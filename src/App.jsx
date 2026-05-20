@@ -32,7 +32,7 @@ import PendingApproval from './pages/PendingApproval';
 import Profile from './pages/Profile';
 import UserManagement from './pages/UserManagement';
 import { isStaff, isStudent, defaultRoute } from './lib/permissions';
-import { getInitialWorkRole } from './lib/roleUtils';
+import { getAvailableRoles, getInitialWorkRole, getSystemRole } from './lib/roleUtils';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
@@ -88,10 +88,12 @@ const AuthenticatedApp = () => {
     }
   }
 
-  // Role is set by admin — never allow students to reach staff routes
-  const role = workRole || user?.role || 'student';
-  const staff = isStaff(role);
-  const studentRole = isStudent(role);
+  // Roles are approved by admin; system access is separated from current work mode
+  const approvedRoles = getAvailableRoles(user);
+  const systemRole = getSystemRole(user);
+  const role = workRole || systemRole;
+  const staff = approvedRoles.some(isStaff);
+  const studentRole = approvedRoles.includes('student') && !staff;
 
   const renderRoutes = () => (
     <Routes>
@@ -112,13 +114,13 @@ const AuthenticatedApp = () => {
         <Route path="/announcements" element={<Announcements role={role} />} />
         <Route path="/reports" element={<Reports role={role} />} />
         <Route path="/profile" element={<Profile user={user} role={role} />} />
-        {role === 'admin' && (
+        {approvedRoles.includes('admin') && (
           <>
             <Route path="/approvals" element={<ApprovalManagement role={role} />} />
             <Route path="/users" element={<UserManagement />} />
           </>
         )}
-        {(role === 'admin' || role === 'homeroom_teacher' || role === 'coordinator') && (
+        {(approvedRoles.includes('admin') || approvedRoles.includes('homeroom_teacher') || approvedRoles.includes('coordinator')) && (
           <Route path="/grade-monitor" element={<GradeMonitor user={user} role={role} />} />
         )}
       </>}

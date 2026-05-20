@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import WorkModeSelector from '@/components/layout/WorkModeSelector';
-import { getRoleDisplayLines, getUserDisplayName } from '@/lib/roleUtils';
+import { getAvailableRoles, getRoleDisplayLines, getUserDisplayName } from '@/lib/roleUtils';
 
 const sidebarNav = [
   { path: '/profile', icon: UserRound, label: 'פרופיל', roles: ['admin', 'homeroom_teacher', 'coordinator', 'student', 'parent'] },
@@ -25,7 +25,7 @@ const sidebarNav = [
 const teacherBottomNav = [
   { path: '/', icon: LayoutDashboard, label: 'דשבורד', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
   { path: '/students', icon: Users, label: 'תלמידים', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
-  { path: '/class-attendance', icon: Users, label: 'נוכחות', roles: ['admin', 'homeroom_teacher'] },
+  { path: '/class-attendance', icon: Users, label: 'נוכחות', roles: ['homeroom_teacher'] },
   { path: '/schedule', icon: Calendar, label: 'מערכת', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
   { path: '/exams', icon: BookOpen, label: 'מבחנים', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
 ];
@@ -49,21 +49,23 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
   const [pendingCount, setPendingCount] = useState(0);
   const location = useLocation();
 
-  const isStaffRole = ['admin', 'homeroom_teacher', 'coordinator'].includes(role);
-  const navItems = sidebarNav.filter(item => item.roles.includes(role));
-  const bottomNavItems = (role === 'student' ? studentBottomNav : teacherBottomNav).filter(item => item.roles.includes(role));
+  const approvedRoles = getAvailableRoles(user);
+  const isStaffRole = approvedRoles.some(item => ['admin', 'homeroom_teacher', 'coordinator'].includes(item));
+  const canAccess = (item) => item.roles.some(itemRole => approvedRoles.includes(itemRole));
+  const navItems = sidebarNav.filter(canAccess);
+  const bottomNavItems = (isStaffRole ? teacherBottomNav : studentBottomNav).filter(canAccess);
   const displayName = getUserDisplayName(user);
   const roleLines = getRoleDisplayLines(user, role);
 
   useEffect(() => {
-    if (role !== 'admin') {
+    if (!approvedRoles.includes('admin')) {
       setPendingCount(0);
       return;
     }
     base44.functions.invoke('handleApprovalRequest', { action: 'get_pending' })
       .then(res => setPendingCount((res.data.pending || []).filter(r => r.status === 'pending').length))
       .catch(() => {});
-  }, [role]);
+  }, [approvedRoles.join(',')]);
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full text-right" dir="rtl">

@@ -11,7 +11,8 @@
         "student",
         "parent"
       ],
-      "default": "student"
+      "default": "student",
+      "description": "\u05d4\u05e8\u05e9\u05d0\u05ea \u05de\u05e2\u05e8\u05db\u05ea / \u05ea\u05e4\u05e7\u05d9\u05d3 \u05e8\u05d0\u05e9\u05d9 \u05de\u05d0\u05d5\u05e9\u05e8"
     },
     "roles": {
       "type": "array",
@@ -25,7 +26,7 @@
           "parent"
         ]
       },
-      "description": "\u05ea\u05e4\u05e7\u05d9\u05d3\u05d9\u05dd \u05d6\u05de\u05d9\u05e0\u05d9\u05dd \u05dc\u05de\u05e9\u05ea\u05de\u05e9"
+      "description": "\u05db\u05dc \u05d4\u05ea\u05e4\u05e7\u05d9\u05d3\u05d9\u05dd \u05d4\u05de\u05d0\u05d5\u05e9\u05e8\u05d9\u05dd \u05dc\u05de\u05e9\u05ea\u05de\u05e9"
     },
     "available_roles": {
       "type": "array",
@@ -39,7 +40,7 @@
           "parent"
         ]
       },
-      "description": "\u05ea\u05e4\u05e7\u05d9\u05d3\u05d9\u05dd \u05d6\u05de\u05d9\u05e0\u05d9\u05dd \u05dc\u05d1\u05d7\u05d9\u05e8\u05d4 \u05d1\u05de\u05e6\u05d1 \u05e2\u05d1\u05d5\u05d3\u05d4"
+      "description": "\u05ea\u05e4\u05e7\u05d9\u05d3\u05d9\u05dd \u05de\u05d0\u05d5\u05e9\u05e8\u05d9\u05dd \u05dc\u05d1\u05d7\u05d9\u05e8\u05d4 \u05d1\u05de\u05e6\u05d1 \u05e2\u05d1\u05d5\u05d3\u05d4"
     },
     "active_work_role": {
       "type": "string",
@@ -79,7 +80,7 @@
         "password",
         "admin_created"
       ],
-      "description": "\u05e1\u05d5\u05d2 \u05db\u05e0\u05d9\u05e1\u05d4: google=Google OAuth, admin_created=\u05d7\u05e9\u05d1\u05d5\u05df \u05e9\u05e0\u05d5\u05e6\u05e8 \u05e2\"\u05d9 \u05de\u05e0\u05d4\u05dc"
+      "description": "\u05e1\u05d5\u05d2 \u05db\u05e0\u05d9\u05e1\u05d4"
     },
     "must_change_password": {
       "type": "boolean",
@@ -89,7 +90,7 @@
     "pre_created_by_admin": {
       "type": "boolean",
       "default": false,
-      "description": "\u05d7\u05e9\u05d1\u05d5\u05df \u05e9\u05e0\u05d5\u05e6\u05e8 \u05de\u05e8\u05d0\u05e9 \u05e2\"\u05d9 \u05de\u05e0\u05d4\u05dc \u05e2\u05dd \u05ea\u05e4\u05e7\u05d9\u05d3 \u05de\u05d5\u05d2\u05d3\u05e8"
+      "description": "\u05d7\u05e9\u05d1\u05d5\u05df \u05e9\u05e0\u05d5\u05e6\u05e8 \u05de\u05e8\u05d0\u05e9 \u05e2\u05f4\u05d9 \u05de\u05e0\u05d4\u05dc"
     },
     "profile_full_name": {
       "type": "string",
@@ -108,30 +109,36 @@
       "description": "\u05db\u05ea\u05d5\u05d1\u05ea"
     },
     "profile_class": {
-      "type": "string"
+      "type": "string",
+      "description": "\u05db\u05d9\u05ea\u05ea \u05ea\u05dc\u05de\u05d9\u05d3"
     },
     "profile_homeroom_teacher": {
-      "type": "string"
+      "type": "string",
+      "description": "\u05e9\u05dd \u05de\u05d7\u05e0\u05da/\u05ea"
     },
     "profile_tracks": {
-      "type": "string"
+      "type": "string",
+      "description": "\u05de\u05d2\u05de\u05d5\u05ea"
     },
     "profile_subject": {
-      "type": "string"
+      "type": "string",
+      "description": "\u05de\u05e7\u05e6\u05d5\u05e2 \u05d4\u05d5\u05e8\u05d0\u05d4"
     },
     "profile_school_role": {
-      "type": "string"
+      "type": "string",
+      "description": "\u05ea\u05e4\u05e7\u05d9\u05d3 \u05d1\u05d1\u05d9\u05ea \u05d4\u05e1\u05e4\u05e8"
     },
     "profile_extra_roles": {
-      "type": "string"
+      "type": "string",
+      "description": "\u05ea\u05e4\u05e7\u05d9\u05d3\u05d9\u05dd \u05e0\u05d5\u05e1\u05e4\u05d9\u05dd \u05d1\u05ea\u05d9\u05d0\u05d5\u05e8 \u05d7\u05d5\u05e4\u05e9\u05d9 \u05d1\u05dc\u05d1\u05d3, \u05dc\u05d0 \u05dc\u05d4\u05e8\u05e9\u05d0\u05d5\u05ea"
     },
     "profile_grade_managed": {
       "type": "string",
-      "description": "\u05e9\u05db\u05d1\u05d4 \u05de\u05e9\u05d5\u05d9\u05db\u05ea"
+      "description": "\u05e9\u05db\u05d1\u05d4 \u05de\u05e9\u05d5\u05d9\u05db\u05ea \u05de\u05d0\u05d5\u05e9\u05e8\u05ea"
     },
     "profile_homeroom_class": {
       "type": "string",
-      "description": "\u05db\u05d9\u05ea\u05d4 \u05de\u05e9\u05d5\u05d9\u05db\u05ea"
+      "description": "\u05db\u05d9\u05ea\u05d4 \u05de\u05e9\u05d5\u05d9\u05db\u05ea \u05de\u05d0\u05d5\u05e9\u05e8\u05ea"
     }
   }
 }

@@ -8,28 +8,53 @@ const ROLE_LABELS = {
   parent: 'הורה',
 };
 
-const STAFF_ROLES = ['admin', 'homeroom_teacher', 'coordinator', 'student', 'parent'];
+const VALID_ROLES = ['admin', 'homeroom_teacher', 'coordinator', 'student', 'parent'];
+const SYSTEM_ROLE_PRIORITY = ['admin', 'coordinator', 'homeroom_teacher', 'student', 'parent'];
 
-function requireAdmin(user) {
-  return user?.role === 'admin';
+function parseRoles(value) {
+  if (Array.isArray(value)) return value;
+  if (typeof value !== 'string') return [];
+  const trimmed = value.trim();
+  if (!trimmed) return [];
+  if (trimmed.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return trimmed.split(',').map(role => role.trim());
 }
 
-// Basic heuristic: suspicion flags
+function normalizeRoles(...values) {
+  return [...new Set(values.flatMap(parseRoles).filter(role => VALID_ROLES.includes(role)))];
+}
+
+function getApprovedRoles(user) {
+  const roles = normalizeRoles(user?.roles, user?.available_roles, [user?.role]);
+  return roles.length ? roles : ['student'];
+}
+
+function getSystemRole(roles) {
+  return SYSTEM_ROLE_PRIORITY.find(role => roles.includes(role)) || 'student';
+}
+
+function requireAdmin(user) {
+  return getApprovedRoles(user).includes('admin');
+}
+
 function detectSuspicion(data) {
   const flags = [];
   const name = (data.full_name || '').toLowerCase();
   const subject = (data.subject || '').toLowerCase();
   const role = data.requested_role;
 
-  // Very young-sounding name patterns (simple heuristic)
   if (name.length < 3) flags.push('שם קצר מאוד');
-  // Subject field left empty for teacher role
   if (role === 'homeroom_teacher' && !subject.trim()) flags.push('מקצוע הוראה ריק למורה');
-  // Grade/class looks like a student class (e.g. "י1", "יא2") for coordinator
   if (role === 'coordinator' && /^[יא-ת]{1,2}\d/.test(data.class_or_grade || '')) {
     flags.push('שכבה נראית ככיתת תלמיד ולא שכבה');
   }
-  // Suspicious keywords in extra roles
   const suspiciousWords = ['תלמיד', 'student', 'ילד', 'כיתה'];
   if (suspiciousWords.some(w => (data.extra_roles || '').toLowerCase().includes(w))) {
     flags.push('תפקידים נוספים מכילים מילות חשד');
@@ -47,14 +72,15 @@ Deno.serve(async (req) => {
     const body = await req.json();
     const { action, request_id, rejection_reason } = body;
 
-    // === ACTION: submit new approval request ===
     if (action === 'submit') {
       const { full_name, requested_role, class_or_grade, subject, school_role, extra_roles } = body;
+      if (!VALID_ROLES.includes(requested_role) || requested_role === 'admin') {
+        return Response.json({ error: 'Invalid role' }, { status: 400 });
+      }
 
       const suspicionFlags = detectSuspicion({ full_name, requested_role, class_or_grade, subject, extra_roles });
       const isSuspicious = suspicionFlags.length >= 2;
 
-      // Create approval request record
       const approvalReq = await base44.asServiceRole.entities.ApprovalRequest.create({
         user_email: user.email,
         full_name,
@@ -69,7 +95,6 @@ Deno.serve(async (req) => {
         notification_sent: false,
       });
 
-      // Log the event
       await base44.asServiceRole.entities.ActivityLog.create({
         event_type: 'approval_request_submitted',
         actor_email: user.email,
@@ -80,16 +105,8 @@ Deno.serve(async (req) => {
         severity: isSuspicious ? 'warning' : 'info',
       });
 
-      // Find admins to notify
-      const admins = await base44.asServiceRole.entities.User.filter({ role: 'admin' });
-      const homerooms = await base44.asServiceRole.entities.User.filter({ role: 'homeroom_teacher' });
-      const coordinators = await base44.asServiceRole.entities.User.filter({ role: 'coordinator' });
-
-      const notifyEmails = new Set([
-        ...admins.map(u => u.email),
-        ...homerooms.map(u => u.email),
-        ...coordinators.map(u => u.email),
-      ]);
+      const allUsers = await base44.asServiceRole.entities.User.list('-updated_date', 200);
+      const notifyEmails = new Set(allUsers.filter(u => getApprovedRoles(u).includes('admin')).map(u => u.email));
 
       const roleLabel = ROLE_LABELS[requested_role] || requested_role;
       const suspicionNote = isSuspicious
@@ -124,22 +141,18 @@ ${suspicionNote}
             to: email,
             subject: `[כיתה חכמה] בקשת הרשמה חדשה – ${full_name}${isSuspicious ? ' ⚠️ חשוד' : ''}`,
             body: emailBody,
-          }).catch(() => {}) // don't fail if email errors
+          }).catch(() => {})
         );
       }
       await Promise.all(emailPromises);
-
-      // Mark notification sent
       await base44.asServiceRole.entities.ApprovalRequest.update(approvalReq.id, { notification_sent: true });
 
       return Response.json({ success: true, request_id: approvalReq.id, is_suspicious: isSuspicious });
     }
 
-    // === ACTION: approve ===
     if (action === 'approve') {
-      if (!requireAdmin(user)) {
-        return Response.json({ error: 'Forbidden' }, { status: 403 });
-      }
+      if (!requireAdmin(user)) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
       const requests = await base44.asServiceRole.entities.ApprovalRequest.filter({ id: request_id });
       const approvalReq = requests[0];
       if (!approvalReq) return Response.json({ error: 'Not found' }, { status: 404 });
@@ -150,20 +163,23 @@ ${suspicionNote}
         reviewed_at: new Date().toISOString(),
       });
 
-      // Update the target user's role and onboarding status
       const targetUsers = await base44.asServiceRole.entities.User.filter({ email: approvalReq.user_email });
       if (targetUsers[0]) {
+        const target = targetUsers[0];
+        const approvedRoles = normalizeRoles(getApprovedRoles(target), [approvalReq.requested_role]);
+        const primaryRole = target.role === 'admin' ? 'admin' : getSystemRole(approvedRoles);
         const classOrGrade = approvalReq.class_or_grade || '';
         const approvedGrade = classOrGrade.replace(/[׳״'"\d\s]/g, '');
-        await base44.asServiceRole.entities.User.update(targetUsers[0].id, {
-          role: approvalReq.requested_role,
-          roles: [approvalReq.requested_role],
-          available_roles: [approvalReq.requested_role],
-          active_work_role: approvalReq.requested_role,
+
+        await base44.asServiceRole.entities.User.update(target.id, {
+          role: primaryRole,
+          roles: approvedRoles,
+          available_roles: approvedRoles,
+          active_work_role: approvedRoles.includes(target.active_work_role) ? target.active_work_role : primaryRole,
           onboarding_status: 'approved',
-          profile_homeroom_class: approvalReq.requested_role === 'homeroom_teacher' || approvalReq.requested_role === 'student' ? classOrGrade : targetUsers[0].profile_homeroom_class || '',
-          profile_class: approvalReq.requested_role === 'student' ? classOrGrade : targetUsers[0].profile_class || '',
-          profile_grade_managed: approvedGrade || targetUsers[0].profile_grade_managed || '',
+          profile_homeroom_class: approvalReq.requested_role === 'homeroom_teacher' || approvalReq.requested_role === 'student' ? classOrGrade : target.profile_homeroom_class || '',
+          profile_class: approvalReq.requested_role === 'student' ? classOrGrade : target.profile_class || '',
+          profile_grade_managed: approvedGrade || target.profile_grade_managed || '',
         });
       }
 
@@ -176,27 +192,23 @@ ${suspicionNote}
         severity: 'info',
       });
 
-      // Notify the applicant
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: approvalReq.user_email,
         subject: '[כיתה חכמה] בקשתך אושרה!',
-        body: `שלום ${approvalReq.full_name},\n\nבקשתך לתפקיד ${ROLE_LABELS[approvalReq.requested_role]} אושרה!\nתוכל/י כעת להיכנס למערכת כיתה חכמה עם הרשאות מלאות.\n\nבברכה,\nמערכת כיתה חכמה`,
+        body: `שלום ${approvalReq.full_name},\n\nבקשתך לתפקיד ${ROLE_LABELS[approvalReq.requested_role]} אושרה!\n\nבברכה,\nמערכת כיתה חכמה`,
       }).catch(() => {});
 
       return Response.json({ success: true });
     }
 
-    // === ACTION: reject ===
     if (action === 'reject') {
-      if (!requireAdmin(user)) {
-        return Response.json({ error: 'Forbidden' }, { status: 403 });
-      }
+      if (!requireAdmin(user)) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
       const requests = await base44.asServiceRole.entities.ApprovalRequest.filter({ id: request_id });
       const approvalReq = requests[0];
       if (!approvalReq) return Response.json({ error: 'Not found' }, { status: 404 });
 
       const isSuspicious = approvalReq.is_suspicious;
-
       await base44.asServiceRole.entities.ApprovalRequest.update(request_id, {
         status: isSuspicious ? 'suspicious' : 'rejected',
         reviewed_by: user.email,
@@ -204,12 +216,9 @@ ${suspicionNote}
         rejection_reason: rejection_reason || '',
       });
 
-      // Keep user's onboarding_status as awaiting_approval (they stay blocked)
       const targetUsers = await base44.asServiceRole.entities.User.filter({ email: approvalReq.user_email });
       if (targetUsers[0]) {
-        await base44.asServiceRole.entities.User.update(targetUsers[0].id, {
-          onboarding_status: 'rejected',
-        });
+        await base44.asServiceRole.entities.User.update(targetUsers[0].id, { onboarding_status: 'rejected' });
       }
 
       await base44.asServiceRole.entities.ActivityLog.create({
@@ -222,43 +231,40 @@ ${suspicionNote}
         severity: isSuspicious ? 'critical' : 'warning',
       });
 
-      // Notify applicant of rejection
       await base44.asServiceRole.integrations.Core.SendEmail({
         to: approvalReq.user_email,
         subject: '[כיתה חכמה] עדכון בנוגע לבקשתך',
-        body: `שלום ${approvalReq.full_name},\n\nלצערנו, בקשתך לתפקיד ${ROLE_LABELS[approvalReq.requested_role]} לא אושרה${rejection_reason ? ': ' + rejection_reason : '.'}\n\nלשאלות פנה/י למנהל בית הספר.\n\nבברכה,\nמערכת כיתה חכמה`,
+        body: `שלום ${approvalReq.full_name},\n\nלצערנו, בקשתך לתפקיד ${ROLE_LABELS[approvalReq.requested_role]} לא אושרה${rejection_reason ? ': ' + rejection_reason : '.'}\n\nבברכה,\nמערכת כיתה חכמה`,
       }).catch(() => {});
 
       return Response.json({ success: true });
     }
 
-    // === ACTION: list users for secure admin management ===
     if (action === 'list_users') {
-      if (!requireAdmin(user)) {
-        return Response.json({ error: 'Forbidden' }, { status: 403 });
-      }
+      if (!requireAdmin(user)) return Response.json({ error: 'Forbidden' }, { status: 403 });
       const users = await base44.asServiceRole.entities.User.list('-updated_date', 200);
       return Response.json({ users });
     }
 
-    // === ACTION: admin update approved user role ===
     if (action === 'admin_update_user') {
-      if (!requireAdmin(user)) {
-        return Response.json({ error: 'Forbidden' }, { status: 403 });
-      }
+      if (!requireAdmin(user)) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
-      const { target_user_id, target_role, profile_homeroom_class, profile_grade_managed } = body;
-      if (!STAFF_ROLES.includes(target_role)) {
+      const { target_user_id, target_role, approved_roles, profile_homeroom_class, profile_grade_managed } = body;
+      const approvedRoles = normalizeRoles(approved_roles, [target_role]);
+      if (!approvedRoles.length || !approvedRoles.every(role => VALID_ROLES.includes(role)) || !approvedRoles.includes(target_role)) {
         return Response.json({ error: 'Invalid role' }, { status: 400 });
       }
 
+      const targetUsers = await base44.asServiceRole.entities.User.filter({ id: target_user_id });
+      const target = targetUsers[0] || {};
+
       await base44.asServiceRole.entities.User.update(target_user_id, {
         role: target_role,
-        roles: [target_role],
-        available_roles: [target_role],
-        active_work_role: target_role,
+        roles: approvedRoles,
+        available_roles: approvedRoles,
+        active_work_role: approvedRoles.includes(target.active_work_role) ? target.active_work_role : target_role,
         profile_homeroom_class: profile_homeroom_class || '',
-        profile_class: target_role === 'student' ? profile_homeroom_class || '' : '',
+        profile_class: approvedRoles.includes('student') ? profile_homeroom_class || '' : target.profile_class || '',
         profile_grade_managed: profile_grade_managed || '',
         onboarding_status: 'approved',
       });
@@ -268,19 +274,16 @@ ${suspicionNote}
         actor_email: user.email,
         action_name: 'admin_update_user_role',
         target_email: body.target_email || '',
-        details: `תפקיד משתמש עודכן ל-${ROLE_LABELS[target_role] || target_role}`,
-        metadata: JSON.stringify({ target_user_id, target_role, profile_homeroom_class, profile_grade_managed }),
+        details: `הרשאות משתמש עודכנו: ${approvedRoles.map(role => ROLE_LABELS[role] || role).join(', ')}`,
+        metadata: JSON.stringify({ target_user_id, target_role, approvedRoles, profile_homeroom_class, profile_grade_managed }),
         severity: 'warning',
       });
 
       return Response.json({ success: true });
     }
 
-    // === ACTION: get_pending ===
     if (action === 'get_pending') {
-      if (!requireAdmin(user)) {
-        return Response.json({ error: 'Forbidden' }, { status: 403 });
-      }
+      if (!requireAdmin(user)) return Response.json({ error: 'Forbidden' }, { status: 403 });
       const pending = await base44.asServiceRole.entities.ApprovalRequest.filter({ status: 'pending' });
       const logs = await base44.asServiceRole.entities.ActivityLog.list('-created_date', 50);
       return Response.json({ pending, logs });

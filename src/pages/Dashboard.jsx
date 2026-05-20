@@ -8,7 +8,7 @@ import StatCard from '@/components/ui/StatCard';
 import {
   Users, Clock, AlertTriangle, BookOpen, CheckSquare,
   Shield, Heart, UserCheck, Plus, Calendar, MessageSquare,
-  Megaphone, Star, ChevronLeft, TrendingUp
+  Megaphone, Star, ChevronLeft, TrendingUp, Settings
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,6 +16,7 @@ import StatusBadge from '@/components/ui/StatusBadge';
 import QuickActionModal from '@/components/dashboard/QuickActionModal';
 import NotificationsDropdown from '@/components/dashboard/NotificationsDropdown';
 import { isStudentInApprovedScope, getUserApprovedClass, getUserApprovedGrade } from '@/lib/schoolStructure';
+import { getAvailableRoles, hasApprovedRole } from '@/lib/roleUtils';
 
 const HEBREW_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 const HEBREW_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
@@ -35,6 +36,11 @@ export default function Dashboard({ user, role }) {
   const [quickAction, setQuickAction] = useState(null);
 
   const today = new Date().toISOString().split('T')[0];
+  const approvedRoles = getAvailableRoles(user);
+  const isAdmin = approvedRoles.includes('admin');
+  const hasClassRole = approvedRoles.includes('homeroom_teacher');
+  const hasCoordinatorRole = approvedRoles.includes('coordinator');
+  const classScopeLabel = hasClassRole ? `כיתה ${getUserApprovedClass(user) || ''}` : hasCoordinatorRole ? `שכבה ${getUserApprovedGrade(user) || ''}` : 'מערכת כללית';
 
   useEffect(() => {
     loadData();
@@ -50,7 +56,8 @@ export default function Dashboard({ user, role }) {
       base44.entities.DisciplineEvent.filter({ class_id: CLASS_ID }),
       base44.entities.Announcement.filter({ class_id: CLASS_ID }),
     ]);
-    const scopedStudents = sts.filter(student => isStudentInApprovedScope(student, user, role));
+    const scopeRole = hasApprovedRole(user, 'homeroom_teacher') ? 'homeroom_teacher' : hasApprovedRole(user, 'coordinator') ? 'coordinator' : role;
+    const scopedStudents = isAdmin && !hasClassRole && !hasCoordinatorRole ? sts : sts.filter(student => isStudentInApprovedScope(student, user, scopeRole));
     const scopedIds = new Set(scopedStudents.map(student => student.id));
     setStudents(scopedStudents);
     setTodayAttendance(att.filter(record => scopedIds.has(record.student_id)));
@@ -103,8 +110,8 @@ export default function Dashboard({ user, role }) {
     return pct < 50 && s.status === 'פעיל';
   });
 
-  const canSeeClassAlerts = ['admin', 'homeroom_teacher'].includes(role);
-  const canSeeCoordinatorAlerts = ['admin', 'coordinator'].includes(role);
+  const canSeeClassAlerts = hasClassRole;
+  const canSeeCoordinatorAlerts = isAdmin || hasCoordinatorRole;
   const notifications = [
     ...(canSeeClassAlerts && openDiscipline > 0 ? [{
       id: 'discipline',
@@ -152,10 +159,38 @@ export default function Dashboard({ user, role }) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">שלום, {user?.full_name?.split(' ')[0] || 'מחנך'} 👋</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{hebrewDate()} · {role === 'coordinator' ? `שכבה ${getUserApprovedGrade(user)}` : `כיתה ${getUserApprovedClass(user) || ''}`}</p>
+          <p className="text-sm text-muted-foreground mt-0.5">{hebrewDate()} · {classScopeLabel}</p>
         </div>
         <NotificationsDropdown notifications={notifications} />
       </div>
+
+      {isAdmin && (
+        <Card className="border-primary/20 bg-primary/5">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base font-semibold flex items-center gap-2">
+              <Settings className="w-4 h-4 text-primary" />
+              פעולות ניהול כלליות
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <Button asChild variant="outline"><Link to="/users">הרשאות משתמשים</Link></Button>
+            <Button asChild variant="outline"><Link to="/approvals">אישורי הרשמה</Link></Button>
+            <Button asChild variant="outline"><Link to="/reports">דוחות</Link></Button>
+            <Button asChild variant="outline"><Link to="/grade-monitor">מעקב שכבה</Link></Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {hasClassRole && (
+        <Card className="border-emerald-200 dark:border-emerald-800">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-semibold">הכיתה שלי · {getUserApprovedClass(user) || 'לא הוגדרה כיתה'}</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm text-muted-foreground">
+            באזור זה מוצגים נתוני הכיתה המשויכת המאושרת שלך, גם אם יש לך הרשאות מנהל מערכת.
+          </CardContent>
+        </Card>
+      )}
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -195,7 +230,7 @@ export default function Dashboard({ user, role }) {
               { icon: MessageSquare, label: 'שיחה עם הורים', action: 'communication', color: 'bg-cyan-500', roles: ['admin', 'homeroom_teacher'] },
               { icon: CheckSquare, label: 'משימה חדשה', action: 'task', color: 'bg-indigo-500', roles: ['admin', 'coordinator', 'homeroom_teacher'] },
               { icon: Heart, label: 'עדכון מעורבות', action: 'community', color: 'bg-pink-500', roles: ['admin', 'homeroom_teacher'] },
-            ].filter(btn => btn.roles.includes(role)).map(btn => (
+            ].filter(btn => btn.roles.some(itemRole => approvedRoles.includes(itemRole))).map(btn => (
               <motion.button
                 key={btn.action}
                 whileHover={{ scale: 1.03 }}

@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Save, UserRound, Send } from 'lucide-react';
 import GradeClassSelect from '@/components/profile/GradeClassSelect';
 import { extractGradeFromClass } from '@/lib/schoolStructure';
+import { getAvailableRoles, getSystemRole, ROLE_LABELS } from '@/lib/roleUtils';
 
 const roles = [
   { value: 'admin', label: 'מנהל/ת מערכת' },
@@ -52,7 +53,7 @@ export default function Profile({ user, role }) {
   };
 
   const handleRoleRequest = async () => {
-    if (!requestedRole || requestedRole === user?.role) return;
+    if (!requestedRole || approvedRoles.includes(requestedRole)) return;
     if (!requestScope.grade || !requestScope.className) {
       toast.error('יש לבחור שכבה וכיתה לבקשה');
       return;
@@ -73,7 +74,10 @@ export default function Profile({ user, role }) {
     setSaving(false);
   };
 
-  const currentRoleLabel = roles.find(item => item.value === user?.role)?.label || 'משתמש';
+  const approvedRoles = getAvailableRoles(user);
+  const primaryRole = getSystemRole(user);
+  const currentRoleLabel = ROLE_LABELS[primaryRole] || 'משתמש';
+  const additionalRoleLabels = approvedRoles.filter(item => item !== primaryRole).map(item => ROLE_LABELS[item]).filter(Boolean).join(', ') || 'אין';
 
   return (
     <div className="min-h-full bg-background p-4 md:p-8" dir="rtl">
@@ -117,10 +121,14 @@ export default function Profile({ user, role }) {
               <CardTitle>תפקיד ושיוך</CardTitle>
               <CardDescription>התפקיד והשיוך נקבעים לפי הרשאה מאושרת. שינוי תפקיד דורש אישור מנהל מערכת.</CardDescription>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>תפקיד</Label>
+                <Label>תפקיד ראשי מאושר</Label>
                 <Input value={currentRoleLabel} disabled className="bg-muted" />
+              </div>
+              <div className="space-y-2">
+                <Label>תפקידים נוספים מאושרים</Label>
+                <Input value={additionalRoleLabels} disabled className="bg-muted" />
               </div>
               <GradeClassSelect
                 grade={form.profile_grade_managed}
@@ -146,7 +154,7 @@ export default function Profile({ user, role }) {
                   {roles.filter(item => item.value !== 'admin').map(item => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
                 </SelectContent>
               </Select>
-              {requestedRole && requestedRole !== user?.role && (
+              {requestedRole && !approvedRoles.includes(requestedRole) && (
                 <GradeClassSelect
                   grade={requestScope.grade}
                   classNameValue={requestScope.className}
@@ -154,7 +162,7 @@ export default function Profile({ user, role }) {
                   onClassChange={(value) => setRequestScope(prev => ({ ...prev, className: value }))}
                 />
               )}
-              <Button type="button" variant="outline" onClick={handleRoleRequest} disabled={saving || !requestedRole || requestedRole === user?.role || !requestScope.grade || !requestScope.className}>
+              <Button type="button" variant="outline" onClick={handleRoleRequest} disabled={saving || !requestedRole || approvedRoles.includes(requestedRole) || !requestScope.grade || !requestScope.className}>
                 <Send className="w-4 h-4" />
                 שלח בקשה לאישור
               </Button>
