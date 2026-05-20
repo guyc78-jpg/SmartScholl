@@ -100,27 +100,37 @@
   .rtl { direction: rtl; }
   .ltr { direction: ltr; }
 
+  /* Force LTR only where content is inherently LTR (numbers, codes, urls) */
+  .force-ltr,
+  [dir="rtl"] .force-ltr {
+    direction: ltr;
+    text-align: left;
+    unicode-bidi: isolate;
+  }
+
   [dir="rtl"] {
     text-align: right;
   }
 
-  [dir="rtl"] .text-left,
-  [dir="rtl"] .text-start {
+  /* Default text alignment for common containers */
+  [dir="rtl"] .text-left {
     text-align: right;
   }
 
-  [dir="rtl"] .justify-start {
-    justify-content: flex-end;
+  /* Radix popovers/dropdowns/dialogs inherit RTL */
+  [dir="rtl"] [data-radix-popper-content-wrapper],
+  [dir="rtl"] [role="dialog"],
+  [dir="rtl"] [role="menu"],
+  [dir="rtl"] [role="listbox"],
+  [dir="rtl"] [role="tablist"],
+  [dir="rtl"] [data-radix-select-content],
+  [dir="rtl"] [data-radix-dropdown-menu-content],
+  [dir="rtl"] [data-radix-popover-content] {
+    direction: rtl;
+    text-align: right;
   }
 
-  [dir="rtl"] .items-start {
-    align-items: flex-end;
-  }
-
-  [dir="rtl"] .origin-left {
-    transform-origin: right;
-  }
-
+  /* Inputs / textareas / selects */
   [dir="rtl"] input,
   [dir="rtl"] textarea,
   [dir="rtl"] select {
@@ -128,18 +138,91 @@
     direction: rtl;
   }
 
+  /* Inputs whose content is inherently LTR — keep text on the right side of the field but type LTR */
   [dir="rtl"] input[type="email"],
   [dir="rtl"] input[type="url"],
   [dir="rtl"] input[type="tel"],
   [dir="rtl"] input[type="number"],
   [dir="rtl"] input[type="date"],
-  [dir="rtl"] input[type="time"] {
+  [dir="rtl"] input[type="time"],
+  [dir="rtl"] input[type="datetime-local"],
+  [dir="rtl"] input[type="password"] {
     direction: ltr;
     text-align: right;
   }
 
-  [dir="rtl"] [data-radix-popper-content-wrapper] {
+  /* Placeholders stay RTL aligned */
+  [dir="rtl"] input::placeholder,
+  [dir="rtl"] textarea::placeholder {
+    text-align: right;
+    direction: rtl;
+  }
+
+  /* Radix Select trigger icon should sit on the left side in RTL */
+  [dir="rtl"] [data-radix-select-trigger] > svg:last-child {
+    margin-right: auto;
+    margin-left: 0;
+  }
+
+  /* Select item checkmark indicator moves to the left in RTL */
+  [dir="rtl"] [data-radix-select-item] {
+    padding-left: 2rem;
+    padding-right: 0.5rem;
+  }
+  [dir="rtl"] [data-radix-select-item] > span:first-child {
+    left: 0.5rem;
+    right: auto;
+  }
+
+  /* Dialog close button - move to the start (right side in RTL) */
+  [dir="rtl"] [role="dialog"] > button[type="button"][aria-label],
+  [dir="rtl"] [role="dialog"] > .absolute.right-4 {
+    right: auto;
+    left: 1rem;
+  }
+
+  /* DropdownMenu / ContextMenu item indicator side */
+  [dir="rtl"] [data-radix-dropdown-menu-item],
+  [dir="rtl"] [data-radix-context-menu-item] {
     direction: rtl;
     text-align: right;
+  }
+
+  /* Toasts (sonner) - align text right */
+  [dir="rtl"] [data-sonner-toast] {
+    direction: rtl;
+    text-align: right;
+  }
+  [dir="rtl"] [data-sonner-toast] [data-icon] {
+    margin-left: 0.5rem;
+    margin-right: 0;
+  }
+
+  /* Tabs underline / triggers */
+  [dir="rtl"] [role="tablist"] {
+    flex-direction: row-reverse;
+  }
+
+  /* Sheet / Drawer slide direction is handled per-side by Radix; ensure inner content is RTL */
+  [dir="rtl"] [data-state="open"][data-side] {
+    direction: rtl;
+  }
+
+  /* Lucide icons keep their orientation but spacing is logical */
+  [dir="rtl"] .lucide-chevron-right {
+    transform: scaleX(-1);
+  }
+  [dir="rtl"] .lucide-chevron-left {
+    transform: scaleX(-1);
+  }
+
+  /* Calendar / day picker */
+  [dir="rtl"] .rdp,
+  [dir="rtl"] .rdp-month,
+  [dir="rtl"] .rdp-table {
+    direction: rtl;
+  }
+  [dir="rtl"] .rdp-nav {
+    flex-direction: row-reverse;
   }
 }
