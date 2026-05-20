@@ -8,12 +8,13 @@ import StatCard from '@/components/ui/StatCard';
 import {
   Users, Clock, AlertTriangle, BookOpen, CheckSquare,
   Shield, Heart, UserCheck, Plus, Calendar, MessageSquare,
-  Megaphone, Star, ChevronLeft, TrendingUp, Bell
+  Megaphone, Star, ChevronLeft, TrendingUp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import StatusBadge from '@/components/ui/StatusBadge';
 import QuickActionModal from '@/components/dashboard/QuickActionModal';
+import NotificationsDropdown from '@/components/dashboard/NotificationsDropdown';
 
 const HEBREW_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 const HEBREW_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
@@ -92,6 +93,41 @@ export default function Dashboard({ user, role }) {
     return pct < 50 && s.status === 'פעיל';
   });
 
+  const canSeeClassAlerts = ['admin', 'homeroom_teacher'].includes(role);
+  const canSeeCoordinatorAlerts = ['admin', 'coordinator'].includes(role);
+  const notifications = [
+    ...(canSeeClassAlerts && openDiscipline > 0 ? [{
+      id: 'discipline',
+      title: `${openDiscipline} אירועי משמעת פתוחים`,
+      description: 'דורש טיפול ומעקב',
+      to: '/discipline'
+    }] : []),
+    ...(openTasks > 0 ? [{
+      id: 'tasks',
+      title: `${openTasks} משימות פתוחות`,
+      description: 'משימות שממתינות לטיפול',
+      to: '/tasks'
+    }] : []),
+    ...(canSeeClassAlerts && attendanceAlertStudents.length > 0 ? [{
+      id: 'attendance',
+      title: `${attendanceAlertStudents.length} התראות נוכחות`,
+      description: 'תלמידים שחצו סף היעדרויות או איחורים',
+      to: '/class-attendance'
+    }] : []),
+    ...(canSeeClassAlerts && watchStudents.length > 0 ? [{
+      id: 'watch-students',
+      title: `${watchStudents.length} תלמידים למעקב`,
+      description: 'תלמידים שסומנו כדורשים מעקב',
+      to: '/students'
+    }] : []),
+    ...(canSeeCoordinatorAlerts && nextExams.length > 0 ? [{
+      id: 'exams',
+      title: `${nextExams.length} מבחנים קרובים`,
+      description: 'מבחנים מתוכננים להמשך',
+      to: '/exams'
+    }] : []),
+  ];
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -108,15 +144,7 @@ export default function Dashboard({ user, role }) {
           <h1 className="text-2xl font-bold text-foreground">שלום, {user?.full_name?.split(' ')[0] || 'מחנך'} 👋</h1>
           <p className="text-sm text-muted-foreground mt-0.5">{hebrewDate()} · כיתה י׳1</p>
         </div>
-        <Button variant="outline" size="sm" className="gap-2">
-          <Bell className="w-4 h-4" />
-          <span className="hidden sm:inline">התראות</span>
-          {(openDiscipline + openTasks) > 0 && (
-            <span className="w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center">
-              {openDiscipline + openTasks}
-            </span>
-          )}
-        </Button>
+        <NotificationsDropdown notifications={notifications} />
       </div>
 
       {/* Stat Cards */}
