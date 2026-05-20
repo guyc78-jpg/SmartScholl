@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -24,6 +24,7 @@ import Tasks from './pages/Tasks';
 import Announcements from './pages/Announcements';
 import Reports from './pages/Reports';
 import StudentHome from './pages/StudentHome';
+import { isStaff, isStudent, defaultRoute } from './lib/permissions';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
@@ -64,25 +65,39 @@ const AuthenticatedApp = () => {
   }
 
   const role = user?.role || 'homeroom_teacher'; // default for demo
+  const staff = isStaff(role);
+  const studentRole = isStudent(role);
 
   const renderRoutes = () => (
     <Routes>
-      {/* Teacher / Coordinator routes */}
-      <Route path="/" element={<Dashboard user={user} />} />
-      <Route path="/students" element={<Students />} />
-      <Route path="/students/:id" element={<StudentProfile />} />
-      <Route path="/attendance" element={<Attendance />} />
-      <Route path="/schedule" element={<Schedule role={role} />} />
-      <Route path="/exams" element={<Exams />} />
-      <Route path="/community" element={<Community />} />
-      <Route path="/discipline" element={<Discipline />} />
-      <Route path="/performance" element={<Performance />} />
-      <Route path="/communications" element={<Communications />} />
-      <Route path="/tasks" element={<Tasks />} />
-      <Route path="/announcements" element={<Announcements role={role} />} />
-      <Route path="/reports" element={<Reports />} />
+      {/* Staff routes */}
+      {staff && <>
+        <Route path="/" element={<Dashboard user={user} />} />
+        <Route path="/students" element={<Students />} />
+        <Route path="/students/:id" element={<StudentProfile role={role} />} />
+        <Route path="/attendance" element={<Attendance />} />
+        <Route path="/schedule" element={<Schedule role={role} />} />
+        <Route path="/exams" element={<Exams role={role} />} />
+        <Route path="/community" element={<Community role={role} />} />
+        <Route path="/discipline" element={<Discipline role={role} />} />
+        <Route path="/performance" element={<Performance role={role} />} />
+        <Route path="/communications" element={<Communications role={role} />} />
+        <Route path="/tasks" element={<Tasks role={role} />} />
+        <Route path="/announcements" element={<Announcements role={role} />} />
+        <Route path="/reports" element={<Reports />} />
+      </>}
+
       {/* Student routes */}
-      <Route path="/student-home" element={<StudentHome user={user} />} />
+      {studentRole && <>
+        <Route path="/student-home" element={<StudentHome user={user} />} />
+        <Route path="/schedule" element={<Schedule role={role} />} />
+        <Route path="/exams" element={<Exams role={role} />} />
+        <Route path="/announcements" element={<Announcements role={role} />} />
+        <Route path="/community" element={<Community role={role} />} />
+      </>}
+
+      {/* Role-based default redirect */}
+      {studentRole && <Route path="/" element={<Navigate to="/student-home" replace />} />}
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

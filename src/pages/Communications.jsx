@@ -16,7 +16,7 @@ import { MessageSquare, Plus, Edit, Trash2, Phone, Mail, Video } from 'lucide-re
 
 const typeIcons = { 'שיחה טלפונית': Phone, 'פגישה': MessageSquare, 'מייל': Mail, 'הודעה': MessageSquare, 'שיחת זום': Video };
 
-export default function Communications() {
+export default function Communications({ role = 'homeroom_teacher' }) {
   const [comms, setComms] = useState([]);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -63,7 +63,7 @@ export default function Communications() {
   return (
     <div className="p-4 lg:p-6 space-y-5" dir="rtl">
       <PageHeader title="תקשורת" subtitle="תיעוד שיחות והתקשרויות"
-        actions={<Button size="sm" className="gap-2" onClick={openAdd}><Plus className="w-4 h-4"/>תעד שיחה</Button>} />
+        actions={['admin','homeroom_teacher','coordinator'].includes(role) ? <Button size="sm" className="gap-2" onClick={openAdd}><Plus className="w-4 h-4"/>תעד שיחה</Button> : null} />
 
       {loading ? <div className="flex justify-center py-12"><div className="w-7 h-7 border-4 border-primary/20 border-t-primary rounded-full animate-spin"/></div>
       : comms.length === 0

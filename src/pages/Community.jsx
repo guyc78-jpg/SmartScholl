@@ -14,7 +14,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import { toast } from 'sonner';
 import { Heart, Edit, AlertTriangle, TrendingUp } from 'lucide-react';
 
-export default function Community() {
+export default function Community({ role = 'homeroom_teacher' }) {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editStudent, setEditStudent] = useState(null);
@@ -53,7 +53,7 @@ export default function Community() {
 
   return (
     <div className="p-4 lg:p-6 space-y-5" dir="rtl">
-      <PageHeader title="מעורבות חברתית" subtitle="מעקב שעות התנדבות" />
+      <PageHeader title="מעורבות חברתית" subtitle="מעקב שעות התנדבות" actions={null} />
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -110,16 +110,18 @@ export default function Community() {
                           <div className={`h-full rounded-full transition-all ${p >= 100 ? 'bg-emerald-500' : p >= 50 ? 'bg-blue-500' : 'bg-red-400'}`}
                             style={{ width: `${Math.min(p, 100)}%` }} />
                         </div>
-                        <span className="text-xs font-bold text-foreground w-10 text-left">{p}%</span>
+                        <span className="text-xs font-bold text-foreground w-10 text-center">{p}%</span>
                       </div>
                       <div className="flex gap-3 text-xs text-muted-foreground">
                         <span>{s.community_service_done || 0} / {s.community_service_goal || 60} שע׳</span>
                         {s.community_service_place && <span>· {s.community_service_place}</span>}
                       </div>
                     </div>
-                    <Button variant="ghost" size="icon" className="w-8 h-8 flex-shrink-0" onClick={() => openEdit(s)}>
-                      <Edit className="w-4 h-4"/>
-                    </Button>
+                    {['admin','homeroom_teacher','coordinator'].includes(role) && (
+                      <Button variant="ghost" size="icon" className="w-8 h-8 flex-shrink-0" onClick={() => openEdit(s)}>
+                        <Edit className="w-4 h-4"/>
+                      </Button>
+                    )}
                   </div>
                 </Card>
               </motion.div>

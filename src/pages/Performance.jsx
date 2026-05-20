@@ -45,7 +45,7 @@ const avg = (r) => {
   return vals.length > 0 ? (vals.reduce((a,b)=>a+b,0)/vals.length).toFixed(1) : '—';
 };
 
-export default function Performance() {
+export default function Performance({ role = 'homeroom_teacher' }) {
   const [reviews, setReviews] = useState([]);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -92,7 +92,7 @@ export default function Performance() {
   return (
     <div className="p-4 lg:p-6 space-y-5" dir="rtl">
       <PageHeader title="תפקוד" subtitle="הערכות תקופתיות לתלמידים"
-        actions={<Button size="sm" className="gap-2" onClick={openAdd}><Plus className="w-4 h-4"/>הערכה חדשה</Button>} />
+        actions={['admin','homeroom_teacher','coordinator'].includes(role) ? <Button size="sm" className="gap-2" onClick={openAdd}><Plus className="w-4 h-4"/>הערכה חדשה</Button> : null} />
 
       {loading ? <div className="flex justify-center py-12"><div className="w-7 h-7 border-4 border-primary/20 border-t-primary rounded-full animate-spin"/></div>
       : reviews.length === 0

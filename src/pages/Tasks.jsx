@@ -15,7 +15,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import { toast } from 'sonner';
 import { CheckSquare, Plus, Edit, Trash2, Check } from 'lucide-react';
 
-export default function Tasks() {
+export default function Tasks({ role = 'homeroom_teacher' }) {
   const [tasks, setTasks] = useState([]);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -37,14 +37,14 @@ export default function Tasks() {
     setLoading(false);
   }
 
-  function openAdd() { setForm({ student_id: '', student_name: '', title: '', description: '', due_date: today, priority: 'בינונית', status: 'לביצוע', category: 'כללי' }); setEditTask(null); setShowForm(true); }
-  function openEdit(t) { setForm({ ...t, student_id: t.student_id || '' }); setEditTask(t); setShowForm(true); }
+  function openAdd() { setForm({ student_id: 'none', student_name: '', title: '', description: '', due_date: today, priority: 'בינונית', status: 'לביצוע', category: 'כללי' }); setEditTask(null); setShowForm(true); }
+  function openEdit(t) { setForm({ ...t, student_id: t.student_id || 'none' }); setEditTask(t); setShowForm(true); }
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
   async function handleSave() {
     if (!form.title) { toast.error('כותרת היא שדה חובה'); return; }
-    const student = students.find(s => s.id === form.student_id);
-    const data = { ...form, student_name: student?.full_name || '', class_id: CLASS_ID };
+    const student = form.student_id !== 'none' ? students.find(s => s.id === form.student_id) : null;
+    const data = { ...form, student_id: student?.id || '', student_name: student?.full_name || '', class_id: CLASS_ID };
     try {
       if (editTask) { await base44.entities.Task.update(editTask.id, data); toast.success('עודכן'); }
       else { await base44.entities.Task.create(data); toast.success('משימה נוספה!'); }
@@ -129,7 +129,7 @@ export default function Tasks() {
                 <Select value={form.student_id} onValueChange={v => set('student_id', v)}>
                   <SelectTrigger><SelectValue placeholder="בחר תלמיד"/></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={null}>כיתה כללי</SelectItem>
+                    <SelectItem value="none">כיתה – כללי</SelectItem>
                     {students.map(s => <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>)}
                   </SelectContent>
                 </Select>

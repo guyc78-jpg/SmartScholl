@@ -16,7 +16,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import { toast } from 'sonner';
 import { Shield, Plus, Edit, Trash2, Filter } from 'lucide-react';
 
-export default function Discipline() {
+export default function Discipline({ role = 'homeroom_teacher' }) {
   const [events, setEvents] = useState([]);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -70,7 +70,7 @@ export default function Discipline() {
   return (
     <div className="p-4 lg:p-6 space-y-5" dir="rtl">
       <PageHeader title="משמעת" subtitle={`${events.filter(e => e.status === 'פתוח').length} אירועים פתוחים`}
-        actions={<Button size="sm" className="gap-2" onClick={openAdd}><Plus className="w-4 h-4"/>הוסף אירוע</Button>} />
+        actions={['admin','homeroom_teacher','coordinator'].includes(role) ? <Button size="sm" className="gap-2" onClick={openAdd}><Plus className="w-4 h-4"/>הוסף אירוע</Button> : null} />
 
       <div className="flex gap-2 flex-wrap">
         {['הכל', 'פתוח', 'בטיפול', 'סגור'].map(s => (

@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { Save, CheckCircle2 } from 'lucide-react';
 
 const STATUSES = ['נוכח', 'נעדר', 'מאחר', 'מוצדק', 'שוחרר'];
+const STATUS_SHORT = { 'נוכח': 'נוכח', 'נעדר': 'נעדר', 'מאחר': 'מאחר', 'מוצדק': 'מוצדק', 'שוחרר': 'שוחרר' };
 const statusColors = {
   'נוכח':  { active: 'bg-emerald-500 text-white border-emerald-500', idle: 'bg-background border-border text-muted-foreground hover:bg-emerald-50 hover:border-emerald-300' },
   'נעדר':  { active: 'bg-red-500 text-white border-red-500',    idle: 'bg-background border-border text-muted-foreground hover:bg-red-50 hover:border-red-300' },
@@ -150,15 +151,16 @@ export default function Attendance() {
                       <p className="font-medium text-sm truncate">{student.full_name}</p>
                       {student.status === 'דורש מעקב' && <StatusBadge status="דורש מעקב" className="mt-0.5 scale-90 origin-right" />}
                     </div>
-                    {/* Status buttons — fixed width, no wrapping */}
-                    <div className="flex gap-1 flex-1 justify-end">
+                    {/* Status buttons */}
+                    <div className="flex gap-1 flex-shrink-0">
                       {STATUSES.map(st => {
                         const isSelected = current?.status === st;
                         return (
                           <button
                             key={st}
                             onClick={() => setStatus(student.id, st)}
-                            className={`text-xs px-2 py-1.5 rounded-lg border font-medium transition-all flex-1 min-w-0 text-center
+                            title={st}
+                            className={`text-[11px] px-1.5 sm:px-2 py-1.5 rounded-lg border font-medium transition-all whitespace-nowrap
                               ${isSelected ? statusColors[st].active : statusColors[st].idle}`}
                           >
                             {st}
