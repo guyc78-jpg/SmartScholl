@@ -1,0 +1,137 @@
+{
+  "name": "Student",
+  "type": "object",
+  "properties": {
+    "full_name": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05de\u05dc\u05d0"
+    },
+    "class_id": {
+      "type": "string",
+      "description": "\u05de\u05d6\u05d4\u05d4 \u05db\u05d9\u05ea\u05d4"
+    },
+    "class_name": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05db\u05d9\u05ea\u05d4"
+    },
+    "student_number": {
+      "type": "string",
+      "description": "\u05de\u05e1\u05e4\u05e8 \u05ea\u05dc\u05de\u05d9\u05d3"
+    },
+    "grade": {
+      "type": "string",
+      "enum": [
+        "\u05d9",
+        "\u05d9\u05d0",
+        "\u05d9\u05d1"
+      ],
+      "description": "\u05e9\u05db\u05d1\u05d4"
+    },
+    "gender": {
+      "type": "string",
+      "enum": [
+        "\u05d6\u05db\u05e8",
+        "\u05e0\u05e7\u05d1\u05d4"
+      ],
+      "description": "\u05de\u05d2\u05d3\u05e8"
+    },
+    "birth_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\u05ea\u05d0\u05e8\u05d9\u05da \u05dc\u05d9\u05d3\u05d4"
+    },
+    "address": {
+      "type": "string",
+      "description": "\u05db\u05ea\u05d5\u05d1\u05ea"
+    },
+    "phone": {
+      "type": "string",
+      "description": "\u05d8\u05dc\u05e4\u05d5\u05df \u05ea\u05dc\u05de\u05d9\u05d3"
+    },
+    "email": {
+      "type": "string",
+      "description": "\u05de\u05d9\u05d9\u05dc \u05ea\u05dc\u05de\u05d9\u05d3"
+    },
+    "parent1_name": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05d4\u05d5\u05e8\u05d4 1"
+    },
+    "parent1_phone": {
+      "type": "string",
+      "description": "\u05d8\u05dc\u05e4\u05d5\u05df \u05d4\u05d5\u05e8\u05d4 1"
+    },
+    "parent1_email": {
+      "type": "string",
+      "description": "\u05de\u05d9\u05d9\u05dc \u05d4\u05d5\u05e8\u05d4 1"
+    },
+    "parent2_name": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05d4\u05d5\u05e8\u05d4 2"
+    },
+    "parent2_phone": {
+      "type": "string",
+      "description": "\u05d8\u05dc\u05e4\u05d5\u05df \u05d4\u05d5\u05e8\u05d4 2"
+    },
+    "parent2_email": {
+      "type": "string",
+      "description": "\u05de\u05d9\u05d9\u05dc \u05d4\u05d5\u05e8\u05d4 2"
+    },
+    "community_service_goal": {
+      "type": "number",
+      "description": "\u05d9\u05e2\u05d3 \u05e9\u05e2\u05d5\u05ea \u05de\u05e2\u05d5\u05e8\u05d1\u05d5\u05ea \u05d7\u05d1\u05e8\u05ea\u05d9\u05ea",
+      "default": 60
+    },
+    "community_service_done": {
+      "type": "number",
+      "description": "\u05e9\u05e2\u05d5\u05ea \u05de\u05e2\u05d5\u05e8\u05d1\u05d5\u05ea \u05e9\u05d1\u05d5\u05e6\u05e2\u05d5",
+      "default": 0
+    },
+    "community_service_place": {
+      "type": "string",
+      "description": "\u05de\u05e7\u05d5\u05dd \u05d4\u05ea\u05e0\u05d3\u05d1\u05d5\u05ea"
+    },
+    "community_service_contact": {
+      "type": "string",
+      "description": "\u05d0\u05d9\u05e9 \u05e7\u05e9\u05e8 \u05de\u05e2\u05d5\u05e8\u05d1\u05d5\u05ea"
+    },
+    "community_service_status": {
+      "type": "string",
+      "enum": [
+        "\u05dc\u05d0 \u05d4\u05ea\u05d7\u05d9\u05dc",
+        "\u05d1\u05ea\u05d4\u05dc\u05d9\u05da",
+        "\u05d4\u05d5\u05e9\u05dc\u05dd"
+      ],
+      "default": "\u05dc\u05d0 \u05d4\u05ea\u05d7\u05d9\u05dc"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "\u05e4\u05e2\u05d9\u05dc",
+        "\u05d3\u05d5\u05e8\u05e9 \u05de\u05e2\u05e7\u05d1",
+        "\u05de\u05d5\u05e2\u05d1\u05e8",
+        "\u05e1\u05d9\u05d9\u05dd"
+      ],
+      "default": "\u05e4\u05e2\u05d9\u05dc"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "\u05ea\u05d2\u05d9\u05d5\u05ea"
+    },
+    "photo_url": {
+      "type": "string",
+      "description": "\u05ea\u05de\u05d5\u05e0\u05ea \u05ea\u05dc\u05de\u05d9\u05d3"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "\u05d0\u05d9\u05de\u05d9\u05d9\u05dc \u05de\u05e9\u05ea\u05de\u05e9 \u05de\u05e7\u05d5\u05e9\u05e8 \u05dc\u05ea\u05dc\u05de\u05d9\u05d3"
+    }
+  },
+  "required": [
+    "full_name",
+    "class_id",
+    "grade"
+  ]
+}

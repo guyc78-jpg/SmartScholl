@@ -5,43 +5,96 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
-// Add page imports here
+import { useState, useEffect } from 'react';
+import { seedDemoData } from '@/lib/demoData';
+import AppLayout from '@/components/layout/AppLayout';
+import { Toaster as SonnerToaster } from 'sonner';
+
+import Dashboard from './pages/Dashboard';
+import Students from './pages/Students';
+import StudentProfile from './pages/StudentProfile';
+import Attendance from './pages/Attendance';
+import Schedule from './pages/Schedule';
+import Exams from './pages/Exams';
+import Community from './pages/Community';
+import Discipline from './pages/Discipline';
+import Performance from './pages/Performance';
+import Communications from './pages/Communications';
+import Tasks from './pages/Tasks';
+import Announcements from './pages/Announcements';
+import Reports from './pages/Reports';
+import StudentHome from './pages/StudentHome';
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('darkMode') === 'true' || window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return false;
+  });
+  const [seeded, setSeeded] = useState(false);
 
-  // Show loading spinner while checking app public settings or auth
+  useEffect(() => {
+    if (darkMode) document.documentElement.classList.add('dark');
+    else document.documentElement.classList.remove('dark');
+    localStorage.setItem('darkMode', darkMode);
+  }, [darkMode]);
+
+  useEffect(() => {
+    if (!seeded && !isLoadingAuth && !authError) {
+      seedDemoData().then(() => setSeeded(true));
+    }
+  }, [isLoadingAuth, authError]);
+
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
-      <div className="fixed inset-0 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div>
+      <div className="fixed inset-0 flex items-center justify-center bg-background" dir="rtl">
+        <div className="text-center">
+          <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground text-sm">טוען כיתה חכמה...</p>
+        </div>
       </div>
     );
   }
 
-  // Handle authentication errors
   if (authError) {
-    if (authError.type === 'user_not_registered') {
-      return <UserNotRegisteredError />;
-    } else if (authError.type === 'auth_required') {
-      // Redirect to login automatically
-      navigateToLogin();
-      return null;
-    }
+    if (authError.type === 'user_not_registered') return <UserNotRegisteredError />;
+    else if (authError.type === 'auth_required') { navigateToLogin(); return null; }
   }
 
-  // Render the main app
-  return (
+  const role = user?.role || 'homeroom_teacher'; // default for demo
+
+  const renderRoutes = () => (
     <Routes>
-      {/* Add your page Route elements here */}
+      {/* Teacher / Coordinator routes */}
+      <Route path="/" element={<Dashboard user={user} />} />
+      <Route path="/students" element={<Students />} />
+      <Route path="/students/:id" element={<StudentProfile />} />
+      <Route path="/attendance" element={<Attendance />} />
+      <Route path="/schedule" element={<Schedule role={role} />} />
+      <Route path="/exams" element={<Exams />} />
+      <Route path="/community" element={<Community />} />
+      <Route path="/discipline" element={<Discipline />} />
+      <Route path="/performance" element={<Performance />} />
+      <Route path="/communications" element={<Communications />} />
+      <Route path="/tasks" element={<Tasks />} />
+      <Route path="/announcements" element={<Announcements role={role} />} />
+      <Route path="/reports" element={<Reports />} />
+      {/* Student routes */}
+      <Route path="/student-home" element={<StudentHome user={user} />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
+
+  return (
+    <AppLayout user={user} role={role} darkMode={darkMode} setDarkMode={setDarkMode}>
+      {renderRoutes()}
+    </AppLayout>
+  );
 };
 
-
 function App() {
-
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
@@ -49,9 +102,10 @@ function App() {
           <AuthenticatedApp />
         </Router>
         <Toaster />
+        <SonnerToaster position="top-center" richColors dir="rtl" />
       </QueryClientProvider>
     </AuthProvider>
-  )
+  );
 }
 
-export default App
+export default App;

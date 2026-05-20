@@ -1,0 +1,26 @@
+{
+  "name": "AnnouncementRead",
+  "type": "object",
+  "properties": {
+    "announcement_id": {
+      "type": "string",
+      "description": "\u05de\u05d6\u05d4\u05d4 \u05d4\u05d5\u05d3\u05e2\u05d4"
+    },
+    "student_id": {
+      "type": "string",
+      "description": "\u05de\u05d6\u05d4\u05d4 \u05ea\u05dc\u05de\u05d9\u05d3"
+    },
+    "student_name": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05ea\u05dc\u05de\u05d9\u05d3"
+    },
+    "read_at": {
+      "type": "string",
+      "description": "\u05d6\u05de\u05df \u05e7\u05e8\u05d9\u05d0\u05d4"
+    }
+  },
+  "required": [
+    "announcement_id",
+    "student_id"
+  ]
+}
