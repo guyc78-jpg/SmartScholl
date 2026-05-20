@@ -63,7 +63,11 @@ export function getInitialWorkRole(user) {
 }
 
 export function getUserDisplayName(user) {
-  return user?.profile_full_name || user?.full_name || 'משתמש';
+  return user?.displayName || user?.display_name || user?.name || user?.profile_full_name || user?.full_name || user?.email || 'משתמש';
+}
+
+export function getUserFirstName(user) {
+  return getUserDisplayName(user).split(' ')[0] || 'משתמש';
 }
 
 export function getRoleDisplayLines(user, activeRole) {

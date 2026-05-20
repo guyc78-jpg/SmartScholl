@@ -114,6 +114,10 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const updateCurrentUser = (updates) => {
+    setUser(prev => ({ ...prev, ...updates }));
+  };
+
   const logout = (shouldRedirect = true) => {
     setUser(null);
     setIsAuthenticated(false);
@@ -144,7 +148,8 @@ export const AuthProvider = ({ children }) => {
       logout,
       navigateToLogin,
       checkUserAuth,
-      checkAppState
+      checkAppState,
+      updateCurrentUser
     }}>
       {children}
     </AuthContext.Provider>

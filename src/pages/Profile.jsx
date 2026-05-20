@@ -9,7 +9,8 @@ import { toast } from 'sonner';
 import { Save, UserRound, Send } from 'lucide-react';
 import GradeClassSelect from '@/components/profile/GradeClassSelect';
 import { extractGradeFromClass } from '@/lib/schoolStructure';
-import { getAvailableRoles, getSystemRole, ROLE_LABELS } from '@/lib/roleUtils';
+import { getAvailableRoles, getSystemRole, getUserDisplayName, ROLE_LABELS } from '@/lib/roleUtils';
+import { useAuth } from '@/lib/AuthContext';
 
 const roles = [
   { value: 'admin', label: 'מנהל/ת מערכת' },
@@ -20,11 +21,12 @@ const roles = [
 ];
 
 export default function Profile({ user, role }) {
+  const { updateCurrentUser } = useAuth();
   const [saving, setSaving] = useState(false);
   const [requestedRole, setRequestedRole] = useState('');
   const [requestScope, setRequestScope] = useState({ grade: '', className: '' });
   const [form, setForm] = useState({
-    profile_full_name: user?.profile_full_name || user?.full_name || '',
+    profile_full_name: getUserDisplayName(user) || '',
     profile_phone: user?.profile_phone || '',
     profile_email: user?.profile_email || user?.email || '',
     profile_address: user?.profile_address || '',
@@ -46,10 +48,10 @@ export default function Profile({ user, role }) {
       profile_address: form.profile_address,
     };
 
-    await base44.auth.updateMe(personalData);
+    const savedUser = await base44.auth.updateMe(personalData);
+    updateCurrentUser(savedUser || personalData);
     toast.success('הפרופיל נשמר בהצלחה');
     setSaving(false);
-    setTimeout(() => window.location.reload(), 500);
   };
 
   const handleRoleRequest = async () => {

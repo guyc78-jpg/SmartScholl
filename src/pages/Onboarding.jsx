@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import GradeClassSelect from '@/components/profile/GradeClassSelect';
 import { extractGradeFromClass } from '@/lib/schoolStructure';
 import { toast } from 'sonner';
+import { getUserDisplayName } from '@/lib/roleUtils';
 import {
   GraduationCap, BookOpen, Users, ChevronLeft, ChevronRight,
   CheckCircle, Clock, Lock, Eye, EyeOff, ShieldCheck
@@ -243,7 +244,7 @@ export default function Onboarding({ user, onComplete }) {
             {step === 'guide' && (
               <RoleGuideScreen
                 role={role}
-                userName={user?.full_name || user?.profile_full_name}
+                userName={getUserDisplayName(user)}
                 onContinue={async () => {
                   await base44.auth.updateMe({ onboarding_status: 'approved' });
                   onComplete({ ...user, onboarding_status: 'approved' });

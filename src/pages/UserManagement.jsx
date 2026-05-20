@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import { ShieldCheck } from 'lucide-react';
 import GradeClassSelect from '@/components/profile/GradeClassSelect';
 import { extractGradeFromClass } from '@/lib/schoolStructure';
-import { getAvailableRoles, ROLE_LABELS, SYSTEM_ROLE_PRIORITY } from '@/lib/roleUtils';
+import { getAvailableRoles, getUserDisplayName, ROLE_LABELS, SYSTEM_ROLE_PRIORITY } from '@/lib/roleUtils';
 import { cn } from '@/lib/utils';
 
 const roles = SYSTEM_ROLE_PRIORITY.map(value => ({ value, label: ROLE_LABELS[value] }));
@@ -58,7 +58,7 @@ function UserRoleCard({ user, onSaved }) {
   return (
     <Card>
       <CardHeader className="pb-3">
-        <CardTitle className="text-base">{user.profile_full_name || user.full_name || user.email}</CardTitle>
+        <CardTitle className="text-base">{getUserDisplayName(user)}</CardTitle>
         <CardDescription>{user.email}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

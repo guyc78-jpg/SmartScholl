@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { toast } from 'sonner';
 import { Calendar, BookOpen, Megaphone, Heart, CheckSquare, Check, Clock, RotateCcw } from 'lucide-react';
+import { getUserFirstName } from '@/lib/roleUtils';
 
 export default function StudentHome({ user }) {
   const [announcements, setAnnouncements] = useState([]);
@@ -98,7 +99,7 @@ export default function StudentHome({ user }) {
   return (
     <div className="p-4 lg:p-6 space-y-5 text-right" dir="rtl">
       <div>
-        <h1 className="text-2xl font-bold text-foreground">שלום, {user?.full_name?.split(' ')[0] || 'תלמיד'} 👋</h1>
+        <h1 className="text-2xl font-bold text-foreground">שלום, {getUserFirstName(user)} 👋</h1>
         <p className="text-sm text-muted-foreground mt-0.5">יום {todayDayName} · כיתה {studentData?.class_name || 'י׳1'}</p>
       </div>
 

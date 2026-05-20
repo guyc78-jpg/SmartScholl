@@ -12,8 +12,11 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import WorkModeSelector from '@/components/layout/WorkModeSelector';
 import { getAvailableRoles, getRoleDisplayLines, getUserDisplayName } from '@/lib/roleUtils';
+import { getDashboardLabel } from '@/lib/dashboardLabels';
 
 const sidebarNav = [
+  { path: '/', icon: LayoutDashboard, label: 'דשבורד', dynamicLabel: true, roles: ['admin', 'homeroom_teacher', 'coordinator'] },
+  { path: '/student-home', icon: LayoutDashboard, label: 'היום שלי', dynamicLabel: true, roles: ['student'] },
   { path: '/profile', icon: UserRound, label: 'פרופיל', roles: ['admin', 'homeroom_teacher', 'coordinator', 'student', 'parent'] },
   { path: '/announcements', icon: Megaphone, label: 'הודעות', roles: ['admin', 'homeroom_teacher', 'coordinator', 'student', 'parent'] },
   { path: '/reports', icon: BarChart2, label: 'דוחות', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
@@ -23,7 +26,7 @@ const sidebarNav = [
 ];
 
 const teacherBottomNav = [
-  { path: '/', icon: LayoutDashboard, label: 'דשבורד', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
+  { path: '/', icon: LayoutDashboard, label: 'דשבורד', dynamicLabel: true, roles: ['admin', 'homeroom_teacher', 'coordinator'] },
   { path: '/students', icon: Users, label: 'תלמידים', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
   { path: '/class-attendance', icon: Users, label: 'נוכחות', roles: ['homeroom_teacher'] },
   { path: '/schedule', icon: Calendar, label: 'מערכת', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
@@ -31,7 +34,7 @@ const teacherBottomNav = [
 ];
 
 const studentBottomNav = [
-  { path: '/student-home', icon: LayoutDashboard, label: 'דשבורד', roles: ['student'] },
+  { path: '/student-home', icon: LayoutDashboard, label: 'היום שלי', dynamicLabel: true, roles: ['student'] },
   { path: '/schedule', icon: Calendar, label: 'מערכת', roles: ['student'] },
   { path: '/exams', icon: BookOpen, label: 'מבחנים', roles: ['student'] },
 ];
@@ -108,6 +111,7 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
       <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
+          const itemLabel = item.dynamicLabel ? getDashboardLabel(role) : item.label;
           const badge = item.path === '/approvals' && pendingCount > 0 ? pendingCount : null;
           return (
             <Link
@@ -122,7 +126,7 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
               )}
             >
               <item.icon className="w-4 h-4 flex-shrink-0" />
-              <span className="text-sm font-medium flex-1">{item.label}</span>
+              <span className="text-sm font-medium flex-1">{itemLabel}</span>
               {badge && (
                 <span className="w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center flex-shrink-0">
                   {badge}
@@ -205,6 +209,7 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
           style={{ gridTemplateColumns: `repeat(${bottomNavItems.length}, minmax(0, 1fr))`, paddingBottom: 'env(safe-area-inset-bottom)', paddingTop: '8px', paddingInline: '12px', minHeight: '64px' }}>
           {bottomNavItems.map((item) => {
             const isActive = location.pathname === item.path;
+            const itemLabel = item.dynamicLabel ? getDashboardLabel(role) : item.label;
             return (
               <Link
                 key={item.path}
@@ -215,7 +220,7 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
                 )}
               >
                 <item.icon className="w-5 h-5 flex-shrink-0" />
-                <span className="text-[11px] font-semibold leading-tight whitespace-nowrap">{item.label}</span>
+                <span className="text-[11px] font-semibold leading-tight whitespace-nowrap">{itemLabel}</span>
               </Link>
             );
           })}
