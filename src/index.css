@@ -96,6 +96,52 @@
   }
 }
 
+@layer components {
+  /* Subtle 3D effect & soft shadow for all card-like blocks */
+  .bg-card,
+  [class*="rounded-xl"].border,
+  [class*="rounded-2xl"].border,
+  [class*="rounded-3xl"].border {
+    box-shadow:
+      0 1px 2px hsl(var(--foreground) / 0.04),
+      0 4px 12px hsl(var(--foreground) / 0.06),
+      inset 0 1px 0 hsl(0 0% 100% / 0.6);
+    transition: box-shadow 0.25s ease, transform 0.25s ease;
+  }
+
+  .dark .bg-card,
+  .dark [class*="rounded-xl"].border,
+  .dark [class*="rounded-2xl"].border,
+  .dark [class*="rounded-3xl"].border {
+    box-shadow:
+      0 1px 2px hsl(0 0% 0% / 0.3),
+      0 6px 16px hsl(0 0% 0% / 0.35),
+      inset 0 1px 0 hsl(0 0% 100% / 0.04);
+  }
+
+  /* Gentle lift on hover for interactive cards */
+  a .bg-card:hover,
+  button .bg-card:hover,
+  .bg-card.cursor-pointer:hover,
+  [class*="hover:shadow"]:hover {
+    box-shadow:
+      0 2px 4px hsl(var(--foreground) / 0.05),
+      0 10px 24px hsl(var(--foreground) / 0.09),
+      inset 0 1px 0 hsl(0 0% 100% / 0.7);
+    transform: translateY(-1px);
+  }
+
+  .dark a .bg-card:hover,
+  .dark button .bg-card:hover,
+  .dark .bg-card.cursor-pointer:hover,
+  .dark [class*="hover:shadow"]:hover {
+    box-shadow:
+      0 2px 4px hsl(0 0% 0% / 0.35),
+      0 12px 28px hsl(0 0% 0% / 0.45),
+      inset 0 1px 0 hsl(0 0% 100% / 0.05);
+  }
+}
+
 @layer utilities {
   .rtl { direction: rtl; }
   .ltr { direction: ltr; }
