@@ -30,6 +30,7 @@ import GradeMonitor from './pages/GradeMonitor';
 import Onboarding from './pages/Onboarding';
 import PendingApproval from './pages/PendingApproval';
 import { isStaff, isStudent, defaultRoute } from './lib/permissions';
+import { getInitialWorkRole } from './lib/roleUtils';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
@@ -40,6 +41,7 @@ const AuthenticatedApp = () => {
     return false;
   });
   const [seeded, setSeeded] = useState(false);
+  const [workRole, setWorkRole] = useState(null);
 
   useEffect(() => {
     if (darkMode) document.documentElement.classList.add('dark');
@@ -52,6 +54,10 @@ const AuthenticatedApp = () => {
       seedDemoData().then(() => setSeeded(true));
     }
   }, [isLoadingAuth, authError]);
+
+  useEffect(() => {
+    if (user) setWorkRole(getInitialWorkRole(user));
+  }, [user]);
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
@@ -81,7 +87,7 @@ const AuthenticatedApp = () => {
   }
 
   // Role is set by admin — never allow students to reach staff routes
-  const role = user?.role || 'student';
+  const role = workRole || user?.role || 'student';
   const staff = isStaff(role);
   const studentRole = isStudent(role);
 
@@ -89,7 +95,7 @@ const AuthenticatedApp = () => {
     <Routes>
       {/* Staff routes */}
       {staff && <>
-        <Route path="/" element={<Dashboard user={user} />} />
+        <Route path="/" element={<Dashboard user={user} role={role} />} />
         <Route path="/students" element={<Students role={role} />} />
         <Route path="/students/:id" element={<StudentProfile role={role} />} />
         <Route path="/attendance" element={<Attendance />} />
@@ -103,7 +109,7 @@ const AuthenticatedApp = () => {
         <Route path="/tasks" element={<Tasks role={role} />} />
         <Route path="/announcements" element={<Announcements role={role} />} />
         <Route path="/reports" element={<Reports />} />
-        {(role === 'admin' || role === 'homeroom_teacher' || role === 'coordinator') && (
+        {role === 'admin' && (
           <Route path="/approvals" element={<ApprovalManagement role={role} />} />
         )}
         {(role === 'admin' || role === 'homeroom_teacher' || role === 'coordinator') && (
@@ -137,7 +143,7 @@ const AuthenticatedApp = () => {
   );
 
   return (
-    <AppLayout user={user} role={role} darkMode={darkMode} setDarkMode={setDarkMode}>
+    <AppLayout user={user} role={role} darkMode={darkMode} setDarkMode={setDarkMode} onRoleChange={setWorkRole}>
       {renderRoutes()}
     </AppLayout>
   );

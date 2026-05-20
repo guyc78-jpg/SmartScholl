@@ -22,7 +22,7 @@ function hebrewDate() {
   return `יום ${HEBREW_DAYS[d.getDay()]}, ${d.getDate()} ב${HEBREW_MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-export default function Dashboard({ user }) {
+export default function Dashboard({ user, role }) {
   const [students, setStudents] = useState([]);
   const [todayAttendance, setTodayAttendance] = useState([]);
   const [exams, setExams] = useState([]);
@@ -149,15 +149,15 @@ export default function Dashboard({ user }) {
         <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {[
-              { icon: Clock, label: 'סימון נוכחות', action: 'attendance', color: 'bg-blue-500' },
-              { icon: Shield, label: 'אירוע משמעת', action: 'discipline', color: 'bg-red-500' },
-              { icon: BookOpen, label: 'הוספת מבחן', action: 'exam', color: 'bg-purple-500' },
-              { icon: Megaphone, label: 'הודעה לכיתה', action: 'announcement', color: 'bg-amber-500' },
-              { icon: Star, label: 'הערת מחנך', action: 'note', color: 'bg-emerald-500' },
-              { icon: MessageSquare, label: 'שיחה עם הורים', action: 'communication', color: 'bg-cyan-500' },
-              { icon: CheckSquare, label: 'משימה חדשה', action: 'task', color: 'bg-indigo-500' },
-              { icon: Heart, label: 'עדכון מעורבות', action: 'community', color: 'bg-pink-500' },
-            ].map(btn => (
+              { icon: Clock, label: 'סימון נוכחות', action: 'attendance', color: 'bg-blue-500', roles: ['admin', 'homeroom_teacher'] },
+              { icon: Shield, label: 'אירוע משמעת', action: 'discipline', color: 'bg-red-500', roles: ['admin', 'homeroom_teacher'] },
+              { icon: BookOpen, label: 'הוספת מבחן', action: 'exam', color: 'bg-purple-500', roles: ['admin', 'coordinator', 'homeroom_teacher'] },
+              { icon: Megaphone, label: 'הודעה לכיתה', action: 'announcement', color: 'bg-amber-500', roles: ['admin', 'coordinator', 'homeroom_teacher'] },
+              { icon: Star, label: 'הערת מחנך', action: 'note', color: 'bg-emerald-500', roles: ['admin', 'homeroom_teacher'] },
+              { icon: MessageSquare, label: 'שיחה עם הורים', action: 'communication', color: 'bg-cyan-500', roles: ['admin', 'homeroom_teacher'] },
+              { icon: CheckSquare, label: 'משימה חדשה', action: 'task', color: 'bg-indigo-500', roles: ['admin', 'coordinator', 'homeroom_teacher'] },
+              { icon: Heart, label: 'עדכון מעורבות', action: 'community', color: 'bg-pink-500', roles: ['admin', 'homeroom_teacher'] },
+            ].filter(btn => btn.roles.includes(role)).map(btn => (
               <motion.button
                 key={btn.action}
                 whileHover={{ scale: 1.03 }}
@@ -325,6 +325,8 @@ export default function Dashboard({ user }) {
           students={students}
           classId={CLASS_ID}
           onClose={() => setQuickAction(null)}
+          user={user}
+          role={role}
           onSuccess={() => { setQuickAction(null); loadData(); }}
         />
       )}

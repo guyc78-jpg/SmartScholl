@@ -21,10 +21,13 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useAuth } from '@/lib/AuthContext';
+import { logActivity } from '@/lib/activityLogger';
 import AddStudentModal from '@/components/students/AddStudentModal';
 import ImportStudentsModal from '@/components/students/ImportStudentsModal';
 
 export default function Students({ role }) {
+  const { user } = useAuth();
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -55,7 +58,16 @@ export default function Students({ role }) {
 
   async function deleteAllStudents() {
     setDeleting(true);
+    const deletedCount = students.length;
     await Promise.all(students.map(student => base44.entities.Student.delete(student.id)));
+    await logActivity({
+      user,
+      role,
+      actionName: 'delete_all_students',
+      details: `${user?.full_name || 'משתמש'} מחק/ה ${deletedCount} תלמידים`,
+      metadata: { deletedCount },
+      severity: 'critical'
+    });
     setStudents([]);
     setSearch('');
     setStatusFilter('הכל');

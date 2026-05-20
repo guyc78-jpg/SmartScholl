@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import { logActivity } from '@/lib/activityLogger';
 
 const titles = {
   attendance: 'סימון נוכחות',
@@ -19,7 +20,7 @@ const titles = {
   community: 'עדכון מעורבות חברתית',
 };
 
-export default function QuickActionModal({ action, students, classId, onClose, onSuccess }) {
+export default function QuickActionModal({ action, students, classId, user, role, onClose, onSuccess }) {
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
 
@@ -72,6 +73,13 @@ export default function QuickActionModal({ action, students, classId, onClose, o
           due_date: form.due_date || today, priority: form.priority || 'בינונית', status: 'לביצוע', category: 'כללי'
         });
       }
+      await logActivity({
+        user,
+        role,
+        actionName: `quick_${action}`,
+        details: `${user?.full_name || 'משתמש'} ביצע/ה פעולה מהירה: ${titles[action]}`,
+        metadata: { classId }
+      });
       toast.success('נשמר בהצלחה!');
       onSuccess();
     } catch (e) {

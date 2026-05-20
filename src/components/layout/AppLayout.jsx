@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import WorkModeSelector from '@/components/layout/WorkModeSelector';
 
 const teacherNav = [
   { path: '/', icon: LayoutDashboard, label: 'דשבורד' },
@@ -54,7 +55,7 @@ const roleLabels = {
   parent: 'הורה',
 };
 
-export default function AppLayout({ children, user, role, darkMode, setDarkMode }) {
+export default function AppLayout({ children, user, role, darkMode, setDarkMode, onRoleChange }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
   const location = useLocation();
@@ -64,11 +65,14 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode 
   const bottomNavItems = role === 'student' ? studentNav : teacherBottomNav;
 
   useEffect(() => {
-    if (!isStaffRole) return;
+    if (role !== 'admin') {
+      setPendingCount(0);
+      return;
+    }
     base44.functions.invoke('handleApprovalRequest', { action: 'get_pending' })
       .then(res => setPendingCount((res.data.pending || []).filter(r => r.status === 'pending').length))
       .catch(() => {});
-  }, [isStaffRole]);
+  }, [role]);
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full text-right" dir="rtl">
@@ -100,13 +104,14 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode 
             {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
           </button>
         </div>
+        <WorkModeSelector user={user} activeRole={role} onRoleChange={onRoleChange} />
       </div>
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5">
         {navItems.map((item) => {
-          if (item.staffOnly && !isStaffRole) return null;
-          if (item.coordinatorOnly && !['admin', 'coordinator', 'homeroom_teacher'].includes(role)) return null;
+          if (item.staffOnly && role !== 'admin') return null;
+          if (item.coordinatorOnly && !['admin', 'coordinator'].includes(role)) return null;
           const isActive = location.pathname === item.path;
           const badge = item.path === '/approvals' && pendingCount > 0 ? pendingCount : null;
           return (
