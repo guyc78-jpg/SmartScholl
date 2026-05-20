@@ -101,7 +101,8 @@ export default function ImportExamsDialog({ open, onOpenChange, onImported, clas
       type: row.type || 'מבחן',
       date: row.date,
       time: row.time,
-      notes: [row.class_or_grade ? `שכבה/כיתה: ${row.class_or_grade}` : '', row.notes || ''].filter(Boolean).join('\n')
+      class_or_grade: row.class_or_grade,
+      notes: row.notes
     })));
 
     toast.success('הייבוא הושלם בהצלחה');

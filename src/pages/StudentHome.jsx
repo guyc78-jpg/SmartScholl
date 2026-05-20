@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { toast } from 'sonner';
 import { Calendar, BookOpen, Megaphone, Heart, CheckSquare, Check, Clock } from 'lucide-react';
+import StudentExamCompletion from '@/components/exams/StudentExamCompletion';
 
 export default function StudentHome({ user }) {
   const [announcements, setAnnouncements] = useState([]);
@@ -15,6 +16,8 @@ export default function StudentHome({ user }) {
   const [scheduleToday, setScheduleToday] = useState([]);
   const [studentData, setStudentData] = useState(null);
   const [reads, setReads] = useState([]);
+  const [examCompletions, setExamCompletions] = useState([]);
+  const [celebratingExamId, setCelebratingExamId] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const today = new Date().toISOString().split('T')[0];
@@ -36,8 +39,12 @@ export default function StudentHome({ user }) {
     const myStudent = students.find(s => s.email === user?.email || s.user_email === user?.email);
     setStudentData(myStudent || students[0]); // fallback to first student for demo
 
-    const myReads = myStudent ? await base44.entities.AnnouncementRead.filter({ student_id: myStudent.id }) : [];
+    const [myReads, myExamCompletions] = myStudent ? await Promise.all([
+      base44.entities.AnnouncementRead.filter({ student_id: myStudent.id }),
+      base44.entities.ExamCompletion.filter({ student_id: myStudent.id })
+    ]) : [[], []];
     setReads(myReads);
+    setExamCompletions(myExamCompletions);
 
     setAnnouncements(anns.filter(a => ['כיתתית', 'חשובה'].includes(a.type)).sort((a,b) => (b.published_at||'').localeCompare(a.published_at||'')));
     setExams(exs.filter(e => e.date >= today).sort((a,b) => a.date.localeCompare(b.date)));
@@ -58,12 +65,37 @@ export default function StudentHome({ user }) {
     loadData();
   }
 
+  async function toggleExamCompletion(exam) {
+    if (!studentData) return;
+    const existing = examCompletions.find(c => c.exam_id === exam.id);
+    if (existing) {
+      await base44.entities.ExamCompletion.delete(existing.id);
+      setExamCompletions(prev => prev.filter(c => c.id !== existing.id));
+      toast.info('הסימון בוטל');
+      return;
+    }
+
+    const created = await base44.entities.ExamCompletion.create({
+      exam_id: exam.id,
+      student_id: studentData.id,
+      student_name: studentData.full_name,
+      completed_at: new Date().toISOString()
+    });
+    setExamCompletions(prev => [...prev, created]);
+    setCelebratingExamId(exam.id);
+    setTimeout(() => setCelebratingExamId(null), 700);
+    toast.success('אלופים! המבחן סומן כבוצע ✅');
+  }
+
   const communityPct = studentData?.community_service_goal > 0
     ? Math.round((studentData.community_service_done / studentData.community_service_goal) * 100) : 0;
 
   if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin"/></div>;
 
   const formatDate = (d) => { const dt = new Date(d); return `${dt.getDate().toString().padStart(2,'0')}/${(dt.getMonth()+1).toString().padStart(2,'0')}`; };
+  const completedExamIds = new Set(examCompletions.map(c => c.exam_id));
+  const completedExamsCount = exams.filter(exam => completedExamIds.has(exam.id)).length;
+  const examProgressPct = exams.length > 0 ? Math.round((completedExamsCount / exams.length) * 100) : 0;
 
   return (
     <div className="p-4 lg:p-6 space-y-5 text-right" dir="rtl">
@@ -98,22 +130,42 @@ export default function StudentHome({ user }) {
       {exams.length > 0 && (
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2"><BookOpen className="w-4 h-4 text-purple-500"/>מבחנים קרובים</CardTitle>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2"><BookOpen className="w-4 h-4 text-purple-500"/>מבחנים קרובים</CardTitle>
+              <div className="min-w-[180px]">
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <span className="text-muted-foreground flex items-center gap-1"><CheckSquare className="w-3.5 h-3.5" />התקדמות</span>
+                  <span className="font-bold">{completedExamsCount}/{exams.length} בוצעו</span>
+                </div>
+                <div className="h-2 bg-muted rounded-full overflow-hidden">
+                  <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${examProgressPct}%` }} />
+                </div>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="space-y-2">
-            {exams.slice(0, 4).map(exam => (
-              <div key={exam.id} className="flex items-center gap-3 py-1.5 border-b last:border-0">
-                <div className="w-10 h-10 bg-purple-50 dark:bg-purple-900/20 rounded-xl flex flex-col items-center justify-center text-purple-600 dark:text-purple-400 flex-shrink-0">
-                  <span className="text-xs font-bold">{formatDate(exam.date)}</span>
+            {exams.slice(0, 4).map(exam => {
+              const completed = completedExamIds.has(exam.id);
+              return (
+              <div key={exam.id} className={`flex flex-col sm:flex-row sm:items-center gap-3 py-2 border-b last:border-0 rounded-lg ${completed ? 'bg-emerald-50/60 dark:bg-emerald-900/10 px-2' : ''}`}>
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className={`w-10 h-10 rounded-xl flex flex-col items-center justify-center flex-shrink-0 ${completed ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400'}`}>
+                    <span className="text-xs font-bold">{completed ? '✅' : formatDate(exam.date)}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium">{exam.title}</p>
+                    <p className="text-xs text-muted-foreground">{exam.subject}{exam.teacher ? ` · ${exam.teacher}` : ''}</p>
+                    {exam.material && <p className="text-xs text-muted-foreground">📚 {exam.material}</p>}
+                  </div>
+                  <StatusBadge status={completed ? 'בוצע' : exam.type} />
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium">{exam.title}</p>
-                  <p className="text-xs text-muted-foreground">{exam.subject}{exam.teacher ? ` · ${exam.teacher}` : ''}</p>
-                  {exam.material && <p className="text-xs text-muted-foreground">📚 {exam.material}</p>}
-                </div>
-                <StatusBadge status={exam.type} />
+                <StudentExamCompletion
+                  completed={completed}
+                  celebrating={celebratingExamId === exam.id}
+                  onToggle={() => toggleExamCompletion(exam)}
+                />
               </div>
-            ))}
+            );})}
           </CardContent>
         </Card>
       )}

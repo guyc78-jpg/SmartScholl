@@ -19,13 +19,14 @@ import ImportExamsDialog from '@/components/exams/ImportExamsDialog';
 const SUBJECTS = ['מתמטיקה', 'עברית', 'ספרות', 'אנגלית', 'היסטוריה', 'גיאוגרפיה', 'פיזיקה', 'כימיה', 'ביולוגיה', 'חינוך גופני', 'אמנות', 'אחר'];
 const TYPES = ['מבחן', 'בחן', 'עבודה', 'פרויקט', 'הגשה'];
 
-export default function Exams() {
+export default function Exams({ role }) {
   const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [editExam, setEditExam] = useState(null);
-  const [form, setForm] = useState({ title: '', subject: '', type: 'מבחן', date: '', time: '', teacher: '', material: '', notes: '' });
+  const [form, setForm] = useState({ title: '', subject: '', type: 'מבחן', date: '', time: '', class_or_grade: '', teacher: '', material: '', notes: '' });
+  const canEditExams = ['admin', 'homeroom_teacher', 'coordinator'].includes(role);
 
   useEffect(() => { loadExams(); }, []);
 
@@ -38,7 +39,7 @@ export default function Exams() {
 
   const today = new Date().toISOString().split('T')[0];
 
-  function openAdd() { setForm({ title: '', subject: '', type: 'מבחן', date: '', time: '', teacher: '', material: '', notes: '' }); setEditExam(null); setShowForm(true); }
+  function openAdd() { setForm({ title: '', subject: '', type: 'מבחן', date: '', time: '', class_or_grade: '', teacher: '', material: '', notes: '' }); setEditExam(null); setShowForm(true); }
   function openEdit(exam) { setForm({ ...exam }); setEditExam(exam); setShowForm(true); }
 
   async function handleSave() {
@@ -92,6 +93,7 @@ export default function Exams() {
             <div className="flex flex-wrap gap-2 mt-1 text-xs text-muted-foreground">
               <span className="flex items-center gap-1"><BookOpen className="w-3 h-3" />{exam.subject}</span>
               {exam.time && <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{exam.time}</span>}
+              {exam.class_or_grade && <span>כיתה/שכבה: {exam.class_or_grade}</span>}
               {exam.teacher && <span className="flex items-center gap-1"><User className="w-3 h-3" />{exam.teacher}</span>}
             </div>
             {exam.material && <p className="text-xs text-muted-foreground mt-1.5 bg-muted/50 rounded px-2 py-1">📚 {exam.material}</p>}
@@ -99,9 +101,9 @@ export default function Exams() {
           </div>
           <div className="flex flex-col items-end gap-2">
             <StatusBadge status={exam.type} />
-            {!isPast && (
+            {canEditExams && !isPast && (
               <div className="flex gap-1">
-                <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => openEdit(exam)}><Edit className="w-3.5 h-3.5" /></Button>
+                <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => openEdit(exam)} title="עריכה"><Edit className="w-3.5 h-3.5" /></Button>
                 <Button variant="ghost" size="icon" className="w-7 h-7 text-red-500" onClick={() => handleDelete(exam.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
               </div>
             )}
@@ -116,14 +118,14 @@ export default function Exams() {
       <PageHeader
         title="לוח מבחנים"
         subtitle="מבחנים, בחנים, עבודות ופרויקטים"
-        actions={
+        actions={canEditExams ? (
           <>
             <Button size="sm" variant="outline" className="gap-2" onClick={() => setShowImport(true)}>
               <FileUp className="w-4 h-4" />ייבוא קובץ
             </Button>
             <Button size="sm" className="gap-2" onClick={openAdd}><Plus className="w-4 h-4" />הוסף</Button>
           </>
-        }
+        ) : null}
       />
 
       {overloadWeeks.length > 0 && (
@@ -144,9 +146,11 @@ export default function Exams() {
             </div>
             <h3 className="text-xl font-bold text-foreground mb-2">אין מבחנים עדיין</h3>
             <p className="text-sm text-muted-foreground mb-6 max-w-xs">הוסף מבחנים, בחנים, עבודות ופרויקטים לכיתה, כך שהתלמידים יוכלו להתכונן בזמן.</p>
-            <Button onClick={openAdd} size="lg" className="gap-2 px-8">
-              <Plus className="w-5 h-5"/>הוסף מבחן ראשון
-            </Button>
+            {canEditExams && (
+              <Button onClick={openAdd} size="lg" className="gap-2 px-8">
+                <Plus className="w-5 h-5"/>הוסף מבחן ראשון
+              </Button>
+            )}
           </div>
         : <>
           {upcoming.length > 0 && (
@@ -205,7 +209,8 @@ export default function Exams() {
                 <div className="space-y-1"><Label>תאריך *</Label><Input type="date" value={form.date} onChange={e => setForm(p => ({...p, date: e.target.value}))} /></div>
                 <div className="space-y-1"><Label>שעה</Label><Input type="time" value={form.time} onChange={e => setForm(p => ({...p, time: e.target.value}))} /></div>
               </div>
-              <div className="space-y-1"><Label>מורה</Label><Input value={form.teacher} onChange={e => setForm(p => ({...p, teacher: e.target.value}))} /></div>
+              <div className="space-y-1"><Label>כיתה/שכבה</Label><Input value={form.class_or_grade || ''} onChange={e => setForm(p => ({...p, class_or_grade: e.target.value}))} /></div>
+              <div className="space-y-1"><Label>מורה</Label><Input value={form.teacher || ''} onChange={e => setForm(p => ({...p, teacher: e.target.value}))} /></div>
               <div className="space-y-1"><Label>חומר למבחן</Label><Textarea value={form.material} onChange={e => setForm(p => ({...p, material: e.target.value}))} rows={2} /></div>
               <div className="space-y-1"><Label>הערות</Label><Textarea value={form.notes} onChange={e => setForm(p => ({...p, notes: e.target.value}))} rows={2} /></div>
               <div className="flex gap-2 pt-1">

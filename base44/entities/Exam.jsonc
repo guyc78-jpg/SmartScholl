@@ -34,6 +34,10 @@
       "type": "string",
       "description": "\u05e9\u05e2\u05d4"
     },
+    "class_or_grade": {
+      "type": "string",
+      "description": "\u05db\u05d9\u05ea\u05d4/\u05e9\u05db\u05d1\u05d4"
+    },
     "teacher": {
       "type": "string",
       "description": "\u05de\u05d5\u05e8\u05d4"
