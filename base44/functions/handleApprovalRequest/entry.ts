@@ -258,7 +258,7 @@ ${suspicionNote}
       const targetUsers = await base44.asServiceRole.entities.User.filter({ id: target_user_id });
       const target = targetUsers[0] || {};
 
-      await base44.asServiceRole.entities.User.update(target_user_id, {
+      const updatedUser = await base44.asServiceRole.entities.User.update(target_user_id, {
         role: target_role,
         roles: approvedRoles,
         available_roles: approvedRoles,
@@ -279,7 +279,7 @@ ${suspicionNote}
         severity: 'warning',
       });
 
-      return Response.json({ success: true });
+      return Response.json({ success: true, user: updatedUser });
     }
 
     if (action === 'get_pending') {

@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { Save, UserRound, Send } from 'lucide-react';
 import GradeClassSelect from '@/components/profile/GradeClassSelect';
+import UserPermissionEditor from '@/components/profile/UserPermissionEditor';
 import { extractGradeFromClass } from '@/lib/schoolStructure';
 import { getAvailableRoles, getSystemRole, getUserDisplayName, ROLE_LABELS } from '@/lib/roleUtils';
 import { useAuth } from '@/lib/AuthContext';
@@ -77,6 +78,7 @@ export default function Profile({ user, role }) {
   };
 
   const approvedRoles = getAvailableRoles(user);
+  const isAdmin = approvedRoles.includes('admin');
   const primaryRole = getSystemRole(user);
   const currentRoleLabel = ROLE_LABELS[primaryRole] || 'משתמש';
   const additionalRoleLabels = approvedRoles.filter(item => item !== primaryRole).map(item => ROLE_LABELS[item]).filter(Boolean).join(', ') || 'אין';
@@ -118,58 +120,68 @@ export default function Profile({ user, role }) {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>תפקיד ושיוך</CardTitle>
-              <CardDescription>התפקיד והשיוך נקבעים לפי הרשאה מאושרת. שינוי תפקיד דורש אישור מנהל מערכת.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>תפקיד ראשי מאושר</Label>
-                <Input value={currentRoleLabel} disabled className="bg-muted" />
-              </div>
-              <div className="space-y-2">
-                <Label>תפקידים נוספים מאושרים</Label>
-                <Input value={additionalRoleLabels} disabled className="bg-muted" />
-              </div>
-              <GradeClassSelect
-                grade={form.profile_grade_managed}
-                classNameValue={form.profile_homeroom_class}
-                onGradeChange={(value) => updateField('profile_grade_managed', value)}
-                onClassChange={(value) => updateField('profile_homeroom_class', value)}
-                disabled
-              />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>בקשת שינוי תפקיד</CardTitle>
-              <CardDescription>הבקשה תישלח לאישור מנהל מערכת ולא תשנה הרשאות באופן מיידי.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col md:flex-row gap-3">
-              <Select value={requestedRole} onValueChange={setRequestedRole}>
-                <SelectTrigger className="md:w-64">
-                  <SelectValue placeholder="בחר/י תפקיד מבוקש" />
-                </SelectTrigger>
-                <SelectContent dir="rtl">
-                  {roles.filter(item => item.value !== 'admin').map(item => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              {requestedRole && !approvedRoles.includes(requestedRole) && (
+          {isAdmin ? (
+            <UserPermissionEditor
+              targetUser={user}
+              currentUser={user}
+              onSaved={(savedUser) => updateCurrentUser(savedUser)}
+            />
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle>תפקיד ושיוך</CardTitle>
+                <CardDescription>התפקיד והשיוך נקבעים לפי הרשאה מאושרת. שינוי תפקיד דורש אישור מנהל מערכת.</CardDescription>
+              </CardHeader>
+              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>תפקיד ראשי מאושר</Label>
+                  <Input value={currentRoleLabel} disabled className="bg-muted" />
+                </div>
+                <div className="space-y-2">
+                  <Label>תפקידים נוספים מאושרים</Label>
+                  <Input value={additionalRoleLabels} disabled className="bg-muted" />
+                </div>
                 <GradeClassSelect
-                  grade={requestScope.grade}
-                  classNameValue={requestScope.className}
-                  onGradeChange={(value) => setRequestScope({ grade: value, className: '' })}
-                  onClassChange={(value) => setRequestScope(prev => ({ ...prev, className: value }))}
+                  grade={form.profile_grade_managed}
+                  classNameValue={form.profile_homeroom_class}
+                  onGradeChange={(value) => updateField('profile_grade_managed', value)}
+                  onClassChange={(value) => updateField('profile_homeroom_class', value)}
+                  disabled
                 />
-              )}
-              <Button type="button" variant="outline" onClick={handleRoleRequest} disabled={saving || !requestedRole || approvedRoles.includes(requestedRole) || !requestScope.grade || !requestScope.className}>
-                <Send className="w-4 h-4" />
-                שלח בקשה לאישור
-              </Button>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
+
+          {!isAdmin && (
+            <Card>
+              <CardHeader>
+                <CardTitle>בקשת שינוי תפקיד</CardTitle>
+                <CardDescription>הבקשה תישלח לאישור מנהל מערכת ולא תשנה הרשאות באופן מיידי.</CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col md:flex-row gap-3">
+                <Select value={requestedRole} onValueChange={setRequestedRole}>
+                  <SelectTrigger className="md:w-64">
+                    <SelectValue placeholder="בחר/י תפקיד מבוקש" />
+                  </SelectTrigger>
+                  <SelectContent dir="rtl">
+                    {roles.filter(item => item.value !== 'admin').map(item => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                {requestedRole && !approvedRoles.includes(requestedRole) && (
+                  <GradeClassSelect
+                    grade={requestScope.grade}
+                    classNameValue={requestScope.className}
+                    onGradeChange={(value) => setRequestScope({ grade: value, className: '' })}
+                    onClassChange={(value) => setRequestScope(prev => ({ ...prev, className: value }))}
+                  />
+                )}
+                <Button type="button" variant="outline" onClick={handleRoleRequest} disabled={saving || !requestedRole || approvedRoles.includes(requestedRole) || !requestScope.grade || !requestScope.className}>
+                  <Send className="w-4 h-4" />
+                  שלח בקשה לאישור
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
           <div className="flex justify-end">
             <Button type="submit" disabled={saving} className="min-w-32">
