@@ -90,7 +90,7 @@ const AuthenticatedApp = () => {
       {/* Staff routes */}
       {staff && <>
         <Route path="/" element={<Dashboard user={user} />} />
-        <Route path="/students" element={<Students />} />
+        <Route path="/students" element={<Students role={role} />} />
         <Route path="/students/:id" element={<StudentProfile role={role} />} />
         <Route path="/attendance" element={<Attendance />} />
         <Route path="/class-attendance" element={<ClassAttendance role={role} />} />

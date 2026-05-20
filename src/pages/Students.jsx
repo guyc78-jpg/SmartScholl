@@ -10,18 +10,30 @@ import { Badge } from '@/components/ui/badge';
 import StatusBadge from '@/components/ui/StatusBadge';
 import EmptyState from '@/components/ui/EmptyState';
 import PageHeader from '@/components/ui/PageHeader';
-import { Search, Plus, Upload, Filter, Users, ChevronLeft, Phone, Mail } from 'lucide-react';
+import { Search, Plus, Upload, Users, ChevronLeft, Phone, Trash2 } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AddStudentModal from '@/components/students/AddStudentModal';
 import ImportStudentsModal from '@/components/students/ImportStudentsModal';
 
-export default function Students() {
+export default function Students({ role }) {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('הכל');
   const [showAdd, setShowAdd] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const canDeleteAllStudents = role === 'homeroom_teacher' || role === 'coordinator';
 
   useEffect(() => { loadStudents(); }, []);
 
@@ -41,6 +53,18 @@ export default function Students() {
   const communityPct = (s) => s.community_service_goal > 0
     ? Math.round((s.community_service_done / s.community_service_goal) * 100) : 0;
 
+  async function deleteAllStudents() {
+    setDeleting(true);
+    await Promise.all(students.map(student => base44.entities.Student.delete(student.id)));
+    setStudents([]);
+    setSearch('');
+    setStatusFilter('הכל');
+    setShowDeleteConfirm(false);
+    toast.success('כל התלמידים נמחקו בהצלחה');
+    await loadStudents();
+    setDeleting(false);
+  }
+
   return (
     <div className="p-4 lg:p-6 space-y-5 text-right" dir="rtl">
       <PageHeader
@@ -52,6 +76,18 @@ export default function Students() {
               <Upload className="w-4 h-4" />
               <span className="hidden sm:inline">ייבוא מאקסל</span>
             </Button>
+            {canDeleteAllStudents && (
+              <Button
+                variant="destructive"
+                size="sm"
+                className="gap-2"
+                onClick={() => setShowDeleteConfirm(true)}
+                disabled={students.length === 0 || deleting}
+              >
+                <Trash2 className="w-4 h-4" />
+                <span className="hidden sm:inline">מחיקת הכל</span>
+              </Button>
+            )}
             <Button size="sm" className="gap-2" onClick={() => setShowAdd(true)}>
               <Plus className="w-4 h-4" />
               תלמיד חדש
@@ -163,6 +199,25 @@ export default function Students() {
 
       {showAdd && <AddStudentModal classId={CLASS_ID} onClose={() => setShowAdd(false)} onSuccess={() => { setShowAdd(false); loadStudents(); }} />}
       {showImport && <ImportStudentsModal classId={CLASS_ID} onClose={() => setShowImport(false)} onSuccess={() => { setShowImport(false); loadStudents(); }} />}
+
+      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+        <AlertDialogContent dir="rtl" className="text-right">
+          <AlertDialogHeader>
+            <AlertDialogTitle>מחיקת כל התלמידים</AlertDialogTitle>
+            <AlertDialogDescription>
+              פעולה זו תמחק את כל התלמידים ולא ניתן לשחזר אותה
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:justify-start">
+            <Button variant="outline" onClick={() => setShowDeleteConfirm(false)} disabled={deleting}>
+              ביטול
+            </Button>
+            <Button variant="destructive" onClick={deleteAllStudents} disabled={deleting}>
+              {deleting ? 'מוחק...' : 'מחק הכל'}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

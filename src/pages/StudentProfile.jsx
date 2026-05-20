@@ -5,6 +5,10 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { ChevronRight, Phone, Mail, Edit, Plus, Calendar, Shield, Heart, Star, MessageSquare, BarChart2, CheckSquare } from 'lucide-react';
 import AddStudentModal from '@/components/students/AddStudentModal';
@@ -31,6 +35,15 @@ export default function StudentProfile() {
   const [loading, setLoading] = useState(true);
   const [showEdit, setShowEdit] = useState(false);
   const [tab, setTab] = useState('overview');
+  const today = new Date().toISOString().split('T')[0];
+  const [conversationForm, setConversationForm] = useState({
+    date: today,
+    type: 'שיחה טלפונית',
+    with_whom: 'הורה 1',
+    summary: '',
+    follow_up: '',
+    follow_up_date: ''
+  });
 
   useEffect(() => { loadAll(); }, [id]);
 
@@ -70,6 +83,44 @@ export default function StudentProfile() {
     const date = new Date(d);
     return `${date.getDate().toString().padStart(2,'0')}/${(date.getMonth()+1).toString().padStart(2,'0')}/${date.getFullYear()}`;
   };
+
+  const setConversationField = (field, value) => {
+    setConversationForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  async function handleSaveConversation() {
+    if (!conversationForm.summary.trim()) {
+      toast.error('יש למלא סיכום שיחה');
+      return;
+    }
+
+    const communicationData = {
+      ...conversationForm,
+      student_id: id,
+      student_name: student.full_name,
+      class_id: student.class_id || CLASS_ID
+    };
+
+    await base44.entities.Communication.create(communicationData);
+
+    if (conversationForm.follow_up.trim() && conversationForm.follow_up_date) {
+      await base44.entities.Task.create({
+        class_id: student.class_id || CLASS_ID,
+        student_id: id,
+        student_name: student.full_name,
+        title: `תזכורת המשך: ${student.full_name}`,
+        description: `${conversationForm.follow_up}\n\nמתוך סיכום שיחה: ${conversationForm.summary}`,
+        due_date: conversationForm.follow_up_date,
+        priority: 'גבוהה',
+        status: 'לביצוע',
+        category: 'הורים'
+      });
+    }
+
+    toast.success('השיחה תועדה ומשימת ההמשך נוספה לדשבורד');
+    setConversationForm({ date: today, type: 'שיחה טלפונית', with_whom: 'הורה 1', summary: '', follow_up: '', follow_up_date: '' });
+    loadAll();
+  }
 
   return (
     <div className="p-4 lg:p-6" dir="rtl">
