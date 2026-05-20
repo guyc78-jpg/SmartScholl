@@ -162,16 +162,30 @@ export default function Onboarding({ user, onComplete }) {
   async function handleSubmit() {
     if (!validateForm()) return;
     setSaving(true);
-    // Determine status & role — students get instant approval; staff await admin
     const isStudentRole = selectedRole === 'student';
+
+    // Save profile data first
     const updateData = {
       ...form,
       requested_role: selectedRole,
-      // Role is set only for students (auto-approved). Staff keep current role until admin approves.
       role: isStudentRole ? 'student' : user?.role || 'student',
       onboarding_status: isStudentRole ? 'approved' : 'awaiting_approval',
     };
     await base44.auth.updateMe(updateData);
+
+    // For staff roles: send approval request + notifications via backend
+    if (!isStudentRole) {
+      await base44.functions.invoke('handleApprovalRequest', {
+        action: 'submit',
+        full_name: form.profile_full_name,
+        requested_role: selectedRole,
+        class_or_grade: form.profile_class || form.profile_grade_managed || '',
+        subject: form.profile_subject || '',
+        school_role: form.profile_school_role || '',
+        extra_roles: form.profile_extra_roles || '',
+      }).catch(() => {}); // Don't block UI if function fails
+    }
+
     setSaving(false);
     setStep(3);
     if (isStudentRole) {

@@ -1,0 +1,80 @@
+{
+  "name": "ApprovalRequest",
+  "type": "object",
+  "properties": {
+    "user_email": {
+      "type": "string",
+      "description": "\u05d0\u05d9\u05de\u05d9\u05d9\u05dc \u05d4\u05de\u05e9\u05ea\u05de\u05e9 \u05d4\u05de\u05d1\u05e7\u05e9"
+    },
+    "full_name": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05de\u05dc\u05d0"
+    },
+    "requested_role": {
+      "type": "string",
+      "enum": [
+        "homeroom_teacher",
+        "coordinator"
+      ],
+      "description": "\u05ea\u05e4\u05e7\u05d9\u05d3 \u05de\u05d1\u05d5\u05e7\u05e9"
+    },
+    "class_or_grade": {
+      "type": "string",
+      "description": "\u05db\u05d9\u05ea\u05d4/\u05e9\u05db\u05d1\u05d4"
+    },
+    "subject": {
+      "type": "string",
+      "description": "\u05de\u05e7\u05e6\u05d5\u05e2 \u05d4\u05d5\u05e8\u05d0\u05d4"
+    },
+    "school_role": {
+      "type": "string",
+      "description": "\u05ea\u05e4\u05e7\u05d9\u05d3 \u05d1\u05d1\u05d9\u05ea \u05d4\u05e1\u05e4\u05e8"
+    },
+    "extra_roles": {
+      "type": "string",
+      "description": "\u05ea\u05e4\u05e7\u05d9\u05d3\u05d9\u05dd \u05e0\u05d5\u05e1\u05e4\u05d9\u05dd"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected",
+        "suspicious"
+      ],
+      "default": "pending",
+      "description": "\u05e1\u05d8\u05d8\u05d5\u05e1 \u05d4\u05d1\u05e7\u05e9\u05d4"
+    },
+    "reviewed_by": {
+      "type": "string",
+      "description": "\u05d0\u05d9\u05de\u05d9\u05d9\u05dc \u05d4\u05de\u05d0\u05e9\u05e8/\u05d4\u05d3\u05d5\u05d7\u05d4"
+    },
+    "reviewed_at": {
+      "type": "string",
+      "description": "\u05ea\u05d0\u05e8\u05d9\u05da \u05d8\u05d9\u05e4\u05d5\u05dc"
+    },
+    "rejection_reason": {
+      "type": "string",
+      "description": "\u05e1\u05d9\u05d1\u05ea \u05d4\u05d3\u05d7\u05d9\u05d9\u05d4"
+    },
+    "is_suspicious": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u05e1\u05d5\u05de\u05df \u05db\u05d7\u05e9\u05d5\u05d3"
+    },
+    "suspicious_notes": {
+      "type": "string",
+      "description": "\u05d4\u05e2\u05e8\u05d5\u05ea \u05d7\u05e9\u05d3"
+    },
+    "notification_sent": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u05d4\u05d0\u05dd \u05e0\u05e9\u05dc\u05d7\u05d4 \u05d4\u05ea\u05e8\u05d0\u05d4"
+    }
+  },
+  "required": [
+    "user_email",
+    "full_name",
+    "requested_role"
+  ]
+}

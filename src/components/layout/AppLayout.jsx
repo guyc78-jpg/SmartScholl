@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { base44 } from '@/api/base44Client';
 
 import {
   LayoutDashboard, Users, Calendar, BookOpen, Shield,
   MessageSquare, CheckSquare, Megaphone, BarChart2,
   Clock, Heart, Menu, X, Sun, Moon, BookMarked,
-  FileText, Star
+  FileText, Star, UserCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -24,6 +25,7 @@ const teacherNav = [
   { path: '/community', icon: Heart, label: 'מעורבות חברתית' },
   { path: '/performance', icon: Star, label: 'תפקוד' },
   { path: '/reports', icon: BarChart2, label: 'דוחות' },
+  { path: '/approvals', icon: UserCheck, label: 'אישורי הרשמה', staffOnly: true },
 ];
 
 // Bottom nav shows only 5 most important items
@@ -53,10 +55,19 @@ const roleLabels = {
 
 export default function AppLayout({ children, user, role, darkMode, setDarkMode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
   const location = useLocation();
 
+  const isStaffRole = ['admin', 'homeroom_teacher', 'coordinator'].includes(role);
   const navItems = role === 'student' ? studentNav : teacherNav;
   const bottomNavItems = role === 'student' ? studentNav : teacherBottomNav;
+
+  useEffect(() => {
+    if (!isStaffRole) return;
+    base44.functions.invoke('handleApprovalRequest', { action: 'get_pending' })
+      .then(res => setPendingCount((res.data.pending || []).filter(r => r.status === 'pending').length))
+      .catch(() => {});
+  }, [isStaffRole]);
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
@@ -93,7 +104,9 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5">
         {navItems.map((item) => {
+          if (item.staffOnly && !isStaffRole) return null;
           const isActive = location.pathname === item.path;
+          const badge = item.path === '/approvals' && pendingCount > 0 ? pendingCount : null;
           return (
             <Link
               key={item.path}
@@ -107,7 +120,12 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode 
               )}
             >
               <item.icon className="w-4 h-4 flex-shrink-0" />
-              <span className="text-sm font-medium">{item.label}</span>
+              <span className="text-sm font-medium flex-1">{item.label}</span>
+              {badge && (
+                <span className="w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center flex-shrink-0">
+                  {badge}
+                </span>
+              )}
             </Link>
           );
         })}

@@ -25,6 +25,7 @@ import Announcements from './pages/Announcements';
 import Reports from './pages/Reports';
 import StudentHome from './pages/StudentHome';
 import ClassAttendance from './pages/ClassAttendance';
+import ApprovalManagement from './pages/ApprovalManagement';
 import Onboarding from './pages/Onboarding';
 import PendingApproval from './pages/PendingApproval';
 import { isStaff, isStudent, defaultRoute } from './lib/permissions';
@@ -101,6 +102,9 @@ const AuthenticatedApp = () => {
         <Route path="/tasks" element={<Tasks role={role} />} />
         <Route path="/announcements" element={<Announcements role={role} />} />
         <Route path="/reports" element={<Reports />} />
+        {(role === 'admin' || role === 'homeroom_teacher' || role === 'coordinator') && (
+          <Route path="/approvals" element={<ApprovalManagement role={role} />} />
+        )}
       </>}
 
       {/* Student routes */}
