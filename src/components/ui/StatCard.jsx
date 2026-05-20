@@ -32,7 +32,7 @@ export default function StatCard({ icon: Icon, title, value, subtitle, color = '
         urgent && 'ring-2 ring-red-400'
       )}
     >
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between text-right" dir="rtl">
         <div>
           <p className="text-sm font-medium text-muted-foreground">{title}</p>
           <p className="text-3xl font-bold text-foreground mt-1">{value}</p>

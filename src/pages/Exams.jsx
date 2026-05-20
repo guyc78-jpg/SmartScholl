@@ -117,7 +117,7 @@ export default function Exams({ role, user }) {
     const celebrating = celebratingExamId === exam.id;
     return (
       <Card className={`relative p-4 hover:shadow-sm transition-all ${isOverloaded && !isPast ? 'border-amber-300 dark:border-amber-700' : ''} ${isPast && !completed ? 'opacity-60' : ''} ${completed ? 'border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/40 dark:bg-emerald-900/10' : ''}`}>
-        {celebrating && <motion.div initial={{ scale: 0, opacity: 0 }} animate={{ scale: [0, 1.4, 1], opacity: [0, 1, 0] }} transition={{ duration: 0.8 }} className="absolute left-5 top-3 text-3xl pointer-events-none">✅</motion.div>}
+        {celebrating && <motion.div initial={{ scale: 0, opacity: 0 }} animate={{ scale: [0, 1.4, 1], opacity: [0, 1, 0] }} transition={{ duration: 0.8 }} className="absolute start-5 top-3 text-3xl pointer-events-none">✅</motion.div>}
         <div className="flex items-start gap-3">
           <div className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center flex-shrink-0 ${isPast ? 'bg-slate-100 text-slate-500' : 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'}`}>
             <span className="text-sm font-bold">{new Date(exam.date).getDate()}</span>

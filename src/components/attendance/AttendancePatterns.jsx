@@ -25,7 +25,7 @@ export default function AttendancePatterns({ statsPerStudent, allRecords }) {
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={160}>
-            <BarChart data={dayData} margin={{ top: 4, right: -20, left: 8, bottom: 0 }}>
+            <BarChart data={dayData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
               <XAxis dataKey="name" tick={{ fontSize: 11 }} />
               <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
               <Tooltip formatter={(v) => [`${v} היעדרויות`]} />
@@ -49,7 +49,7 @@ export default function AttendancePatterns({ statsPerStudent, allRecords }) {
             {topAbsent.length === 0 ? (
               <p className="text-xs text-muted-foreground">אין נתונים</p>
             ) : topAbsent.map(s => (
-              <div key={s.id} className="flex items-center justify-between">
+              <div key={s.id} className="flex items-center justify-between text-right">
                 <span className="text-sm">{s.full_name}</span>
                 <span className="text-sm font-bold text-red-500">{s.absences} ימים</span>
               </div>
@@ -66,7 +66,7 @@ export default function AttendancePatterns({ statsPerStudent, allRecords }) {
             {topLate.length === 0 ? (
               <p className="text-xs text-muted-foreground">אין נתונים</p>
             ) : topLate.map(s => (
-              <div key={s.id} className="flex items-center justify-between">
+              <div key={s.id} className="flex items-center justify-between text-right">
                 <span className="text-sm">{s.full_name}</span>
                 <span className="text-sm font-bold text-amber-500">{s.lates} פעמים</span>
               </div>

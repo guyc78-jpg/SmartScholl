@@ -104,8 +104,17 @@
     text-align: right;
   }
 
-  [dir="rtl"] .text-left {
+  [dir="rtl"] .text-left,
+  [dir="rtl"] .text-start {
     text-align: right;
+  }
+
+  [dir="rtl"] .justify-start {
+    justify-content: flex-end;
+  }
+
+  [dir="rtl"] .items-start {
+    align-items: flex-end;
   }
 
   [dir="rtl"] .origin-left {

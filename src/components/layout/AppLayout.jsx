@@ -168,7 +168,7 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
   return (
     <div className="flex h-screen bg-background overflow-hidden" dir="rtl">
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex w-60 bg-sidebar flex-col flex-shrink-0 border-l border-sidebar-border">
+      <aside className="hidden lg:flex w-60 bg-sidebar flex-col flex-shrink-0 border-s border-sidebar-border">
         <SidebarContent />
       </aside>
 
@@ -182,7 +182,7 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
           <aside className="fixed right-0 top-0 h-full w-72 bg-sidebar z-50 lg:hidden shadow-2xl">
             <button
               onClick={() => setSidebarOpen(false)}
-              className="absolute top-4 left-4 w-8 h-8 flex items-center justify-center text-sidebar-foreground/70 hover:text-sidebar-foreground rounded-lg hover:bg-sidebar-accent">
+              className="absolute top-4 start-4 w-8 h-8 flex items-center justify-center text-sidebar-foreground/70 hover:text-sidebar-foreground rounded-lg hover:bg-sidebar-accent">
               <X className="w-5 h-5" />
             </button>
             <SidebarContent />
