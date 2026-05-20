@@ -14,7 +14,7 @@ export default function ImportStudentsModal({ classId, onClose, onSuccess }) {
     const file = e.target.files[0];
     if (!file) return;
     try {
-      const { default: XLSX } = await import('xlsx');
+      const XLSX = await import('https://cdn.sheetjs.com/xlsx-0.20.3/package/xlsx.mjs');
       const buffer = await file.arrayBuffer();
       const wb = XLSX.read(buffer);
       const ws = wb.Sheets[wb.SheetNames[0]];
