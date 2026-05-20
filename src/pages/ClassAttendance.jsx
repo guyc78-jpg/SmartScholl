@@ -12,6 +12,8 @@ import { toast } from 'sonner';
 import { Save, AlertTriangle, TrendingUp, Users, Clock, UserX, ChevronDown, ChevronUp } from 'lucide-react';
 import AttendanceAlerts from '@/components/attendance/AttendanceAlerts';
 import AttendancePatterns from '@/components/attendance/AttendancePatterns';
+import { isStudentInApprovedScope, getUserApprovedClass } from '@/lib/schoolStructure';
+import { useAuth } from '@/lib/AuthContext';
 
 const STATUSES = ['נוכח/ת', 'מאחר/ת', 'נעדר/ת', 'שוחרר/ה'];
 
@@ -26,6 +28,7 @@ const statusStyle = {
 export const THRESHOLDS = { absences: 5, lates: 8 };
 
 export default function ClassAttendance({ role }) {
+  const { user } = useAuth();
   const isHomeroomTeacher = role === 'homeroom_teacher' || role === 'admin';
 
   const [students, setStudents] = useState([]);
@@ -48,9 +51,11 @@ export default function ClassAttendance({ role }) {
       base44.entities.Student.filter({ class_id: CLASS_ID }),
       base44.entities.AttendanceRecord.filter({ class_id: CLASS_ID }),
     ]);
-    setStudents(sts.filter(s => s.status === 'פעיל' || s.status === 'דורש מעקב'));
+    const scopedStudents = sts.filter(s => isStudentInApprovedScope(s, user, role) && (s.status === 'פעיל' || s.status === 'דורש מעקב'));
+    const scopedIds = new Set(scopedStudents.map(s => s.id));
+    setStudents(scopedStudents);
     // Only use records with the new statuses
-    setAllRecords(recs.filter(r => STATUSES.includes(r.status)));
+    setAllRecords(recs.filter(r => STATUSES.includes(r.status) && scopedIds.has(r.student_id)));
     setLoading(false);
   }
 
@@ -149,7 +154,7 @@ export default function ClassAttendance({ role }) {
     <div className="p-4 lg:p-6 space-y-4 text-right" dir="rtl">
       <PageHeader
         title="מעקב נוכחות כיתתי"
-        subtitle="כלי פנימי לזיהוי דפוסי איחורים והיעדרויות"
+        subtitle={`כלי פנימי לזיהוי דפוסי איחורים והיעדרויות · כיתה ${getUserApprovedClass(user) || ''}`}
         actions={
           alertStudents.length > 0 && (
             <div className="flex items-center gap-2 px-3 py-1.5 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-sm text-red-700 dark:text-red-400">

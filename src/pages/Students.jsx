@@ -23,6 +23,7 @@ import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/lib/AuthContext';
 import { logActivity } from '@/lib/activityLogger';
+import { isStudentInApprovedScope, getUserApprovedClass, getUserApprovedGrade } from '@/lib/schoolStructure';
 import AddStudentModal from '@/components/students/AddStudentModal';
 import ImportStudentsModal from '@/components/students/ImportStudentsModal';
 
@@ -43,7 +44,7 @@ export default function Students({ role }) {
   async function loadStudents() {
     setLoading(true);
     const data = await base44.entities.Student.filter({ class_id: CLASS_ID });
-    setStudents(data);
+    setStudents(data.filter(student => isStudentInApprovedScope(student, user, role)));
     setLoading(false);
   }
 
@@ -81,7 +82,7 @@ export default function Students({ role }) {
     <div className="p-4 lg:p-6 space-y-5 text-right" dir="rtl">
       <PageHeader
         title="תלמידים"
-        subtitle={`${students.length} תלמידים בכיתה`}
+        subtitle={`${students.length} תלמידים ${role === 'coordinator' ? `בשכבה ${getUserApprovedGrade(user)}` : `בכיתה ${getUserApprovedClass(user) || ''}`}`}
         actions={
           <>
             <Button variant="outline" size="sm" className="gap-2" onClick={() => setShowImport(true)}>

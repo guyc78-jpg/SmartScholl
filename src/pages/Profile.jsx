@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { Save, UserRound, Send } from 'lucide-react';
+import GradeClassSelect from '@/components/profile/GradeClassSelect';
+import { extractGradeFromClass } from '@/lib/schoolStructure';
 
 const roles = [
   { value: 'admin', label: 'מנהל/ת מערכת' },
@@ -19,6 +21,7 @@ const roles = [
 export default function Profile({ user, role }) {
   const [saving, setSaving] = useState(false);
   const [requestedRole, setRequestedRole] = useState('');
+  const [requestScope, setRequestScope] = useState({ grade: '', className: '' });
   const [form, setForm] = useState({
     profile_full_name: user?.profile_full_name || user?.full_name || '',
     profile_phone: user?.profile_phone || '',
@@ -26,7 +29,7 @@ export default function Profile({ user, role }) {
     profile_address: user?.profile_address || '',
     role: user?.role || 'student',
     profile_homeroom_class: user?.profile_homeroom_class || user?.profile_class || '',
-    profile_grade_managed: user?.profile_grade_managed || '',
+    profile_grade_managed: user?.profile_grade_managed || extractGradeFromClass(user?.profile_homeroom_class || user?.profile_class || ''),
   });
 
   const updateField = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
@@ -50,18 +53,23 @@ export default function Profile({ user, role }) {
 
   const handleRoleRequest = async () => {
     if (!requestedRole || requestedRole === user?.role) return;
+    if (!requestScope.grade || !requestScope.className) {
+      toast.error('יש לבחור שכבה וכיתה לבקשה');
+      return;
+    }
     setSaving(true);
     await base44.functions.invoke('handleApprovalRequest', {
       action: 'submit',
       full_name: form.profile_full_name,
       requested_role: requestedRole,
-      class_or_grade: form.profile_homeroom_class || form.profile_grade_managed || '',
+      class_or_grade: requestScope.className,
       subject: '',
       school_role: 'בקשת שינוי תפקיד מפרופיל אישי',
       extra_roles: ''
     });
     toast.success('בקשת שינוי התפקיד נשלחה לאישור מנהל מערכת');
     setRequestedRole('');
+    setRequestScope({ grade: '', className: '' });
     setSaving(false);
   };
 
@@ -114,14 +122,13 @@ export default function Profile({ user, role }) {
                 <Label>תפקיד</Label>
                 <Input value={currentRoleLabel} disabled className="bg-muted" />
               </div>
-              <div className="space-y-2">
-                <Label>כיתה משויכת</Label>
-                <Input value={form.profile_homeroom_class} disabled className="bg-muted" placeholder="לדוגמה: י׳1" />
-              </div>
-              <div className="space-y-2">
-                <Label>שכבה משויכת</Label>
-                <Input value={form.profile_grade_managed} disabled className="bg-muted" placeholder="לדוגמה: י׳" />
-              </div>
+              <GradeClassSelect
+                grade={form.profile_grade_managed}
+                classNameValue={form.profile_homeroom_class}
+                onGradeChange={(value) => updateField('profile_grade_managed', value)}
+                onClassChange={(value) => updateField('profile_homeroom_class', value)}
+                disabled
+              />
             </CardContent>
           </Card>
 
@@ -139,7 +146,15 @@ export default function Profile({ user, role }) {
                   {roles.filter(item => item.value !== 'admin').map(item => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
                 </SelectContent>
               </Select>
-              <Button type="button" variant="outline" onClick={handleRoleRequest} disabled={saving || !requestedRole || requestedRole === user?.role}>
+              {requestedRole && requestedRole !== user?.role && (
+                <GradeClassSelect
+                  grade={requestScope.grade}
+                  classNameValue={requestScope.className}
+                  onGradeChange={(value) => setRequestScope({ grade: value, className: '' })}
+                  onClassChange={(value) => setRequestScope(prev => ({ ...prev, className: value }))}
+                />
+              )}
+              <Button type="button" variant="outline" onClick={handleRoleRequest} disabled={saving || !requestedRole || requestedRole === user?.role || !requestScope.grade || !requestScope.className}>
                 <Send className="w-4 h-4" />
                 שלח בקשה לאישור
               </Button>

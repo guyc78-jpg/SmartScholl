@@ -4,6 +4,8 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import GradeClassSelect from '@/components/profile/GradeClassSelect';
+import { extractGradeFromClass } from '@/lib/schoolStructure';
 import { toast } from 'sonner';
 import {
   GraduationCap, BookOpen, Users, ChevronLeft, ChevronRight,
@@ -88,10 +90,12 @@ function StudentProfileForm({ form, setForm }) {
         <Label>שם מלא *</Label>
         <Input value={form.profile_full_name || ''} onChange={e => setForm(p => ({ ...p, profile_full_name: e.target.value }))} placeholder="למשל: יעל כהן" />
       </div>
-      <div className="space-y-1">
-        <Label>כיתה *</Label>
-        <Input value={form.profile_class || ''} onChange={e => setForm(p => ({ ...p, profile_class: e.target.value }))} placeholder="למשל: י׳1" />
-      </div>
+      <GradeClassSelect
+        grade={form.profile_grade_managed || extractGradeFromClass(form.profile_class || '')}
+        classNameValue={form.profile_class || ''}
+        onGradeChange={(value) => setForm(p => ({ ...p, profile_grade_managed: value, profile_class: '' }))}
+        onClassChange={(value) => setForm(p => ({ ...p, profile_class: value, profile_homeroom_class: value }))}
+      />
       <div className="space-y-1">
         <Label>שם מחנך/ת</Label>
         <Input value={form.profile_homeroom_teacher || ''} onChange={e => setForm(p => ({ ...p, profile_homeroom_teacher: e.target.value }))} placeholder="למשל: ד״ר אבי לוי" />
@@ -255,7 +259,8 @@ export default function Onboarding({ user, onComplete }) {
   /* New user self-registration flow — only students allowed to self-register */
   async function handleSubmitStudent() {
     if (!profileForm.profile_full_name?.trim()) { toast.error('יש להזין שם מלא'); return; }
-    if (!profileForm.profile_class?.trim()) { toast.error('יש להזין כיתה'); return; }
+    if (!profileForm.profile_grade_managed?.trim()) { toast.error('יש לבחור שכבה'); return; }
+    if (!profileForm.profile_class?.trim()) { toast.error('יש לבחור כיתה'); return; }
     setSaving(true);
     const updateData = {
       ...profileForm,

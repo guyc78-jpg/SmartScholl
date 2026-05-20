@@ -5,8 +5,9 @@ import PageHeader from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Users, AlertTriangle, Lock } from 'lucide-react';
 import ClassDashboard from '@/components/grade/ClassDashboard';
+import { getUserApprovedGrade, normalizeGrade } from '@/lib/schoolStructure';
 
-const GRADE_LABELS = { י: 'שכבת י׳', יא: 'שכבת י״א', יב: 'שכבת י״ב' };
+const GRADE_LABELS = { ז: 'שכבת ז׳', ח: 'שכבת ח׳', ט: 'שכבת ט׳', י: 'שכבת י׳', יא: 'שכבת י״א', יב: 'שכבת י״ב' };
 
 export default function GradeMonitor({ user, role }) {
   const [classes, setClasses] = useState([]);
@@ -14,7 +15,7 @@ export default function GradeMonitor({ user, role }) {
   const [loading, setLoading] = useState(true);
 
   // Determine which grade this coordinator manages
-  const managedGrade = user?.profile_grade_managed || user?.profile_class || null;
+  const managedGrade = getUserApprovedGrade(user);
 
   useEffect(() => {
     async function loadClasses() {
@@ -23,15 +24,7 @@ export default function GradeMonitor({ user, role }) {
       let filtered = allClasses;
 
       if (role === 'coordinator' && managedGrade) {
-        // Extract grade letter from things like "שכבת י׳", "י", "י׳", "כיתה י"
-        const gradeMatch = managedGrade.match(/[יאב]{1,2}(?:׳|״)?/);
-        if (gradeMatch) {
-          const gradeLetter = gradeMatch[0].replace(/[׳״]/g, '');
-          filtered = allClasses.filter(c => {
-            const cGrade = (c.grade || '').replace(/[׳״]/g, '');
-            return cGrade === gradeLetter;
-          });
-        }
+        filtered = allClasses.filter(c => normalizeGrade(c.grade) === managedGrade);
       } else if (role === 'homeroom_teacher') {
         // Teacher sees only their own class(es)
         const teacherEmail = user?.email;

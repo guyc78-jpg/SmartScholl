@@ -153,14 +153,17 @@ ${suspicionNote}
       // Update the target user's role and onboarding status
       const targetUsers = await base44.asServiceRole.entities.User.filter({ email: approvalReq.user_email });
       if (targetUsers[0]) {
+        const classOrGrade = approvalReq.class_or_grade || '';
+        const approvedGrade = classOrGrade.replace(/[׳״'"\d\s]/g, '');
         await base44.asServiceRole.entities.User.update(targetUsers[0].id, {
           role: approvalReq.requested_role,
           roles: [approvalReq.requested_role],
           available_roles: [approvalReq.requested_role],
           active_work_role: approvalReq.requested_role,
           onboarding_status: 'approved',
-          profile_homeroom_class: approvalReq.requested_role === 'homeroom_teacher' ? approvalReq.class_or_grade || '' : targetUsers[0].profile_homeroom_class || '',
-          profile_grade_managed: approvalReq.requested_role === 'coordinator' ? approvalReq.class_or_grade || '' : targetUsers[0].profile_grade_managed || '',
+          profile_homeroom_class: approvalReq.requested_role === 'homeroom_teacher' || approvalReq.requested_role === 'student' ? classOrGrade : targetUsers[0].profile_homeroom_class || '',
+          profile_class: approvalReq.requested_role === 'student' ? classOrGrade : targetUsers[0].profile_class || '',
+          profile_grade_managed: approvedGrade || targetUsers[0].profile_grade_managed || '',
         });
       }
 
@@ -255,6 +258,7 @@ ${suspicionNote}
         available_roles: [target_role],
         active_work_role: target_role,
         profile_homeroom_class: profile_homeroom_class || '',
+        profile_class: target_role === 'student' ? profile_homeroom_class || '' : '',
         profile_grade_managed: profile_grade_managed || '',
         onboarding_status: 'approved',
       });

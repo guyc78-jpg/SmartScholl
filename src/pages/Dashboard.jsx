@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import StatusBadge from '@/components/ui/StatusBadge';
 import QuickActionModal from '@/components/dashboard/QuickActionModal';
 import NotificationsDropdown from '@/components/dashboard/NotificationsDropdown';
+import { isStudentInApprovedScope, getUserApprovedClass, getUserApprovedGrade } from '@/lib/schoolStructure';
 
 const HEBREW_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 const HEBREW_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
@@ -49,7 +50,16 @@ export default function Dashboard({ user, role }) {
       base44.entities.DisciplineEvent.filter({ class_id: CLASS_ID }),
       base44.entities.Announcement.filter({ class_id: CLASS_ID }),
     ]);
-    setStudents(sts);
+    const scopedStudents = sts.filter(student => isStudentInApprovedScope(student, user, role));
+    const scopedIds = new Set(scopedStudents.map(student => student.id));
+    setStudents(scopedStudents);
+    setTodayAttendance(att.filter(record => scopedIds.has(record.student_id)));
+    setDiscipline(dis.filter(record => scopedIds.has(record.student_id)));
+    setTasks(tks.filter(task => !task.student_id || scopedIds.has(task.student_id)));
+    setExams(exs);
+    setAnnouncements(ann);
+    setLoading(false);
+    return;
     setTodayAttendance(att);
     setExams(exs);
     setTasks(tks);
@@ -142,7 +152,7 @@ export default function Dashboard({ user, role }) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">שלום, {user?.full_name?.split(' ')[0] || 'מחנך'} 👋</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{hebrewDate()} · כיתה י׳1</p>
+          <p className="text-sm text-muted-foreground mt-0.5">{hebrewDate()} · {role === 'coordinator' ? `שכבה ${getUserApprovedGrade(user)}` : `כיתה ${getUserApprovedClass(user) || ''}`}</p>
         </div>
         <NotificationsDropdown notifications={notifications} />
       </div>

@@ -10,8 +10,11 @@ import PageHeader from '@/components/ui/PageHeader';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { FileBarChart, Download } from 'lucide-react';
+import { useAuth } from '@/lib/AuthContext';
+import { isStudentInApprovedScope } from '@/lib/schoolStructure';
 
-export default function Reports() {
+export default function Reports({ role }) {
+  const { user } = useAuth();
   const [students, setStudents] = useState([]);
   const [attendance, setAttendance] = useState([]);
   const [discipline, setDiscipline] = useState([]);
@@ -30,9 +33,11 @@ export default function Reports() {
       base44.entities.DisciplineEvent.filter({ class_id: CLASS_ID }),
       base44.entities.Exam.filter({ class_id: CLASS_ID }),
     ]);
-    setStudents(sts);
-    setAttendance(att);
-    setDiscipline(dis);
+    const scopedStudents = sts.filter(student => isStudentInApprovedScope(student, user, role));
+    const scopedIds = new Set(scopedStudents.map(student => student.id));
+    setStudents(scopedStudents);
+    setAttendance(att.filter(record => scopedIds.has(record.student_id)));
+    setDiscipline(dis.filter(record => scopedIds.has(record.student_id)));
     setExams(exs);
     setLoading(false);
   }

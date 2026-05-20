@@ -110,7 +110,7 @@ const AuthenticatedApp = () => {
         <Route path="/communications" element={<Communications role={role} />} />
         <Route path="/tasks" element={<Tasks role={role} />} />
         <Route path="/announcements" element={<Announcements role={role} />} />
-        <Route path="/reports" element={<Reports />} />
+        <Route path="/reports" element={<Reports role={role} />} />
         <Route path="/profile" element={<Profile user={user} role={role} />} />
         {role === 'admin' && (
           <>
