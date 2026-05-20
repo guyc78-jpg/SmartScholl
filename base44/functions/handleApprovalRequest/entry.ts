@@ -1,9 +1,18 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const ROLE_LABELS = {
+  admin: 'מנהל/ת מערכת',
   homeroom_teacher: 'מורה / מחנך/ת',
   coordinator: 'רכז/ת שכבה',
+  student: 'תלמיד/ה',
+  parent: 'הורה',
 };
+
+const STAFF_ROLES = ['admin', 'homeroom_teacher', 'coordinator', 'student', 'parent'];
+
+function requireAdmin(user) {
+  return user?.role === 'admin';
+}
 
 // Basic heuristic: suspicion flags
 function detectSuspicion(data) {
@@ -128,7 +137,7 @@ ${suspicionNote}
 
     // === ACTION: approve ===
     if (action === 'approve') {
-      if (!['admin', 'homeroom_teacher', 'coordinator'].includes(user.role)) {
+      if (!requireAdmin(user)) {
         return Response.json({ error: 'Forbidden' }, { status: 403 });
       }
       const requests = await base44.asServiceRole.entities.ApprovalRequest.filter({ id: request_id });
@@ -146,7 +155,12 @@ ${suspicionNote}
       if (targetUsers[0]) {
         await base44.asServiceRole.entities.User.update(targetUsers[0].id, {
           role: approvalReq.requested_role,
+          roles: [approvalReq.requested_role],
+          available_roles: [approvalReq.requested_role],
+          active_work_role: approvalReq.requested_role,
           onboarding_status: 'approved',
+          profile_homeroom_class: approvalReq.requested_role === 'homeroom_teacher' ? approvalReq.class_or_grade || '' : targetUsers[0].profile_homeroom_class || '',
+          profile_grade_managed: approvalReq.requested_role === 'coordinator' ? approvalReq.class_or_grade || '' : targetUsers[0].profile_grade_managed || '',
         });
       }
 
@@ -171,7 +185,7 @@ ${suspicionNote}
 
     // === ACTION: reject ===
     if (action === 'reject') {
-      if (!['admin', 'homeroom_teacher', 'coordinator'].includes(user.role)) {
+      if (!requireAdmin(user)) {
         return Response.json({ error: 'Forbidden' }, { status: 403 });
       }
       const requests = await base44.asServiceRole.entities.ApprovalRequest.filter({ id: request_id });
@@ -215,9 +229,52 @@ ${suspicionNote}
       return Response.json({ success: true });
     }
 
+    // === ACTION: list users for secure admin management ===
+    if (action === 'list_users') {
+      if (!requireAdmin(user)) {
+        return Response.json({ error: 'Forbidden' }, { status: 403 });
+      }
+      const users = await base44.asServiceRole.entities.User.list('-updated_date', 200);
+      return Response.json({ users });
+    }
+
+    // === ACTION: admin update approved user role ===
+    if (action === 'admin_update_user') {
+      if (!requireAdmin(user)) {
+        return Response.json({ error: 'Forbidden' }, { status: 403 });
+      }
+
+      const { target_user_id, target_role, profile_homeroom_class, profile_grade_managed } = body;
+      if (!STAFF_ROLES.includes(target_role)) {
+        return Response.json({ error: 'Invalid role' }, { status: 400 });
+      }
+
+      await base44.asServiceRole.entities.User.update(target_user_id, {
+        role: target_role,
+        roles: [target_role],
+        available_roles: [target_role],
+        active_work_role: target_role,
+        profile_homeroom_class: profile_homeroom_class || '',
+        profile_grade_managed: profile_grade_managed || '',
+        onboarding_status: 'approved',
+      });
+
+      await base44.asServiceRole.entities.ActivityLog.create({
+        event_type: 'role_changed',
+        actor_email: user.email,
+        action_name: 'admin_update_user_role',
+        target_email: body.target_email || '',
+        details: `תפקיד משתמש עודכן ל-${ROLE_LABELS[target_role] || target_role}`,
+        metadata: JSON.stringify({ target_user_id, target_role, profile_homeroom_class, profile_grade_managed }),
+        severity: 'warning',
+      });
+
+      return Response.json({ success: true });
+    }
+
     // === ACTION: get_pending ===
     if (action === 'get_pending') {
-      if (!['admin', 'homeroom_teacher', 'coordinator'].includes(user.role)) {
+      if (!requireAdmin(user)) {
         return Response.json({ error: 'Forbidden' }, { status: 403 });
       }
       const pending = await base44.asServiceRole.entities.ApprovalRequest.filter({ status: 'pending' });

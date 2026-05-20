@@ -30,6 +30,7 @@ import GradeMonitor from './pages/GradeMonitor';
 import Onboarding from './pages/Onboarding';
 import PendingApproval from './pages/PendingApproval';
 import Profile from './pages/Profile';
+import UserManagement from './pages/UserManagement';
 import { isStaff, isStudent, defaultRoute } from './lib/permissions';
 import { getInitialWorkRole } from './lib/roleUtils';
 
@@ -112,7 +113,10 @@ const AuthenticatedApp = () => {
         <Route path="/reports" element={<Reports />} />
         <Route path="/profile" element={<Profile user={user} role={role} />} />
         {role === 'admin' && (
-          <Route path="/approvals" element={<ApprovalManagement role={role} />} />
+          <>
+            <Route path="/approvals" element={<ApprovalManagement role={role} />} />
+            <Route path="/users" element={<UserManagement />} />
+          </>
         )}
         {(role === 'admin' || role === 'homeroom_teacher' || role === 'coordinator') && (
           <Route path="/grade-monitor" element={<GradeMonitor user={user} role={role} />} />

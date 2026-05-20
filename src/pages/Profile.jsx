@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Save, UserRound } from 'lucide-react';
+import { Save, UserRound, Send } from 'lucide-react';
 
 const roles = [
   { value: 'admin', label: 'מנהל/ת מערכת' },
@@ -17,8 +17,8 @@ const roles = [
 ];
 
 export default function Profile({ user, role }) {
-  const isAdmin = role === 'admin';
   const [saving, setSaving] = useState(false);
+  const [requestedRole, setRequestedRole] = useState('');
   const [form, setForm] = useState({
     profile_full_name: user?.profile_full_name || user?.full_name || '',
     profile_phone: user?.profile_phone || '',
@@ -42,20 +42,30 @@ export default function Profile({ user, role }) {
       profile_address: form.profile_address,
     };
 
-    const adminData = isAdmin ? {
-      role: form.role,
-      roles: [form.role],
-      available_roles: [form.role],
-      active_work_role: form.role,
-      profile_homeroom_class: form.profile_homeroom_class,
-      profile_grade_managed: form.profile_grade_managed,
-    } : {};
-
-    await base44.auth.updateMe({ ...personalData, ...adminData });
+    await base44.auth.updateMe(personalData);
     toast.success('הפרופיל נשמר בהצלחה');
     setSaving(false);
     setTimeout(() => window.location.reload(), 500);
   };
+
+  const handleRoleRequest = async () => {
+    if (!requestedRole || requestedRole === user?.role) return;
+    setSaving(true);
+    await base44.functions.invoke('handleApprovalRequest', {
+      action: 'submit',
+      full_name: form.profile_full_name,
+      requested_role: requestedRole,
+      class_or_grade: form.profile_homeroom_class || form.profile_grade_managed || '',
+      subject: '',
+      school_role: 'בקשת שינוי תפקיד מפרופיל אישי',
+      extra_roles: ''
+    });
+    toast.success('בקשת שינוי התפקיד נשלחה לאישור מנהל מערכת');
+    setRequestedRole('');
+    setSaving(false);
+  };
+
+  const currentRoleLabel = roles.find(item => item.value === user?.role)?.label || 'משתמש';
 
   return (
     <div className="min-h-full bg-background p-4 md:p-8" dir="rtl">
@@ -97,35 +107,49 @@ export default function Profile({ user, role }) {
           <Card>
             <CardHeader>
               <CardTitle>תפקיד ושיוך</CardTitle>
-              <CardDescription>{isAdmin ? 'רק מנהל מערכת יכול לערוך שדות אלו.' : 'שדות אלו ניתנים לעריכה על ידי מנהל מערכת בלבד.'}</CardDescription>
+              <CardDescription>התפקיד והשיוך נקבעים לפי הרשאה מאושרת. שינוי תפקיד דורש אישור מנהל מערכת.</CardDescription>
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>תפקיד</Label>
-                <Select value={form.role} onValueChange={(value) => updateField('role', value)} disabled={!isAdmin}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent dir="rtl">
-                    {roles.map(item => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <Input value={currentRoleLabel} disabled className="bg-muted" />
               </div>
               <div className="space-y-2">
                 <Label>כיתה משויכת</Label>
-                <Input value={form.profile_homeroom_class} onChange={(e) => updateField('profile_homeroom_class', e.target.value)} disabled={!isAdmin} placeholder="לדוגמה: י׳1" />
+                <Input value={form.profile_homeroom_class} disabled className="bg-muted" placeholder="לדוגמה: י׳1" />
               </div>
               <div className="space-y-2">
                 <Label>שכבה משויכת</Label>
-                <Input value={form.profile_grade_managed} onChange={(e) => updateField('profile_grade_managed', e.target.value)} disabled={!isAdmin} placeholder="לדוגמה: י׳" />
+                <Input value={form.profile_grade_managed} disabled className="bg-muted" placeholder="לדוגמה: י׳" />
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>בקשת שינוי תפקיד</CardTitle>
+              <CardDescription>הבקשה תישלח לאישור מנהל מערכת ולא תשנה הרשאות באופן מיידי.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col md:flex-row gap-3">
+              <Select value={requestedRole} onValueChange={setRequestedRole}>
+                <SelectTrigger className="md:w-64">
+                  <SelectValue placeholder="בחר/י תפקיד מבוקש" />
+                </SelectTrigger>
+                <SelectContent dir="rtl">
+                  {roles.filter(item => item.value !== 'admin').map(item => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
+                </SelectContent>
+              </Select>
+              <Button type="button" variant="outline" onClick={handleRoleRequest} disabled={saving || !requestedRole || requestedRole === user?.role}>
+                <Send className="w-4 h-4" />
+                שלח בקשה לאישור
+              </Button>
             </CardContent>
           </Card>
 
           <div className="flex justify-end">
             <Button type="submit" disabled={saving} className="min-w-32">
               <Save className="w-4 h-4" />
-              {saving ? 'שומר...' : 'שמור פרופיל'}
+              {saving ? 'שומר...' : 'שמור פרטים אישיים'}
             </Button>
           </div>
         </form>

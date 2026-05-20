@@ -36,11 +36,6 @@ export function getAvailableRoles(user) {
     user.role,
   ];
 
-  const extraRolesText = `${user.profile_extra_roles || ''} ${user.profile_school_role || ''}`;
-  if (/מחנך|homeroom/i.test(extraRolesText)) roles.push('homeroom_teacher');
-  if (/רכז|coordinator/i.test(extraRolesText)) roles.push('coordinator');
-  if (/מנהל|admin/i.test(extraRolesText)) roles.push('admin');
-
   const unique = [...new Set(roles.filter(role => VALID_ROLES.includes(role)))];
   return unique.length ? unique : ['student'];
 }

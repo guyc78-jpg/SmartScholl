@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Users, Calendar, BookOpen, Shield,
   MessageSquare, CheckSquare, Megaphone, BarChart2,
   Clock, Heart, Menu, X, Sun, Moon, BookMarked,
-  FileText, Star, UserCheck, UserRound
+  FileText, Star, UserCheck, UserRound, ShieldCheck
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -29,6 +29,7 @@ const teacherNav = [
   { path: '/grade-monitor', icon: FileText, label: 'מעקב שכבה', coordinatorOnly: true },
   { path: '/reports', icon: BarChart2, label: 'דוחות' },
   { path: '/approvals', icon: UserCheck, label: 'אישורי הרשמה', staffOnly: true },
+  { path: '/users', icon: ShieldCheck, label: 'ניהול משתמשים', staffOnly: true },
   { path: '/profile', icon: UserRound, label: 'פרופיל' },
 ];
 
