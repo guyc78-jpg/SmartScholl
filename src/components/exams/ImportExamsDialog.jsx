@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertTriangle, FileUp, Loader2, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
+import SelectedFileNotice from '@/components/import/SelectedFileNotice';
 
 const ACCEPTED_TYPES = '.xlsx,.xls,.doc,.docx,.pdf,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
 const EXAM_TYPES = ['בגרות', 'מתכונת', 'מועד ב׳', 'חזרה', 'חג', 'אירוע שכבתי', 'אחר', 'מבחן', 'בחן', 'עבודה', 'פרויקט', 'הגשה'];
@@ -50,6 +51,14 @@ export default function ImportExamsDialog({ open, onOpenChange, onImported, clas
 
   const removeRow = (index) => {
     setRows(prev => prev.filter((_, rowIndex) => rowIndex !== index));
+  };
+
+  const clearSelectedFile = () => {
+    if (!window.confirm('להסיר את הקובץ שנבחר?')) return;
+    setFileName('');
+    setRows([]);
+    setError('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
   const handleFileChange = async (event) => {
@@ -150,7 +159,7 @@ export default function ImportExamsDialog({ open, onOpenChange, onImported, clas
               <div>
                 <p className="font-medium">העלאת קובץ Excel, Word או PDF</p>
                 <p className="text-sm text-muted-foreground mt-1">נסרוק את כל הטבלאות והתאים. לא יתבצע ייבוא עד ללחיצה על “אשר ייבוא”.</p>
-                {fileName && <p className="text-xs text-muted-foreground mt-2">קובץ נבחר: {fileName}</p>}
+                <SelectedFileNotice fileName={fileName} onRemove={clearSelectedFile} disabled={isParsing || isImporting} />
               </div>
               <Button variant="outline" className="gap-2" onClick={() => fileInputRef.current?.click()} disabled={isParsing}>
                 {isParsing ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileUp className="w-4 h-4" />}

@@ -1,19 +1,26 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { Upload, FileText, Check, AlertCircle } from 'lucide-react';
+import SelectedFileNotice from '@/components/import/SelectedFileNotice';
 
 export default function ImportStudentsModal({ classId, onClose, onSuccess }) {
+  const fileInputRef = useRef(null);
   const [preview, setPreview] = useState([]);
   const [importing, setImporting] = useState(false);
   const [step, setStep] = useState('upload'); // upload | preview | done
+  const [fileName, setFileName] = useState('');
+  const [error, setError] = useState('');
 
   async function handleFile(e) {
     const file = e.target.files[0];
     if (!file) return;
     try {
+      setFileName(file.name);
+      setPreview([]);
+      setError('');
       const XLSX = await import('https://cdn.sheetjs.com/xlsx-0.20.3/package/xlsx.mjs');
       const buffer = await file.arrayBuffer();
       const wb = XLSX.read(buffer);
@@ -34,8 +41,18 @@ export default function ImportStudentsModal({ classId, onClose, onSuccess }) {
       setPreview(mapped);
       setStep('preview');
     } catch (err) {
+      setError('שגיאה בקריאת הקובץ. ודא שהקובץ הוא Excel תקין');
       toast.error('שגיאה בקריאת הקובץ. ודא שהקובץ הוא Excel תקין');
     }
+  }
+
+  function clearSelectedFile() {
+    if (!window.confirm('להסיר את הקובץ שנבחר?')) return;
+    setFileName('');
+    setPreview([]);
+    setError('');
+    setStep('upload');
+    if (fileInputRef.current) fileInputRef.current.value = '';
   }
 
   async function handleImport() {
@@ -67,8 +84,10 @@ export default function ImportStudentsModal({ classId, onClose, onSuccess }) {
               <p className="text-sm text-muted-foreground mb-4">או לחץ לבחירת קובץ</p>
               <label className="cursor-pointer">
                 <Button variant="outline" asChild><span>בחר קובץ</span></Button>
-                <input type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFile} />
+                <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={handleFile} />
               </label>
+              <SelectedFileNotice fileName={fileName} onRemove={clearSelectedFile} disabled={importing} />
+              {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
             </div>
             <div className="bg-muted rounded-xl p-4">
               <p className="text-sm font-medium mb-2">עמודות נדרשות בקובץ:</p>
@@ -82,9 +101,12 @@ export default function ImportStudentsModal({ classId, onClose, onSuccess }) {
         )}
         {step === 'preview' && (
           <div className="space-y-4">
-            <div className="flex items-center gap-2 text-sm">
-              <FileText className="w-4 h-4 text-primary" />
-              <span className="font-medium">נמצאו {preview.length} תלמידים לייבוא</span>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <FileText className="w-4 h-4 text-primary" />
+                <span className="font-medium">נמצאו {preview.length} תלמידים לייבוא</span>
+              </div>
+              <SelectedFileNotice fileName={fileName} onRemove={clearSelectedFile} disabled={importing} />
             </div>
             <div className="max-h-64 overflow-y-auto border rounded-xl divide-y">
               {preview.slice(0, 20).map((s, i) => (

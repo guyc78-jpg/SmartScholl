@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import PageHeader from '@/components/ui/PageHeader';
 import EmptyState from '@/components/ui/EmptyState';
 import { toast } from 'sonner';
-import { Calendar, Plus, Edit, Trash2 } from 'lucide-react';
+import { Calendar, Plus, Edit, Trash2, FileUp } from 'lucide-react';
+import ImportScheduleDialog from '@/components/schedule/ImportScheduleDialog';
 
 const DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי'];
 const SUBJECTS = ['מתמטיקה', 'עברית', 'ספרות', 'אנגלית', 'היסטוריה', 'גיאוגרפיה', 'פיזיקה', 'כימיה', 'ביולוגיה', 'חינוך גופני', 'אמנות', 'שעת כיתה', 'אחר'];
@@ -32,6 +33,7 @@ export default function Schedule({ role = 'homeroom_teacher' }) {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editSlot, setEditSlot] = useState(null);
+  const [showImport, setShowImport] = useState(false);
   const [form, setForm] = useState({ day: 'ראשון', period: 1, start_time: '08:00', end_time: '08:45', subject: '', teacher: '', room: '', notes: '' });
 
   useEffect(() => { loadSlots(); }, []);
@@ -72,7 +74,12 @@ export default function Schedule({ role = 'homeroom_teacher' }) {
   return (
     <div className="p-4 lg:p-6 space-y-5" dir="rtl">
       <PageHeader title="מערכת שעות" subtitle="לוח השיעורים השבועי"
-        actions={role === 'homeroom_teacher' ? <Button size="sm" className="gap-2" onClick={openAdd}><Plus className="w-4 h-4"/>הוסף שיעור</Button> : null} />
+        actions={role === 'homeroom_teacher' ? (
+          <>
+            <Button size="sm" variant="outline" className="gap-2" onClick={() => setShowImport(true)}><FileUp className="w-4 h-4"/>ייבוא קובץ</Button>
+            <Button size="sm" className="gap-2" onClick={openAdd}><Plus className="w-4 h-4"/>הוסף שיעור</Button>
+          </>
+        ) : null} />
 
       {loading ? <div className="flex justify-center py-12"><div className="w-7 h-7 border-4 border-primary/20 border-t-primary rounded-full animate-spin"/></div>
       : slots.length === 0
@@ -129,6 +136,15 @@ export default function Schedule({ role = 'homeroom_teacher' }) {
           ))}
         </div>
       }
+
+      {showImport && (
+        <ImportScheduleDialog
+          open={showImport}
+          onOpenChange={setShowImport}
+          onImported={loadSlots}
+          classId={CLASS_ID}
+        />
+      )}
 
       {showForm && (
         <Dialog open onOpenChange={() => setShowForm(false)}>
