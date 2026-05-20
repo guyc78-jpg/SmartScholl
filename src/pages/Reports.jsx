@@ -50,12 +50,13 @@ export default function Reports() {
   });
 
   // Attendance stats
+  const countStatuses = (records, statuses) => records.filter(a => statuses.includes(a.status)).length;
   const attStats = {
-    'נוכח': filteredAtt.filter(a => a.status === 'נוכח').length,
-    'נעדר': filteredAtt.filter(a => a.status === 'נעדר').length,
-    'מאחר': filteredAtt.filter(a => a.status === 'מאחר').length,
-    'מוצדק': filteredAtt.filter(a => a.status === 'מוצדק').length,
-    'שוחרר': filteredAtt.filter(a => a.status === 'שוחרר').length,
+    'נוכח': countStatuses(filteredAtt, ['נוכח', 'נוכח/ת']),
+    'נעדר': countStatuses(filteredAtt, ['נעדר', 'נעדר/ת']),
+    'מאחר': countStatuses(filteredAtt, ['מאחר', 'מאחר/ת']),
+    'מוצדק': countStatuses(filteredAtt, ['מוצדק']),
+    'שוחרר': countStatuses(filteredAtt, ['שוחרר', 'שוחרר/ה']),
   };
 
   const attChartData = Object.entries(attStats).map(([name, value]) => ({ name, value }));
@@ -66,9 +67,9 @@ export default function Reports() {
     const sAtt = filteredAtt.filter(a => a.student_id === s.id);
     return {
       name: s.full_name.split(' ')[0],
-      נוכח: sAtt.filter(a => a.status === 'נוכח').length,
-      נעדר: sAtt.filter(a => a.status === 'נעדר').length,
-      מאחר: sAtt.filter(a => a.status === 'מאחר').length,
+      נוכח: countStatuses(sAtt, ['נוכח', 'נוכח/ת']),
+      נעדר: countStatuses(sAtt, ['נעדר', 'נעדר/ת']),
+      מאחר: countStatuses(sAtt, ['מאחר', 'מאחר/ת']),
     };
   }).sort((a,b) => b.נעדר - a.נעדר);
 

@@ -65,7 +65,15 @@ export default function ClassAttendance({ role }) {
     setExistingIds(ids);
   }
 
-  const setStatus = (sid, status) => setAttendanceMap(p => ({ ...p, [sid]: { ...(p[sid] || {}), status } }));
+  const setStatus = (sid, status) => setAttendanceMap(p => {
+    const current = p[sid];
+    if (current?.status === status) {
+      const next = { ...p };
+      delete next[sid];
+      return next;
+    }
+    return { ...p, [sid]: { ...(current || {}), status } };
+  });
   const setNote   = (sid, note)   => setAttendanceMap(p => ({ ...p, [sid]: { ...(p[sid] || {}), note } }));
 
   const markAll = (status) => {
@@ -81,7 +89,13 @@ export default function ClassAttendance({ role }) {
     const timeStr = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
     for (const student of students) {
       const a = attendanceMap[student.id];
-      if (!a?.status) continue;
+      const existingId = existingIds[student.id];
+
+      if (!a?.status) {
+        if (existingId) await base44.entities.AttendanceRecord.delete(existingId);
+        continue;
+      }
+
       const data = {
         student_id: student.id,
         student_name: student.full_name,
@@ -91,8 +105,8 @@ export default function ClassAttendance({ role }) {
         note: a.note || '',
         period: timeStr,
       };
-      if (existingIds[student.id]) {
-        await base44.entities.AttendanceRecord.update(existingIds[student.id], data);
+      if (existingId) {
+        await base44.entities.AttendanceRecord.update(existingId, data);
       } else {
         await base44.entities.AttendanceRecord.create(data);
       }
@@ -100,6 +114,7 @@ export default function ClassAttendance({ role }) {
     setLastSaved(timeStr);
     toast.success('נוכחות נשמרה!');
     await loadAll();
+    await loadDay();
     setSaving(false);
   }
 

@@ -73,9 +73,9 @@ export default function StudentProfile() {
 
   const communityPct = student.community_service_goal > 0
     ? Math.round((student.community_service_done / student.community_service_goal) * 100) : 0;
-  const presentCount = attendance.filter(a => a.status === 'נוכח').length;
-  const absentCount = attendance.filter(a => a.status === 'נעדר').length;
-  const lateCount = attendance.filter(a => a.status === 'מאחר').length;
+  const presentCount = attendance.filter(a => ['נוכח', 'נוכח/ת'].includes(a.status)).length;
+  const absentCount = attendance.filter(a => ['נעדר', 'נעדר/ת'].includes(a.status)).length;
+  const lateCount = attendance.filter(a => ['מאחר', 'מאחר/ת'].includes(a.status)).length;
   const openDiscipline = discipline.filter(d => d.status === 'פתוח').length;
 
   const formatDate = (d) => {
