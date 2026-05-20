@@ -75,13 +75,13 @@ const AuthenticatedApp = () => {
     if (!onboardingStatus || onboardingStatus === 'pending') {
       return <Onboarding user={user} onComplete={() => window.location.reload()} />;
     }
-    if (onboardingStatus === 'awaiting_approval') {
+    if (onboardingStatus === 'awaiting_approval' || onboardingStatus === 'rejected') {
       return <PendingApproval user={user} />;
     }
   }
 
-  // Use approved role; fallback for legacy/demo users without onboarding
-  const role = user?.role || 'homeroom_teacher';
+  // Role is set by admin — never allow students to reach staff routes
+  const role = user?.role || 'student';
   const staff = isStaff(role);
   const studentRole = isStudent(role);
 
@@ -120,8 +120,18 @@ const AuthenticatedApp = () => {
         <Route path="/community" element={<Community role={role} />} />
       </>}
 
-      {/* Role-based default redirect */}
+      {/* Block students from any staff route — redirect to their home */}
       {studentRole && <Route path="/" element={<Navigate to="/student-home" replace />} />}
+      {studentRole && <Route path="/students/*" element={<Navigate to="/student-home" replace />} />}
+      {studentRole && <Route path="/attendance/*" element={<Navigate to="/student-home" replace />} />}
+      {studentRole && <Route path="/class-attendance/*" element={<Navigate to="/student-home" replace />} />}
+      {studentRole && <Route path="/discipline/*" element={<Navigate to="/student-home" replace />} />}
+      {studentRole && <Route path="/performance/*" element={<Navigate to="/student-home" replace />} />}
+      {studentRole && <Route path="/communications/*" element={<Navigate to="/student-home" replace />} />}
+      {studentRole && <Route path="/tasks/*" element={<Navigate to="/student-home" replace />} />}
+      {studentRole && <Route path="/reports/*" element={<Navigate to="/student-home" replace />} />}
+      {studentRole && <Route path="/approvals/*" element={<Navigate to="/student-home" replace />} />}
+      {studentRole && <Route path="/grade-monitor/*" element={<Navigate to="/student-home" replace />} />}
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

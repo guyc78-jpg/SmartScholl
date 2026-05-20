@@ -17,9 +17,10 @@
       "enum": [
         "pending",
         "awaiting_approval",
-        "approved"
+        "approved",
+        "rejected"
       ],
-      "description": "\u05e1\u05d8\u05d8\u05d5\u05e1 \u05d4\u05e8\u05e9\u05de\u05d4: pending=\u05d8\u05e8\u05dd \u05d4\u05d5\u05e9\u05dc\u05dd, awaiting_approval=\u05de\u05de\u05ea\u05d9\u05df \u05dc\u05d0\u05d9\u05e9\u05d5\u05e8 \u05de\u05e0\u05d4\u05dc, approved=\u05de\u05d0\u05d5\u05e9\u05e8",
+      "description": "\u05e1\u05d8\u05d8\u05d5\u05e1 \u05d4\u05e8\u05e9\u05de\u05d4",
       "default": "pending"
     },
     "requested_role": {
@@ -29,43 +30,53 @@
         "coordinator",
         "student"
       ],
-      "description": "\u05d4\u05ea\u05e4\u05e7\u05d9\u05d3 \u05e9\u05d4\u05de\u05e9\u05ea\u05de\u05e9 \u05d1\u05d9\u05e7\u05e9 (\u05dc\u05e4\u05e0\u05d9 \u05d0\u05d9\u05e9\u05d5\u05e8 \u05de\u05e0\u05d4\u05dc)"
+      "description": "\u05d4\u05ea\u05e4\u05e7\u05d9\u05d3 \u05e9\u05d4\u05de\u05e9\u05ea\u05de\u05e9 \u05d1\u05d9\u05e7\u05e9"
+    },
+    "login_type": {
+      "type": "string",
+      "enum": [
+        "google",
+        "password",
+        "admin_created"
+      ],
+      "description": "\u05e1\u05d5\u05d2 \u05db\u05e0\u05d9\u05e1\u05d4: google=Google OAuth, admin_created=\u05d7\u05e9\u05d1\u05d5\u05df \u05e9\u05e0\u05d5\u05e6\u05e8 \u05e2\"\u05d9 \u05de\u05e0\u05d4\u05dc"
+    },
+    "must_change_password": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u05d4\u05d0\u05dd \u05d4\u05de\u05e9\u05ea\u05de\u05e9 \u05d7\u05d9\u05d9\u05d1 \u05dc\u05d4\u05d7\u05dc\u05d9\u05e3 \u05e1\u05d9\u05e1\u05de\u05d4 \u05d1\u05db\u05e0\u05d9\u05e1\u05d4 \u05d4\u05e8\u05d0\u05e9\u05d5\u05e0\u05d4"
+    },
+    "pre_created_by_admin": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u05d7\u05e9\u05d1\u05d5\u05df \u05e9\u05e0\u05d5\u05e6\u05e8 \u05de\u05e8\u05d0\u05e9 \u05e2\"\u05d9 \u05de\u05e0\u05d4\u05dc \u05e2\u05dd \u05ea\u05e4\u05e7\u05d9\u05d3 \u05de\u05d5\u05d2\u05d3\u05e8"
     },
     "profile_full_name": {
-      "type": "string",
-      "description": "\u05e9\u05dd \u05de\u05dc\u05d0 \u05e9\u05d4\u05d5\u05d6\u05df \u05d1\u05d4\u05e8\u05e9\u05de\u05d4"
+      "type": "string"
     },
     "profile_class": {
-      "type": "string",
-      "description": "\u05db\u05d9\u05ea\u05d4 (\u05ea\u05dc\u05de\u05d9\u05d3) / \u05db\u05d9\u05ea\u05d5\u05ea \u05d4\u05d5\u05e8\u05d0\u05d4 (\u05de\u05d5\u05e8\u05d4)"
+      "type": "string"
     },
     "profile_homeroom_teacher": {
-      "type": "string",
-      "description": "\u05e9\u05dd \u05de\u05d7\u05e0\u05da (\u05dc\u05ea\u05dc\u05de\u05d9\u05d3)"
+      "type": "string"
     },
     "profile_tracks": {
-      "type": "string",
-      "description": "\u05de\u05d2\u05de\u05d4/\u05d5\u05ea (\u05dc\u05ea\u05dc\u05de\u05d9\u05d3)"
+      "type": "string"
     },
     "profile_subject": {
-      "type": "string",
-      "description": "\u05de\u05e7\u05e6\u05d5\u05e2 \u05d4\u05d5\u05e8\u05d0\u05d4 (\u05de\u05d5\u05e8\u05d4/\u05e8\u05db\u05d6)"
+      "type": "string"
     },
     "profile_school_role": {
-      "type": "string",
-      "description": "\u05ea\u05e4\u05e7\u05d9\u05d3 \u05d1\u05d1\u05d9\u05ea \u05d4\u05e1\u05e4\u05e8 (\u05de\u05d5\u05e8\u05d4)"
+      "type": "string"
     },
     "profile_extra_roles": {
-      "type": "string",
-      "description": "\u05ea\u05e4\u05e7\u05d9\u05d3\u05d9\u05dd \u05e0\u05d5\u05e1\u05e4\u05d9\u05dd (\u05de\u05d5\u05e8\u05d4/\u05e8\u05db\u05d6)"
+      "type": "string"
     },
     "profile_grade_managed": {
-      "type": "string",
-      "description": "\u05e9\u05db\u05d1\u05d4 \u05d1\u05e0\u05d9\u05d4\u05d5\u05dc (\u05e8\u05db\u05d6 \u05e9\u05db\u05d1\u05d4)"
+      "type": "string"
     },
     "profile_homeroom_class": {
-      "type": "string",
-      "description": "\u05db\u05d9\u05ea\u05ea \u05d7\u05d9\u05e0\u05d5\u05da (\u05e8\u05db\u05d6 \u05e9\u05db\u05d1\u05d4)"
+      "type": "string"
     }
   }
 }
