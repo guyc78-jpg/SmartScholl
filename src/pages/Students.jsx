@@ -33,7 +33,7 @@ export default function Students({ role }) {
   const [showImport, setShowImport] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const canDeleteAllStudents = role === 'admin' || role === 'coordinator';
+  const canDeleteAllStudents = role === 'admin' || role === 'coordinator' || role === 'homeroom_teacher';
 
   useEffect(() => { loadStudents(); }, []);
 
