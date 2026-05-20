@@ -183,8 +183,8 @@ export default function Profile({ user, role }) {
             </Card>
           )}
 
-          <div className="flex justify-end">
-            <Button type="submit" disabled={saving} className="min-w-32">
+          <div className="flex justify-center pt-6">
+            <Button type="submit" disabled={saving} className="w-full sm:w-72">
               <Save className="w-4 h-4" />
               {saving ? 'שומר...' : 'שמור פרטים אישיים'}
             </Button>
