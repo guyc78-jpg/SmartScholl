@@ -13,7 +13,8 @@ import StatusBadge from '@/components/ui/StatusBadge';
 import PageHeader from '@/components/ui/PageHeader';
 import EmptyState from '@/components/ui/EmptyState';
 import { toast } from 'sonner';
-import { BookOpen, Plus, Edit, Trash2, Calendar, Clock, User, AlertTriangle } from 'lucide-react';
+import { BookOpen, Plus, Edit, Trash2, Calendar, Clock, User, AlertTriangle, FileUp } from 'lucide-react';
+import ImportExamsDialog from '@/components/exams/ImportExamsDialog';
 
 const SUBJECTS = ['מתמטיקה', 'עברית', 'ספרות', 'אנגלית', 'היסטוריה', 'גיאוגרפיה', 'פיזיקה', 'כימיה', 'ביולוגיה', 'חינוך גופני', 'אמנות', 'אחר'];
 const TYPES = ['מבחן', 'בחן', 'עבודה', 'פרויקט', 'הגשה'];
@@ -22,6 +23,7 @@ export default function Exams() {
   const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [editExam, setEditExam] = useState(null);
   const [form, setForm] = useState({ title: '', subject: '', type: 'מבחן', date: '', time: '', teacher: '', material: '', notes: '' });
 
@@ -114,7 +116,14 @@ export default function Exams() {
       <PageHeader
         title="לוח מבחנים"
         subtitle="מבחנים, בחנים, עבודות ופרויקטים"
-        actions={<Button size="sm" className="gap-2" onClick={openAdd}><Plus className="w-4 h-4" />הוסף</Button>}
+        actions={
+          <>
+            <Button size="sm" variant="outline" className="gap-2" onClick={() => setShowImport(true)}>
+              <FileUp className="w-4 h-4" />ייבוא קובץ
+            </Button>
+            <Button size="sm" className="gap-2" onClick={openAdd}><Plus className="w-4 h-4" />הוסף</Button>
+          </>
+        }
       />
 
       {overloadWeeks.length > 0 && (
@@ -160,6 +169,15 @@ export default function Exams() {
           )}
         </>
       }
+
+      {showImport && (
+        <ImportExamsDialog
+          open={showImport}
+          onOpenChange={setShowImport}
+          onImported={loadExams}
+          classId={CLASS_ID}
+        />
+      )}
 
       {showForm && (
         <Dialog open onOpenChange={() => setShowForm(false)}>
