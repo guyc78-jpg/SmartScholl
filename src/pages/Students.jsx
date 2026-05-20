@@ -113,15 +113,20 @@ export default function Students() {
                       {student.full_name.charAt(0)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-semibold text-foreground">{student.full_name}</h3>
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold text-foreground text-sm leading-tight">{student.full_name}</h3>
                         <StatusBadge status={student.status} />
                       </div>
-                      <p className="text-xs text-muted-foreground mt-0.5">ת.ז: {student.student_number || '—'}</p>
-                      <div className="flex gap-3 mt-2">
+                      <p className="text-xs text-muted-foreground">{student.class_name || 'כיתה י׳1'} · {student.grade || 'י'}</p>
+                      <div className="flex gap-3 mt-1.5 flex-wrap">
                         {student.phone && (
                           <span className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Phone className="w-3 h-3" />{student.phone}
+                          </span>
+                        )}
+                        {student.parent1_phone && !student.phone && (
+                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Phone className="w-3 h-3" />{student.parent1_phone}
                           </span>
                         )}
                       </div>

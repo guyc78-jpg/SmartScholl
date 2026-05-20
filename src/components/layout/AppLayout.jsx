@@ -4,10 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, Users, Calendar, BookOpen, Shield,
   MessageSquare, CheckSquare, Megaphone, BarChart2,
-  Clock, Heart, ChevronRight, Menu, X, Sun, Moon, Bell
+  Clock, Heart, Menu, X, Sun, Moon, BookMarked,
+  FileText, Star
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
 const teacherNav = [
@@ -16,13 +16,22 @@ const teacherNav = [
   { path: '/attendance', icon: Clock, label: 'נוכחות' },
   { path: '/schedule', icon: Calendar, label: 'מערכת שעות' },
   { path: '/exams', icon: BookOpen, label: 'מבחנים' },
-  { path: '/community', icon: Heart, label: 'מעורבות חברתית' },
   { path: '/discipline', icon: Shield, label: 'משמעת' },
-  { path: '/performance', icon: BarChart2, label: 'תפקוד' },
   { path: '/communications', icon: MessageSquare, label: 'תקשורת' },
   { path: '/tasks', icon: CheckSquare, label: 'משימות' },
   { path: '/announcements', icon: Megaphone, label: 'הודעות' },
+  { path: '/community', icon: Heart, label: 'מעורבות חברתית' },
+  { path: '/performance', icon: Star, label: 'תפקוד' },
   { path: '/reports', icon: BarChart2, label: 'דוחות' },
+];
+
+// Bottom nav shows only 5 most important items
+const teacherBottomNav = [
+  { path: '/', icon: LayoutDashboard, label: 'דשבורד' },
+  { path: '/students', icon: Users, label: 'תלמידים' },
+  { path: '/attendance', icon: Clock, label: 'נוכחות' },
+  { path: '/exams', icon: BookOpen, label: 'מבחנים' },
+  { path: '/tasks', icon: CheckSquare, label: 'משימות' },
 ];
 
 const studentNav = [
@@ -30,52 +39,58 @@ const studentNav = [
   { path: '/schedule', icon: Calendar, label: 'מערכת שעות' },
   { path: '/exams', icon: BookOpen, label: 'מבחנים' },
   { path: '/announcements', icon: Megaphone, label: 'הודעות' },
-  { path: '/community', icon: Heart, label: 'מעורבות חברתית' },
+  { path: '/community', icon: Heart, label: 'מעורבות' },
 ];
 
-const parentNav = [
-  { path: '/parent-home', icon: LayoutDashboard, label: 'עדכונים' },
-  { path: '/announcements', icon: Megaphone, label: 'הודעות' },
-];
+const roleLabels = {
+  homeroom_teacher: 'מחנך/ת כיתה',
+  coordinator: 'רכז/ת שכבה',
+  admin: 'מנהל/ת',
+  student: 'תלמיד/ה',
+  parent: 'הורה',
+};
 
 export default function AppLayout({ children, user, role, darkMode, setDarkMode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
 
-  const navItems = role === 'student' ? studentNav : role === 'parent' ? parentNav : teacherNav;
+  const navItems = role === 'student' ? studentNav : teacherNav;
+  const bottomNavItems = role === 'student' ? studentNav : teacherBottomNav;
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="p-6 border-b border-sidebar-border">
+      <div className="p-5 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
-            <BookOpen className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center flex-shrink-0">
+            <BookMarked className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="font-bold text-lg text-sidebar-foreground">כיתה חכמה</h1>
-            <p className="text-xs text-sidebar-foreground/60">ניהול כיתה חינוך</p>
+            <h1 className="font-bold text-base text-sidebar-foreground">כיתה חכמה</h1>
+            <p className="text-xs text-sidebar-foreground/50">ניהול כיתת חינוך</p>
           </div>
         </div>
       </div>
 
       {/* User */}
-      <div className="p-4 border-b border-sidebar-border">
+      <div className="px-4 py-3 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-primary/20 rounded-full flex items-center justify-center text-sidebar-primary font-bold text-sm">
+          <div className="w-9 h-9 bg-primary/20 rounded-full flex items-center justify-center text-sidebar-primary font-bold text-sm flex-shrink-0">
             {user?.full_name?.charAt(0) || '?'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-medium text-sm text-sidebar-foreground truncate">{user?.full_name || 'משתמש'}</p>
-            <p className="text-xs text-sidebar-foreground/50">
-              {role === 'homeroom_teacher' ? 'מחנך/ת כיתה' : role === 'coordinator' ? 'רכז/ת שכבה' : role === 'student' ? 'תלמיד/ה' : 'הורה'}
-            </p>
+            <p className="font-semibold text-sm text-sidebar-foreground truncate">{user?.full_name || 'משתמש'}</p>
+            <p className="text-xs text-sidebar-foreground/50">{roleLabels[role] || 'משתמש'}</p>
           </div>
+          <button onClick={() => setDarkMode(!darkMode)}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors flex-shrink-0">
+            {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
         </div>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto p-3 space-y-1">
+      <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
@@ -84,37 +99,25 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode 
               to={item.path}
               onClick={() => setSidebarOpen(false)}
               className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group',
+                'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150',
                 isActive
                   ? 'bg-sidebar-primary text-white shadow-sm'
                   : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground'
               )}
             >
-              <item.icon className="w-5 h-5 flex-shrink-0" />
+              <item.icon className="w-4 h-4 flex-shrink-0" />
               <span className="text-sm font-medium">{item.label}</span>
-              {isActive && <ChevronRight className="w-4 h-4 mr-auto opacity-70 rotate-180" />}
             </Link>
           );
         })}
       </nav>
-
-      {/* Dark mode toggle */}
-      <div className="p-4 border-t border-sidebar-border">
-        <button
-          onClick={() => setDarkMode(!darkMode)}
-          className="flex items-center gap-3 w-full px-3 py-2 rounded-xl text-sidebar-foreground/70 hover:bg-sidebar-accent transition-colors"
-        >
-          {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          <span className="text-sm">{darkMode ? 'מצב בהיר' : 'מצב כהה'}</span>
-        </button>
-      </div>
     </div>
   );
 
   return (
     <div className="flex h-screen bg-background overflow-hidden" dir="rtl">
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex w-64 bg-sidebar flex-col flex-shrink-0 border-l border-sidebar-border">
+      <aside className="hidden lg:flex w-60 bg-sidebar flex-col flex-shrink-0 border-l border-sidebar-border">
         <SidebarContent />
       </aside>
 
@@ -123,24 +126,20 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode 
         {sidebarOpen && (
           <>
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="fixed inset-0 bg-black/50 z-40 lg:hidden"
               onClick={() => setSidebarOpen(false)}
             />
             <motion.aside
-              initial={{ x: 300 }}
-              animate={{ x: 0 }}
-              exit={{ x: 300 }}
-              transition={{ type: 'spring', damping: 25 }}
+              initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 28, stiffness: 280 }}
               className="fixed right-0 top-0 h-full w-72 bg-sidebar z-50 lg:hidden shadow-2xl"
             >
-              <div className="absolute top-4 left-4">
-                <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)} className="text-sidebar-foreground">
-                  <X className="w-5 h-5" />
-                </Button>
-              </div>
+              <button
+                onClick={() => setSidebarOpen(false)}
+                className="absolute top-4 left-4 w-8 h-8 flex items-center justify-center text-sidebar-foreground/70 hover:text-sidebar-foreground rounded-lg hover:bg-sidebar-accent">
+                <X className="w-5 h-5" />
+              </button>
               <SidebarContent />
             </motion.aside>
           </>
@@ -150,41 +149,42 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile Header */}
-        <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-card border-b border-border">
-          <button onClick={() => setSidebarOpen(true)} className="text-foreground">
-            <Menu className="w-6 h-6" />
+        <header className="lg:hidden flex items-center justify-between px-4 h-14 bg-card border-b border-border flex-shrink-0">
+          <button onClick={() => setSidebarOpen(true)} className="w-9 h-9 flex items-center justify-center text-foreground rounded-lg hover:bg-muted transition-colors">
+            <Menu className="w-5 h-5" />
           </button>
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center">
-              <BookOpen className="w-4 h-4 text-white" />
+              <BookMarked className="w-4 h-4 text-white" />
             </div>
-            <span className="font-bold text-foreground">כיתה חכמה</span>
+            <span className="font-bold text-foreground text-sm">כיתה חכמה</span>
           </div>
-          <button onClick={() => setDarkMode(!darkMode)} className="text-muted-foreground">
+          <button onClick={() => setDarkMode(!darkMode)} className="w-9 h-9 flex items-center justify-center text-muted-foreground rounded-lg hover:bg-muted transition-colors">
             {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </button>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto pb-20 lg:pb-0">
           {children}
         </main>
 
         {/* Mobile Bottom Nav */}
-        <nav className="lg:hidden flex items-center justify-around px-2 py-2 bg-card border-t border-border safe-area-bottom">
-          {navItems.slice(0, 5).map((item) => {
+        <nav className="lg:hidden fixed bottom-0 right-0 left-0 flex items-center justify-around bg-card border-t border-border z-30"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom)', paddingTop: '6px', paddingLeft: '4px', paddingRight: '4px', minHeight: '56px' }}>
+          {bottomNavItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
               <Link
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  'flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all',
+                  'flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all min-w-0 flex-1',
                   isActive ? 'text-primary' : 'text-muted-foreground'
                 )}
               >
-                <item.icon className="w-5 h-5" />
-                <span className="text-[10px] font-medium">{item.label}</span>
+                <item.icon className="w-5 h-5 flex-shrink-0" />
+                <span className="text-[10px] font-medium truncate w-full text-center">{item.label}</span>
               </Link>
             );
           })}

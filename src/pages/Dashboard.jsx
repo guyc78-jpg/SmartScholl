@@ -12,8 +12,14 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import StatusBadge from '@/components/ui/StatusBadge';
-import { format } from 'date-fns';
 import QuickActionModal from '@/components/dashboard/QuickActionModal';
+
+const HEBREW_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+const HEBREW_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
+function hebrewDate() {
+  const d = new Date();
+  return `יום ${HEBREW_DAYS[d.getDay()]}, ${d.getDate()} ב${HEBREW_MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+}
 
 export default function Dashboard({ user }) {
   const [students, setStudents] = useState([]);
@@ -87,7 +93,7 @@ export default function Dashboard({ user }) {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-foreground">שלום, {user?.full_name?.split(' ')[0] || 'מחנך'} 👋</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{format(new Date(), 'EEEE, d בMMMM yyyy').replace(/\b[A-Z]/, m => m)} · כיתה י׳1</p>
+          <p className="text-sm text-muted-foreground mt-0.5">{hebrewDate()} · כיתה י׳1</p>
         </div>
         <Button variant="outline" size="sm" className="gap-2">
           <Bell className="w-4 h-4" />

@@ -129,7 +129,16 @@ export default function Exams() {
 
       {loading ? <div className="flex justify-center py-12"><div className="w-7 h-7 border-4 border-primary/20 border-t-primary rounded-full animate-spin"/></div>
       : upcoming.length === 0 && past.length === 0
-        ? <EmptyState icon={BookOpen} title="אין מבחנים" description="הוסף מבחן ראשון לכיתה" action={<Button onClick={openAdd} className="gap-2"><Plus className="w-4 h-4"/>הוסף מבחן</Button>} />
+        ? <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
+            <div className="w-20 h-20 bg-purple-50 dark:bg-purple-900/20 rounded-3xl flex items-center justify-center mb-5">
+              <BookOpen className="w-10 h-10 text-purple-400" />
+            </div>
+            <h3 className="text-xl font-bold text-foreground mb-2">אין מבחנים עדיין</h3>
+            <p className="text-sm text-muted-foreground mb-6 max-w-xs">הוסף מבחנים, בחנים, עבודות ופרויקטים לכיתה, כך שהתלמידים יוכלו להתכונן בזמן.</p>
+            <Button onClick={openAdd} size="lg" className="gap-2 px-8">
+              <Plus className="w-5 h-5"/>הוסף מבחן ראשון
+            </Button>
+          </div>
         : <>
           {upcoming.length > 0 && (
             <div>
