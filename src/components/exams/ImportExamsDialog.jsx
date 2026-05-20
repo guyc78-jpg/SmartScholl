@@ -4,15 +4,29 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertTriangle, FileUp, Loader2, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const ACCEPTED_TYPES = '.xlsx,.xls,.doc,.docx,.pdf,application/pdf,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+const EXAM_TYPES = ['בגרות', 'מתכונת', 'מועד ב׳', 'חזרה', 'חג', 'אירוע שכבתי', 'אחר', 'מבחן', 'בחן', 'עבודה', 'פרויקט', 'הגשה'];
+
+const normalizeType = (type = '') => {
+  const value = String(type).replace("'", '׳').trim();
+  if (EXAM_TYPES.includes(value)) return value;
+  if (value.includes('בגרות')) return 'בגרות';
+  if (value.includes('מתכונת')) return 'מתכונת';
+  if (value.includes('מועד ב')) return 'מועד ב׳';
+  if (value.includes('חזרה') || value.includes('תרגול')) return 'חזרה';
+  if (value.includes('חג') || value.includes('חופשה')) return 'חג';
+  if (value.includes('שכבתי') || value.includes('שכבה') || value.includes('טקס') || value.includes('סיור') || value.includes('יום שיא')) return 'אירוע שכבתי';
+  return 'אחר';
+};
 
 const emptyRow = {
   title: '',
   subject: '',
-  type: 'מבחן',
+  type: 'אחר',
   date: '',
   time: '',
   class_or_grade: '',
@@ -28,7 +42,7 @@ export default function ImportExamsDialog({ open, onOpenChange, onImported, clas
   const [isImporting, setIsImporting] = useState(false);
 
   const hasMissingDates = rows.some(row => !row.date);
-  const hasMissingRequired = rows.some(row => !row.title || !row.subject || !row.date);
+  const hasMissingRequired = rows.some(row => !row.title || !row.date);
 
   const updateRow = (index, field, value) => {
     setRows(prev => prev.map((row, rowIndex) => rowIndex === index ? { ...row, [field]: value } : row));
@@ -50,7 +64,13 @@ export default function ImportExamsDialog({ open, onOpenChange, onImported, clas
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
     const result = await base44.integrations.Core.InvokeLLM({
       file_urls: [file_url],
-      prompt: `חלץ מקובץ זה לוח מבחנים בעברית. החזר רק מבחנים/בחנים/עבודות/פרויקטים/הגשות שמופיעים בקובץ. חובה להמיר תאריכים לפורמט YYYY-MM-DD ושעות לפורמט HH:MM אם קיימות. אם לא ניתן לזהות תאריך, השאר date ריק. אם סוג לא ברור, השתמש ב"מבחן".`,
+      prompt: `חלץ מקובץ זה לוח מבחנים/אירועים בעברית מתוך כל הטבלאות בקובץ Word/Excel/PDF, ולא רק מפסקאות רגילות. חובה לסרוק את כל הטבלאות, כל השורות, כל העמודות וכל התאים עד סוף הקובץ ללא הגבלת כמות.
+
+מבנה נפוץ: בכל תא התאריך מופיע בשורה הראשונה, ומתחתיו כמה שורות של מבחנים/אירועים לאותו יום. עליך לזהות את התאריך של התא, ולפצל כל שורה/בולט/פריט שמתחת לתאריך לאירוע נפרד עם אותו תאריך. אם בתא יש כמה מבחנים באותו יום — החזר כל אחד כרשומה נפרדת.
+
+סיווג type חייב להיות אחד מהערכים המדויקים: בגרות, מתכונת, מועד ב׳, חזרה, חג, אירוע שכבתי, אחר. השתמש ב"חג" לחגים/חופשות, "אירוע שכבתי" לטקסים/ימי שיא/סיורים/פעילויות שכבה, "חזרה" לחזרה/תרגול, "מועד ב׳" למועד ב, "מתכונת" למתכונת, "בגרות" לבגרות, ואם לא ברור — "אחר".
+
+חובה להמיר תאריכים לפורמט YYYY-MM-DD ושעות לפורמט HH:MM אם קיימות. אם אין מקצוע ברור, כתוב subject "כללי". אם לא ניתן לזהות תאריך, השאר date ריק. אל תסכם ואל תחזיר רק דוגמאות — החזר את כל הפריטים שנמצאו בקובץ.`,
       response_json_schema: {
         type: 'object',
         properties: {
@@ -74,7 +94,12 @@ export default function ImportExamsDialog({ open, onOpenChange, onImported, clas
       }
     });
 
-    const detectedRows = (result?.exams || []).map(row => ({ ...emptyRow, ...row }));
+    const detectedRows = (result?.exams || []).map(row => ({
+      ...emptyRow,
+      ...row,
+      type: normalizeType(`${row.type || ''} ${row.title || ''}`),
+      subject: row.subject || 'כללי'
+    }));
     if (detectedRows.length === 0) {
       setError('לא הצלחנו לקרוא מהקובץ לוח מבחנים. נסו קובץ ברור יותר עם תאריכים ושמות מבחנים.');
     } else {
@@ -89,7 +114,7 @@ export default function ImportExamsDialog({ open, onOpenChange, onImported, clas
 
   const handleConfirmImport = async () => {
     if (hasMissingRequired) {
-      setError('יש להשלים שם מבחן, מקצוע ותאריך בכל השורות לפני אישור הייבוא.');
+      setError('יש להשלים שם פריט ותאריך בכל השורות לפני אישור הייבוא.');
       return;
     }
 
@@ -97,8 +122,8 @@ export default function ImportExamsDialog({ open, onOpenChange, onImported, clas
     await base44.entities.Exam.bulkCreate(rows.map(row => ({
       class_id: classId,
       title: row.title,
-      subject: row.subject,
-      type: row.type || 'מבחן',
+      subject: row.subject || 'כללי',
+      type: normalizeType(`${row.type || ''} ${row.title || ''}`),
       date: row.date,
       time: row.time,
       class_or_grade: row.class_or_grade,
@@ -124,7 +149,7 @@ export default function ImportExamsDialog({ open, onOpenChange, onImported, clas
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <p className="font-medium">העלאת קובץ Excel, Word או PDF</p>
-                <p className="text-sm text-muted-foreground mt-1">לא יתבצע ייבוא עד ללחיצה על “אשר ייבוא”.</p>
+                <p className="text-sm text-muted-foreground mt-1">נסרוק את כל הטבלאות והתאים. לא יתבצע ייבוא עד ללחיצה על “אשר ייבוא”.</p>
                 {fileName && <p className="text-xs text-muted-foreground mt-2">קובץ נבחר: {fileName}</p>}
               </div>
               <Button variant="outline" className="gap-2" onClick={() => fileInputRef.current?.click()} disabled={isParsing}>
@@ -144,7 +169,7 @@ export default function ImportExamsDialog({ open, onOpenChange, onImported, clas
           {rows.length > 0 && (
             <div className="space-y-3">
               <div className="flex items-center justify-between gap-3">
-                <h3 className="font-semibold">תצוגה מקדימה ({rows.length} שורות)</h3>
+                <h3 className="font-semibold">תצוגה מקדימה ({rows.length} פריטים שנמצאו)</h3>
                 {!hasMissingDates && <span className="inline-flex items-center gap-1 text-sm text-emerald-600"><CheckCircle2 className="w-4 h-4" />כל התאריכים זוהו</span>}
               </div>
 
@@ -152,8 +177,9 @@ export default function ImportExamsDialog({ open, onOpenChange, onImported, clas
                 <table className="w-full min-w-[950px] text-sm">
                   <thead className="bg-muted/60">
                     <tr>
-                      <th className="p-2 text-right">שם מבחן *</th>
-                      <th className="p-2 text-right">מקצוע/פרויקט *</th>
+                      <th className="p-2 text-right">שם פריט *</th>
+                      <th className="p-2 text-right">מקצוע/תחום</th>
+                      <th className="p-2 text-right">סוג</th>
                       <th className="p-2 text-right">תאריך *</th>
                       <th className="p-2 text-right">שעה</th>
                       <th className="p-2 text-right">שכבה/כיתה</th>
@@ -166,6 +192,12 @@ export default function ImportExamsDialog({ open, onOpenChange, onImported, clas
                       <tr key={index} className="border-t align-top">
                         <td className="p-2"><Input value={row.title} onChange={e => updateRow(index, 'title', e.target.value)} /></td>
                         <td className="p-2"><Input value={row.subject} onChange={e => updateRow(index, 'subject', e.target.value)} /></td>
+                        <td className="p-2">
+                          <Select value={normalizeType(row.type)} onValueChange={value => updateRow(index, 'type', value)}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent dir="rtl">{EXAM_TYPES.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}</SelectContent>
+                          </Select>
+                        </td>
                         <td className="p-2"><Input type="date" value={row.date} onChange={e => updateRow(index, 'date', e.target.value)} className={!row.date ? 'border-red-400' : ''} /></td>
                         <td className="p-2"><Input type="time" value={row.time} onChange={e => updateRow(index, 'time', e.target.value)} /></td>
                         <td className="p-2"><Input value={row.class_or_grade} onChange={e => updateRow(index, 'class_or_grade', e.target.value)} /></td>

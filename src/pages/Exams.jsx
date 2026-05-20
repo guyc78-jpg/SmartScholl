@@ -17,7 +17,7 @@ import { BookOpen, Plus, Edit, Trash2, Calendar, Clock, User, AlertTriangle, Fil
 import ImportExamsDialog from '@/components/exams/ImportExamsDialog';
 
 const SUBJECTS = ['מתמטיקה', 'עברית', 'ספרות', 'אנגלית', 'היסטוריה', 'גיאוגרפיה', 'פיזיקה', 'כימיה', 'ביולוגיה', 'חינוך גופני', 'אמנות', 'אחר'];
-const TYPES = ['מבחן', 'בחן', 'עבודה', 'פרויקט', 'הגשה'];
+const TYPES = ['מבחן', 'בחן', 'עבודה', 'פרויקט', 'הגשה', 'בגרות', 'מתכונת', 'מועד ב׳', 'חזרה', 'חג', 'אירוע שכבתי', 'אחר'];
 
 export default function Exams({ role, user }) {
   const [exams, setExams] = useState([]);
