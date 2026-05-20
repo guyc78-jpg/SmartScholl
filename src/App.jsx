@@ -29,6 +29,7 @@ import ApprovalManagement from './pages/ApprovalManagement';
 import GradeMonitor from './pages/GradeMonitor';
 import Onboarding from './pages/Onboarding';
 import PendingApproval from './pages/PendingApproval';
+import Profile from './pages/Profile';
 import { isStaff, isStudent, defaultRoute } from './lib/permissions';
 import { getInitialWorkRole } from './lib/roleUtils';
 
@@ -109,6 +110,7 @@ const AuthenticatedApp = () => {
         <Route path="/tasks" element={<Tasks role={role} />} />
         <Route path="/announcements" element={<Announcements role={role} />} />
         <Route path="/reports" element={<Reports />} />
+        <Route path="/profile" element={<Profile user={user} role={role} />} />
         {role === 'admin' && (
           <Route path="/approvals" element={<ApprovalManagement role={role} />} />
         )}
@@ -124,6 +126,7 @@ const AuthenticatedApp = () => {
         <Route path="/exams" element={<Exams role={role} user={user} />} />
         <Route path="/announcements" element={<Announcements role={role} />} />
         <Route path="/community" element={<Community role={role} />} />
+        <Route path="/profile" element={<Profile user={user} role={role} />} />
       </>}
 
       {/* Block students from any staff route — redirect to their home */}

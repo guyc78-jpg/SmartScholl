@@ -6,11 +6,12 @@ import {
   LayoutDashboard, Users, Calendar, BookOpen, Shield,
   MessageSquare, CheckSquare, Megaphone, BarChart2,
   Clock, Heart, Menu, X, Sun, Moon, BookMarked,
-  FileText, Star, UserCheck
+  FileText, Star, UserCheck, UserRound
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import WorkModeSelector from '@/components/layout/WorkModeSelector';
+import { getRoleDisplayLines, getUserDisplayName } from '@/lib/roleUtils';
 
 const teacherNav = [
   { path: '/', icon: LayoutDashboard, label: 'דשבורד' },
@@ -28,6 +29,7 @@ const teacherNav = [
   { path: '/grade-monitor', icon: FileText, label: 'מעקב שכבה', coordinatorOnly: true },
   { path: '/reports', icon: BarChart2, label: 'דוחות' },
   { path: '/approvals', icon: UserCheck, label: 'אישורי הרשמה', staffOnly: true },
+  { path: '/profile', icon: UserRound, label: 'פרופיל' },
 ];
 
 // Bottom nav shows only 5 most important items
@@ -45,6 +47,7 @@ const studentNav = [
   { path: '/exams', icon: BookOpen, label: 'מבחנים' },
   { path: '/announcements', icon: Megaphone, label: 'הודעות' },
   { path: '/community', icon: Heart, label: 'מעורבות' },
+  { path: '/profile', icon: UserRound, label: 'פרופיל' },
 ];
 
 const roleLabels = {
@@ -63,6 +66,8 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
   const isStaffRole = ['admin', 'homeroom_teacher', 'coordinator'].includes(role);
   const navItems = role === 'student' ? studentNav : teacherNav;
   const bottomNavItems = role === 'student' ? studentNav : teacherBottomNav;
+  const displayName = getUserDisplayName(user);
+  const roleLines = getRoleDisplayLines(user, role);
 
   useEffect(() => {
     if (role !== 'admin') {
@@ -93,11 +98,15 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
       <div className="px-4 py-3 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 bg-primary/20 rounded-full flex items-center justify-center text-sidebar-primary font-bold text-sm flex-shrink-0">
-            {user?.full_name?.charAt(0) || '?'}
+            {displayName?.charAt(0) || '?'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm text-sidebar-foreground truncate">{user?.full_name || 'משתמש'}</p>
-            <p className="text-xs text-sidebar-foreground/50">{roleLabels[role] || 'משתמש'}</p>
+            <p className="font-semibold text-sm text-sidebar-foreground truncate">{displayName}</p>
+            <div className="space-y-0.5">
+              {roleLines.map((line, index) => (
+                <p key={index} className="text-xs text-sidebar-foreground/50 leading-tight">{line}</p>
+              ))}
+            </div>
           </div>
           <button onClick={() => setDarkMode(!darkMode)}
             className="w-8 h-8 rounded-lg flex items-center justify-center text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors flex-shrink-0">

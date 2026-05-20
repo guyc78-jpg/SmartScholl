@@ -92,7 +92,20 @@
       "description": "\u05d7\u05e9\u05d1\u05d5\u05df \u05e9\u05e0\u05d5\u05e6\u05e8 \u05de\u05e8\u05d0\u05e9 \u05e2\"\u05d9 \u05de\u05e0\u05d4\u05dc \u05e2\u05dd \u05ea\u05e4\u05e7\u05d9\u05d3 \u05de\u05d5\u05d2\u05d3\u05e8"
     },
     "profile_full_name": {
-      "type": "string"
+      "type": "string",
+      "description": "\u05e9\u05dd \u05de\u05dc\u05d0 \u05dc\u05ea\u05e6\u05d5\u05d2\u05d4"
+    },
+    "profile_phone": {
+      "type": "string",
+      "description": "\u05d8\u05dc\u05e4\u05d5\u05df"
+    },
+    "profile_email": {
+      "type": "string",
+      "description": "\u05de\u05d9\u05d9\u05dc \u05dc\u05d9\u05e6\u05d9\u05e8\u05ea \u05e7\u05e9\u05e8"
+    },
+    "profile_address": {
+      "type": "string",
+      "description": "\u05db\u05ea\u05d5\u05d1\u05ea"
     },
     "profile_class": {
       "type": "string"
@@ -113,10 +126,12 @@
       "type": "string"
     },
     "profile_grade_managed": {
-      "type": "string"
+      "type": "string",
+      "description": "\u05e9\u05db\u05d1\u05d4 \u05de\u05e9\u05d5\u05d9\u05db\u05ea"
     },
     "profile_homeroom_class": {
-      "type": "string"
+      "type": "string",
+      "description": "\u05db\u05d9\u05ea\u05d4 \u05de\u05e9\u05d5\u05d9\u05db\u05ea"
     }
   }
 }

@@ -51,3 +51,23 @@ export function getInitialWorkRole(user) {
   const preferred = saved || user?.active_work_role;
   return roles.includes(preferred) ? preferred : roles[0];
 }
+
+export function getUserDisplayName(user) {
+  return user?.profile_full_name || user?.full_name || 'משתמש';
+}
+
+export function getRoleDisplayLines(user, activeRole) {
+  const roles = getAvailableRoles(user);
+  const lines = [];
+
+  if (roles.includes('homeroom_teacher')) {
+    lines.push(`מחנך/ת כיתה ${user?.profile_homeroom_class || user?.profile_class || '___'}`);
+  }
+
+  if (roles.includes('coordinator')) {
+    lines.push(`רכז/ת שכבה ${user?.profile_grade_managed || '___'}`);
+  }
+
+  if (lines.length) return lines;
+  return [ROLE_LABELS[activeRole || user?.role] || 'משתמש'];
+}
