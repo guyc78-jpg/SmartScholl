@@ -59,7 +59,12 @@ export function getInitialWorkRole(user) {
   const roles = getAvailableRoles(user);
   const saved = user?.email ? localStorage.getItem(`workRole:${user.email}`) : null;
   const preferred = saved || user?.active_work_role;
-  return roles.includes(preferred) ? preferred : getSystemRole(user);
+  if (roles.includes('admin') && roles.includes('homeroom_teacher') && (!preferred || preferred === 'admin')) return 'homeroom_teacher';
+  if (roles.includes('admin') && roles.includes('coordinator') && (!preferred || preferred === 'admin')) return 'coordinator';
+  if (roles.includes(preferred)) return preferred;
+  if (roles.includes('homeroom_teacher')) return 'homeroom_teacher';
+  if (roles.includes('coordinator')) return 'coordinator';
+  return getSystemRole(user);
 }
 
 export function getUserDisplayName(user) {
@@ -70,22 +75,21 @@ export function getUserFirstName(user) {
   return getUserDisplayName(user).split(' ')[0] || 'משתמש';
 }
 
-export function getRoleDisplayLines(user, activeRole) {
+export function getUserContextLabel(user, activeRole) {
   const roles = getAvailableRoles(user);
-  const lines = [`תפקיד ראשי: ${ROLE_LABELS[getSystemRole(user)] || 'משתמש'}`];
+  const role = activeRole || getInitialWorkRole(user);
 
-  const extraRoles = roles.filter(role => role !== getSystemRole(user));
-  if (extraRoles.length) {
-    lines.push(`תפקידים נוספים: ${extraRoles.map(role => ROLE_LABELS[role]).join(', ')}`);
+  if (role === 'homeroom_teacher' && roles.includes('homeroom_teacher')) {
+    return `${ROLE_LABELS.homeroom_teacher} ${user?.profile_homeroom_class || user?.profile_class || ''}`.trim();
   }
 
-  if (roles.includes('homeroom_teacher')) {
-    lines.push(`כיתה משויכת: ${user?.profile_homeroom_class || user?.profile_class || '___'}`);
+  if (role === 'coordinator' && roles.includes('coordinator')) {
+    return `${ROLE_LABELS.coordinator} ${user?.profile_grade_managed || ''}`.trim();
   }
 
-  if (roles.includes('coordinator')) {
-    lines.push(`שכבה משויכת: ${user?.profile_grade_managed || '___'}`);
-  }
+  return ROLE_LABELS[role] || 'משתמש';
+}
 
-  return lines.length ? lines : [ROLE_LABELS[activeRole || user?.role] || 'משתמש'];
+export function getRoleDisplayLines(user, activeRole) {
+  return [getUserContextLabel(user, activeRole)];
 }

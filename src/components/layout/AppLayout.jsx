@@ -3,26 +3,39 @@ import { Link, useLocation } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 
 import {
-  LayoutDashboard, Users, Calendar, BookOpen,
+  LayoutDashboard, Users, Calendar, CalendarCheck, BookOpen,
   Megaphone, BarChart2,
   Menu, X, Sun, Moon, BookMarked,
-  FileText, UserCheck, UserRound, ShieldCheck, Settings, LogOut
+  UserCheck, UserRound, ShieldCheck, Settings, LogOut
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import WorkModeSelector from '@/components/layout/WorkModeSelector';
-import { getAvailableRoles, getRoleDisplayLines, getUserDisplayName } from '@/lib/roleUtils';
+import { getAvailableRoles, getUserContextLabel, getUserDisplayName } from '@/lib/roleUtils';
 import { getDashboardLabel } from '@/lib/dashboardLabels';
 
-const sidebarNav = [
-  { path: '/', icon: LayoutDashboard, label: 'דשבורד', dynamicLabel: true, roles: ['admin', 'homeroom_teacher', 'coordinator'] },
-  { path: '/student-home', icon: LayoutDashboard, label: 'היום שלי', dynamicLabel: true, roles: ['student'] },
-  { path: '/profile', icon: UserRound, label: 'פרופיל', roles: ['admin', 'homeroom_teacher', 'coordinator', 'student', 'parent'] },
-  { path: '/announcements', icon: Megaphone, label: 'הודעות', roles: ['admin', 'homeroom_teacher', 'coordinator', 'student', 'parent'] },
-  { path: '/reports', icon: BarChart2, label: 'דוחות', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
-  { path: '/grade-monitor', icon: FileText, label: 'מעקב שכבה', roles: ['admin', 'coordinator'] },
-  { path: '/approvals', icon: UserCheck, label: 'אישורי הרשמה', roles: ['admin'] },
-  { path: '/users', icon: ShieldCheck, label: 'הרשאות משתמשים', roles: ['admin'] },
+const sidebarGroups = [
+  {
+    title: 'עבודה שוטפת',
+    items: [
+      { path: '/', icon: LayoutDashboard, label: 'הכיתה שלי', dynamicLabel: true, roles: ['admin', 'homeroom_teacher', 'coordinator'] },
+      { path: '/student-home', icon: LayoutDashboard, label: 'היום שלי', roles: ['student'] },
+      { path: '/students', icon: Users, label: 'תלמידים', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
+      { path: '/class-attendance', icon: CalendarCheck, label: 'מעקב נוכחות', roles: ['homeroom_teacher'] },
+      { path: '/attendance', icon: CalendarCheck, label: 'מעקב נוכחות', roles: ['admin', 'coordinator'] },
+      { path: '/exams', icon: BookOpen, label: 'מבחנים', roles: ['admin', 'homeroom_teacher', 'coordinator', 'student'] },
+      { path: '/reports', icon: BarChart2, label: 'דוחות', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
+      { path: '/announcements', icon: Megaphone, label: 'הודעות', roles: ['admin', 'homeroom_teacher', 'coordinator', 'student', 'parent'] },
+      { path: '/profile', icon: UserRound, label: 'פרופיל', roles: ['admin', 'homeroom_teacher', 'coordinator', 'student', 'parent'] },
+    ],
+  },
+  {
+    title: 'ניהול מערכת',
+    adminOnly: true,
+    items: [
+      { path: '/approvals', icon: UserCheck, label: 'אישורי הרשמה', roles: ['admin'] },
+      { path: '/users', icon: ShieldCheck, label: 'הרשאות משתמשים', roles: ['admin'] },
+    ],
+  },
 ];
 
 const teacherBottomNav = [
@@ -39,14 +52,6 @@ const studentBottomNav = [
   { path: '/exams', icon: BookOpen, label: 'מבחנים', roles: ['student'] },
 ];
 
-const roleLabels = {
-  homeroom_teacher: 'מחנך/ת כיתה',
-  coordinator: 'רכז/ת שכבה',
-  admin: 'מנהל/ת',
-  student: 'תלמיד/ה',
-  parent: 'הורה',
-};
-
 export default function AppLayout({ children, user, role, darkMode, setDarkMode, onRoleChange }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
@@ -55,10 +60,13 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
   const approvedRoles = getAvailableRoles(user);
   const isStaffRole = approvedRoles.some(item => ['admin', 'homeroom_teacher', 'coordinator'].includes(item));
   const canAccess = (item) => item.roles.some(itemRole => approvedRoles.includes(itemRole));
-  const navItems = sidebarNav.filter(canAccess);
+  const navGroups = sidebarGroups
+    .filter(group => !group.adminOnly || approvedRoles.includes('admin'))
+    .map(group => ({ ...group, items: group.items.filter(canAccess) }))
+    .filter(group => group.items.length > 0);
   const bottomNavItems = (isStaffRole ? teacherBottomNav : studentBottomNav).filter(canAccess);
   const displayName = getUserDisplayName(user);
-  const roleLines = getRoleDisplayLines(user, role);
+  const contextLabel = getUserContextLabel(user, role);
 
   useEffect(() => {
     if (!approvedRoles.includes('admin')) {
@@ -86,68 +94,69 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
       </div>
 
       {/* User */}
-      <div className="px-4 py-3 border-b border-sidebar-border">
+      <div className="px-5 py-5 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-primary/20 rounded-full flex items-center justify-center text-sidebar-primary font-bold text-sm flex-shrink-0">
+          <div className="w-10 h-10 bg-primary/20 rounded-2xl flex items-center justify-center text-sidebar-primary font-bold text-sm flex-shrink-0">
             {displayName?.charAt(0) || '?'}
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-sm text-sidebar-foreground truncate">{displayName}</p>
-            <div className="space-y-0.5">
-              {roleLines.map((line, index) => (
-                <p key={index} className="text-xs text-sidebar-foreground/50 leading-tight">{line}</p>
-              ))}
-            </div>
+            <p className="text-xs text-sidebar-foreground/60 leading-5 truncate">{contextLabel}</p>
           </div>
-          <button onClick={() => setDarkMode(!darkMode)}
-            className="w-8 h-8 rounded-lg flex items-center justify-center text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors flex-shrink-0">
-            {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
         </div>
         <WorkModeSelector user={user} activeRole={role} onRoleChange={onRoleChange} />
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          const itemLabel = item.dynamicLabel ? getDashboardLabel(role) : item.label;
-          const badge = item.path === '/approvals' && pendingCount > 0 ? pendingCount : null;
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              onClick={() => setSidebarOpen(false)}
-              className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-150',
-                isActive
-                  ? 'bg-sidebar-primary text-white shadow-sm'
-                  : 'text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground'
-              )}
-            >
-              <item.icon className="w-4 h-4 flex-shrink-0" />
-              <span className="text-sm font-medium flex-1">{itemLabel}</span>
-              {badge && (
-                <span className="w-5 h-5 bg-red-500 rounded-full text-white text-xs flex items-center justify-center flex-shrink-0">
-                  {badge}
-                </span>
-              )}
-            </Link>
-          );
-        })}
+      <nav className="flex-1 overflow-y-auto py-5 px-4 space-y-6">
+        {navGroups.map((group) => (
+          <div key={group.title} className="space-y-2">
+            {group.adminOnly && (
+              <p className="px-3 text-[11px] font-bold text-sidebar-foreground/40 uppercase tracking-wide">{group.title}</p>
+            )}
+            <div className="space-y-1.5">
+              {group.items.map((item) => {
+                const isActive = location.pathname === item.path;
+                const itemLabel = item.dynamicLabel ? getDashboardLabel(role) : item.label;
+                const badge = item.path === '/approvals' && pendingCount > 0 ? pendingCount : null;
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => setSidebarOpen(false)}
+                    className={cn(
+                      'flex items-center gap-3 px-3.5 py-3 rounded-2xl transition-all duration-150',
+                      isActive
+                        ? 'bg-sidebar-primary text-white shadow-sm'
+                        : 'text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-foreground'
+                    )}
+                  >
+                    <item.icon className="w-4 h-4 flex-shrink-0" />
+                    <span className="text-sm font-medium flex-1 text-right">{itemLabel}</span>
+                    {badge && (
+                      <span className="min-w-5 h-5 px-1 bg-red-500 rounded-full text-white text-xs flex items-center justify-center flex-shrink-0">
+                        {badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
-      <div className="p-3 border-t border-sidebar-border space-y-0.5">
+      <div className="p-4 border-t border-sidebar-border space-y-1.5">
         <button
           onClick={() => setDarkMode(!darkMode)}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all"
+          className="w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all"
         >
           <Settings className="w-4 h-4 flex-shrink-0" />
           <span className="text-sm font-medium flex-1 text-right">הגדרות תצוגה</span>
         </button>
         <button
           onClick={() => base44.auth.logout('/')}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all"
+          className="w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all"
         >
           <LogOut className="w-4 h-4 flex-shrink-0" />
           <span className="text-sm font-medium flex-1 text-right">התנתקות</span>
