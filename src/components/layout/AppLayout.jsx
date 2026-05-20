@@ -3,52 +3,37 @@ import { Link, useLocation } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 
 import {
-  LayoutDashboard, Users, Calendar, BookOpen, Shield,
-  MessageSquare, CheckSquare, Megaphone, BarChart2,
-  Clock, Heart, Menu, X, Sun, Moon, BookMarked,
-  FileText, Star, UserCheck, UserRound, ShieldCheck
+  LayoutDashboard, Users, Calendar, BookOpen,
+  Megaphone, BarChart2,
+  Menu, X, Sun, Moon, BookMarked,
+  FileText, UserCheck, UserRound, ShieldCheck, Settings, LogOut
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import WorkModeSelector from '@/components/layout/WorkModeSelector';
 import { getRoleDisplayLines, getUserDisplayName } from '@/lib/roleUtils';
 
-const teacherNav = [
-  { path: '/', icon: LayoutDashboard, label: 'דשבורד' },
-  { path: '/students', icon: Users, label: 'תלמידים' },
-  { path: '/attendance', icon: Clock, label: 'נוכחות' },
-  { path: '/class-attendance', icon: Users, label: 'מעקב נוכחות' },
-  { path: '/schedule', icon: Calendar, label: 'מערכת שעות' },
-  { path: '/exams', icon: BookOpen, label: 'מבחנים' },
-  { path: '/discipline', icon: Shield, label: 'משמעת' },
-  { path: '/communications', icon: MessageSquare, label: 'תקשורת' },
-  { path: '/tasks', icon: CheckSquare, label: 'משימות' },
-  { path: '/announcements', icon: Megaphone, label: 'הודעות' },
-  { path: '/community', icon: Heart, label: 'מעורבות חברתית' },
-  { path: '/performance', icon: Star, label: 'תפקוד' },
-  { path: '/grade-monitor', icon: FileText, label: 'מעקב שכבה', coordinatorOnly: true },
-  { path: '/reports', icon: BarChart2, label: 'דוחות' },
-  { path: '/approvals', icon: UserCheck, label: 'אישורי הרשמה', staffOnly: true },
-  { path: '/users', icon: ShieldCheck, label: 'ניהול משתמשים', staffOnly: true },
-  { path: '/profile', icon: UserRound, label: 'פרופיל' },
+const sidebarNav = [
+  { path: '/profile', icon: UserRound, label: 'פרופיל', roles: ['admin', 'homeroom_teacher', 'coordinator', 'student', 'parent'] },
+  { path: '/announcements', icon: Megaphone, label: 'הודעות', roles: ['admin', 'homeroom_teacher', 'coordinator', 'student', 'parent'] },
+  { path: '/reports', icon: BarChart2, label: 'דוחות', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
+  { path: '/grade-monitor', icon: FileText, label: 'מעקב שכבה', roles: ['admin', 'coordinator'] },
+  { path: '/approvals', icon: UserCheck, label: 'אישורי הרשמה', roles: ['admin'] },
+  { path: '/users', icon: ShieldCheck, label: 'הרשאות משתמשים', roles: ['admin'] },
 ];
 
-// Bottom nav shows only 5 most important items
 const teacherBottomNav = [
-  { path: '/', icon: LayoutDashboard, label: 'דשבורד' },
-  { path: '/students', icon: Users, label: 'תלמידים' },
-  { path: '/class-attendance', icon: Users, label: 'נוכחות' },
-  { path: '/exams', icon: BookOpen, label: 'מבחנים' },
-  { path: '/tasks', icon: CheckSquare, label: 'משימות' },
+  { path: '/', icon: LayoutDashboard, label: 'דשבורד', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
+  { path: '/students', icon: Users, label: 'תלמידים', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
+  { path: '/class-attendance', icon: Users, label: 'נוכחות', roles: ['admin', 'homeroom_teacher'] },
+  { path: '/schedule', icon: Calendar, label: 'מערכת', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
+  { path: '/exams', icon: BookOpen, label: 'מבחנים', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
 ];
 
-const studentNav = [
-  { path: '/student-home', icon: LayoutDashboard, label: 'היום שלי' },
-  { path: '/schedule', icon: Calendar, label: 'מערכת שעות' },
-  { path: '/exams', icon: BookOpen, label: 'מבחנים' },
-  { path: '/announcements', icon: Megaphone, label: 'הודעות' },
-  { path: '/community', icon: Heart, label: 'מעורבות' },
-  { path: '/profile', icon: UserRound, label: 'פרופיל' },
+const studentBottomNav = [
+  { path: '/student-home', icon: LayoutDashboard, label: 'דשבורד', roles: ['student'] },
+  { path: '/schedule', icon: Calendar, label: 'מערכת', roles: ['student'] },
+  { path: '/exams', icon: BookOpen, label: 'מבחנים', roles: ['student'] },
 ];
 
 const roleLabels = {
@@ -65,8 +50,8 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
   const location = useLocation();
 
   const isStaffRole = ['admin', 'homeroom_teacher', 'coordinator'].includes(role);
-  const navItems = role === 'student' ? studentNav : teacherNav;
-  const bottomNavItems = role === 'student' ? studentNav : teacherBottomNav;
+  const navItems = sidebarNav.filter(item => item.roles.includes(role));
+  const bottomNavItems = (role === 'student' ? studentBottomNav : teacherBottomNav).filter(item => item.roles.includes(role));
   const displayName = getUserDisplayName(user);
   const roleLines = getRoleDisplayLines(user, role);
 
@@ -120,8 +105,6 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5">
         {navItems.map((item) => {
-          if (item.staffOnly && role !== 'admin') return null;
-          if (item.coordinatorOnly && !['admin', 'coordinator'].includes(role)) return null;
           const isActive = location.pathname === item.path;
           const badge = item.path === '/approvals' && pendingCount > 0 ? pendingCount : null;
           return (
@@ -147,6 +130,23 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
           );
         })}
       </nav>
+
+      <div className="p-3 border-t border-sidebar-border space-y-0.5">
+        <button
+          onClick={() => setDarkMode(!darkMode)}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all"
+        >
+          <Settings className="w-4 h-4 flex-shrink-0" />
+          <span className="text-sm font-medium flex-1 text-right">הגדרות תצוגה</span>
+        </button>
+        <button
+          onClick={() => base44.auth.logout('/')}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all"
+        >
+          <LogOut className="w-4 h-4 flex-shrink-0" />
+          <span className="text-sm font-medium flex-1 text-right">התנתקות</span>
+        </button>
+      </div>
     </div>
   );
 
@@ -199,8 +199,8 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
         </main>
 
         {/* Mobile Bottom Nav */}
-        <nav className="lg:hidden fixed bottom-0 inset-x-0 flex items-center justify-between bg-card border-t border-border z-30" dir="rtl"
-          style={{ paddingBottom: 'env(safe-area-inset-bottom)', paddingTop: '8px', paddingInline: '12px', minHeight: '64px' }}>
+        <nav className="lg:hidden fixed bottom-0 inset-x-0 grid bg-card border-t border-border z-30" dir="rtl"
+          style={{ gridTemplateColumns: `repeat(${bottomNavItems.length}, minmax(0, 1fr))`, paddingBottom: 'env(safe-area-inset-bottom)', paddingTop: '8px', paddingInline: '12px', minHeight: '64px' }}>
           {bottomNavItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
@@ -208,7 +208,7 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  'flex flex-col items-center justify-center gap-1 py-2 rounded-xl transition-all flex-1',
+                  'flex flex-col items-center justify-center gap-1 py-2 rounded-xl transition-all min-w-0',
                   isActive ? 'text-primary' : 'text-muted-foreground'
                 )}
               >
