@@ -24,6 +24,7 @@ const teacherNav = [
   { path: '/announcements', icon: Megaphone, label: 'הודעות' },
   { path: '/community', icon: Heart, label: 'מעורבות חברתית' },
   { path: '/performance', icon: Star, label: 'תפקוד' },
+  { path: '/grade-monitor', icon: FileText, label: 'מעקב שכבה', coordinatorOnly: true },
   { path: '/reports', icon: BarChart2, label: 'דוחות' },
   { path: '/approvals', icon: UserCheck, label: 'אישורי הרשמה', staffOnly: true },
 ];
@@ -105,6 +106,7 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode 
       <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-0.5">
         {navItems.map((item) => {
           if (item.staffOnly && !isStaffRole) return null;
+          if (item.coordinatorOnly && !['admin', 'coordinator', 'homeroom_teacher'].includes(role)) return null;
           const isActive = location.pathname === item.path;
           const badge = item.path === '/approvals' && pendingCount > 0 ? pendingCount : null;
           return (

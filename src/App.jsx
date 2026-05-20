@@ -26,6 +26,7 @@ import Reports from './pages/Reports';
 import StudentHome from './pages/StudentHome';
 import ClassAttendance from './pages/ClassAttendance';
 import ApprovalManagement from './pages/ApprovalManagement';
+import GradeMonitor from './pages/GradeMonitor';
 import Onboarding from './pages/Onboarding';
 import PendingApproval from './pages/PendingApproval';
 import { isStaff, isStudent, defaultRoute } from './lib/permissions';
@@ -104,6 +105,9 @@ const AuthenticatedApp = () => {
         <Route path="/reports" element={<Reports />} />
         {(role === 'admin' || role === 'homeroom_teacher' || role === 'coordinator') && (
           <Route path="/approvals" element={<ApprovalManagement role={role} />} />
+        )}
+        {(role === 'admin' || role === 'homeroom_teacher' || role === 'coordinator') && (
+          <Route path="/grade-monitor" element={<GradeMonitor user={user} role={role} />} />
         )}
       </>}
 
