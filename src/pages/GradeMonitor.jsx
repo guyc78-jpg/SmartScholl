@@ -67,7 +67,7 @@ export default function GradeMonitor({ user, role }) {
     : 'הכיתה שלך';
 
   return (
-    <div className="p-4 lg:p-6 space-y-5" dir="rtl">
+    <div className="p-4 lg:p-6 space-y-5 text-right" dir="rtl">
       <PageHeader
         title={role === 'coordinator' ? `מעקב שכבה – ${gradeLabel}` : 'מעקב כיתה'}
         subtitle={role === 'coordinator' ? 'מבט-על על כל כיתות השכבה' : 'דשבורד כיתתי מלא'}
@@ -85,10 +85,12 @@ export default function GradeMonitor({ user, role }) {
                   ? 'bg-primary text-primary-foreground border-primary shadow'
                   : 'bg-card border-border text-foreground hover:border-primary/50 hover:bg-muted'}`}
             >
-              <Users className="w-3.5 h-3.5 inline ml-1.5" />
-              {cls.name}
+              <span className="inline-flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5" />
+                <span>{cls.name}</span>
+              </span>
               {cls.homeroom_teacher_name && (
-                <span className="text-xs opacity-70 mr-1">· {cls.homeroom_teacher_name}</span>
+                <span className="text-xs opacity-70 me-1">· {cls.homeroom_teacher_name}</span>
               )}
             </button>
           ))}

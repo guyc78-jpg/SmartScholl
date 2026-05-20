@@ -99,4 +99,38 @@
 @layer utilities {
   .rtl { direction: rtl; }
   .ltr { direction: ltr; }
+
+  [dir="rtl"] {
+    text-align: right;
+  }
+
+  [dir="rtl"] .text-left {
+    text-align: right;
+  }
+
+  [dir="rtl"] .origin-left {
+    transform-origin: right;
+  }
+
+  [dir="rtl"] input,
+  [dir="rtl"] textarea,
+  [dir="rtl"] select {
+    text-align: right;
+    direction: rtl;
+  }
+
+  [dir="rtl"] input[type="email"],
+  [dir="rtl"] input[type="url"],
+  [dir="rtl"] input[type="tel"],
+  [dir="rtl"] input[type="number"],
+  [dir="rtl"] input[type="date"],
+  [dir="rtl"] input[type="time"] {
+    direction: ltr;
+    text-align: right;
+  }
+
+  [dir="rtl"] [data-radix-popper-content-wrapper] {
+    direction: rtl;
+    text-align: right;
+  }
 }

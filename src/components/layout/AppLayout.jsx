@@ -71,7 +71,7 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode 
   }, [isStaffRole]);
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full text-right" dir="rtl">
       {/* Logo */}
       <div className="p-5 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
@@ -179,13 +179,13 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode 
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto pb-20 lg:pb-0">
+        <main className="flex-1 overflow-y-auto pb-20 lg:pb-0 text-right" dir="rtl">
           {children}
         </main>
 
         {/* Mobile Bottom Nav */}
-        <nav className="lg:hidden fixed bottom-0 right-0 left-0 flex items-center justify-around bg-card border-t border-border z-30"
-          style={{ paddingBottom: 'env(safe-area-inset-bottom)', paddingTop: '6px', paddingLeft: '4px', paddingRight: '4px', minHeight: '56px' }}>
+        <nav className="lg:hidden fixed bottom-0 inset-x-0 flex items-center justify-around bg-card border-t border-border z-30" dir="rtl"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom)', paddingTop: '6px', paddingInline: '4px', minHeight: '56px' }}>
           {bottomNavItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (

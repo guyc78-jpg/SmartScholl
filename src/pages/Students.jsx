@@ -42,7 +42,7 @@ export default function Students() {
     ? Math.round((s.community_service_done / s.community_service_goal) * 100) : 0;
 
   return (
-    <div className="p-4 lg:p-6 space-y-5" dir="rtl">
+    <div className="p-4 lg:p-6 space-y-5 text-right" dir="rtl">
       <PageHeader
         title="תלמידים"
         subtitle={`${students.length} תלמידים בכיתה`}
@@ -66,7 +66,7 @@ export default function Students() {
           <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="חיפוש לפי שם או מספר..."
-            className="pr-9"
+            className="pe-9"
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
@@ -104,15 +104,15 @@ export default function Students() {
               transition={{ delay: i * 0.04 }}
             >
               <Link to={`/students/${student.id}`}>
-                <Card className="p-4 hover:shadow-md transition-all cursor-pointer border hover:border-primary/30">
-                  <div className="flex items-start gap-3">
+                <Card className="p-4 hover:shadow-md transition-all cursor-pointer border hover:border-primary/30 text-right">
+                  <div className="grid grid-cols-[auto,1fr,auto] items-start gap-3" dir="rtl">
                     <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-base flex-shrink-0
                       ${student.status === 'דורש מעקב' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
                         student.gender === 'נקבה' ? 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400' :
                         'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'}`}>
                       {student.full_name.charAt(0)}
                     </div>
-                    <div className="flex-1 min-w-0">
+                    <div className="min-w-0 text-right">
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-semibold text-foreground text-sm leading-tight">{student.full_name}</h3>
                         <StatusBadge status={student.status} />
@@ -152,7 +152,7 @@ export default function Students() {
                         </div>
                       )}
                     </div>
-                    <ChevronLeft className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-1" />
+                    <ChevronLeft className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-1 justify-self-end" />
                   </div>
                 </Card>
               </Link>

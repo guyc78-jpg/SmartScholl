@@ -67,7 +67,7 @@ export default function ClassDashboard({ classInfo, user, role }) {
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 text-right" dir="rtl">
       {/* Stat summary */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {statCards.map(sc => {

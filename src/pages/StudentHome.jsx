@@ -66,7 +66,7 @@ export default function StudentHome({ user }) {
   const formatDate = (d) => { const dt = new Date(d); return `${dt.getDate().toString().padStart(2,'0')}/${(dt.getMonth()+1).toString().padStart(2,'0')}`; };
 
   return (
-    <div className="p-4 lg:p-6 space-y-5" dir="rtl">
+    <div className="p-4 lg:p-6 space-y-5 text-right" dir="rtl">
       <div>
         <h1 className="text-2xl font-bold text-foreground">שלום, {user?.full_name?.split(' ')[0] || 'תלמיד'} 👋</h1>
         <p className="text-sm text-muted-foreground mt-0.5">יום {todayDayName} · כיתה {studentData?.class_name || 'י׳1'}</p>

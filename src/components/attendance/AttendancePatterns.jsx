@@ -17,7 +17,7 @@ export default function AttendancePatterns({ statsPerStudent, allRecords }) {
   const dayData = dayNames.map((name, i) => ({ name, count: dayCount[i] || 0 }));
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 text-right" dir="rtl">
       {/* Day of week chart */}
       <Card>
         <CardHeader className="pb-2">
@@ -25,7 +25,7 @@ export default function AttendancePatterns({ statsPerStudent, allRecords }) {
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={160}>
-            <BarChart data={dayData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+            <BarChart data={dayData} margin={{ top: 4, right: -20, left: 8, bottom: 0 }}>
               <XAxis dataKey="name" tick={{ fontSize: 11 }} />
               <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
               <Tooltip formatter={(v) => [`${v} היעדרויות`]} />

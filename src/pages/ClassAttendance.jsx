@@ -131,7 +131,7 @@ export default function ClassAttendance({ role }) {
   }
 
   return (
-    <div className="p-4 lg:p-6 space-y-4" dir="rtl">
+    <div className="p-4 lg:p-6 space-y-4 text-right" dir="rtl">
       <PageHeader
         title="מעקב נוכחות כיתתי"
         subtitle="כלי פנימי לזיהוי דפוסי איחורים והיעדרויות"
@@ -192,20 +192,20 @@ export default function ClassAttendance({ role }) {
                   <motion.div key={student.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}>
                     <Card className={`transition-all ${isAlert ? 'border-red-200 dark:border-red-800/60 bg-red-50/20 dark:bg-red-900/5' : ''}`}>
                       <div className="p-3">
-                        <div className="flex items-center gap-3">
+                        <div className="grid grid-cols-[auto,minmax(7rem,10rem),1fr,auto] items-center gap-3" dir="rtl">
                           <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0
                             ${student.gender === 'נקבה' ? 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'}`}>
                             {student.full_name.charAt(0)}
                           </div>
-                          <div className="w-28 flex-shrink-0 min-w-0">
+                          <div className="min-w-0 text-right">
                             <p className="font-medium text-sm truncate">{student.full_name}</p>
                             {isAlert && (
-                              <p className="text-[10px] text-red-500 flex items-center gap-0.5">
+                              <p className="text-[10px] text-red-500 inline-flex items-center gap-0.5">
                                 <AlertTriangle className="w-2.5 h-2.5" />חריג
                               </p>
                             )}
                           </div>
-                          <div className="flex gap-1 flex-wrap flex-1">
+                          <div className="flex gap-1 flex-wrap justify-center sm:justify-start min-w-0">
                             {STATUSES.map(st => (
                               <button key={st} onClick={() => setStatus(student.id, st)}
                                 className={`text-[11px] px-1.5 sm:px-2 py-1.5 rounded-lg border font-medium transition-all whitespace-nowrap
@@ -215,14 +215,14 @@ export default function ClassAttendance({ role }) {
                             ))}
                           </div>
                           <button onClick={() => setExpandedStudent(isExpanded ? null : student.id)}
-                            className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0">
+                            className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 justify-self-end">
                             {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                           </button>
                         </div>
 
                         {/* Note input when absent/late */}
                         {(current?.status === 'נעדר/ת' || current?.status === 'מאחר/ת' || current?.note) && (
-                          <div className="mt-2 mr-12">
+                          <div className="mt-2 me-12">
                             <Input placeholder="הערה (אופציונלי)..." value={current?.note || ''}
                               onChange={e => setNote(student.id, e.target.value)} className="text-sm h-8" />
                           </div>

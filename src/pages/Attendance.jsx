@@ -85,7 +85,7 @@ export default function Attendance() {
   const markedCount  = Object.values(attendanceMap).filter(a => a.status).length;
 
   return (
-    <div className="p-4 lg:p-6 space-y-4" dir="rtl">
+    <div className="p-4 lg:p-6 space-y-4 text-right" dir="rtl">
       <PageHeader
         title="נוכחות"
         subtitle="סימון נוכחות יומי"
@@ -142,17 +142,17 @@ export default function Attendance() {
             return (
               <motion.div key={student.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}>
                 <Card className={`p-3 transition-all ${isAbsent ? 'border-red-200 dark:border-red-800/50 bg-red-50/30 dark:bg-red-900/5' : ''}`}>
-                  <div className="flex items-center gap-3">
+                  <div className="grid grid-cols-[auto,minmax(7rem,10rem),1fr] items-center gap-3" dir="rtl">
                     <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0
                       ${student.gender === 'נקבה' ? 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'}`}>
                       {student.full_name.charAt(0)}
                     </div>
-                    <div className="w-28 flex-shrink-0 min-w-0">
+                    <div className="min-w-0 text-right">
                       <p className="font-medium text-sm truncate">{student.full_name}</p>
                       {student.status === 'דורש מעקב' && <StatusBadge status="דורש מעקב" className="mt-0.5 scale-90 origin-right" />}
                     </div>
                     {/* Status buttons */}
-                    <div className="flex gap-1 flex-shrink-0">
+                    <div className="flex gap-1 flex-wrap justify-center sm:justify-start min-w-0">
                       {STATUSES.map(st => {
                         const isSelected = current?.status === st;
                         return (
@@ -170,7 +170,7 @@ export default function Attendance() {
                     </div>
                   </div>
                   {(isAbsent || isLate || current?.note) && (
-                    <div className="mt-2 mr-12">
+                    <div className="mt-2 me-12">
                       <Input
                         placeholder="הערה (אופציונלי)..."
                         value={current?.note || ''}

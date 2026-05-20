@@ -7,7 +7,7 @@ export default function AttendanceAlerts({ statsPerStudent }) {
 
   if (alerts.length === 0) {
     return (
-      <Card className="p-6 text-center text-muted-foreground text-sm">
+      <Card className="p-6 text-center text-muted-foreground text-sm" dir="rtl">
         <div className="flex flex-col items-center gap-2">
           <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center">
             <AlertTriangle className="w-6 h-6 text-emerald-500" />
@@ -20,7 +20,7 @@ export default function AttendanceAlerts({ statsPerStudent }) {
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 text-right" dir="rtl">
       <div className="flex items-center gap-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
         <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0" />
         <div>
@@ -57,7 +57,7 @@ export default function AttendanceAlerts({ statsPerStudent }) {
                     )}
                   </div>
                 </div>
-                <div className="flex flex-col items-end gap-1 text-xs text-muted-foreground">
+                <div className="flex flex-col items-start gap-1 text-xs text-muted-foreground">
                   {absAlert && <span className="px-2 py-0.5 bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 rounded-full">היעדרויות חריגות</span>}
                   {lateAlert && <span className="px-2 py-0.5 bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 rounded-full">איחורים חריגים</span>}
                 </div>

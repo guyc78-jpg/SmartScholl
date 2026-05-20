@@ -12,7 +12,7 @@ import { CLASS_ID } from '@/lib/demoData';
 import { toast } from 'sonner';
 
 const RatingDots = ({ value }) => (
-  <div className="flex gap-1">
+  <div className="flex flex-row-reverse gap-1">
     {[1,2,3,4,5].map(n => (
       <div key={n} className={`w-3 h-3 rounded-full ${n <= value ? 'bg-primary' : 'bg-muted'}`} />
     ))}
@@ -81,7 +81,7 @@ export default function StudentProfile() {
 
       {/* Student Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-5">
-        <Card className="p-5">
+        <Card className="p-5 text-right">
           <div className="flex items-start gap-4">
             <div className={`w-16 h-16 rounded-2xl flex items-center justify-center font-bold text-2xl flex-shrink-0 ${student.gender === 'נקבה' ? 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'}`}>
               {student.full_name.charAt(0)}
@@ -263,7 +263,7 @@ export default function StudentProfile() {
                         <div className="flex gap-1"><StatusBadge status={d.severity} /><StatusBadge status={d.status} /></div>
                       </div>
                       <p className="text-xs text-muted-foreground">{d.category} · {d.description}</p>
-                      {d.treatment && <p className="text-xs text-foreground border-r-2 border-primary pr-2">{d.treatment}</p>}
+                      {d.treatment && <p className="text-xs text-foreground border-e-2 border-primary pe-2">{d.treatment}</p>}
                     </div>
                   ))}
                 </div>
@@ -343,7 +343,7 @@ export default function StudentProfile() {
                         <span className="text-xs text-muted-foreground">{formatDate(c.date)}</span>
                       </div>
                       <p className="text-xs text-foreground">{c.summary}</p>
-                      {c.follow_up && <p className="text-xs text-primary border-r-2 border-primary pr-2">פעולת המשך: {c.follow_up}</p>}
+                      {c.follow_up && <p className="text-xs text-primary border-e-2 border-primary pe-2">פעולת המשך: {c.follow_up}</p>}
                     </div>
                   ))}
                 </div>
