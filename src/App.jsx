@@ -24,6 +24,8 @@ import Tasks from './pages/Tasks';
 import Announcements from './pages/Announcements';
 import Reports from './pages/Reports';
 import StudentHome from './pages/StudentHome';
+import Onboarding from './pages/Onboarding';
+import PendingApproval from './pages/PendingApproval';
 import { isStaff, isStudent, defaultRoute } from './lib/permissions';
 
 const AuthenticatedApp = () => {
@@ -64,7 +66,19 @@ const AuthenticatedApp = () => {
     else if (authError.type === 'auth_required') { navigateToLogin(); return null; }
   }
 
-  const role = user?.role || 'homeroom_teacher'; // default for demo
+  // Onboarding gate — admin always bypasses
+  const onboardingStatus = user?.onboarding_status;
+  if (user && user.role !== 'admin') {
+    if (!onboardingStatus || onboardingStatus === 'pending') {
+      return <Onboarding user={user} onComplete={() => window.location.reload()} />;
+    }
+    if (onboardingStatus === 'awaiting_approval') {
+      return <PendingApproval user={user} />;
+    }
+  }
+
+  // Use approved role; fallback for legacy/demo users without onboarding
+  const role = user?.role || 'homeroom_teacher';
   const staff = isStaff(role);
   const studentRole = isStudent(role);
 
