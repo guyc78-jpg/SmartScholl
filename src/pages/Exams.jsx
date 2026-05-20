@@ -124,11 +124,11 @@ export default function Exams({ role, user }) {
             <span className="text-[9px]">{['ינו', 'פבר', 'מרץ', 'אפר', 'מאי', 'יונ', 'יול', 'אוג', 'ספט', 'אוק', 'נוב', 'דצמ'][new Date(exam.date).getMonth()]}</span>
           </div>
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className={`font-semibold text-sm ${completed ? 'line-through text-muted-foreground' : ''}`}>{exam.title} {completed && '✅'}</h3>
-              {isOverloaded && !isPast && <AlertTriangle className="w-4 h-4 text-amber-500" title="עומס מבחנים בשבוע זה!" />}
-            </div>
-            <div className="flex flex-wrap gap-2 mt-1 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 flex-wrap flex-row-reverse justify-end">
+                <h3 className={`font-semibold text-sm ${completed ? 'line-through text-muted-foreground' : ''}`}>{exam.title} {completed && '✅'}</h3>
+                {isOverloaded && !isPast && <AlertTriangle className="w-4 h-4 text-amber-500" title="עומס מבחנים בשבוע זה!" />}
+              </div>
+            <div className="flex flex-wrap gap-2 mt-1 text-xs text-muted-foreground flex-row-reverse justify-end">
               <span className="flex items-center gap-1"><BookOpen className="w-3 h-3" />{exam.subject}</span>
               {exam.time && <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{exam.time}</span>}
               {exam.class_or_grade && <span>כיתה/שכבה: {exam.class_or_grade}</span>}
@@ -137,7 +137,7 @@ export default function Exams({ role, user }) {
             {exam.material && <p className="text-xs text-muted-foreground mt-1.5 bg-muted/50 rounded px-2 py-1">📚 {exam.material}</p>}
             {exam.notes && <p className="text-xs text-muted-foreground mt-1">💬 {exam.notes}</p>}
           </div>
-          <div className="flex flex-col items-end gap-2">
+          <div className="flex flex-col items-start gap-2">
             <StatusBadge status={completed ? 'בוצע' : exam.type} />
             {isStudentView && (
               <Button size="sm" variant={completed ? 'outline' : 'default'} className="h-8 text-xs gap-1.5" onClick={() => toggleExamCompletion(exam)}>
@@ -146,7 +146,7 @@ export default function Exams({ role, user }) {
               </Button>
             )}
             {canEditExams && !isPast && (
-              <div className="flex gap-1">
+              <div className="flex gap-1 flex-row-reverse">
                 <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => openEdit(exam)} title="עריכה"><Edit className="w-3.5 h-3.5" /></Button>
                 <Button variant="ghost" size="icon" className="w-7 h-7 text-red-500" onClick={() => handleDelete(exam.id)}><Trash2 className="w-3.5 h-3.5" /></Button>
               </div>

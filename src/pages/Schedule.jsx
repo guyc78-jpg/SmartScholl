@@ -98,7 +98,7 @@ export default function Schedule({ role = 'homeroom_teacher' }) {
         : <div className="space-y-4">
           {byDay.filter(d => d.slots.length > 0).map(({ day, slots: daySlots }) => (
             <div key={day}>
-              <div className={`flex items-center gap-2 mb-2 ${day === todayDayName ? '' : ''}`}>
+              <div className={`flex items-center gap-2 mb-2 flex-row-reverse justify-end ${day === todayDayName ? '' : ''}`}>
                 <h2 className={`text-sm font-bold ${day === todayDayName ? 'text-primary' : 'text-foreground'}`}>יום {day}</h2>
                 {day === todayDayName && <span className="text-[10px] bg-primary text-white px-2 py-0.5 rounded-full">היום</span>}
               </div>
@@ -108,20 +108,20 @@ export default function Schedule({ role = 'homeroom_teacher' }) {
                   return (
                     <motion.div key={slot.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                       <Card className="p-3 hover:shadow-sm transition-all">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 flex-row-reverse">
                           <div className="w-8 h-8 bg-muted rounded-lg flex items-center justify-center text-xs font-bold text-muted-foreground flex-shrink-0">
                             {slot.period}
                           </div>
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground w-24 flex-shrink-0">
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground w-24 flex-shrink-0 force-ltr">
                             {slot.start_time && slot.end_time ? `${slot.start_time}–${slot.end_time}` : slot.start_time || ''}
                           </div>
-                          <div className="flex-1 flex items-center gap-2 flex-wrap">
+                          <div className="flex-1 flex items-center gap-2 flex-wrap flex-row-reverse justify-end">
                             <span className={`text-xs font-semibold px-2.5 py-1 rounded-lg ${color}`}>{slot.subject}</span>
                             {slot.teacher && <span className="text-xs text-muted-foreground">{slot.teacher}</span>}
                             {slot.room && <span className="text-xs text-muted-foreground">· חדר {slot.room}</span>}
                           </div>
                           {role === 'homeroom_teacher' && (
-                            <div className="flex gap-1">
+                            <div className="flex gap-1 flex-row-reverse">
                               <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => openEdit(slot)}><Edit className="w-3.5 h-3.5"/></Button>
                               <Button variant="ghost" size="icon" className="w-7 h-7 text-red-500" onClick={() => handleDelete(slot.id)}><Trash2 className="w-3.5 h-3.5"/></Button>
                             </div>

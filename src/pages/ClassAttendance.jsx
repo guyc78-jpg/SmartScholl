@@ -174,12 +174,12 @@ export default function ClassAttendance({ role }) {
         {/* ── DAILY TAB ── */}
         <TabsContent value="daily" className="space-y-4">
           {/* Date + Summary */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-right">
-            <div className="flex items-center justify-end gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-right" dir="rtl">
+            <div className="flex items-center flex-row-reverse gap-2">
               <Label htmlFor="date" className="text-sm flex-shrink-0">תאריך:</Label>
               <Input id="date" type="date" value={date} onChange={e => setDate(e.target.value)} className="w-40" />
             </div>
-            <div className="flex gap-2 flex-wrap justify-end text-sm">
+            <div className="flex gap-2 flex-wrap flex-row-reverse text-sm">
               <span className="px-3 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-xl font-medium">✓ {presentCount} נוכחים</span>
               <span className="px-3 py-1 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl font-medium">✗ {absentCount} נעדרים</span>
               <span className="px-3 py-1 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-xl font-medium">⏰ {lateCount} מאחרים</span>
@@ -188,7 +188,7 @@ export default function ClassAttendance({ role }) {
           </div>
 
           {/* Mark All */}
-          <div className="flex items-center justify-end gap-2 flex-wrap text-right">
+          <div className="flex items-center flex-row-reverse gap-2 flex-wrap text-right" dir="rtl">
             <span className="text-xs text-muted-foreground">סמן הכל:</span>
             {STATUSES.map(st => (
               <button key={st} onClick={() => markAll(st)}
@@ -212,7 +212,7 @@ export default function ClassAttendance({ role }) {
                   <motion.div key={student.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}>
                     <Card className={`transition-all ${isAlert ? 'border-red-200 dark:border-red-800/60 bg-red-50/20 dark:bg-red-900/5' : ''}`}>
                       <div className="p-3">
-                        <div className="grid grid-cols-[auto,minmax(7rem,10rem),1fr,auto] items-center gap-3" dir="rtl">
+                        <div className="grid grid-cols-[auto,minmax(7rem,10rem),1fr,auto] items-center gap-3 rtl:grid-cols-[auto,1fr,minmax(7rem,10rem),auto]" dir="rtl">
                           <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0
                             ${student.gender === 'נקבה' ? 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'}`}>
                             {student.full_name.charAt(0)}
@@ -225,7 +225,7 @@ export default function ClassAttendance({ role }) {
                               </p>
                             )}
                           </div>
-                          <div className="flex gap-1 flex-wrap justify-end min-w-0">
+                          <div className="flex gap-1 flex-wrap flex-row-reverse min-w-0">
                             {STATUSES.map(st => (
                               <button key={st} onClick={() => setStatus(student.id, st)}
                                 className={`text-[11px] px-1.5 sm:px-2 py-1.5 rounded-lg border font-medium transition-all whitespace-nowrap
@@ -250,7 +250,7 @@ export default function ClassAttendance({ role }) {
 
                         {/* Expanded stats */}
                         {isExpanded && stats && (
-                          <div className="mt-3 me-12 p-2 bg-muted/40 rounded-lg flex justify-end gap-4 text-xs flex-wrap text-right">
+                          <div className="mt-3 me-12 p-2 bg-muted/40 rounded-lg flex flex-row-reverse gap-4 text-xs flex-wrap text-right">
                             <span className="text-red-600 dark:text-red-400 font-medium">היעדרויות: {stats.absences}</span>
                             <span className="text-amber-600 dark:text-amber-400 font-medium">איחורים: {stats.lates}</span>
                             <span className="text-purple-600 dark:text-purple-400 font-medium">שוחרר/ה: {stats.released}</span>
@@ -266,8 +266,8 @@ export default function ClassAttendance({ role }) {
           )}
 
           {students.length > 0 && (
-            <div className="flex items-center justify-end gap-3 text-right">
-              <Button onClick={handleSave} disabled={saving} className="flex-1 gap-2">
+            <div className="flex items-center flex-row-reverse gap-3 text-right" dir="rtl">
+              <Button onClick={handleSave} disabled={saving} className="gap-2">
                 <Save className="w-4 h-4" />
                 {saving ? 'שומר...' : 'שמור נוכחות'}
               </Button>

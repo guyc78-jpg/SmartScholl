@@ -162,12 +162,12 @@ export default function Students({ role }) {
                       {student.full_name.charAt(0)}
                     </div>
                     <div className="min-w-0 text-right">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-foreground text-sm leading-tight">{student.full_name}</h3>
-                        <StatusBadge status={student.status} />
-                      </div>
+                                  <div className="flex items-center gap-2 mb-1 flex-row-reverse justify-end">
+                                    <h3 className="font-semibold text-foreground text-sm leading-tight">{student.full_name}</h3>
+                                    <StatusBadge status={student.status} />
+                                  </div>
                       <p className="text-xs text-muted-foreground">{student.class_name || 'כיתה י׳1'} · {student.grade || 'י'}</p>
-                      <div className="flex gap-3 mt-1.5 flex-wrap">
+                      <div className="flex gap-3 mt-1.5 flex-wrap flex-row-reverse justify-end">
                         {student.phone && (
                           <span className="flex items-center gap-1 text-xs text-muted-foreground">
                             <Phone className="w-3 h-3" />{student.phone}
@@ -181,7 +181,7 @@ export default function Students({ role }) {
                       </div>
                       {/* Community progress */}
                       <div className="mt-3">
-                        <div className="flex items-center justify-between text-xs mb-1">
+                        <div className="flex items-center justify-between text-xs mb-1" dir="rtl">
                           <span className="text-muted-foreground">מעורבות חברתית</span>
                           <span className="font-medium">{student.community_service_done || 0}/{student.community_service_goal || 60} שע׳</span>
                         </div>
@@ -194,7 +194,7 @@ export default function Students({ role }) {
                       </div>
                       {/* Tags */}
                       {student.tags?.length > 0 && (
-                        <div className="flex gap-1 flex-wrap mt-2">
+                        <div className="flex gap-1 flex-wrap mt-2 flex-row-reverse justify-end">
                           {student.tags.map(tag => (
                             <span key={tag} className="text-[10px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full">{tag}</span>
                           ))}
