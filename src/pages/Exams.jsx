@@ -13,20 +13,24 @@ import StatusBadge from '@/components/ui/StatusBadge';
 import PageHeader from '@/components/ui/PageHeader';
 import EmptyState from '@/components/ui/EmptyState';
 import { toast } from 'sonner';
-import { BookOpen, Plus, Edit, Trash2, Calendar, Clock, User, AlertTriangle, FileUp } from 'lucide-react';
+import { BookOpen, Plus, Edit, Trash2, Calendar, Clock, User, AlertTriangle, FileUp, Check, RotateCcw } from 'lucide-react';
 import ImportExamsDialog from '@/components/exams/ImportExamsDialog';
 
 const SUBJECTS = ['מתמטיקה', 'עברית', 'ספרות', 'אנגלית', 'היסטוריה', 'גיאוגרפיה', 'פיזיקה', 'כימיה', 'ביולוגיה', 'חינוך גופני', 'אמנות', 'אחר'];
 const TYPES = ['מבחן', 'בחן', 'עבודה', 'פרויקט', 'הגשה'];
 
-export default function Exams({ role }) {
+export default function Exams({ role, user }) {
   const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [examCompletions, setExamCompletions] = useState([]);
+  const [studentData, setStudentData] = useState(null);
+  const [celebratingExamId, setCelebratingExamId] = useState(null);
   const [editExam, setEditExam] = useState(null);
   const [form, setForm] = useState({ title: '', subject: '', type: 'מבחן', date: '', time: '', class_or_grade: '', teacher: '', material: '', notes: '' });
   const canEditExams = ['admin', 'homeroom_teacher', 'coordinator'].includes(role);
+  const isStudentView = role === 'student';
 
   useEffect(() => { loadExams(); }, []);
 
@@ -34,6 +38,15 @@ export default function Exams({ role }) {
     setLoading(true);
     const data = await base44.entities.Exam.filter({ class_id: CLASS_ID });
     setExams(data.sort((a,b) => a.date.localeCompare(b.date)));
+
+    if (isStudentView) {
+      const students = await base44.entities.Student.filter({ class_id: CLASS_ID });
+      const myStudent = students.find(s => s.email === user?.email || s.user_email === user?.email) || students[0];
+      setStudentData(myStudent || null);
+      const completions = myStudent ? await base44.entities.ExamCompletion.filter({ student_id: myStudent.id }) : [];
+      setExamCompletions(completions);
+    }
+
     setLoading(false);
   }
 
@@ -59,6 +72,28 @@ export default function Exams({ role }) {
     loadExams();
   }
 
+  async function toggleExamCompletion(exam) {
+    if (!studentData) return;
+    const existing = examCompletions.find(item => item.exam_id === exam.id);
+    if (existing) {
+      await base44.entities.ExamCompletion.delete(existing.id);
+      setExamCompletions(prev => prev.filter(item => item.id !== existing.id));
+      toast.success('הסימון בוטל');
+      return;
+    }
+
+    const completion = await base44.entities.ExamCompletion.create({
+      exam_id: exam.id,
+      student_id: studentData.id,
+      student_name: studentData.full_name,
+      completed_at: new Date().toISOString()
+    });
+    setExamCompletions(prev => [...prev, completion]);
+    setCelebratingExamId(exam.id);
+    setTimeout(() => setCelebratingExamId(null), 900);
+    toast.success('כל הכבוד! המבחן סומן כבוצע');
+  }
+
   // Check for exam overload (more than 3 in a week)
   const getWeekKey = (date) => { const d = new Date(date); const day = d.getDay(); const mon = new Date(d); mon.setDate(d.getDate() - day); return mon.toISOString().split('T')[0]; };
   const weekCounts = {};
@@ -78,8 +113,11 @@ export default function Exams({ role }) {
     const weekKey = getWeekKey(exam.date);
     const isOverloaded = overloadWeeks.includes(weekKey);
     const isPast = exam.date < today;
+    const completed = examCompletions.some(item => item.exam_id === exam.id);
+    const celebrating = celebratingExamId === exam.id;
     return (
-      <Card className={`p-4 hover:shadow-sm transition-all ${isOverloaded && !isPast ? 'border-amber-300 dark:border-amber-700' : ''} ${isPast ? 'opacity-60' : ''}`}>
+      <Card className={`relative p-4 hover:shadow-sm transition-all ${isOverloaded && !isPast ? 'border-amber-300 dark:border-amber-700' : ''} ${isPast && !completed ? 'opacity-60' : ''} ${completed ? 'border-emerald-200 dark:border-emerald-900/50 bg-emerald-50/40 dark:bg-emerald-900/10' : ''}`}>
+        {celebrating && <motion.div initial={{ scale: 0, opacity: 0 }} animate={{ scale: [0, 1.4, 1], opacity: [0, 1, 0] }} transition={{ duration: 0.8 }} className="absolute left-5 top-3 text-3xl pointer-events-none">✅</motion.div>}
         <div className="flex items-start gap-3">
           <div className={`w-12 h-12 rounded-xl flex flex-col items-center justify-center flex-shrink-0 ${isPast ? 'bg-slate-100 text-slate-500' : 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'}`}>
             <span className="text-sm font-bold">{new Date(exam.date).getDate()}</span>
@@ -87,7 +125,7 @@ export default function Exams({ role }) {
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-semibold text-sm">{exam.title}</h3>
+              <h3 className={`font-semibold text-sm ${completed ? 'line-through text-muted-foreground' : ''}`}>{exam.title} {completed && '✅'}</h3>
               {isOverloaded && !isPast && <AlertTriangle className="w-4 h-4 text-amber-500" title="עומס מבחנים בשבוע זה!" />}
             </div>
             <div className="flex flex-wrap gap-2 mt-1 text-xs text-muted-foreground">
@@ -100,7 +138,13 @@ export default function Exams({ role }) {
             {exam.notes && <p className="text-xs text-muted-foreground mt-1">💬 {exam.notes}</p>}
           </div>
           <div className="flex flex-col items-end gap-2">
-            <StatusBadge status={exam.type} />
+            <StatusBadge status={completed ? 'בוצע' : exam.type} />
+            {isStudentView && (
+              <Button size="sm" variant={completed ? 'outline' : 'default'} className="h-8 text-xs gap-1.5" onClick={() => toggleExamCompletion(exam)}>
+                {completed ? <RotateCcw className="w-3 h-3" /> : <Check className="w-3 h-3" />}
+                {completed ? 'בטל סימון' : 'סיימתי את המבחן'}
+              </Button>
+            )}
             {canEditExams && !isPast && (
               <div className="flex gap-1">
                 <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => openEdit(exam)} title="עריכה"><Edit className="w-3.5 h-3.5" /></Button>

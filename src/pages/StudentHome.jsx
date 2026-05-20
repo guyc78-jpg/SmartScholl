@@ -6,8 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { toast } from 'sonner';
-import { Calendar, BookOpen, Megaphone, Heart, CheckSquare, Check, Clock } from 'lucide-react';
-import StudentExamCompletion from '@/components/exams/StudentExamCompletion';
+import { Calendar, BookOpen, Megaphone, Heart, CheckSquare, Check, Clock, RotateCcw } from 'lucide-react';
 
 export default function StudentHome({ user }) {
   const [announcements, setAnnouncements] = useState([]);
@@ -67,35 +66,34 @@ export default function StudentHome({ user }) {
 
   async function toggleExamCompletion(exam) {
     if (!studentData) return;
-    const existing = examCompletions.find(c => c.exam_id === exam.id);
+    const existing = examCompletions.find(item => item.exam_id === exam.id);
     if (existing) {
       await base44.entities.ExamCompletion.delete(existing.id);
-      setExamCompletions(prev => prev.filter(c => c.id !== existing.id));
-      toast.info('הסימון בוטל');
+      setExamCompletions(prev => prev.filter(item => item.id !== existing.id));
+      toast.success('הסימון בוטל');
       return;
     }
 
-    const created = await base44.entities.ExamCompletion.create({
+    const completion = await base44.entities.ExamCompletion.create({
       exam_id: exam.id,
       student_id: studentData.id,
       student_name: studentData.full_name,
       completed_at: new Date().toISOString()
     });
-    setExamCompletions(prev => [...prev, created]);
+    setExamCompletions(prev => [...prev, completion]);
     setCelebratingExamId(exam.id);
-    setTimeout(() => setCelebratingExamId(null), 700);
-    toast.success('אלופים! המבחן סומן כבוצע ✅');
+    setTimeout(() => setCelebratingExamId(null), 900);
+    toast.success('כל הכבוד! המבחן סומן כבוצע');
   }
 
   const communityPct = studentData?.community_service_goal > 0
     ? Math.round((studentData.community_service_done / studentData.community_service_goal) * 100) : 0;
+  const completedExamCount = exams.filter(exam => examCompletions.some(item => item.exam_id === exam.id)).length;
+  const examProgressPct = exams.length ? Math.round((completedExamCount / exams.length) * 100) : 0;
 
   if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin"/></div>;
 
   const formatDate = (d) => { const dt = new Date(d); return `${dt.getDate().toString().padStart(2,'0')}/${(dt.getMonth()+1).toString().padStart(2,'0')}`; };
-  const completedExamIds = new Set(examCompletions.map(c => c.exam_id));
-  const completedExamsCount = exams.filter(exam => completedExamIds.has(exam.id)).length;
-  const examProgressPct = exams.length > 0 ? Math.round((completedExamsCount / exams.length) * 100) : 0;
 
   return (
     <div className="p-4 lg:p-6 space-y-5 text-right" dir="rtl">
@@ -130,42 +128,44 @@ export default function StudentHome({ user }) {
       {exams.length > 0 && (
         <Card>
           <CardHeader className="pb-2">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <CardTitle className="text-sm font-semibold flex items-center gap-2"><BookOpen className="w-4 h-4 text-purple-500"/>מבחנים קרובים</CardTitle>
-              <div className="min-w-[180px]">
-                <div className="flex items-center justify-between text-xs mb-1">
-                  <span className="text-muted-foreground flex items-center gap-1"><CheckSquare className="w-3.5 h-3.5" />התקדמות</span>
-                  <span className="font-bold">{completedExamsCount}/{exams.length} בוצעו</span>
-                </div>
-                <div className="h-2 bg-muted rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${examProgressPct}%` }} />
-                </div>
+            <CardTitle className="text-sm font-semibold flex items-center gap-2"><BookOpen className="w-4 h-4 text-purple-500"/>מבחנים קרובים</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="rounded-xl bg-purple-50 dark:bg-purple-900/20 p-3">
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-muted-foreground">התקדמות מבחנים</span>
+                <span className="font-bold">{completedExamCount} / {exams.length} בוצעו</span>
+              </div>
+              <div className="h-2.5 bg-white/70 dark:bg-slate-800 rounded-full overflow-hidden">
+                <div className="h-full bg-purple-500 rounded-full transition-all" style={{ width: `${examProgressPct}%` }} />
               </div>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-2">
             {exams.slice(0, 4).map(exam => {
-              const completed = completedExamIds.has(exam.id);
+              const completed = examCompletions.some(item => item.exam_id === exam.id);
+              const celebrating = celebratingExamId === exam.id;
               return (
-              <div key={exam.id} className={`flex flex-col sm:flex-row sm:items-center gap-3 py-2 border-b last:border-0 rounded-lg ${completed ? 'bg-emerald-50/60 dark:bg-emerald-900/10 px-2' : ''}`}>
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <div className={`w-10 h-10 rounded-xl flex flex-col items-center justify-center flex-shrink-0 ${completed ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400'}`}>
-                    <span className="text-xs font-bold">{completed ? '✅' : formatDate(exam.date)}</span>
+                <div key={exam.id} className={`relative flex flex-col sm:flex-row sm:items-center gap-3 py-2 border-b last:border-0 ${completed ? 'opacity-80' : ''}`}>
+                  {celebrating && <motion.div initial={{ scale: 0, opacity: 0 }} animate={{ scale: [0, 1.4, 1], opacity: [0, 1, 0] }} transition={{ duration: 0.8 }} className="absolute left-4 top-1 text-3xl pointer-events-none">✅</motion.div>}
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className={`w-10 h-10 rounded-xl flex flex-col items-center justify-center flex-shrink-0 ${completed ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400' : 'bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400'}`}>
+                      <span className="text-xs font-bold">{completed ? '✓' : formatDate(exam.date)}</span>
+                    </div>
+                    <div className="flex-1">
+                      <p className={`text-sm font-medium ${completed ? 'line-through text-muted-foreground' : ''}`}>{exam.title} {completed && '✅'}</p>
+                      <p className="text-xs text-muted-foreground">{exam.subject}{exam.time ? ` · ${exam.time}` : ''}{exam.class_or_grade ? ` · ${exam.class_or_grade}` : ''}</p>
+                      {exam.material && <p className="text-xs text-muted-foreground">📚 {exam.material}</p>}
+                    </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">{exam.title}</p>
-                    <p className="text-xs text-muted-foreground">{exam.subject}{exam.teacher ? ` · ${exam.teacher}` : ''}</p>
-                    {exam.material && <p className="text-xs text-muted-foreground">📚 {exam.material}</p>}
+                  <div className="flex items-center gap-2">
+                    <StatusBadge status={completed ? 'בוצע' : exam.type} />
+                    <Button size="sm" variant={completed ? 'outline' : 'default'} className="h-8 text-xs gap-1.5" onClick={() => toggleExamCompletion(exam)}>
+                      {completed ? <RotateCcw className="w-3 h-3" /> : <Check className="w-3 h-3" />}
+                      {completed ? 'בטל סימון' : 'סיימתי את המבחן'}
+                    </Button>
                   </div>
-                  <StatusBadge status={completed ? 'בוצע' : exam.type} />
                 </div>
-                <StudentExamCompletion
-                  completed={completed}
-                  celebrating={celebratingExamId === exam.id}
-                  onToggle={() => toggleExamCompletion(exam)}
-                />
-              </div>
-            );})}
+              );
+            })}
           </CardContent>
         </Card>
       )}

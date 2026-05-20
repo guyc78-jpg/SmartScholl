@@ -95,7 +95,7 @@ const AuthenticatedApp = () => {
         <Route path="/attendance" element={<Attendance />} />
         <Route path="/class-attendance" element={<ClassAttendance role={role} />} />
         <Route path="/schedule" element={<Schedule role={role} />} />
-        <Route path="/exams" element={<Exams role={role} />} />
+        <Route path="/exams" element={<Exams role={role} user={user} />} />
         <Route path="/community" element={<Community role={role} />} />
         <Route path="/discipline" element={<Discipline role={role} />} />
         <Route path="/performance" element={<Performance role={role} />} />
@@ -115,7 +115,7 @@ const AuthenticatedApp = () => {
       {studentRole && <>
         <Route path="/student-home" element={<StudentHome user={user} />} />
         <Route path="/schedule" element={<Schedule role={role} />} />
-        <Route path="/exams" element={<Exams role={role} />} />
+        <Route path="/exams" element={<Exams role={role} user={user} />} />
         <Route path="/announcements" element={<Announcements role={role} />} />
         <Route path="/community" element={<Community role={role} />} />
       </>}
