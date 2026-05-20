@@ -16,8 +16,7 @@ import StatusBadge from '@/components/ui/StatusBadge';
 import QuickActionModal from '@/components/dashboard/QuickActionModal';
 import NotificationsDropdown from '@/components/dashboard/NotificationsDropdown';
 import { isStudentInApprovedScope, getUserApprovedClass, getUserApprovedGrade } from '@/lib/schoolStructure';
-import { getAvailableRoles, hasApprovedRole } from '@/lib/roleUtils';
-import { getDashboardLabel } from '@/lib/dashboardLabels';
+import { getAvailableRoles, getUserFirstName, hasApprovedRole } from '@/lib/roleUtils';
 
 const HEBREW_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 const HEBREW_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
@@ -41,8 +40,12 @@ export default function Dashboard({ user, role }) {
   const isAdmin = approvedRoles.includes('admin');
   const hasClassRole = approvedRoles.includes('homeroom_teacher');
   const hasCoordinatorRole = approvedRoles.includes('coordinator');
-  const dashboardTitle = getDashboardLabel(role);
-  const classScopeLabel = hasClassRole ? `כיתה ${getUserApprovedClass(user) || ''}` : hasCoordinatorRole ? `שכבה ${getUserApprovedGrade(user) || ''}` : 'מערכת כללית';
+  const dashboardTitle = isAdmin ? 'ניהול מערכת' : hasClassRole ? 'הכיתה שלי' : hasCoordinatorRole ? 'השכבה שלי' : 'דשבורד';
+  const scopeLabels = [
+    isAdmin ? 'ניהול מערכת' : null,
+    hasClassRole ? `הכיתה שלי${getUserApprovedClass(user) ? ` · ${getUserApprovedClass(user)}` : ''}` : null,
+    hasCoordinatorRole ? `השכבה שלי${getUserApprovedGrade(user) ? ` · ${getUserApprovedGrade(user)}` : ''}` : null,
+  ].filter(Boolean).join(' | ') || 'מערכת כללית';
 
   useEffect(() => {
     loadData();
@@ -160,8 +163,8 @@ export default function Dashboard({ user, role }) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">{dashboardTitle}</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">שלום, {user?.full_name?.split(' ')[0] || 'משתמש'} · {hebrewDate()} · {classScopeLabel}</p>
+          <h1 className="text-2xl font-bold text-foreground">{dashboardTitle} · שלום, {getUserFirstName(user)} 👋</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">{hebrewDate()} · {scopeLabels}</p>
         </div>
         <NotificationsDropdown notifications={notifications} />
       </div>
@@ -189,7 +192,7 @@ export default function Dashboard({ user, role }) {
             <CardTitle className="text-base font-semibold">הכיתה שלי · {getUserApprovedClass(user) || 'לא הוגדרה כיתה'}</CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground">
-            באזור זה מוצגים נתוני הכיתה המשויכת המאושרת שלך, גם אם יש לך הרשאות מנהל מערכת.
+            אזור נתוני הכיתה המשויכת המאושרת שלך.
           </CardContent>
         </Card>
       )}
@@ -200,7 +203,7 @@ export default function Dashboard({ user, role }) {
             <CardTitle className="text-base font-semibold">השכבה שלי · {getUserApprovedGrade(user) || 'לא הוגדרה שכבה'}</CardTitle>
           </CardHeader>
           <CardContent className="text-sm text-muted-foreground">
-            באזור זה מוצגים נתוני השכבה המשויכת המאושרת שלך לצד שאר ההרשאות שלך.
+            אזור נתוני השכבה המשויכת המאושרת שלך.
           </CardContent>
         </Card>
       )}
