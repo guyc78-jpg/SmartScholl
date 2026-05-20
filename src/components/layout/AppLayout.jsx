@@ -14,6 +14,7 @@ const teacherNav = [
   { path: '/', icon: LayoutDashboard, label: 'דשבורד' },
   { path: '/students', icon: Users, label: 'תלמידים' },
   { path: '/attendance', icon: Clock, label: 'נוכחות' },
+  { path: '/class-attendance', icon: Users, label: 'מעקב נוכחות' },
   { path: '/schedule', icon: Calendar, label: 'מערכת שעות' },
   { path: '/exams', icon: BookOpen, label: 'מבחנים' },
   { path: '/discipline', icon: Shield, label: 'משמעת' },
@@ -29,7 +30,7 @@ const teacherNav = [
 const teacherBottomNav = [
   { path: '/', icon: LayoutDashboard, label: 'דשבורד' },
   { path: '/students', icon: Users, label: 'תלמידים' },
-  { path: '/attendance', icon: Clock, label: 'נוכחות' },
+  { path: '/class-attendance', icon: Users, label: 'נוכחות' },
   { path: '/exams', icon: BookOpen, label: 'מבחנים' },
   { path: '/tasks', icon: CheckSquare, label: 'משימות' },
 ];

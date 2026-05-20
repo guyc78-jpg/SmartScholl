@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { THRESHOLDS } from '@/pages/ClassAttendance';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
@@ -56,9 +57,9 @@ export default function Dashboard({ user }) {
     setLoading(false);
   }
 
-  const presentToday = todayAttendance.filter(a => a.status === 'נוכח').length;
-  const absentToday = todayAttendance.filter(a => a.status === 'נעדר').length;
-  const lateToday = todayAttendance.filter(a => a.status === 'מאחר').length;
+  const presentToday = todayAttendance.filter(a => ['נוכח', 'נוכח/ת'].includes(a.status)).length;
+  const absentToday  = todayAttendance.filter(a => ['נעדר', 'נעדר/ת'].includes(a.status)).length;
+  const lateToday    = todayAttendance.filter(a => ['מאחר', 'מאחר/ת'].includes(a.status)).length;
   const openTasks = tasks.filter(t => t.status !== 'בוצע').length;
   const openDiscipline = discipline.filter(d => d.status === 'פתוח').length;
   const pendingTasks = tasks.filter(t => t.status !== 'בוצע').length;
@@ -73,6 +74,17 @@ export default function Dashboard({ user }) {
     .slice(0, 3);
 
   const watchStudents = students.filter(s => s.status === 'דורש מעקב');
+
+  // Class attendance pattern alerts
+  const [allAttRecords, setAllAttRecords] = useState([]);
+  useEffect(() => {
+    base44.entities.AttendanceRecord.filter({ class_id: CLASS_ID }).then(setAllAttRecords);
+  }, []);
+  const attendanceAlertStudents = students.filter(s => {
+    const absences = allAttRecords.filter(r => r.student_id === s.id && ['נעדר/ת'].includes(r.status)).length;
+    const lates    = allAttRecords.filter(r => r.student_id === s.id && ['מאחר/ת'].includes(r.status)).length;
+    return absences >= THRESHOLDS.absences || lates >= THRESHOLDS.lates;
+  });
 
   const communityBehind = students.filter(s => {
     const pct = s.community_service_goal > 0 ? (s.community_service_done / s.community_service_goal) * 100 : 0;
@@ -243,6 +255,43 @@ export default function Dashboard({ user }) {
                   <ChevronLeft className="w-4 h-4 text-muted-foreground" />
                 </Link>
               ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Attendance Alerts */}
+        {attendanceAlertStudents.length > 0 && (
+          <Card className="border-red-200 dark:border-red-800">
+            <CardHeader className="pb-3 flex flex-row items-center justify-between">
+              <CardTitle className="text-base font-semibold text-red-700 dark:text-red-400 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4" />
+                התראות נוכחות
+              </CardTitle>
+              <Link to="/class-attendance" className="text-xs text-primary flex items-center gap-1 hover:underline">
+                לניהול <ChevronLeft className="w-3 h-3" />
+              </Link>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {attendanceAlertStudents.slice(0, 3).map(s => {
+                const abs = allAttRecords.filter(r => r.student_id === s.id && r.status === 'נעדר/ת').length;
+                const lt  = allAttRecords.filter(r => r.student_id === s.id && r.status === 'מאחר/ת').length;
+                return (
+                  <Link key={s.id} to="/class-attendance" className="flex items-center gap-3 p-2.5 rounded-xl bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">
+                    <div className="w-9 h-9 bg-red-200 dark:bg-red-800 rounded-full flex items-center justify-center text-red-700 dark:text-red-300 font-bold text-sm flex-shrink-0">
+                      {s.full_name.charAt(0)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium">{s.full_name}</p>
+                      <p className="text-xs text-red-600 dark:text-red-400">
+                        {abs >= THRESHOLDS.absences && `${abs} היעדרויות`}
+                        {abs >= THRESHOLDS.absences && lt >= THRESHOLDS.lates && ' · '}
+                        {lt >= THRESHOLDS.lates && `${lt} איחורים`}
+                      </p>
+                    </div>
+                    <ChevronLeft className="w-4 h-4 text-muted-foreground" />
+                  </Link>
+                );
+              })}
             </CardContent>
           </Card>
         )}

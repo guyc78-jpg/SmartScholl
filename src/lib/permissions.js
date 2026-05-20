@@ -14,8 +14,8 @@ export const ROLES = {
 
 // Routes each role can access
 export const ROLE_ROUTES = {
-  admin:            ['/', '/students', '/attendance', '/schedule', '/exams', '/discipline', '/communications', '/tasks', '/announcements', '/community', '/performance', '/reports'],
-  homeroom_teacher: ['/', '/students', '/attendance', '/schedule', '/exams', '/discipline', '/communications', '/tasks', '/announcements', '/community', '/performance', '/reports'],
+  admin:            ['/', '/students', '/attendance', '/class-attendance', '/schedule', '/exams', '/discipline', '/communications', '/tasks', '/announcements', '/community', '/performance', '/reports'],
+  homeroom_teacher: ['/', '/students', '/attendance', '/class-attendance', '/schedule', '/exams', '/discipline', '/communications', '/tasks', '/announcements', '/community', '/performance', '/reports'],
   coordinator:      ['/', '/students', '/attendance', '/schedule', '/exams', '/discipline', '/communications', '/tasks', '/announcements', '/community', '/performance', '/reports'],
   student:          ['/student-home', '/schedule', '/exams', '/announcements', '/community'],
   parent:           ['/announcements'],
