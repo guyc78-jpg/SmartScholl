@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+
 import {
   LayoutDashboard, Users, Calendar, BookOpen, Shield,
   MessageSquare, CheckSquare, Megaphone, BarChart2,
@@ -122,29 +122,22 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode 
       </aside>
 
       {/* Mobile Sidebar Overlay */}
-      <AnimatePresence>
-        {sidebarOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+      {sidebarOpen && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+          <aside className="fixed right-0 top-0 h-full w-72 bg-sidebar z-50 lg:hidden shadow-2xl">
+            <button
               onClick={() => setSidebarOpen(false)}
-            />
-            <motion.aside
-              initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 28, stiffness: 280 }}
-              className="fixed right-0 top-0 h-full w-72 bg-sidebar z-50 lg:hidden shadow-2xl"
-            >
-              <button
-                onClick={() => setSidebarOpen(false)}
-                className="absolute top-4 left-4 w-8 h-8 flex items-center justify-center text-sidebar-foreground/70 hover:text-sidebar-foreground rounded-lg hover:bg-sidebar-accent">
-                <X className="w-5 h-5" />
-              </button>
-              <SidebarContent />
-            </motion.aside>
-          </>
-        )}
-      </AnimatePresence>
+              className="absolute top-4 left-4 w-8 h-8 flex items-center justify-center text-sidebar-foreground/70 hover:text-sidebar-foreground rounded-lg hover:bg-sidebar-accent">
+              <X className="w-5 h-5" />
+            </button>
+            <SidebarContent />
+          </aside>
+        </>
+      )}
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
