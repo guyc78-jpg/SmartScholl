@@ -381,7 +381,54 @@ export default function StudentProfile() {
         </TabsContent>
 
         {/* Communications */}
-        <TabsContent value="comms">
+        <TabsContent value="comms" className="space-y-4">
+          <Card>
+            <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">סיכום שיחה חדש</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label>תאריך</Label>
+                  <Input type="date" value={conversationForm.date} onChange={e => setConversationField('date', e.target.value)} />
+                </div>
+                <div className="space-y-1">
+                  <Label>סוג אינטראקציה</Label>
+                  <Select value={conversationForm.type} onValueChange={v => setConversationField('type', v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{['שיחה טלפונית', 'פגישה', 'מייל', 'הודעה', 'שיחת זום'].map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label>עם מי</Label>
+                  <Select value={conversationForm.with_whom} onValueChange={v => setConversationField('with_whom', v)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>{['הורה 1', 'הורה 2', 'תלמיד', 'מורה', 'יועצת', 'אחר'].map(person => <SelectItem key={person} value={person}>{person}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <Label>סיכום שיחה *</Label>
+                <Textarea value={conversationForm.summary} onChange={e => setConversationField('summary', e.target.value)} rows={4} placeholder="כתוב כאן את עיקרי השיחה, החלטות ונקודות חשובות..." />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label>משימת המשך ליומן</Label>
+                  <Input value={conversationForm.follow_up} onChange={e => setConversationField('follow_up', e.target.value)} placeholder="לדוגמה: להתקשר שוב להורה" />
+                </div>
+                <div className="space-y-1">
+                  <Label>תאריך תזכורת</Label>
+                  <Input type="date" value={conversationForm.follow_up_date} onChange={e => setConversationField('follow_up_date', e.target.value)} />
+                </div>
+              </div>
+
+              <Button onClick={handleSaveConversation} className="w-full sm:w-auto gap-2">
+                <MessageSquare className="w-4 h-4" />
+                שמור סיכום ותזכורת
+              </Button>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">תקשורת עם הורים</CardTitle></CardHeader>
             <CardContent>

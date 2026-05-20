@@ -70,7 +70,8 @@ export default function Dashboard({ user }) {
     .slice(0, 3);
 
   const urgentTasks = tasks
-    .filter(t => t.status !== 'בוצע' && (t.priority === 'גבוהה' || t.priority === 'דחופה'))
+    .filter(t => t.status !== 'בוצע' && ((t.priority === 'גבוהה' || t.priority === 'דחופה') || t.category === 'הורים'))
+    .sort((a, b) => (a.due_date || '').localeCompare(b.due_date || ''))
     .slice(0, 3);
 
   const watchStudents = students.filter(s => s.status === 'דורש מעקב');
@@ -205,7 +206,7 @@ export default function Dashboard({ user }) {
         {/* Open Tasks */}
         <Card>
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <CardTitle className="text-base font-semibold">משימות דחופות</CardTitle>
+            <CardTitle className="text-base font-semibold">משימות ותזכורות דחופות</CardTitle>
             <Link to="/tasks" className="text-xs text-primary flex items-center gap-1 hover:underline">
               הכל <ChevronLeft className="w-3 h-3" />
             </Link>
@@ -218,7 +219,7 @@ export default function Dashboard({ user }) {
                 <div className={`w-2 h-10 rounded-full ${task.priority === 'דחופה' ? 'bg-red-500' : 'bg-orange-500'}`} />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{task.title}</p>
-                  {task.student_name && <p className="text-xs text-muted-foreground">{task.student_name}</p>}
+                  {task.student_name && <p className="text-xs text-muted-foreground">{task.category === 'הורים' ? 'תזכורת שיחה · ' : ''}{task.student_name}</p>}
                 </div>
                 <StatusBadge status={task.priority} />
               </div>
