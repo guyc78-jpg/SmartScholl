@@ -179,13 +179,13 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode 
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto pb-20 lg:pb-0 text-right" dir="rtl">
+        <main className="flex-1 overflow-y-auto text-right" dir="rtl" style={{ paddingBottom: 'calc(64px + env(safe-area-inset-bottom))' }}>
           {children}
         </main>
 
         {/* Mobile Bottom Nav */}
-        <nav className="lg:hidden fixed bottom-0 inset-x-0 flex items-center justify-around bg-card border-t border-border z-30" dir="rtl"
-          style={{ paddingBottom: 'env(safe-area-inset-bottom)', paddingTop: '6px', paddingInline: '4px', minHeight: '56px' }}>
+        <nav className="lg:hidden fixed bottom-0 inset-x-0 flex items-center justify-between bg-card border-t border-border z-30" dir="rtl"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom)', paddingTop: '8px', paddingInline: '12px', minHeight: '64px' }}>
           {bottomNavItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
@@ -193,12 +193,12 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode 
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  'flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all min-w-0 flex-1',
+                  'flex flex-col items-center justify-center gap-1 py-2 rounded-xl transition-all flex-1',
                   isActive ? 'text-primary' : 'text-muted-foreground'
                 )}
               >
                 <item.icon className="w-5 h-5 flex-shrink-0" />
-                <span className="text-[10px] font-medium truncate w-full text-center">{item.label}</span>
+                <span className="text-[11px] font-semibold leading-tight whitespace-nowrap">{item.label}</span>
               </Link>
             );
           })}
