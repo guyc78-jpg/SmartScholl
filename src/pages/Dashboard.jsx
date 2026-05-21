@@ -8,6 +8,7 @@ import StatCard from '@/components/ui/StatCard';
 import TodayHighlights from '@/components/dashboard/TodayHighlights';
 import DailySmartCard from '@/components/dashboard/DailySmartCard';
 import WatchStudentsSection from '@/components/dashboard/WatchStudentsSection';
+import SmartAssistantWidget from '@/components/dashboard/SmartAssistantWidget';
 import {
   Users, Clock, AlertTriangle, BookOpen, CheckSquare,
   Shield, Heart, UserCheck, Calendar, MessageSquare,

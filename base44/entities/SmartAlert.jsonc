@@ -1,0 +1,65 @@
+{
+  "name": "SmartAlert",
+  "type": "object",
+  "properties": {
+    "student_id": {
+      "type": "string",
+      "description": "\u05de\u05d6\u05d4\u05d4 \u05d4\u05ea\u05dc\u05de\u05d9\u05d3"
+    },
+    "student_name": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05d4\u05ea\u05dc\u05de\u05d9\u05d3"
+    },
+    "class_id": {
+      "type": "string",
+      "description": "\u05de\u05d6\u05d4\u05d4 \u05d4\u05db\u05d9\u05ea\u05d4"
+    },
+    "alert_type": {
+      "type": "string",
+      "enum": [
+        "high_absences",
+        "consecutive_lates",
+        "upcoming_exam",
+        "exam_overload",
+        "pending_task",
+        "open_incident"
+      ],
+      "description": "\u05e1\u05d5\u05d2 \u05d4\u05d4\u05ea\u05e8\u05d0\u05d4"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "default": "medium",
+      "description": "\u05e8\u05de\u05ea \u05d7\u05d5\u05de\u05e8\u05d4"
+    },
+    "message": {
+      "type": "string",
+      "description": "\u05ea\u05d5\u05db\u05df \u05d4\u05d4\u05ea\u05e8\u05d0\u05d4"
+    },
+    "details": {
+      "type": "object",
+      "description": "\u05e4\u05e8\u05d8\u05d9\u05dd \u05e0\u05d5\u05e1\u05e4\u05d9\u05dd (JSON)"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "\u05d4\u05d0\u05dd \u05d4\u05d4\u05ea\u05e8\u05d0\u05d4 \u05e4\u05e2\u05d9\u05dc\u05d4"
+    },
+    "dismissed_at": {
+      "type": "string",
+      "description": "\u05ea\u05d0\u05e8\u05d9\u05da \u05e1\u05d2\u05d9\u05e8\u05ea \u05d4\u05d4\u05ea\u05e8\u05d0\u05d4"
+    }
+  },
+  "required": [
+    "student_id",
+    "student_name",
+    "class_id",
+    "alert_type",
+    "message"
+  ]
+}
