@@ -204,7 +204,7 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
             <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center">
               <BookMarked className="w-3.5 h-3.5 text-white" />
             </div>
-            <span className="font-bold text-foreground text-[13px]">כיתה חכמה</span>
+            <span className="font-bold text-foreground text-[13px]">ניהול כיתה חכם</span>
           </div>
           <button onClick={() => setDarkMode(!darkMode)} className="w-8 h-8 flex items-center justify-center text-muted-foreground rounded-lg hover:bg-muted transition-colors">
             {darkMode ? <Sun className="w-4.5 h-4.5" /> : <Moon className="w-4.5 h-4.5" />}
