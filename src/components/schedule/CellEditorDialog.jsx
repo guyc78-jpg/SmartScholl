@@ -52,9 +52,11 @@ export default function CellEditorDialog({ open, onOpenChange, slot, day, period
           <DialogTitle className="text-right">
             {isEdit ? 'עריכת שיעור' : 'הוספת שיעור'}
           </DialogTitle>
-          <p className="text-xs text-muted-foreground text-right">
-            יום {day} · שיעור {period}{periodTime ? ` · ${periodTime}` : ''}
-          </p>
+          <div className="flex items-center justify-center gap-4 py-2 rounded-lg bg-muted/40">
+            <span className="text-sm font-semibold text-foreground">יום {day}</span>
+            <span className="text-sm font-semibold text-foreground">שיעור {period}</span>
+            {periodTime && <span className="force-ltr text-base font-bold text-primary">{periodTime}</span>}
+          </div>
         </DialogHeader>
 
         <div className="space-y-3 text-right">
