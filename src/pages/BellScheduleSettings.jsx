@@ -84,12 +84,7 @@ function PeriodRow({ period, lessonNumber, isActive, onChange, onRemove }) {
 
       <KindChip value={period.kind} onChange={(v) => set('kind', v)} />
 
-      <Input
-        value={period.label || ''}
-        onChange={(e) => set('label', e.target.value)}
-        placeholder={KIND_META[period.kind]?.label}
-        className="h-7 text-[12px] flex-1 min-w-0 px-2"
-      />
+      <div className="flex-1 min-w-0" />
 
       <Input
         type="time"
@@ -122,7 +117,7 @@ function ColumnHeaders() {
     <div className="flex items-center gap-1.5 sm:gap-2 px-1.5 pb-1.5 mb-1 border-b border-border/60 text-[10px] sm:text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
       <div className="w-6 text-center flex-shrink-0">#</div>
       <div className="w-[88px] sm:w-[104px] text-center flex-shrink-0">סוג</div>
-      <div className="flex-1 min-w-0 px-2">שם</div>
+      <div className="flex-1 min-w-0" />
       <div className="w-[72px] sm:w-[82px] text-center flex-shrink-0">התחלה</div>
       <div className="w-[72px] sm:w-[82px] text-center flex-shrink-0">סיום</div>
       <div className="w-7 text-center flex-shrink-0">מחק</div>
@@ -134,7 +129,7 @@ function PeriodEditor({ periods, onChange, activeIndex, onRequestRemove }) {
   const update = (idx, next) => onChange(periods.map((p, i) => i === idx ? next : p));
   const add = () => onChange([
     ...periods,
-    { kind: 'lesson', label: '', start_time: '08:00', end_time: '08:45' }
+    { kind: 'lesson', start_time: '08:00', end_time: '08:45' }
   ]);
 
   return (
@@ -330,7 +325,6 @@ export default function BellScheduleSettings({ user, role }) {
               האם למחוק את{' '}
               <span className="font-semibold text-foreground">
                 {deleteMeta?.label || 'השורה'}
-                {confirmDelete?.period?.label ? ` — ${confirmDelete.period.label}` : ''}
               </span>
               {confirmDelete?.period?.start_time && (
                 <> בשעה <span className="force-ltr font-semibold text-foreground">{confirmDelete.period.start_time}</span></>
