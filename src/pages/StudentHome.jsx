@@ -8,6 +8,7 @@ import StatusBadge from '@/components/ui/StatusBadge';
 import { toast } from 'sonner';
 import { Calendar, BookOpen, Megaphone, Heart, CheckSquare, Check, Clock, RotateCcw } from 'lucide-react';
 import { getUserFirstName } from '@/lib/roleUtils';
+import NowNextCard from '@/components/schedule/NowNextCard';
 
 export default function StudentHome({ user }) {
   const [announcements, setAnnouncements] = useState([]);
@@ -102,6 +103,9 @@ export default function StudentHome({ user }) {
         <h1 className="text-2xl font-bold text-foreground">שלום, {getUserFirstName(user)} 👋</h1>
         <p className="text-sm text-muted-foreground mt-0.5">יום {todayDayName} · כיתה {studentData?.class_name || 'י׳1'}</p>
       </div>
+
+      {/* Now / Next smart card */}
+      <NowNextCard classId={CLASS_ID} />
 
       {/* Today's Schedule */}
       {scheduleToday.length > 0 && (

@@ -32,6 +32,7 @@ import PendingApproval from './pages/PendingApproval';
 import GenderRequiredGate from '@/components/profile/GenderRequiredGate';
 import Profile from './pages/Profile';
 import UserManagement from './pages/UserManagement';
+import BellScheduleSettings from './pages/BellScheduleSettings';
 import { isStaff, isStudent, defaultRoute } from './lib/permissions';
 import { getAvailableRoles, getInitialWorkRole, getSystemRole } from './lib/roleUtils';
 
@@ -124,6 +125,7 @@ const AuthenticatedApp = () => {
           <>
             <Route path="/approvals" element={<ApprovalManagement role={role} />} />
             <Route path="/users" element={<UserManagement />} />
+            <Route path="/bell-schedule" element={<BellScheduleSettings role={role} />} />
           </>
         )}
         {(approvedRoles.includes('admin') || approvedRoles.includes('homeroom_teacher') || approvedRoles.includes('coordinator')) && (

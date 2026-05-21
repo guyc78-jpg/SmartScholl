@@ -1,0 +1,61 @@
+{
+  "name": "BellSchedule",
+  "type": "object",
+  "properties": {
+    "day_type": {
+      "type": "string",
+      "enum": [
+        "sun_thu",
+        "fri"
+      ],
+      "description": "\u05e1\u05d5\u05d2 \u05d4\u05d9\u05d5\u05dd: \u05d0-\u05d4 \u05d0\u05d5 \u05d9\u05d5\u05dd \u05d5'"
+    },
+    "label": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05ea\u05e6\u05d5\u05d2\u05d4"
+    },
+    "periods": {
+      "type": "array",
+      "description": "\u05e8\u05e9\u05d9\u05de\u05ea \u05ea\u05e7\u05d5\u05e4\u05d5\u05ea \u05d6\u05de\u05df (\u05e9\u05d9\u05e2\u05d5\u05e8\u05d9\u05dd \u05d5\u05d4\u05e4\u05e1\u05e7\u05d5\u05ea) \u05d1\u05e1\u05d3\u05e8 \u05db\u05e8\u05d5\u05e0\u05d5\u05dc\u05d5\u05d2\u05d9",
+      "items": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "pre_bell",
+              "lesson",
+              "break",
+              "homeroom"
+            ],
+            "description": "\u05e1\u05d5\u05d2: \u05e6\u05dc\u05e6\u05d5\u05dc \u05de\u05e7\u05d3\u05d9\u05dd / \u05e9\u05d9\u05e2\u05d5\u05e8 / \u05d4\u05e4\u05e1\u05e7\u05d4 / \u05d1\u05d5\u05e7\u05e8 \u05d8\u05d5\u05d1 \u05de\u05d7\u05e0\u05da"
+          },
+          "period": {
+            "type": "number",
+            "description": "\u05de\u05e1\u05e4\u05e8 \u05e9\u05d9\u05e2\u05d5\u05e8 (\u05e8\u05e7 \u05dc\u05e9\u05d9\u05e2\u05d5\u05e8\u05d9\u05dd)"
+          },
+          "label": {
+            "type": "string",
+            "description": "\u05ea\u05d9\u05d0\u05d5\u05e8: \u05dc\u05de\u05e9\u05dc '\u05e9\u05d9\u05e2\u05d5\u05e8 1', '\u05d4\u05e4\u05e1\u05e7\u05d4', '\u05e6\u05dc\u05e6\u05d5\u05dc \u05de\u05e7\u05d3\u05d9\u05dd'"
+          },
+          "start_time": {
+            "type": "string",
+            "description": "\u05e9\u05e2\u05ea \u05d4\u05ea\u05d7\u05dc\u05d4 HH:MM"
+          },
+          "end_time": {
+            "type": "string",
+            "description": "\u05e9\u05e2\u05ea \u05e1\u05d9\u05d5\u05dd HH:MM"
+          }
+        },
+        "required": [
+          "kind",
+          "start_time"
+        ]
+      }
+    }
+  },
+  "required": [
+    "day_type",
+    "periods"
+  ]
+}

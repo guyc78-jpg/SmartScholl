@@ -17,6 +17,7 @@ import StatusBadge from '@/components/ui/StatusBadge';
 import QuickActionModal from '@/components/dashboard/QuickActionModal';
 import NotificationsDropdown from '@/components/dashboard/NotificationsDropdown';
 import SchoolNameBanner from '@/components/layout/SchoolNameBanner';
+import NowNextCard from '@/components/schedule/NowNextCard';
 import { isStudentInApprovedScope, getUserApprovedClass, getUserApprovedGrade } from '@/lib/schoolStructure';
 import { getAvailableRoles, getUserFirstName, hasApprovedRole, getRoleHomeLabel, getRoleShort } from '@/lib/roleUtils';
 
@@ -177,6 +178,9 @@ export default function Dashboard({ user, role }) {
         </div>
         <NotificationsDropdown notifications={notifications} />
       </div>
+
+      {/* Now / Next — only useful for homeroom teachers (have a class) */}
+      {(isActiveHomeroom || isActiveAdmin) && <NowNextCard classId={CLASS_ID} />}
 
       {isAdmin && (
         <section>

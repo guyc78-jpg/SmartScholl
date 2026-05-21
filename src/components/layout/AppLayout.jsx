@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Users, Calendar, CalendarCheck, BookOpen,
   Megaphone, BarChart2,
   Menu, X, Sun, Moon, BookMarked,
-  UserCheck, UserRound, ShieldCheck, Settings, LogOut
+  UserCheck, UserRound, ShieldCheck, Settings, LogOut, Bell
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getAvailableRoles, getUserContextLabel, getUserDisplayName } from '@/lib/roleUtils';
@@ -33,6 +33,7 @@ const sidebarGroups = [
     items: [
       { path: '/approvals', icon: UserCheck, label: 'אישורי הרשמה', roles: ['admin'] },
       { path: '/users', icon: ShieldCheck, label: 'הרשאות משתמשים', roles: ['admin'] },
+      { path: '/bell-schedule', icon: Bell, label: 'צלצולים והפסקות', roles: ['admin'] },
     ],
   },
 ];
