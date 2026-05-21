@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import mammoth from 'mammoth';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -70,96 +71,75 @@ export default function ImportExamsDialog({ open, onOpenChange, onImported, clas
     setError('');
     setIsParsing(true);
 
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-
-    const PROMPT = `חלץ מקובץ זה לוח מבחנים/אירועים בעברית. הקובץ הוא טבלה שבועית בה כל עמודה מייצגת יום בשבוע (א'-ו') וכל שורה מייצגת שבוע. בכל תא: השורה הראשונה היא התאריך (פורמט DD/MM), ומתחתיה מופיעות שורות עם שמות מבחנים/אירועים לאותו יום.
-
-הוראות קריטיות:
-1. עבור על כל תא בטבלה — כל שורה, כל עמודה, כל שבוע עד סוף הקובץ.
-2. בכל תא: זהה את התאריך (DD/MM) ואת כל הפריטים שמתחתיו.
-3. כל פריט/שורה/בולט בתא = רשומה נפרדת עם אותו תאריך.
-4. שנת הלימודים היא 2025-2026: תאריכים מינואר עד יולי = שנה 2026. תאריכים מספטמבר עד דצמבר = שנה 2025.
-5. המיר תאריכים לפורמט YYYY-MM-DD (לדוגמה: 12/04 → 2026-04-12).
-6. אם יש שעה (כגון 16:00-18:00), שמור אותה בשדה time בפורמט HH:MM.
-7. אל תכלול ריקודים/משחקים — אלו פעילויות פנאי.
-8. שדה class_or_grade: אם מופיע מספר כיתה (כגון יב5, יב7) — שמור אותו. אחרת השאר ריק.
-
-סיווג type — חייב להיות בדיוק אחד מ: בגרות, מתכונת, מועד ב׳, חזרה, חג, אירוע שכבתי, אחר.
-- "בגרות" = מבחן בגרות
-- "מתכונת" = מתכונת / מ.מ / מ.מתכונת
-- "מועד ב׳" = מ.ב' / מועד ב
-- "חג" = חג / חופשה / יום זיכרון / יום עצמאות / ל"ג בעומר
-- "אירוע שכבתי" = טקס / ימי שיא / סיור / מסיבת סיום / צילומים / גנרלית / יום ירושלים
-- "חזרה" = חזרה / תרגול
-- "אחר" = כל דבר שאינו מהרשימה
-
-החזר JSON בדיוק בפורמט: {"exams": [...]}
-אל תסכם, אל תחזיר רק חלק מהנתונים — החזר את כל הרשומות שמצאת.`;
-
-    let detectedRows = [];
-
-    // Try with claude first (better for complex Hebrew Word docs)
-    try {
-      const result = await base44.integrations.Core.InvokeLLM({
-        file_urls: [file_url],
-        model: 'claude_sonnet_4_6',
-        prompt: PROMPT,
-        response_json_schema: {
-          type: 'object',
-          properties: {
-            exams: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  title: { type: 'string' },
-                  subject: { type: 'string' },
-                  type: { type: 'string' },
-                  date: { type: 'string' },
-                  time: { type: 'string' },
-                  class_or_grade: { type: 'string' },
-                  notes: { type: 'string' }
-                }
-              }
-            }
-          },
-          required: ['exams']
-        }
-      });
-
-      const raw = result?.exams || (Array.isArray(result) ? result : []);
-      detectedRows = raw.map(row => ({
-        ...emptyRow,
-        ...row,
-        type: normalizeType(`${row.type || ''} ${row.title || ''}`),
-        subject: row.subject || 'כללי'
-      }));
-    } catch (e) {
-      // fallback: try without json schema, parse manually
-      try {
-        const resultStr = await base44.integrations.Core.InvokeLLM({
-          file_urls: [file_url],
-          model: 'claude_sonnet_4_6',
-          prompt: PROMPT + '\n\nחשוב: החזר רק JSON תקין, ללא טקסט נוסף לפני או אחרי.'
-        });
-        const jsonMatch = String(resultStr).match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          const parsed = JSON.parse(jsonMatch[0]);
-          const raw = parsed?.exams || [];
-          detectedRows = raw.map(row => ({
-            ...emptyRow,
-            ...row,
-            type: normalizeType(`${row.type || ''} ${row.title || ''}`),
-            subject: row.subject || 'כללי'
-          }));
-        }
-      } catch {
-        // both failed
-      }
+    // For Word files — extract text via mammoth first
+    let fileContent = null;
+    const isWord = file.name.match(/\.docx?$/i);
+    if (isWord) {
+      const arrayBuffer = await file.arrayBuffer();
+      const result = await mammoth.extractRawText({ arrayBuffer });
+      fileContent = result.value; // plain text from the docx
     }
 
+    const PROMPT = `להלן תוכן לוח מבחנים/אירועים לשנת הלימודים תשפ"ו (2025-2026). הקובץ הוא טבלה שבועית: כל תא מכיל תאריך (פורמט DD/MM) ומתחתיו שורות של מבחנים/אירועים לאותו יום.
+
+הוראות:
+1. עבור על כל תא — כל שורה, כל עמודה, עד סוף הטבלה.
+2. בכל תא: זהה את התאריך (DD/MM) ואת כל הפריטים שמתחתיו. כל פריט = רשומה נפרדת.
+3. שנת הלימודים 2025-2026: ינואר-יולי = 2026, ספטמבר-דצמבר = 2025.
+4. המיר תאריכים לפורמט YYYY-MM-DD (דוגמה: 12/04 → 2026-04-12).
+5. אם יש שעה (כגון 16:00), שמור בשדה time בפורמט HH:MM.
+6. שדה class_or_grade: אם מופיע מספר כיתה (כגון יב5, יב7) — שמור. אחרת ריק.
+
+סיווג type — בדיוק אחד מ: בגרות, מתכונת, מועד ב׳, חזרה, חג, אירוע שכבתי, אחר.
+- בגרות = מבחן בגרות
+- מתכונת = מתכונת / מ.מ
+- מועד ב׳ = מ.ב' / מועד ב
+- חג = חג / חופשה / יום זיכרון / יום עצמאות / ל"ג בעומר
+- אירוע שכבתי = טקס / יום שיא / סיור / מסיבת סיום / צילומים / יום ירושלים
+- חזרה = חזרה / תרגול
+- אחר = כל השאר
+
+החזר את כל הרשומות ללא יוצא מן הכלל.
+
+${fileContent ? `תוכן הקובץ:\n${fileContent}` : ''}`;
+
+    const result = await base44.integrations.Core.InvokeLLM({
+      ...(isWord ? {} : { file_urls: [(await base44.integrations.Core.UploadFile({ file })).file_url] }),
+      model: 'claude_sonnet_4_6',
+      prompt: PROMPT,
+      response_json_schema: {
+        type: 'object',
+        properties: {
+          exams: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                title: { type: 'string' },
+                subject: { type: 'string' },
+                type: { type: 'string' },
+                date: { type: 'string' },
+                time: { type: 'string' },
+                class_or_grade: { type: 'string' },
+                notes: { type: 'string' }
+              }
+            }
+          }
+        },
+        required: ['exams']
+      }
+    });
+
+    const raw = result?.exams || [];
+    const detectedRows = raw.map(row => ({
+      ...emptyRow,
+      ...row,
+      type: normalizeType(`${row.type || ''} ${row.title || ''}`),
+      subject: row.subject || 'כללי'
+    }));
+
     if (detectedRows.length === 0) {
-      setError('לא הצלחנו לקרוא מהקובץ לוח מבחנים. נסו לייצא את הקובץ כ-PDF ולנסות שוב.');
+      setError('לא הצלחנו לקרוא מהקובץ לוח מבחנים. נסו קובץ ברור יותר עם תאריכים ושמות מבחנים.');
     } else {
       setRows(detectedRows);
       if (detectedRows.some(row => !row.date)) {
