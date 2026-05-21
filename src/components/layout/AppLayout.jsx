@@ -80,27 +80,14 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full text-right" dir="rtl">
-      {/* Logo */}
-      <div className="px-4 py-4 border-b border-sidebar-border">
-        <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
-            <BookMarked className="w-4 h-4 text-white" />
-          </div>
-          <div className="min-w-0">
-            <h1 className="font-bold text-sm text-sidebar-foreground leading-tight">כיתה חכמה</h1>
-            <p className="text-[11px] text-sidebar-foreground/50 leading-tight">ניהול כיתת חינוך</p>
-          </div>
-        </div>
-      </div>
-
       {/* User */}
-      <div className="px-4 py-3 border-b border-sidebar-border">
-        <div className="flex items-center gap-2.5">
+      <div className="px-4 py-4 border-b border-sidebar-border">
+        <div className="flex items-center gap-2.5 mb-2">
           <div className="w-9 h-9 bg-primary/15 rounded-lg flex items-center justify-center text-sidebar-primary font-bold text-sm flex-shrink-0">
             {displayName?.charAt(0) || '?'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-xs text-sidebar-foreground truncate">{displayName}</p>
+            <p className="font-semibold text-sm text-sidebar-foreground truncate">{displayName}</p>
             <p className="text-[11px] text-sidebar-foreground/60 truncate">{contextLabel}</p>
           </div>
         </div>
