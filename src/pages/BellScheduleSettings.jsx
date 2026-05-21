@@ -27,12 +27,12 @@ function KindChip({ value, onChange }) {
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger
         className={cn(
-          'h-8 w-32 px-2.5 rounded-full border bg-muted/50 hover:bg-muted',
-          'text-[12px] font-medium gap-1.5 [&>svg:last-child]:opacity-50'
+          'h-7 w-[92px] sm:w-28 px-2 rounded-full border bg-muted/60 hover:bg-muted',
+          'text-[11px] sm:text-[12px] font-medium gap-1 [&>svg:last-child]:hidden'
         )}
       >
-        <div className="flex items-center gap-1.5 min-w-0 flex-1">
-          <Icon className={cn('w-3.5 h-3.5 flex-shrink-0', meta.color)} />
+        <div className="flex items-center gap-1 min-w-0 flex-1 justify-center">
+          <Icon className={cn('w-3 h-3 flex-shrink-0', meta.color)} />
           <span className="truncate">{meta.label}</span>
         </div>
       </SelectTrigger>
@@ -58,48 +58,45 @@ function PeriodRow({ period, index, onChange, onRemove }) {
   const isLesson = period.kind === 'lesson';
 
   return (
-    <div className="grid grid-cols-[auto_1fr_auto] sm:grid-cols-[auto_72px_1fr_auto_auto] gap-2 items-center px-2.5 py-1.5 rounded-lg hover:bg-muted/40 group transition-colors">
+    <div className="flex items-center gap-1.5 sm:gap-2 px-1.5 py-1 rounded-md hover:bg-muted/40 group transition-colors">
       {/* Row number */}
-      <div className="w-6 text-center text-[11px] font-bold text-muted-foreground/60 tabular-nums">
+      <div className="w-5 text-center text-[10px] sm:text-[11px] font-bold text-muted-foreground/60 tabular-nums flex-shrink-0">
         {index + 1}
       </div>
 
-      {/* Kind chip - uniform */}
-      <div className="sm:order-2">
-        <KindChip value={period.kind} onChange={(v) => set('kind', v)} />
-      </div>
+      {/* Kind chip - uniform size */}
+      <KindChip value={period.kind} onChange={(v) => set('kind', v)} />
 
-      {/* Label */}
+      {/* Label - flexible */}
       <Input
         value={period.label || ''}
         onChange={(e) => set('label', e.target.value)}
         placeholder={isLesson ? `שיעור ${period.period || ''}` : KIND_META[period.kind]?.label}
-        className="h-8 text-[13px] sm:order-3 col-span-2 sm:col-span-1"
+        className="h-7 text-[12px] flex-1 min-w-0 px-2"
       />
 
-      {/* Times - paired */}
-      <div className="flex items-center gap-1 sm:order-4 col-span-3 sm:col-span-1">
-        <Input
-          type="time"
-          value={period.start_time || ''}
-          onChange={(e) => set('start_time', e.target.value)}
-          className="h-8 w-[88px] text-[12px] force-ltr px-2"
-        />
-        <span className="text-muted-foreground text-xs">–</span>
-        <Input
-          type="time"
-          value={period.end_time || ''}
-          onChange={(e) => set('end_time', e.target.value)}
-          className="h-8 w-[88px] text-[12px] force-ltr px-2"
-        />
-      </div>
+      {/* Start time */}
+      <Input
+        type="time"
+        value={period.start_time || ''}
+        onChange={(e) => set('start_time', e.target.value)}
+        className="h-7 w-[72px] sm:w-[82px] text-[11px] sm:text-[12px] force-ltr px-1.5 flex-shrink-0"
+      />
+
+      {/* End time */}
+      <Input
+        type="time"
+        value={period.end_time || ''}
+        onChange={(e) => set('end_time', e.target.value)}
+        className="h-7 w-[72px] sm:w-[82px] text-[11px] sm:text-[12px] force-ltr px-1.5 flex-shrink-0"
+      />
 
       {/* Delete */}
       <Button
         variant="ghost"
         size="icon"
         onClick={onRemove}
-        className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 sm:order-5 opacity-60 group-hover:opacity-100 transition-opacity"
+        className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 flex-shrink-0"
       >
         <Trash2 className="w-3.5 h-3.5" />
       </Button>
