@@ -5,7 +5,7 @@ import { Select, SelectTrigger, SelectContent, SelectItem } from '@/components/u
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import PageHeader from '@/components/ui/PageHeader';
-import { Plus, Trash2, Save, RotateCcw, Bell, BookOpen, Coffee, Sunrise, AlertTriangle } from 'lucide-react';
+import { Plus, Trash2, Save, RotateCcw, Bell, BookOpen, Coffee, Sunrise, AlertTriangle, Copy, CircleDot } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import {
@@ -28,13 +28,13 @@ function KindChip({ value, onChange }) {
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger
         className={cn(
-          'h-7 w-[88px] sm:w-[104px] px-2 rounded-full border bg-muted/60 hover:bg-muted',
+          'h-7 w-[118px] sm:w-[132px] px-2.5 rounded-full border bg-muted/60 hover:bg-muted',
           'text-[11px] font-medium gap-1 [&>svg:last-child]:hidden'
         )}
       >
-        <div className="flex items-center gap-1 min-w-0 flex-1 justify-center">
+        <div className="flex items-center gap-1.5 min-w-0 flex-1 justify-center">
           <Icon className={cn('w-3 h-3 flex-shrink-0', meta.color)} />
-          <span className="truncate">{meta.label}</span>
+          <span className="whitespace-nowrap">{meta.label}</span>
         </div>
       </SelectTrigger>
       <SelectContent>
@@ -68,18 +68,26 @@ function PeriodRow({ period, lessonNumber, isActive, onChange, onRemove }) {
   return (
     <div
       className={cn(
-        'flex items-center gap-1.5 sm:gap-2 px-1.5 h-10 rounded-md transition-colors',
+        'relative flex items-center gap-1.5 sm:gap-2 px-1.5 h-10 rounded-md transition-colors',
         isActive
-          ? 'bg-primary/8 ring-1 ring-primary/30'
+          ? 'bg-primary/10 ring-1 ring-primary/40 shadow-sm'
           : 'hover:bg-muted/40'
       )}
     >
-      {/* Row index — lesson number only */}
+      {isActive && (
+        <span className="absolute -right-0.5 top-1/2 -translate-y-1/2 h-5 w-1 rounded-full bg-primary" />
+      )}
+
+      {/* Row index — lesson number, or live dot when active */}
       <div className={cn(
-        'w-6 text-center text-[11px] font-bold tabular-nums flex-shrink-0',
-        lessonNumber ? 'text-primary' : 'text-transparent'
+        'w-6 flex items-center justify-center text-[11px] font-bold tabular-nums flex-shrink-0',
+        isActive ? 'text-primary' : (lessonNumber ? 'text-primary' : 'text-transparent')
       )}>
-        {lessonNumber ?? '·'}
+        {isActive ? (
+          <CircleDot className="w-3.5 h-3.5 text-primary animate-pulse" />
+        ) : (
+          lessonNumber ?? '·'
+        )}
       </div>
 
       <KindChip value={period.kind} onChange={(v) => set('kind', v)} />
@@ -116,7 +124,7 @@ function ColumnHeaders() {
   return (
     <div className="flex items-center gap-1.5 sm:gap-2 px-1.5 pb-1.5 mb-1 border-b border-border/60 text-[10px] sm:text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
       <div className="w-6 text-center flex-shrink-0">#</div>
-      <div className="w-[88px] sm:w-[104px] text-center flex-shrink-0">סוג</div>
+      <div className="w-[118px] sm:w-[132px] text-center flex-shrink-0">סוג</div>
       <div className="flex-1 min-w-0" />
       <div className="w-[72px] sm:w-[82px] text-center flex-shrink-0">התחלה</div>
       <div className="w-[72px] sm:w-[82px] text-center flex-shrink-0">סיום</div>
@@ -165,7 +173,7 @@ function findActiveIndex(periods) {
   return periods.findIndex(p => p.start_time && p.end_time && hhmm >= p.start_time && hhmm < p.end_time);
 }
 
-function DayPanel({ periods, onChange, onSave, onReset, saving, isCurrentDay, onRequestRemove }) {
+function DayPanel({ periods, onChange, onSave, onReset, onDuplicate, duplicateTargetLabel, saving, isCurrentDay, onRequestRemove }) {
   const [tick, setTick] = useState(0);
   useEffect(() => {
     if (!isCurrentDay) return;
@@ -185,7 +193,10 @@ function DayPanel({ periods, onChange, onSave, onReset, saving, isCurrentDay, on
         activeIndex={activeIndex}
         onRequestRemove={onRequestRemove}
       />
-      <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/60">
+      <div className="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-border/60">
+        <Button variant="ghost" onClick={onDuplicate} className="h-8 text-[12px] gap-1.5 text-muted-foreground hover:text-foreground">
+          <Copy className="w-3.5 h-3.5" /> שכפל ל{duplicateTargetLabel}
+        </Button>
         <Button variant="ghost" onClick={onReset} className="h-8 text-[12px] gap-1.5 text-muted-foreground hover:text-foreground">
           <RotateCcw className="w-3.5 h-3.5" /> ברירת מחדל
         </Button>
@@ -205,6 +216,7 @@ export default function BellScheduleSettings({ user, role }) {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState(null); // { dayType, index, period }
+  const [confirmDuplicate, setConfirmDuplicate] = useState(null); // { from, to }
 
   useEffect(() => { load(); }, []);
 
@@ -251,6 +263,24 @@ export default function BellScheduleSettings({ user, role }) {
     setConfirmDelete(null);
   }
 
+  function requestDuplicate(from) {
+    const to = from === 'sun_thu' ? 'fri' : 'sun_thu';
+    setConfirmDuplicate({ from, to });
+  }
+
+  function performDuplicate() {
+    if (!confirmDuplicate) return;
+    const { from, to } = confirmDuplicate;
+    const source = from === 'fri' ? fri : sunThu;
+    const copy = source.map(p => ({ ...p }));
+    if (to === 'fri') setFri(copy); else setSunThu(copy);
+    toast.success('הצלצולים שוכפלו (זכור לשמור)');
+    setConfirmDuplicate(null);
+    setTab(to);
+  }
+
+  const dayLabel = (d) => d === 'fri' ? 'יום ו׳' : 'ימים א׳–ה׳';
+
   if (!isAdmin) {
     return (
       <div className="p-6 flex flex-col items-center justify-center min-h-64 text-center" dir="rtl">
@@ -293,6 +323,8 @@ export default function BellScheduleSettings({ user, role }) {
                 onChange={setSunThu}
                 onSave={() => handleSave('sun_thu')}
                 onReset={() => reset('sun_thu')}
+                onDuplicate={() => requestDuplicate('sun_thu')}
+                duplicateTargetLabel="יום ו׳"
                 onRequestRemove={(i) => requestRemove('sun_thu', i)}
                 saving={saving}
                 isCurrentDay={isCurrentDay('sun_thu')}
@@ -304,6 +336,8 @@ export default function BellScheduleSettings({ user, role }) {
                 onChange={setFri}
                 onSave={() => handleSave('fri')}
                 onReset={() => reset('fri')}
+                onDuplicate={() => requestDuplicate('fri')}
+                duplicateTargetLabel="ימים א׳–ה׳"
                 onRequestRemove={(i) => requestRemove('fri', i)}
                 saving={saving}
                 isCurrentDay={isCurrentDay('fri')}
@@ -338,6 +372,33 @@ export default function BellScheduleSettings({ user, role }) {
             </Button>
             <Button variant="destructive" onClick={confirmRemove} className="flex-1 sm:flex-none gap-2">
               <Trash2 className="w-4 h-4" /> מחק
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Duplicate day confirmation */}
+      <Dialog open={!!confirmDuplicate} onOpenChange={(o) => !o && setConfirmDuplicate(null)}>
+        <DialogContent className="sm:max-w-sm" dir="rtl">
+          <DialogHeader>
+            <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-2">
+              <Copy className="w-6 h-6 text-primary" />
+            </div>
+            <DialogTitle className="text-center">שכפול לוח צלצולים</DialogTitle>
+            <DialogDescription className="text-center pt-1">
+              להעתיק את כל הצלצולים מ
+              <span className="font-semibold text-foreground"> {dayLabel(confirmDuplicate?.from)} </span>
+              אל
+              <span className="font-semibold text-foreground"> {dayLabel(confirmDuplicate?.to)}</span>?<br />
+              הצלצולים הקיימים ביעד יוחלפו.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-row gap-2 sm:justify-center">
+            <Button variant="outline" onClick={() => setConfirmDuplicate(null)} className="flex-1 sm:flex-none">
+              ביטול
+            </Button>
+            <Button onClick={performDuplicate} className="flex-1 sm:flex-none gap-2">
+              <Copy className="w-4 h-4" /> שכפל
             </Button>
           </DialogFooter>
         </DialogContent>
