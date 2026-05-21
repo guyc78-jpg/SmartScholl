@@ -193,15 +193,15 @@ function DayPanel({ periods, onChange, onSave, onReset, onDuplicate, duplicateTa
         activeIndex={activeIndex}
         onRequestRemove={onRequestRemove}
       />
-      <div className="flex flex-wrap items-center justify-end gap-2 pt-2 border-t border-border/60">
-        <Button variant="ghost" onClick={onDuplicate} className="h-8 text-[12px] gap-1.5 text-muted-foreground hover:text-foreground">
-          <Copy className="w-3.5 h-3.5" /> שכפל ל{duplicateTargetLabel}
+      <div className="flex items-center justify-end gap-2 pt-3 border-t border-border/60">
+        <Button onClick={onSave} disabled={saving} className="h-8 px-3.5 text-[12px] font-medium gap-1.5 whitespace-nowrap flex-shrink-0">
+          <Save className="w-4 h-4" /> שמור שינויים
         </Button>
-        <Button variant="ghost" onClick={onReset} className="h-8 text-[12px] gap-1.5 text-muted-foreground hover:text-foreground">
+        <Button variant="outline" onClick={onReset} className="h-8 px-3 text-[12px] font-medium gap-1.5 whitespace-nowrap flex-shrink-0">
           <RotateCcw className="w-3.5 h-3.5" /> ברירת מחדל
         </Button>
-        <Button onClick={onSave} disabled={saving} className="h-8 text-[12px] gap-1.5">
-          <Save className="w-3.5 h-3.5" /> שמור שינויים
+        <Button variant="outline" onClick={onDuplicate} className="h-8 px-3 text-[12px] font-medium gap-1.5 whitespace-nowrap flex-shrink-0">
+          <Copy className="w-3.5 h-3.5" /> שכפל ל{duplicateTargetLabel}
         </Button>
       </div>
     </div>
@@ -212,7 +212,7 @@ export default function BellScheduleSettings({ user, role }) {
   const isAdmin = role === 'admin' || hasApprovedRole(user, 'admin');
   const [sunThu, setSunThu] = useState([]);
   const [fri, setFri] = useState([]);
-  const [tab, setTab] = useState('sun_thu');
+  const [tab, setTab] = useState('sun_thu'); // Default to sun_thu
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState(null); // { dayType, index, period }
@@ -309,13 +309,13 @@ export default function BellScheduleSettings({ user, role }) {
       />
 
       <div className="rounded-xl border border-border bg-card overflow-hidden">
-        <Tabs value={tab} onValueChange={setTab} dir="rtl">
-          <div className="px-3 pt-3">
-            <TabsList className="h-9 p-0.5 bg-muted/60">
-              <TabsTrigger value="sun_thu" className="h-8 px-4 text-[12px]">ימים א׳–ה׳</TabsTrigger>
-              <TabsTrigger value="fri" className="h-8 px-4 text-[12px]">יום ו׳</TabsTrigger>
-            </TabsList>
-          </div>
+         <Tabs value={tab} onValueChange={setTab} dir="rtl">
+           <div className="flex justify-center pt-3 pb-0 px-3">
+             <TabsList className="h-9 p-0.5 bg-muted/60 w-fit">
+               <TabsTrigger value="sun_thu" className="h-8 px-5 text-[12px] font-medium">ימים א׳–ה׳</TabsTrigger>
+               <TabsTrigger value="fri" className="h-8 px-5 text-[12px] font-medium">יום ו׳</TabsTrigger>
+             </TabsList>
+           </div>
           <div className="p-3">
             <TabsContent value="sun_thu" className="mt-0">
               <DayPanel
