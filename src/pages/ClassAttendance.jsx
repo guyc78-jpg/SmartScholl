@@ -180,21 +180,21 @@ export default function ClassAttendance({ role }) {
             <Input id="date" type="date" value={date} onChange={e => setDate(e.target.value)} className="w-40" />
           </div>
 
-          {/* Summary chips — equal width, evenly distributed across the row */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm" dir="rtl">
-            <span className="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-xl font-medium text-center truncate">✓ {presentCount} נוכחים</span>
-            <span className="px-3 py-1.5 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl font-medium text-center truncate">✗ {absentCount} נעדרים</span>
-            <span className="px-3 py-1.5 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-xl font-medium text-center truncate">⏰ {lateCount} מאחרים</span>
-            <span className="px-3 py-1.5 bg-muted text-muted-foreground rounded-xl font-medium text-center truncate">{markedCount}/{students.length} סומנו</span>
+          {/* Summary chips — single row, 4 equal columns */}
+          <div className="grid grid-cols-4 gap-1.5 sm:gap-2 text-xs sm:text-sm" dir="rtl">
+            <span className="px-2 sm:px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-xl font-medium text-center truncate">✓ {presentCount} נוכחים</span>
+            <span className="px-2 sm:px-3 py-1.5 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl font-medium text-center truncate">✗ {absentCount} נעדרים</span>
+            <span className="px-2 sm:px-3 py-1.5 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-xl font-medium text-center truncate">⏰ {lateCount} מאחרים</span>
+            <span className="px-2 sm:px-3 py-1.5 bg-muted text-muted-foreground rounded-xl font-medium text-center truncate">{markedCount}/{students.length} סומנו</span>
           </div>
 
-          {/* Mark All — equal width status filter chips */}
+          {/* Mark All — single row, 4 equal columns */}
           <div className="space-y-2 text-right" dir="rtl">
             <span className="text-xs text-muted-foreground">סמן הכל:</span>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
               {STATUSES.map(st => (
                 <button key={st} onClick={() => markAll(st)}
-                  className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-all text-center truncate ${statusStyle[st].idle}`}>
+                  className={`text-xs px-2 sm:px-3 py-1.5 rounded-lg border font-medium transition-all text-center truncate ${statusStyle[st].idle}`}>
                   {st}
                 </button>
               ))}
