@@ -6,10 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Save, UserRound, Send } from 'lucide-react';
+import { Save, UserRound, Send, School } from 'lucide-react';
 import GradeClassSelect from '@/components/profile/GradeClassSelect';
 import UserPermissionEditor from '@/components/profile/UserPermissionEditor';
 import WorkModeSelector from '@/components/layout/WorkModeSelector';
+import { invalidateSchoolNameCache } from '@/components/layout/SchoolNameBanner';
 import { extractGradeFromClass } from '@/lib/schoolStructure';
 import { getAvailableRoles, getSystemRole, getUserDisplayName, getRoleLabel, GENDER_OPTIONS } from '@/lib/roleUtils';
 import { useAuth } from '@/lib/AuthContext';
@@ -36,6 +37,7 @@ export default function Profile({ user, role, onRoleChange }) {
     role: user?.role || 'student',
     profile_homeroom_class: user?.profile_homeroom_class || user?.profile_class || '',
     profile_grade_managed: user?.profile_grade_managed || extractGradeFromClass(user?.profile_homeroom_class || user?.profile_class || ''),
+    school_name: user?.school_name || '',
   });
 
   const updateField = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
@@ -55,9 +57,11 @@ export default function Profile({ user, role, onRoleChange }) {
       profile_address: form.profile_address,
       profile_gender: form.profile_gender,
     };
+    if (isAdmin) personalData.school_name = form.school_name?.trim() || '';
 
     const savedUser = await base44.auth.updateMe(personalData);
     updateCurrentUser(savedUser || personalData);
+    if (isAdmin) invalidateSchoolNameCache();
     toast.success('הפרופיל נשמר בהצלחה');
     setSaving(false);
   };
@@ -149,6 +153,28 @@ export default function Profile({ user, role, onRoleChange }) {
               </div>
             </CardContent>
           </Card>
+
+          {isAdmin && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <School className="w-5 h-5 text-primary" />
+                  הגדרות מערכת
+                </CardTitle>
+                <CardDescription>שם בית הספר יוצג בעדינות בדשבורד ובכותרת המערכת.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2 max-w-md">
+                  <Label>שם בית הספר</Label>
+                  <Input
+                    value={form.school_name}
+                    onChange={(e) => updateField('school_name', e.target.value)}
+                    placeholder="לדוגמה: תיכון הראל"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {hasMultipleRoles && onRoleChange && (
             <Card>

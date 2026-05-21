@@ -16,6 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import StatusBadge from '@/components/ui/StatusBadge';
 import QuickActionModal from '@/components/dashboard/QuickActionModal';
 import NotificationsDropdown from '@/components/dashboard/NotificationsDropdown';
+import SchoolNameBanner from '@/components/layout/SchoolNameBanner';
 import { isStudentInApprovedScope, getUserApprovedClass, getUserApprovedGrade } from '@/lib/schoolStructure';
 import { getAvailableRoles, getUserFirstName, hasApprovedRole, getRoleHomeLabel, getRoleShort } from '@/lib/roleUtils';
 
@@ -169,7 +170,10 @@ export default function Dashboard({ user, role }) {
         <div className="min-w-0">
           <h1 className="text-xl lg:text-2xl font-bold text-foreground leading-tight">שלום, {getUserFirstName(user)} 👋</h1>
           <p className="text-sm font-medium text-foreground/70 mt-0.5">{dashboardTitle}</p>
-          <p className="text-xs text-muted-foreground mt-0.5">{hebrewDate()}</p>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
+            <p className="text-xs text-muted-foreground">{hebrewDate()}</p>
+            <SchoolNameBanner />
+          </div>
         </div>
         <NotificationsDropdown notifications={notifications} />
       </div>

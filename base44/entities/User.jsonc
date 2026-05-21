@@ -108,6 +108,14 @@
       "type": "string",
       "description": "\u05db\u05ea\u05d5\u05d1\u05ea"
     },
+    "profile_gender": {
+      "type": "string",
+      "enum": [
+        "male",
+        "female"
+      ],
+      "description": "\u05dc\u05e9\u05d5\u05df \u05e4\u05e0\u05d9\u05d9\u05d4"
+    },
     "profile_class": {
       "type": "string",
       "description": "\u05db\u05d9\u05ea\u05ea \u05ea\u05dc\u05de\u05d9\u05d3"
@@ -139,6 +147,10 @@
     "profile_homeroom_class": {
       "type": "string",
       "description": "\u05db\u05d9\u05ea\u05d4 \u05de\u05e9\u05d5\u05d9\u05db\u05ea \u05de\u05d0\u05d5\u05e9\u05e8\u05ea"
+    },
+    "school_name": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05d1\u05d9\u05ea \u05d4\u05e1\u05e4\u05e8 (\u05de\u05d5\u05d2\u05d3\u05e8 \u05e2\u05f4\u05d9 \u05de\u05e0\u05d4\u05dc \u05de\u05e2\u05e8\u05db\u05ea \u05d5\u05de\u05d5\u05e6\u05d2 \u05d1\u05e2\u05d3\u05d9\u05e0\u05d5\u05ea \u05d1\u05d3\u05e9\u05d1\u05d5\u05e8\u05d3 \u05d5\u05d1\u05db\u05d5\u05ea\u05e8\u05ea)"
     }
   }
 }

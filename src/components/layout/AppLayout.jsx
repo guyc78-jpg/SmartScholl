@@ -11,6 +11,7 @@ import {
 import { cn } from '@/lib/utils';
 import { getAvailableRoles, getUserContextLabel, getUserDisplayName } from '@/lib/roleUtils';
 import { getDashboardLabel } from '@/lib/dashboardLabels';
+import SchoolNameBanner from '@/components/layout/SchoolNameBanner';
 
 const sidebarGroups = [
   {
@@ -185,11 +186,14 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
           <button onClick={() => setSidebarOpen(true)} className="w-8 h-8 flex items-center justify-center text-foreground rounded-lg hover:bg-muted transition-colors">
             <Menu className="w-4.5 h-4.5" />
           </button>
-          <div className="flex items-center gap-1.5">
-            <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center">
-              <BookMarked className="w-3.5 h-3.5 text-white" />
+          <div className="flex flex-col items-center gap-0 min-w-0">
+            <div className="flex items-center gap-1.5">
+              <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center">
+                <BookMarked className="w-3.5 h-3.5 text-white" />
+              </div>
+              <span className="font-bold text-foreground text-[13px]">ניהול כיתה חכם</span>
             </div>
-            <span className="font-bold text-foreground text-[13px]">ניהול כיתה חכם</span>
+            <SchoolNameBanner size="xs" withIcon={false} className="leading-none max-w-[40vw]" />
           </div>
           <button onClick={() => setDarkMode(!darkMode)} className="w-8 h-8 flex items-center justify-center text-muted-foreground rounded-lg hover:bg-muted transition-colors">
             {darkMode ? <Sun className="w-4.5 h-4.5" /> : <Moon className="w-4.5 h-4.5" />}
