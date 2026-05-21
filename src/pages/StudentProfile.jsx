@@ -13,6 +13,7 @@ import StatusBadge from '@/components/ui/StatusBadge';
 import { ChevronRight, Phone, Mail, Edit, Plus, Calendar, Shield, Heart, Star, MessageSquare, BarChart2, CheckSquare } from 'lucide-react';
 import AddStudentModal from '@/components/students/AddStudentModal';
 import ParentContactLog from '@/components/student/ParentContactLog';
+import GrowthReport from '@/components/student/GrowthReport';
 import { CLASS_ID } from '@/lib/demoData';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/AuthContext';
@@ -194,18 +195,24 @@ export default function StudentProfile() {
 
       {/* Tabs */}
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="w-full grid grid-cols-5 sm:grid-cols-7 mb-4">
-          <TabsTrigger value="overview">סקירה</TabsTrigger>
-          <TabsTrigger value="attendance">נוכחות</TabsTrigger>
-          <TabsTrigger value="discipline">משמעת</TabsTrigger>
-          <TabsTrigger value="performance">תפקוד</TabsTrigger>
-          <TabsTrigger value="contacts" className="hidden sm:flex">קשרים</TabsTrigger>
-          <TabsTrigger value="notes" className="hidden sm:flex">הערות</TabsTrigger>
-          <TabsTrigger value="comms" className="hidden sm:flex">תקשורת</TabsTrigger>
-        </TabsList>
+        <TabsList className="w-full grid grid-cols-5 sm:grid-cols-8 mb-4 overflow-x-auto">
+            <TabsTrigger value="overview">סקירה</TabsTrigger>
+            <TabsTrigger value="growth">צמיחה</TabsTrigger>
+            <TabsTrigger value="attendance">נוכחות</TabsTrigger>
+            <TabsTrigger value="discipline">משמעת</TabsTrigger>
+            <TabsTrigger value="performance">תפקוד</TabsTrigger>
+            <TabsTrigger value="contacts" className="hidden sm:flex">קשרים</TabsTrigger>
+            <TabsTrigger value="notes" className="hidden sm:flex">הערות</TabsTrigger>
+            <TabsTrigger value="comms" className="hidden sm:flex">תקשורת</TabsTrigger>
+          </TabsList>
 
-        {/* Overview */}
-        <TabsContent value="overview" className="space-y-4">
+        {/* Growth Report */}
+         <TabsContent value="growth">
+           <GrowthReport studentId={id} studentName={student.full_name} />
+         </TabsContent>
+
+         {/* Overview */}
+         <TabsContent value="overview" className="space-y-4">
           {/* Parents */}
           <Card>
             <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">הורים</CardTitle></CardHeader>
