@@ -25,13 +25,13 @@ export default function WorkModeSelector({ user, activeRole, onRoleChange }) {
   }
 
   return (
-    <div className="mt-2 space-y-1">
-      <p className="text-[11px] text-sidebar-foreground/50">מצב עבודה</p>
+    <div className="mt-2 space-y-1" dir="rtl">
+      <p className="text-[11px] text-sidebar-foreground/50 text-right">מצב עבודה</p>
       <Select value={activeRole} onValueChange={handleChange} disabled={saving}>
-        <SelectTrigger className="h-8 bg-sidebar-accent border-sidebar-border text-sidebar-foreground text-xs">
-          <SelectValue />
+        <SelectTrigger className="h-8 bg-sidebar-accent border-sidebar-border text-sidebar-foreground text-xs w-full flex flex-row-reverse justify-between pe-2 ps-2 [&_svg]:order-first">
+          <SelectValue className="text-right" />
         </SelectTrigger>
-        <SelectContent dir="rtl">
+        <SelectContent dir="rtl" align="start">
           {roles.map(role => (
             <SelectItem key={role} value={role}>{ROLE_LABELS[role] || role}</SelectItem>
           ))}
