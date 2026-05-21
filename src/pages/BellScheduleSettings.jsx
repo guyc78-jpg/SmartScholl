@@ -173,7 +173,7 @@ function findActiveIndex(periods) {
   return periods.findIndex(p => p.start_time && p.end_time && hhmm >= p.start_time && hhmm < p.end_time);
 }
 
-function DayPanel({ periods, onChange, onSave, onReset, onDuplicate, duplicateTargetLabel, saving, isCurrentDay, onRequestRemove }) {
+function DayPanel({ periods, onChange, onSave, onReset, saving, isCurrentDay, onRequestRemove }) {
   const [tick, setTick] = useState(0);
   useEffect(() => {
     if (!isCurrentDay) return;
@@ -193,15 +193,12 @@ function DayPanel({ periods, onChange, onSave, onReset, onDuplicate, duplicateTa
         activeIndex={activeIndex}
         onRequestRemove={onRequestRemove}
       />
-      <div className="flex items-center justify-end gap-2 pt-3 border-t border-border/60">
-        <Button onClick={onSave} disabled={saving} className="h-8 px-3.5 text-[12px] font-medium gap-1.5 whitespace-nowrap flex-shrink-0">
+      <div className="grid grid-cols-2 gap-2 pt-3 border-t border-border/60">
+        <Button onClick={onSave} disabled={saving} className="h-9 text-[12px] font-semibold gap-1.5">
           <Save className="w-4 h-4" /> שמור שינויים
         </Button>
-        <Button variant="outline" onClick={onReset} className="h-8 px-3 text-[12px] font-medium gap-1.5 whitespace-nowrap flex-shrink-0">
+        <Button variant="outline" onClick={onReset} className="h-9 text-[12px] font-medium gap-1.5">
           <RotateCcw className="w-3.5 h-3.5" /> ברירת מחדל
-        </Button>
-        <Button variant="outline" onClick={onDuplicate} className="h-8 px-3 text-[12px] font-medium gap-1.5 whitespace-nowrap flex-shrink-0">
-          <Copy className="w-3.5 h-3.5" /> שכפל ל{duplicateTargetLabel}
         </Button>
       </div>
     </div>
@@ -323,8 +320,6 @@ export default function BellScheduleSettings({ user, role }) {
                 onChange={setSunThu}
                 onSave={() => handleSave('sun_thu')}
                 onReset={() => reset('sun_thu')}
-                onDuplicate={() => requestDuplicate('sun_thu')}
-                duplicateTargetLabel="יום ו׳"
                 onRequestRemove={(i) => requestRemove('sun_thu', i)}
                 saving={saving}
                 isCurrentDay={isCurrentDay('sun_thu')}
@@ -336,8 +331,6 @@ export default function BellScheduleSettings({ user, role }) {
                 onChange={setFri}
                 onSave={() => handleSave('fri')}
                 onReset={() => reset('fri')}
-                onDuplicate={() => requestDuplicate('fri')}
-                duplicateTargetLabel="ימים א׳–ה׳"
                 onRequestRemove={(i) => requestRemove('fri', i)}
                 saving={saving}
                 isCurrentDay={isCurrentDay('fri')}
