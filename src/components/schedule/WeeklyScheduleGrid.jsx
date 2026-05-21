@@ -1,8 +1,8 @@
 import { Plus, MapPin, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// Weekly schedule grid — Sun → Thu (RTL: Sunday rightmost), periods 1..N as rows.
-// Slim, professional, mobile-friendly. Inspired by the reference design.
+// Weekly schedule grid — Sun → Thu only (no Friday), periods 1..N as rows.
+// Slim, professional, mobile-friendly. Highlights today + current period.
 const DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי'];
 
 const subjectColors = {
@@ -18,15 +18,16 @@ const subjectColors = {
   'תנ"ך': 'text-rose-700 dark:text-rose-300',
 };
 
-export default function WeeklyScheduleGrid({ periods, slotsByKey, todayDayName, canEdit, onCellClick }) {
-  // periods: [{ period, start_time, end_time, label }]
+export default function WeeklyScheduleGrid({ periods, slotsByKey, todayDayName, currentPeriod, canEdit, onCellClick }) {
+  // todayDayName might be 'שישי' or 'שבת' — only highlight if it's in DAYS list
+  const highlightDay = DAYS.includes(todayDayName) ? todayDayName : null;
+
   return (
     <div className="rounded-2xl border border-border bg-card overflow-hidden" dir="rtl">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[640px] table-fixed border-collapse text-center">
           <thead>
             <tr>
-              {/* Right header cell: "יום / שעה" */}
               <th className="bg-primary text-primary-foreground text-[11px] font-bold w-16 sm:w-20 py-2 px-1 border-b border-l border-primary/30">
                 <div className="leading-tight">
                   <div>יום</div>
@@ -37,50 +38,57 @@ export default function WeeklyScheduleGrid({ periods, slotsByKey, todayDayName, 
                 <th
                   key={day}
                   className={cn(
-                    'text-[12px] font-bold py-2 px-1 border-b border-l border-primary/30 last:border-l-0',
-                    day === todayDayName
+                    'text-[12px] font-bold py-2 px-1 border-b border-l border-primary/30 last:border-l-0 relative',
+                    day === highlightDay
                       ? 'bg-primary text-primary-foreground'
                       : 'bg-primary/85 text-primary-foreground/95'
                   )}
                 >
                   {day}
+                  {day === highlightDay && (
+                    <span className="block text-[9px] font-normal opacity-90 mt-0.5">היום</span>
+                  )}
                 </th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {periods.map((p, rowIdx) => (
-              <tr key={p.period}>
-                <td
-                  className={cn(
-                    'w-16 sm:w-20 align-middle text-center font-bold text-xs sm:text-sm py-2 px-1 border-b border-l border-border',
-                    rowIdx % 2 === 0 ? 'bg-muted/40' : 'bg-card',
-                  )}
-                >
-                  <div className="text-foreground">{p.period}</div>
-                  {p.start_time && (
-                    <div className="force-ltr text-[9px] text-muted-foreground mt-0.5">
-                      {p.start_time}
-                    </div>
-                  )}
-                </td>
-                {DAYS.map(day => {
-                  const slot = slotsByKey[`${day}|${p.period}`];
-                  const isToday = day === todayDayName;
-                  return (
-                    <Cell
-                      key={day + p.period}
-                      slot={slot}
-                      day={day}
-                      period={p.period}
-                      isToday={isToday}
-                      canEdit={canEdit}
-                      onClick={() => onCellClick(day, p.period, slot, p)}
-                    />
-                  );
-                })}
-              </tr>
-            ))}
+            {periods.map((p, rowIdx) => {
+              const isCurrentRow = highlightDay && Number(currentPeriod) === Number(p.period);
+              return (
+                <tr key={p.period}>
+                  <td
+                    className={cn(
+                      'w-16 sm:w-20 align-middle text-center font-bold text-xs sm:text-sm py-2 px-1 border-b border-l border-border',
+                      rowIdx % 2 === 0 ? 'bg-muted/40' : 'bg-card',
+                      isCurrentRow && 'bg-primary/10 text-primary',
+                    )}
+                  >
+                    <div className={cn(isCurrentRow ? 'text-primary' : 'text-foreground')}>{p.period}</div>
+                    {p.start_time && (
+                      <div className="force-ltr text-[9px] text-muted-foreground mt-0.5">
+                        {p.start_time}
+                      </div>
+                    )}
+                  </td>
+                  {DAYS.map(day => {
+                    const slot = slotsByKey[`${day}|${p.period}`];
+                    const isToday = day === highlightDay;
+                    const isNow = isToday && isCurrentRow;
+                    return (
+                      <Cell
+                        key={day + p.period}
+                        slot={slot}
+                        isToday={isToday}
+                        isNow={isNow}
+                        canEdit={canEdit}
+                        onClick={() => onCellClick(day, p.period, slot, p)}
+                      />
+                    );
+                  })}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -88,16 +96,17 @@ export default function WeeklyScheduleGrid({ periods, slotsByKey, todayDayName, 
   );
 }
 
-function Cell({ slot, isToday, canEdit, onClick }) {
+function Cell({ slot, isToday, isNow, canEdit, onClick }) {
   const color = slot ? (subjectColors[slot.subject] || 'text-foreground') : '';
   const group = slot?.notes?.match(/^\[קבוצה: ([^\]]+)\]/)?.[1];
 
   return (
     <td
       className={cn(
-        'border-b border-l last:border-l-0 border-border align-middle p-0 transition-colors',
-        isToday ? 'bg-primary/[0.06]' : '',
-        canEdit ? 'cursor-pointer hover:bg-accent/60' : 'cursor-default',
+        'border-b border-l last:border-l-0 border-border align-middle p-0 transition-colors relative',
+        isNow ? 'bg-primary/15 dark:bg-primary/20 ring-1 ring-inset ring-primary/40'
+              : isToday ? 'bg-primary/[0.05]' : '',
+        canEdit ? 'cursor-pointer hover:bg-accent/60' : (slot ? 'cursor-pointer hover:bg-accent/40' : 'cursor-default'),
       )}
       onClick={canEdit || slot ? onClick : undefined}
     >
@@ -106,9 +115,10 @@ function Cell({ slot, isToday, canEdit, onClick }) {
           <div className={cn('text-[12px] sm:text-sm font-bold leading-tight truncate w-full', color)}>
             {slot.subject}
           </div>
-          {(slot.teacher || group) && (
-            <div className="text-[10px] text-muted-foreground leading-tight truncate w-full flex items-center justify-center gap-1">
-              {slot.teacher && <span className="truncate"><User className="w-2.5 h-2.5 inline ms-0.5 -mt-0.5" />{slot.teacher}</span>}
+          {slot.teacher && (
+            <div className="text-[10px] text-muted-foreground leading-tight truncate w-full inline-flex items-center justify-center gap-0.5">
+              <User className="w-2.5 h-2.5 flex-shrink-0" />
+              <span className="truncate">{slot.teacher}</span>
             </div>
           )}
           <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground/90 leading-tight">
@@ -117,8 +127,14 @@ function Cell({ slot, isToday, canEdit, onClick }) {
           </div>
         </div>
       ) : (
-        <div className="px-1 py-2 min-h-[58px] sm:min-h-[68px] flex items-center justify-center text-muted-foreground/40">
-          {canEdit ? <Plus className="w-4 h-4" /> : <span className="text-[10px]">—</span>}
+        <div className="px-1 py-2 min-h-[58px] sm:min-h-[68px] flex items-center justify-center">
+          {canEdit ? (
+            <div className="w-7 h-7 rounded-full border-2 border-dashed border-muted-foreground/30 hover:border-primary hover:bg-primary/10 hover:text-primary flex items-center justify-center text-muted-foreground/50 transition-all">
+              <Plus className="w-4 h-4" strokeWidth={2.5} />
+            </div>
+          ) : (
+            <span className="text-[10px] text-muted-foreground/30">—</span>
+          )}
         </div>
       )}
     </td>

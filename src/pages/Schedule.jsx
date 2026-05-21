@@ -13,7 +13,7 @@ import ImportScheduleDialog from '@/components/schedule/ImportScheduleDialog';
 import WeeklyScheduleGrid from '@/components/schedule/WeeklyScheduleGrid';
 import CellEditorDialog from '@/components/schedule/CellEditorDialog';
 import NowNextCard from '@/components/schedule/NowNextCard';
-import { loadBellSchedule, getTodayDayType, HEBREW_DAY_NAMES } from '@/lib/bellSchedule';
+import { loadBellSchedule, getTodayDayType, HEBREW_DAY_NAMES, getNowAndNext } from '@/lib/bellSchedule';
 
 // Build a full list of lesson rows from the bell schedule, falling back to 1..12 if needed.
 function buildPeriodRows(bellPeriods) {
@@ -41,9 +41,23 @@ export default function Schedule({ role = 'homeroom_teacher' }) {
   const [showImport, setShowImport] = useState(false);
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
   const [editor, setEditor] = useState(null); // { day, period, slot, periodRow }
+  const [currentPeriod, setCurrentPeriod] = useState(null);
 
   const canEdit = role === 'homeroom_teacher' || role === 'admin';
   const todayDayName = HEBREW_DAY_NAMES[new Date().getDay()];
+
+  // Update current-period highlight every 30s
+  useEffect(() => {
+    if (periods.length === 0) return;
+    const fullPeriods = periods.filter(p => p.start_time).map(p => ({ ...p, kind: 'lesson' }));
+    const tick = () => {
+      const { current } = getNowAndNext(fullPeriods);
+      setCurrentPeriod(current?.period || null);
+    };
+    tick();
+    const t = setInterval(tick, 30_000);
+    return () => clearInterval(t);
+  }, [periods]);
 
   useEffect(() => { load(); }, []);
 
@@ -107,7 +121,7 @@ export default function Schedule({ role = 'homeroom_teacher' }) {
   }
 
   return (
-    <div className="p-4 lg:p-6 space-y-4" dir="rtl">
+    <div className="p-4 lg:p-6 pb-24 lg:pb-6 space-y-4" dir="rtl">
       <PageHeader
         title="מערכת שעות"
         subtitle="לוח שבועי לפי הצלצולים — ימים א׳–ה׳"
@@ -137,6 +151,7 @@ export default function Schedule({ role = 'homeroom_teacher' }) {
           periods={periods}
           slotsByKey={slotsByKey}
           todayDayName={todayDayName}
+          currentPeriod={currentPeriod}
           canEdit={canEdit}
           onCellClick={openCell}
         />
