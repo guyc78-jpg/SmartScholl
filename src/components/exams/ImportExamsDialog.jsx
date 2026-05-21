@@ -71,19 +71,17 @@ export default function ImportExamsDialog({ open, onOpenChange, onImported, clas
     setIsParsing(true);
 
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    const result = await base44.integrations.Core.InvokeLLM({
-      file_urls: [file_url],
-      model: 'claude_sonnet_4_6',
-      prompt: `חלץ מקובץ זה לוח מבחנים/אירועים בעברית. הקובץ הוא טבלה שבועית בה כל עמודה מייצגת יום בשבוע (א'-ו') וכל שורה מייצגת שבוע. בכל תא: השורה הראשונה היא התאריך (פורמט DD/MM), ומתחתיה מופיעות שורות עם שמות מבחנים/אירועים לאותו יום.
+
+    const PROMPT = `חלץ מקובץ זה לוח מבחנים/אירועים בעברית. הקובץ הוא טבלה שבועית בה כל עמודה מייצגת יום בשבוע (א'-ו') וכל שורה מייצגת שבוע. בכל תא: השורה הראשונה היא התאריך (פורמט DD/MM), ומתחתיה מופיעות שורות עם שמות מבחנים/אירועים לאותו יום.
 
 הוראות קריטיות:
 1. עבור על כל תא בטבלה — כל שורה, כל עמודה, כל שבוע עד סוף הקובץ.
 2. בכל תא: זהה את התאריך (DD/MM) ואת כל הפריטים שמתחתיו.
 3. כל פריט/שורה/בולט בתא = רשומה נפרדת עם אותו תאריך.
-4. שנת הלימודים היא 2025-2026: תאריכים מינואר עד יולי → שנה 2026. תאריכים מספטמבר עד דצמבר → שנה 2025.
+4. שנת הלימודים היא 2025-2026: תאריכים מינואר עד יולי = שנה 2026. תאריכים מספטמבר עד דצמבר = שנה 2025.
 5. המיר תאריכים לפורמט YYYY-MM-DD (לדוגמה: 12/04 → 2026-04-12).
 6. אם יש שעה (כגון 16:00-18:00), שמור אותה בשדה time בפורמט HH:MM.
-7. אל תכלול ריקודים/משחקים כאירועים — אלו פעילויות פנאי ולא מבחנים/אירועים אקדמיים.
+7. אל תכלול ריקודים/משחקים — אלו פעילויות פנאי.
 8. שדה class_or_grade: אם מופיע מספר כיתה (כגון יב5, יב7) — שמור אותו. אחרת השאר ריק.
 
 סיווג type — חייב להיות בדיוק אחד מ: בגרות, מתכונת, מועד ב׳, חזרה, חג, אירוע שכבתי, אחר.
@@ -95,38 +93,73 @@ export default function ImportExamsDialog({ open, onOpenChange, onImported, clas
 - "חזרה" = חזרה / תרגול
 - "אחר" = כל דבר שאינו מהרשימה
 
-אל תסכם, אל תחזיר רק חלק מהנתונים — החזר את כל הרשומות שמצאת.`,
-      response_json_schema: {
-        type: 'object',
-        properties: {
-          exams: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                title: { type: 'string' },
-                subject: { type: 'string' },
-                type: { type: 'string' },
-                date: { type: 'string' },
-                time: { type: 'string' },
-                class_or_grade: { type: 'string' },
-                notes: { type: 'string' }
+החזר JSON בדיוק בפורמט: {"exams": [...]}
+אל תסכם, אל תחזיר רק חלק מהנתונים — החזר את כל הרשומות שמצאת.`;
+
+    let detectedRows = [];
+
+    // Try with claude first (better for complex Hebrew Word docs)
+    try {
+      const result = await base44.integrations.Core.InvokeLLM({
+        file_urls: [file_url],
+        model: 'claude_sonnet_4_6',
+        prompt: PROMPT,
+        response_json_schema: {
+          type: 'object',
+          properties: {
+            exams: {
+              type: 'array',
+              items: {
+                type: 'object',
+                properties: {
+                  title: { type: 'string' },
+                  subject: { type: 'string' },
+                  type: { type: 'string' },
+                  date: { type: 'string' },
+                  time: { type: 'string' },
+                  class_or_grade: { type: 'string' },
+                  notes: { type: 'string' }
+                }
               }
             }
-          }
-        },
-        required: ['exams']
-      }
-    });
+          },
+          required: ['exams']
+        }
+      });
 
-    const detectedRows = (result?.exams || []).map(row => ({
-      ...emptyRow,
-      ...row,
-      type: normalizeType(`${row.type || ''} ${row.title || ''}`),
-      subject: row.subject || 'כללי'
-    }));
+      const raw = result?.exams || (Array.isArray(result) ? result : []);
+      detectedRows = raw.map(row => ({
+        ...emptyRow,
+        ...row,
+        type: normalizeType(`${row.type || ''} ${row.title || ''}`),
+        subject: row.subject || 'כללי'
+      }));
+    } catch (e) {
+      // fallback: try without json schema, parse manually
+      try {
+        const resultStr = await base44.integrations.Core.InvokeLLM({
+          file_urls: [file_url],
+          model: 'claude_sonnet_4_6',
+          prompt: PROMPT + '\n\nחשוב: החזר רק JSON תקין, ללא טקסט נוסף לפני או אחרי.'
+        });
+        const jsonMatch = String(resultStr).match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          const raw = parsed?.exams || [];
+          detectedRows = raw.map(row => ({
+            ...emptyRow,
+            ...row,
+            type: normalizeType(`${row.type || ''} ${row.title || ''}`),
+            subject: row.subject || 'כללי'
+          }));
+        }
+      } catch {
+        // both failed
+      }
+    }
+
     if (detectedRows.length === 0) {
-      setError('לא הצלחנו לקרוא מהקובץ לוח מבחנים. נסו קובץ ברור יותר עם תאריכים ושמות מבחנים.');
+      setError('לא הצלחנו לקרוא מהקובץ לוח מבחנים. נסו לייצא את הקובץ כ-PDF ולנסות שוב.');
     } else {
       setRows(detectedRows);
       if (detectedRows.some(row => !row.date)) {
