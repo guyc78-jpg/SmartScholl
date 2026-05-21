@@ -1,82 +1,153 @@
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import PageHeader from '@/components/ui/PageHeader';
-import { Plus, Trash2, Save, RotateCcw, Bell, AlertTriangle } from 'lucide-react';
+import { Plus, Trash2, Save, RotateCcw, Bell, BookOpen, Coffee, Sunrise, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import {
   loadBellSchedule, saveBellSchedule,
   DEFAULT_SUN_THU, DEFAULT_FRI
 } from '@/lib/bellSchedule';
 import { hasApprovedRole } from '@/lib/roleUtils';
 
-const KIND_LABEL = {
-  pre_bell: 'צלצול מקדים',
-  homeroom: 'בוקר טוב מחנך',
-  lesson: 'שיעור',
-  break: 'הפסקה',
+const KIND_META = {
+  lesson:   { label: 'שיעור',         icon: BookOpen, color: 'text-primary'      },
+  break:    { label: 'הפסקה',         icon: Coffee,   color: 'text-amber-600 dark:text-amber-400' },
+  homeroom: { label: 'בוקר טוב',      icon: Sunrise,  color: 'text-sky-600 dark:text-sky-400' },
+  pre_bell: { label: 'צלצול מקדים',   icon: Bell,     color: 'text-muted-foreground' },
 };
 
-function PeriodEditor({ periods, onChange }) {
-  const setField = (idx, field, value) => {
-    const next = periods.map((p, i) => i === idx ? { ...p, [field]: value } : p);
-    onChange(next);
-  };
-  const remove = (idx) => onChange(periods.filter((_, i) => i !== idx));
-  const add = () => onChange([...periods, { kind: 'lesson', label: 'שיעור', start_time: '08:00', end_time: '08:45' }]);
+function KindChip({ value, onChange }) {
+  const meta = KIND_META[value] || KIND_META.lesson;
+  const Icon = meta.icon;
+  return (
+    <Select value={value} onValueChange={onChange}>
+      <SelectTrigger
+        className={cn(
+          'h-8 w-32 px-2.5 rounded-full border bg-muted/50 hover:bg-muted',
+          'text-[12px] font-medium gap-1.5 [&>svg:last-child]:opacity-50'
+        )}
+      >
+        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+          <Icon className={cn('w-3.5 h-3.5 flex-shrink-0', meta.color)} />
+          <span className="truncate">{meta.label}</span>
+        </div>
+      </SelectTrigger>
+      <SelectContent>
+        {Object.entries(KIND_META).map(([k, m]) => {
+          const I = m.icon;
+          return (
+            <SelectItem key={k} value={k}>
+              <div className="flex items-center gap-2">
+                <I className={cn('w-3.5 h-3.5', m.color)} />
+                <span>{m.label}</span>
+              </div>
+            </SelectItem>
+          );
+        })}
+      </SelectContent>
+    </Select>
+  );
+}
+
+function PeriodRow({ period, index, onChange, onRemove }) {
+  const set = (field, value) => onChange({ ...period, [field]: value });
+  const isLesson = period.kind === 'lesson';
 
   return (
-    <div className="space-y-2" dir="rtl">
-      {periods.map((p, i) => (
-        <div key={i} className="grid grid-cols-12 gap-2 items-end p-2 rounded-lg border border-border bg-card">
-          <div className="col-span-12 sm:col-span-3">
-            <Label className="text-xs">סוג</Label>
-            <Select value={p.kind} onValueChange={(v) => setField(i, 'kind', v)}>
-              <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {Object.entries(KIND_LABEL).map(([k, l]) => (
-                  <SelectItem key={k} value={k}>{l}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="col-span-6 sm:col-span-2">
-            <Label className="text-xs">מס׳ שיעור</Label>
-            <Input
-              type="number"
-              min="1"
-              value={p.period ?? ''}
-              onChange={(e) => setField(i, 'period', e.target.value ? Number(e.target.value) : undefined)}
-              disabled={p.kind !== 'lesson'}
-              className="h-9"
-            />
-          </div>
-          <div className="col-span-12 sm:col-span-3">
-            <Label className="text-xs">תיאור</Label>
-            <Input value={p.label || ''} onChange={(e) => setField(i, 'label', e.target.value)} className="h-9" />
-          </div>
-          <div className="col-span-6 sm:col-span-1.5">
-            <Label className="text-xs">התחלה</Label>
-            <Input type="time" value={p.start_time || ''} onChange={(e) => setField(i, 'start_time', e.target.value)} className="h-9" />
-          </div>
-          <div className="col-span-6 sm:col-span-1.5">
-            <Label className="text-xs">סיום</Label>
-            <Input type="time" value={p.end_time || ''} onChange={(e) => setField(i, 'end_time', e.target.value)} className="h-9" />
-          </div>
-          <div className="col-span-12 sm:col-span-1 flex sm:justify-end">
-            <Button variant="ghost" size="icon" onClick={() => remove(i)} className="text-destructive hover:text-destructive">
-              <Trash2 className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-      ))}
-      <Button variant="outline" onClick={add} className="gap-2">
-        <Plus className="w-4 h-4" /> הוסף שורה
+    <div className="grid grid-cols-[auto_1fr_auto] sm:grid-cols-[auto_72px_1fr_auto_auto] gap-2 items-center px-2.5 py-1.5 rounded-lg hover:bg-muted/40 group transition-colors">
+      {/* Row number */}
+      <div className="w-6 text-center text-[11px] font-bold text-muted-foreground/60 tabular-nums">
+        {index + 1}
+      </div>
+
+      {/* Kind chip - uniform */}
+      <div className="sm:order-2">
+        <KindChip value={period.kind} onChange={(v) => set('kind', v)} />
+      </div>
+
+      {/* Label */}
+      <Input
+        value={period.label || ''}
+        onChange={(e) => set('label', e.target.value)}
+        placeholder={isLesson ? `שיעור ${period.period || ''}` : KIND_META[period.kind]?.label}
+        className="h-8 text-[13px] sm:order-3 col-span-2 sm:col-span-1"
+      />
+
+      {/* Times - paired */}
+      <div className="flex items-center gap-1 sm:order-4 col-span-3 sm:col-span-1">
+        <Input
+          type="time"
+          value={period.start_time || ''}
+          onChange={(e) => set('start_time', e.target.value)}
+          className="h-8 w-[88px] text-[12px] force-ltr px-2"
+        />
+        <span className="text-muted-foreground text-xs">–</span>
+        <Input
+          type="time"
+          value={period.end_time || ''}
+          onChange={(e) => set('end_time', e.target.value)}
+          className="h-8 w-[88px] text-[12px] force-ltr px-2"
+        />
+      </div>
+
+      {/* Delete */}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={onRemove}
+        className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 sm:order-5 opacity-60 group-hover:opacity-100 transition-opacity"
+      >
+        <Trash2 className="w-3.5 h-3.5" />
       </Button>
+    </div>
+  );
+}
+
+function PeriodEditor({ periods, onChange }) {
+  const update = (idx, next) => onChange(periods.map((p, i) => i === idx ? next : p));
+  const remove = (idx) => onChange(periods.filter((_, i) => i !== idx));
+  const add = () => onChange([
+    ...periods,
+    { kind: 'lesson', label: '', start_time: '08:00', end_time: '08:45' }
+  ]);
+
+  return (
+    <div className="space-y-0.5" dir="rtl">
+      {periods.map((p, i) => (
+        <PeriodRow
+          key={i}
+          period={p}
+          index={i}
+          onChange={(next) => update(i, next)}
+          onRemove={() => remove(i)}
+        />
+      ))}
+      <button
+        onClick={add}
+        className="w-full mt-2 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-border hover:border-primary hover:bg-primary/5 hover:text-primary text-muted-foreground text-[12px] font-medium transition-colors"
+      >
+        <Plus className="w-3.5 h-3.5" /> הוסף שורה
+      </button>
+    </div>
+  );
+}
+
+function DayPanel({ dayType, periods, onChange, onSave, onReset, saving }) {
+  return (
+    <div className="space-y-3">
+      <PeriodEditor periods={periods} onChange={onChange} />
+      <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/60">
+        <Button variant="ghost" onClick={onReset} className="h-8 text-[12px] gap-1.5 text-muted-foreground hover:text-foreground">
+          <RotateCcw className="w-3.5 h-3.5" /> ברירת מחדל
+        </Button>
+        <Button onClick={onSave} disabled={saving} className="h-8 text-[12px] gap-1.5">
+          <Save className="w-3.5 h-3.5" /> שמור שינויים
+        </Button>
+      </div>
     </div>
   );
 }
@@ -126,52 +197,53 @@ export default function BellScheduleSettings({ user, role }) {
     );
   }
 
-  if (loading) return <div className="flex justify-center py-16"><div className="w-7 h-7 border-4 border-primary/20 border-t-primary rounded-full animate-spin"/></div>;
+  if (loading) {
+    return (
+      <div className="flex justify-center py-16">
+        <div className="w-7 h-7 border-4 border-primary/20 border-t-primary rounded-full animate-spin"/>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-4 lg:p-6 space-y-4 text-right" dir="rtl">
+    <div className="p-3 lg:p-5 max-w-3xl mx-auto space-y-3 text-right" dir="rtl">
       <PageHeader
         title="צלצולים והפסקות"
-        subtitle="הגדר את שעות השיעורים, הצלצולים וההפסקות. הנתונים מסתנכרנים אוטומטית עם דשבורד התלמיד והמחנך."
+        subtitle="הגדר שעות שיעורים, צלצולים והפסקות. הנתונים מסונכרנים אוטומטית בכל המערכת."
       />
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold flex items-center gap-2">
-            <Bell className="w-4 h-4 text-primary" /> לוח צלצולים
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Tabs value={tab} onValueChange={setTab} dir="rtl">
-            <TabsList className="mb-4">
-              <TabsTrigger value="sun_thu">ימים א׳–ה׳</TabsTrigger>
-              <TabsTrigger value="fri">יום ו׳</TabsTrigger>
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <Tabs value={tab} onValueChange={setTab} dir="rtl">
+          <div className="px-3 pt-3">
+            <TabsList className="h-9 p-0.5 bg-muted/60">
+              <TabsTrigger value="sun_thu" className="h-8 px-4 text-[12px]">ימים א׳–ה׳</TabsTrigger>
+              <TabsTrigger value="fri" className="h-8 px-4 text-[12px]">יום ו׳</TabsTrigger>
             </TabsList>
-            <TabsContent value="sun_thu" className="space-y-3">
-              <PeriodEditor periods={sunThu} onChange={setSunThu} />
-              <div className="flex items-center gap-2 pt-2">
-                <Button onClick={() => handleSave('sun_thu')} disabled={saving} className="gap-2">
-                  <Save className="w-4 h-4" /> שמור
-                </Button>
-                <Button variant="outline" onClick={() => reset('sun_thu')} className="gap-2">
-                  <RotateCcw className="w-4 h-4" /> ברירת מחדל
-                </Button>
-              </div>
+          </div>
+          <div className="p-3">
+            <TabsContent value="sun_thu" className="mt-0">
+              <DayPanel
+                dayType="sun_thu"
+                periods={sunThu}
+                onChange={setSunThu}
+                onSave={() => handleSave('sun_thu')}
+                onReset={() => reset('sun_thu')}
+                saving={saving}
+              />
             </TabsContent>
-            <TabsContent value="fri" className="space-y-3">
-              <PeriodEditor periods={fri} onChange={setFri} />
-              <div className="flex items-center gap-2 pt-2">
-                <Button onClick={() => handleSave('fri')} disabled={saving} className="gap-2">
-                  <Save className="w-4 h-4" /> שמור
-                </Button>
-                <Button variant="outline" onClick={() => reset('fri')} className="gap-2">
-                  <RotateCcw className="w-4 h-4" /> ברירת מחדל
-                </Button>
-              </div>
+            <TabsContent value="fri" className="mt-0">
+              <DayPanel
+                dayType="fri"
+                periods={fri}
+                onChange={setFri}
+                onSave={() => handleSave('fri')}
+                onReset={() => reset('fri')}
+                saving={saving}
+              />
             </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+          </div>
+        </Tabs>
+      </div>
     </div>
   );
 }
