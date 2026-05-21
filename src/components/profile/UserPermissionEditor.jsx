@@ -10,7 +10,7 @@ import { extractGradeFromClass } from '@/lib/schoolStructure';
 import { getAvailableRoles, getUserDisplayName, ROLE_LABELS, SYSTEM_ROLE_PRIORITY } from '@/lib/roleUtils';
 import { cn } from '@/lib/utils';
 
-const roles = SYSTEM_ROLE_PRIORITY.map(value => ({ value, label: ROLE_LABELS[value] }));
+const roles = SYSTEM_ROLE_PRIORITY.filter(value => value !== 'parent').map(value => ({ value, label: ROLE_LABELS[value] }));
 
 export default function UserPermissionEditor({ targetUser, currentUser, onSaved }) {
   const currentRoles = getAvailableRoles(targetUser);
@@ -80,9 +80,9 @@ export default function UserPermissionEditor({ targetUser, currentUser, onSaved 
           </Button>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-2" dir="rtl">
           <Label>תפקידים נוספים / מאושרים</Label>
-          <div className="flex flex-wrap gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
             {roles.map(item => {
               const selected = form.approvedRoles.includes(item.value);
               return (
@@ -91,8 +91,10 @@ export default function UserPermissionEditor({ targetUser, currentUser, onSaved 
                   key={item.value}
                   onClick={() => toggleRole(item.value)}
                   className={cn(
-                    'px-3 py-2 rounded-xl border text-sm transition-colors',
-                    selected ? 'bg-primary text-primary-foreground border-primary' : 'bg-card hover:bg-muted border-border'
+                    'h-10 px-3 rounded-xl border text-sm font-medium leading-none flex items-center justify-center text-center transition-colors',
+                    selected
+                      ? 'bg-primary text-primary-foreground border-primary hover:bg-primary/90'
+                      : 'bg-card text-foreground/80 border-border hover:bg-muted hover:text-foreground'
                   )}
                 >
                   {item.label}
