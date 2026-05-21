@@ -167,8 +167,9 @@ export default function Dashboard({ user, role }) {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">{dashboardTitle} · שלום, {getUserFirstName(user)} 👋</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{hebrewDate()} · {scopeLabels}</p>
+          <h1 className="text-2xl font-bold text-foreground">שלום, {getUserFirstName(user)} 👋</h1>
+          <p className="text-sm text-muted-foreground mt-1">{dashboardTitle}</p>
+          <p className="text-sm text-muted-foreground/70 mt-0.5">{hebrewDate()} · {scopeLabels}</p>
         </div>
         <NotificationsDropdown notifications={notifications} />
       </div>
