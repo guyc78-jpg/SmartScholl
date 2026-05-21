@@ -158,10 +158,10 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
     <div className="flex h-screen bg-background overflow-hidden" dir="rtl">
       {/* Desktop Sidebar */}
        <aside className={cn(
-         'hidden lg:flex w-56 flex-col flex-shrink-0 border-s transition-all shadow-lg',
+         'hidden lg:flex w-56 flex-col flex-shrink-0 border-s',
          darkMode
-           ? 'bg-slate-700 border-slate-600/40 shadow-[0_0_24px_rgba(0,0,0,0.4)]'
-           : 'bg-sidebar border-sidebar-border shadow-lg'
+           ? 'bg-slate-700 border-slate-600/40'
+           : 'bg-sidebar border-sidebar-border'
        )}>
          <SidebarContent />
        </aside>
@@ -171,8 +171,8 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
          <>
            <div
              className={cn(
-               'fixed inset-0 z-40 lg:hidden transition-all',
-               darkMode ? 'bg-black/60 backdrop-blur-sm' : 'bg-black/50'
+               'fixed inset-0 z-40 lg:hidden',
+               darkMode ? 'bg-black/60' : 'bg-black/50'
              )}
              onClick={() => setSidebarOpen(false)}
            />
@@ -197,7 +197,7 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile Header — compact */}
-        <header className="lg:hidden relative z-30 flex items-center justify-between px-2 h-14 bg-card/95 backdrop-blur border-b border-border flex-shrink-0">
+        <header className="lg:hidden relative z-30 flex items-center justify-between px-2 h-14 bg-card border-b border-border flex-shrink-0">
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
@@ -223,12 +223,12 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto text-right" dir="rtl" style={{ paddingBottom: 'calc(76px + env(safe-area-inset-bottom))' }}>
+        <main className="flex-1 overflow-y-auto overflow-x-hidden text-right will-change-scroll" dir="rtl" style={{ paddingBottom: 'calc(76px + env(safe-area-inset-bottom))', WebkitOverflowScrolling: 'touch' }}>
           {children}
         </main>
 
         {/* Mobile Bottom Nav */}
-        <nav className="lg:hidden fixed bottom-0 inset-x-0 grid bg-card/95 backdrop-blur border-t border-border z-30 shadow-[0_-2px_8px_rgba(0,0,0,0.04)]" dir="rtl"
+        <nav className="lg:hidden fixed bottom-0 inset-x-0 grid bg-card border-t border-border z-30" dir="rtl"
           style={{
             gridTemplateColumns: `repeat(${bottomNavItems.length}, minmax(0, 1fr))`,
             paddingBottom: 'env(safe-area-inset-bottom)',

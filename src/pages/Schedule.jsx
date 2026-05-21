@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { CLASS_ID } from '@/lib/demoData';
 import { Button } from '@/components/ui/button';
@@ -79,12 +79,12 @@ export default function Schedule({ role = 'homeroom_teacher' }) {
     return map;
   }, [slots]);
 
-  function openCell(day, period, slot, periodRow) {
+  const openCell = useCallback((day, period, slot, periodRow) => {
     if (!canEdit && !slot) return;
     setEditor({ day, period, slot, periodRow });
-  }
+  }, [canEdit]);
 
-  async function handleSaveCell(payload) {
+  const handleSaveCell = useCallback(async (payload) => {
     const { day, period, slot, periodRow } = editor;
     const base = {
       class_id: CLASS_ID,
@@ -103,22 +103,22 @@ export default function Schedule({ role = 'homeroom_teacher' }) {
     }
     setEditor(null);
     load();
-  }
+  }, [editor]);
 
-  async function handleDeleteCell(id) {
+  const handleDeleteCell = useCallback(async (id) => {
     await base44.entities.ScheduleSlot.delete(id);
     toast.success('נמחק');
     setEditor(null);
     load();
-  }
+  }, []);
 
-  async function handleDeleteAll() {
+  const handleDeleteAll = useCallback(async () => {
     const all = await base44.entities.ScheduleSlot.filter({ class_id: CLASS_ID });
     await Promise.all(all.map(s => base44.entities.ScheduleSlot.delete(s.id)));
     toast.success('המערכת נמחקה');
     setConfirmDeleteAll(false);
     load();
-  }
+  }, []);
 
   return (
     <div className="p-4 lg:p-6 pb-24 lg:pb-6 space-y-4" dir="rtl">
