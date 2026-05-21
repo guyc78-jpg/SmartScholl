@@ -25,7 +25,7 @@ export function invalidateSchoolNameCache() {
   cachedPromise = null;
 }
 
-export default function SchoolNameBanner({ className, withIcon = true, size = 'sm' }) {
+export default function SchoolNameBanner({ className, withIcon = true, size = 'sm', inline = false }) {
   const [name, setName] = useState(cachedSchoolName || '');
 
   useEffect(() => {
@@ -35,6 +35,15 @@ export default function SchoolNameBanner({ className, withIcon = true, size = 's
   }, []);
 
   if (!name) return null;
+
+  if (inline) {
+    return (
+      <span className={cn('inline-flex items-center gap-1.5 text-foreground/70 font-medium', className)} dir="rtl">
+        <span>{name}</span>
+        <span aria-hidden className="text-muted-foreground/60">·</span>
+      </span>
+    );
+  }
 
   return (
     <span
