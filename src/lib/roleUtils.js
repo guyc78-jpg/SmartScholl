@@ -90,6 +90,24 @@ export function getUserContextLabel(user, activeRole) {
   return ROLE_LABELS[role] || 'משתמש';
 }
 
+export function getRoleHomeLabel(user, activeRole) {
+  const role = activeRole || getInitialWorkRole(user);
+
+  if (role === 'homeroom_teacher') {
+    return user?.profile_homeroom_class || user?.profile_class
+      ? `מחנך ${user?.profile_homeroom_class || user?.profile_class}`
+      : 'מחנך/ת כיתה';
+  }
+
+  if (role === 'coordinator') {
+    return user?.profile_grade_managed
+      ? `רכז ${user.profile_grade_managed}`
+      : 'רכז/ת שכבה';
+  }
+
+  return ROLE_LABELS[role] || 'משתמש';
+}
+
 export function getRoleDisplayLines(user, activeRole) {
   return [getUserContextLabel(user, activeRole)];
 }

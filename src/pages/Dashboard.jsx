@@ -17,7 +17,7 @@ import StatusBadge from '@/components/ui/StatusBadge';
 import QuickActionModal from '@/components/dashboard/QuickActionModal';
 import NotificationsDropdown from '@/components/dashboard/NotificationsDropdown';
 import { isStudentInApprovedScope, getUserApprovedClass, getUserApprovedGrade } from '@/lib/schoolStructure';
-import { getAvailableRoles, getUserFirstName, hasApprovedRole } from '@/lib/roleUtils';
+import { getAvailableRoles, getUserFirstName, hasApprovedRole, getRoleHomeLabel } from '@/lib/roleUtils';
 
 const HEBREW_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 const HEBREW_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
@@ -41,11 +41,14 @@ export default function Dashboard({ user, role }) {
   const isAdmin = approvedRoles.includes('admin');
   const hasClassRole = approvedRoles.includes('homeroom_teacher');
   const hasCoordinatorRole = approvedRoles.includes('coordinator');
-  const dashboardTitle = isAdmin ? 'ניהול מערכת' : hasClassRole ? 'הכיתה שלי' : hasCoordinatorRole ? 'השכבה שלי' : 'דשבורד';
+  const isActiveHomeroom = role === 'homeroom_teacher';
+  const isActiveCoordinator = role === 'coordinator';
+  const isActiveAdmin = role === 'admin';
+  const dashboardTitle = getRoleHomeLabel(user, role);
   const scopeLabels = [
-    isAdmin ? 'ניהול מערכת' : null,
-    hasClassRole ? `הכיתה שלי${getUserApprovedClass(user) ? ` · ${getUserApprovedClass(user)}` : ''}` : null,
-    hasCoordinatorRole ? `השכבה שלי${getUserApprovedGrade(user) ? ` · ${getUserApprovedGrade(user)}` : ''}` : null,
+    isActiveAdmin ? 'ניהול מערכת' : null,
+    isActiveHomeroom ? `מחנך${getUserApprovedClass(user) ? ` · ${getUserApprovedClass(user)}` : ''}` : null,
+    isActiveCoordinator ? `רכז${getUserApprovedGrade(user) ? ` · ${getUserApprovedGrade(user)}` : ''}` : null,
   ].filter(Boolean).join(' | ') || 'מערכת כללית';
 
   useEffect(() => {
@@ -198,16 +201,16 @@ export default function Dashboard({ user, role }) {
         </section>
       )}
 
-      {hasClassRole && (
+      {isActiveHomeroom && (
         <div className="space-y-1">
-          <h2 className="text-lg font-bold text-foreground">הכיתה שלי · {getUserApprovedClass(user) || 'לא הוגדרה כיתה'}</h2>
+          <h2 className="text-lg font-bold text-foreground">מחנך {getUserApprovedClass(user) || 'לא הוגדרה כיתה'}</h2>
           <p className="text-sm text-muted-foreground">אזור נתוני הכיתה המשויכת המאושרת שלך.</p>
         </div>
       )}
 
-      {hasCoordinatorRole && (
+      {isActiveCoordinator && (
         <div className="space-y-1">
-          <h2 className="text-lg font-bold text-foreground">השכבה שלי · {getUserApprovedGrade(user) || 'לא הוגדרה שכבה'}</h2>
+          <h2 className="text-lg font-bold text-foreground">רכז {getUserApprovedGrade(user) || 'לא הוגדרה שכבה'}</h2>
           <p className="text-sm text-muted-foreground">אזור נתוני השכבה המשויכת המאושרת שלך.</p>
         </div>
       )}
