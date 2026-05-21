@@ -221,6 +221,7 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
                   'flex flex-col items-center justify-center gap-1 py-1.5 px-0.5 transition-colors min-w-0 text-center',
                   isActive ? 'text-primary' : 'text-muted-foreground'
                 )}
+                style={{ transform: 'translateY(-8px)' }}
               >
                 <div className={cn(
                   'flex items-center justify-center w-10 h-6 rounded-full transition-colors flex-shrink-0',
