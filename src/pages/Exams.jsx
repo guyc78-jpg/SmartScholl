@@ -13,7 +13,7 @@ import StatusBadge from '@/components/ui/StatusBadge';
 import PageHeader from '@/components/ui/PageHeader';
 import EmptyState from '@/components/ui/EmptyState';
 import { toast } from 'sonner';
-import { BookOpen, Plus, Edit, Trash2, Calendar, Clock, User, AlertTriangle, FileUp, Check, RotateCcw } from 'lucide-react';
+import { BookOpen, Plus, Edit, Trash2, Calendar, Clock, User, AlertTriangle, FileUp, Check, RotateCcw, Eraser } from 'lucide-react';
 import ImportExamsDialog from '@/components/exams/ImportExamsDialog';
 
 const SUBJECTS = ['מתמטיקה', 'עברית', 'ספרות', 'אנגלית', 'היסטוריה', 'גיאוגרפיה', 'פיזיקה', 'כימיה', 'ביולוגיה', 'חינוך גופני', 'אמנות', 'אחר'];
@@ -67,8 +67,15 @@ export default function Exams({ role, user }) {
 
   async function handleDelete(id) {
     if (!window.confirm('למחוק את המבחן?')) return;
-    await base44.entities.DisciplineEvent.delete && base44.entities.Exam.delete(id);
+    await base44.entities.Exam.delete(id);
     toast.success('נמחק');
+    loadExams();
+  }
+
+  async function handleDeleteAll() {
+    if (!window.confirm(`למחוק את כל ${exams.length} המבחנים? פעולה זו אינה הפיכה.`)) return;
+    await Promise.all(exams.map(e => base44.entities.Exam.delete(e.id)));
+    toast.success('כל המבחנים נמחקו');
     loadExams();
   }
 
@@ -164,6 +171,11 @@ export default function Exams({ role, user }) {
         subtitle="מבחנים, בחנים, עבודות ופרויקטים"
         actions={canEditExams ? (
           <>
+            {exams.length > 0 && (
+              <Button size="sm" variant="outline" className="gap-2 text-red-500 hover:text-red-600 hover:border-red-300" onClick={handleDeleteAll}>
+                <Eraser className="w-4 h-4" />מחק הכל
+              </Button>
+            )}
             <Button size="sm" variant="outline" className="gap-2" onClick={() => setShowImport(true)}>
               <FileUp className="w-4 h-4" />ייבוא קובץ
             </Button>
