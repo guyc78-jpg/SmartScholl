@@ -312,8 +312,8 @@ export default function BellScheduleSettings({ user, role }) {
          <Tabs value={tab} onValueChange={setTab} dir="rtl">
            <div className="flex justify-center pt-3 pb-0 px-3">
              <TabsList className="h-9 p-0.5 bg-muted/60 w-fit">
-               <TabsTrigger value="sun_thu" className="h-8 px-5 text-[12px] font-medium">ימים א׳–ה׳</TabsTrigger>
                <TabsTrigger value="fri" className="h-8 px-5 text-[12px] font-medium">יום ו׳</TabsTrigger>
+               <TabsTrigger value="sun_thu" className="h-8 px-5 text-[12px] font-medium">ימים א׳–ה׳</TabsTrigger>
              </TabsList>
            </div>
           <div className="p-3">
