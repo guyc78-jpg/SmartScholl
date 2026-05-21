@@ -157,27 +157,40 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
   return (
     <div className="flex h-screen bg-background overflow-hidden" dir="rtl">
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex w-56 bg-sidebar flex-col flex-shrink-0 border-s border-sidebar-border">
-        <SidebarContent />
-      </aside>
+       <aside className={cn(
+         'hidden lg:flex w-56 flex-col flex-shrink-0 border-s transition-all',
+         darkMode
+           ? 'bg-slate-950 border-slate-800'
+           : 'bg-sidebar border-sidebar-border'
+       )}>
+         <SidebarContent />
+       </aside>
 
       {/* Mobile Sidebar Overlay */}
-      {sidebarOpen && (
-        <>
-          <div
-            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-          />
-          <aside className="fixed right-0 top-0 h-full w-72 bg-sidebar z-50 lg:hidden shadow-2xl">
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="absolute top-4 end-4 w-8 h-8 flex items-center justify-center text-sidebar-foreground/70 hover:text-sidebar-foreground rounded-lg hover:bg-sidebar-accent">
-              <X className="w-5 h-5" />
-            </button>
-            <SidebarContent />
-          </aside>
-        </>
-      )}
+       {sidebarOpen && (
+         <>
+           <div
+             className={cn(
+               'fixed inset-0 z-40 lg:hidden transition-all',
+               darkMode ? 'bg-black/60 backdrop-blur-sm' : 'bg-black/50'
+             )}
+             onClick={() => setSidebarOpen(false)}
+           />
+           <aside className={cn(
+             'fixed right-0 top-0 h-full w-72 z-50 lg:hidden border-s',
+             darkMode
+               ? 'bg-slate-950 dark:bg-slate-950 border-slate-800 shadow-[0_0_32px_rgba(0,0,0,0.6)]'
+               : 'bg-sidebar border-sidebar-border shadow-2xl'
+           )}>
+             <button
+               onClick={() => setSidebarOpen(false)}
+               className="absolute top-4 end-4 w-8 h-8 flex items-center justify-center text-sidebar-foreground/70 hover:text-sidebar-foreground rounded-lg hover:bg-sidebar-accent">
+               <X className="w-5 h-5" />
+             </button>
+             <SidebarContent />
+           </aside>
+         </>
+       )}
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
