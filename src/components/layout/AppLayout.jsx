@@ -197,13 +197,19 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto text-right" dir="rtl" style={{ paddingBottom: 'calc(72px + env(safe-area-inset-bottom))' }}>
+        <main className="flex-1 overflow-y-auto text-right" dir="rtl" style={{ paddingBottom: 'calc(76px + env(safe-area-inset-bottom))' }}>
           {children}
         </main>
 
         {/* Mobile Bottom Nav */}
         <nav className="lg:hidden fixed bottom-0 inset-x-0 grid bg-card/95 backdrop-blur border-t border-border z-30 shadow-[0_-2px_8px_rgba(0,0,0,0.04)]" dir="rtl"
-          style={{ gridTemplateColumns: `repeat(${bottomNavItems.length}, minmax(0, 1fr))`, paddingBottom: 'env(safe-area-inset-bottom)', paddingTop: '6px', paddingInline: '4px', minHeight: '60px' }}>
+          style={{
+            gridTemplateColumns: `repeat(${bottomNavItems.length}, minmax(0, 1fr))`,
+            paddingBottom: 'env(safe-area-inset-bottom)',
+            paddingTop: '8px',
+            paddingInline: '2px',
+            minHeight: 'calc(72px + env(safe-area-inset-bottom))',
+          }}>
           {bottomNavItems.map((item) => {
             const isActive = location.pathname === item.path;
             const itemLabel = item.dynamicLabel ? getDashboardLabel(role) : item.label;
@@ -212,17 +218,25 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  'flex flex-col items-center justify-center gap-0.5 py-1.5 transition-colors min-w-0',
+                  'flex flex-col items-center justify-center gap-1 py-1.5 px-0.5 transition-colors min-w-0 text-center',
                   isActive ? 'text-primary' : 'text-muted-foreground'
                 )}
               >
                 <div className={cn(
-                  'flex items-center justify-center w-9 h-7 rounded-full transition-colors',
+                  'flex items-center justify-center w-10 h-6 rounded-full transition-colors flex-shrink-0',
                   isActive && 'bg-primary/10'
                 )}>
-                  <item.icon className="w-[18px] h-[18px] flex-shrink-0" strokeWidth={isActive ? 2.4 : 2} />
+                  <item.icon className="w-[18px] h-[18px]" strokeWidth={isActive ? 2.4 : 2} />
                 </div>
-                <span className={cn('text-[10px] leading-tight whitespace-nowrap', isActive ? 'font-bold' : 'font-medium')}>{itemLabel}</span>
+                <span
+                  className={cn(
+                    'leading-tight w-full text-center px-0.5',
+                    isActive ? 'font-bold' : 'font-medium'
+                  )}
+                  style={{ fontSize: '10.5px', lineHeight: '1.1' }}
+                >
+                  {itemLabel}
+                </span>
               </Link>
             );
           })}
