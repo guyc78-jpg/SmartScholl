@@ -81,40 +81,40 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
   const SidebarContent = () => (
     <div className="flex flex-col h-full text-right" dir="rtl">
       {/* Logo */}
-      <div className="p-5 border-b border-sidebar-border">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center flex-shrink-0">
-            <BookMarked className="w-5 h-5 text-white" />
+      <div className="px-4 py-4 border-b border-sidebar-border">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 bg-primary rounded-lg flex items-center justify-center flex-shrink-0">
+            <BookMarked className="w-4 h-4 text-white" />
           </div>
-          <div>
-            <h1 className="font-bold text-base text-sidebar-foreground">כיתה חכמה</h1>
-            <p className="text-xs text-sidebar-foreground/50">ניהול כיתת חינוך</p>
+          <div className="min-w-0">
+            <h1 className="font-bold text-sm text-sidebar-foreground leading-tight">כיתה חכמה</h1>
+            <p className="text-[11px] text-sidebar-foreground/50 leading-tight">ניהול כיתת חינוך</p>
           </div>
         </div>
       </div>
 
       {/* User */}
-      <div className="px-5 py-5 border-b border-sidebar-border">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-primary/20 rounded-2xl flex items-center justify-center text-sidebar-primary font-bold text-sm flex-shrink-0">
+      <div className="px-4 py-3 border-b border-sidebar-border">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 bg-primary/15 rounded-lg flex items-center justify-center text-sidebar-primary font-bold text-sm flex-shrink-0">
             {displayName?.charAt(0) || '?'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-sm text-sidebar-foreground truncate">{displayName}</p>
-            <p className="text-xs text-sidebar-foreground/60 leading-5 truncate">{contextLabel}</p>
+            <p className="font-semibold text-xs text-sidebar-foreground truncate">{displayName}</p>
+            <p className="text-[11px] text-sidebar-foreground/60 truncate">{contextLabel}</p>
           </div>
         </div>
         <WorkModeSelector user={user} activeRole={role} onRoleChange={onRoleChange} />
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-5 px-4 space-y-6">
+      <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-4">
         {navGroups.map((group) => (
-          <div key={group.title} className="space-y-2">
+          <div key={group.title} className="space-y-1">
             {group.adminOnly && (
-              <p className="px-3 text-[11px] font-bold text-sidebar-foreground/40 uppercase tracking-wide">{group.title}</p>
+              <p className="px-2 pb-1 text-[10px] font-bold text-sidebar-foreground/40 uppercase tracking-wider">{group.title}</p>
             )}
-            <div className="space-y-1.5">
+            <div className="space-y-0.5">
               {group.items.map((item) => {
                 const isActive = location.pathname === item.path;
                 const itemLabel = item.dynamicLabel ? getDashboardLabel(role) : item.label;
@@ -125,16 +125,19 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
                     to={item.path}
                     onClick={() => setSidebarOpen(false)}
                     className={cn(
-                      'flex items-center gap-3 px-3.5 py-3 rounded-2xl transition-all duration-150',
+                      'relative flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors duration-150',
                       isActive
-                        ? 'bg-sidebar-primary text-white shadow-sm'
-                        : 'text-sidebar-foreground/75 hover:bg-sidebar-accent hover:text-sidebar-foreground'
+                        ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold'
+                        : 'text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
                     )}
                   >
-                    <item.icon className="w-4 h-4 flex-shrink-0" />
-                    <span className="text-sm font-medium flex-1 text-right">{itemLabel}</span>
+                    {isActive && (
+                      <span className="absolute right-0 top-1.5 bottom-1.5 w-[3px] bg-sidebar-primary rounded-l-full" />
+                    )}
+                    <item.icon className={cn('w-4 h-4 flex-shrink-0', isActive && 'text-sidebar-primary')} />
+                    <span className="text-[13px] flex-1 text-right">{itemLabel}</span>
                     {badge && (
-                      <span className="min-w-5 h-5 px-1 bg-red-500 rounded-full text-white text-xs flex items-center justify-center flex-shrink-0">
+                      <span className="min-w-4 h-4 px-1 bg-destructive rounded-full text-destructive-foreground text-[10px] font-bold flex items-center justify-center flex-shrink-0">
                         {badge}
                       </span>
                     )}
@@ -146,20 +149,20 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
         ))}
       </nav>
 
-      <div className="p-4 border-t border-sidebar-border space-y-1.5">
+      <div className="px-3 py-3 border-t border-sidebar-border space-y-0.5">
         <button
           onClick={() => setDarkMode(!darkMode)}
-          className="w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all"
+          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground transition-colors"
         >
-          <Settings className="w-4 h-4 flex-shrink-0" />
-          <span className="text-sm font-medium flex-1 text-right">הגדרות תצוגה</span>
+          {darkMode ? <Sun className="w-4 h-4 flex-shrink-0" /> : <Moon className="w-4 h-4 flex-shrink-0" />}
+          <span className="text-[13px] flex-1 text-right">{darkMode ? 'מצב בהיר' : 'מצב כהה'}</span>
         </button>
         <button
           onClick={() => base44.auth.logout('/')}
-          className="w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-all"
+          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground transition-colors"
         >
           <LogOut className="w-4 h-4 flex-shrink-0" />
-          <span className="text-sm font-medium flex-1 text-right">התנתקות</span>
+          <span className="text-[13px] flex-1 text-right">התנתקות</span>
         </button>
       </div>
     </div>
@@ -168,7 +171,7 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
   return (
     <div className="flex h-screen bg-background overflow-hidden" dir="rtl">
       {/* Desktop Sidebar */}
-      <aside className="hidden lg:flex w-60 bg-sidebar flex-col flex-shrink-0 border-s border-sidebar-border">
+      <aside className="hidden lg:flex w-56 bg-sidebar flex-col flex-shrink-0 border-s border-sidebar-border">
         <SidebarContent />
       </aside>
 
@@ -209,13 +212,13 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto text-right" dir="rtl" style={{ paddingBottom: 'calc(64px + env(safe-area-inset-bottom))' }}>
+        <main className="flex-1 overflow-y-auto text-right" dir="rtl" style={{ paddingBottom: 'calc(72px + env(safe-area-inset-bottom))' }}>
           {children}
         </main>
 
         {/* Mobile Bottom Nav */}
-        <nav className="lg:hidden fixed bottom-0 inset-x-0 grid bg-card border-t border-border z-30" dir="rtl"
-          style={{ gridTemplateColumns: `repeat(${bottomNavItems.length}, minmax(0, 1fr))`, paddingBottom: 'env(safe-area-inset-bottom)', paddingTop: '8px', paddingInline: '12px', minHeight: '64px' }}>
+        <nav className="lg:hidden fixed bottom-0 inset-x-0 grid bg-card/95 backdrop-blur border-t border-border z-30 shadow-[0_-2px_8px_rgba(0,0,0,0.04)]" dir="rtl"
+          style={{ gridTemplateColumns: `repeat(${bottomNavItems.length}, minmax(0, 1fr))`, paddingBottom: 'env(safe-area-inset-bottom)', paddingTop: '6px', paddingInline: '4px', minHeight: '60px' }}>
           {bottomNavItems.map((item) => {
             const isActive = location.pathname === item.path;
             const itemLabel = item.dynamicLabel ? getDashboardLabel(role) : item.label;
@@ -224,12 +227,17 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  'flex flex-col items-center justify-center gap-1 py-2 rounded-xl transition-all min-w-0',
+                  'flex flex-col items-center justify-center gap-0.5 py-1.5 transition-colors min-w-0',
                   isActive ? 'text-primary' : 'text-muted-foreground'
                 )}
               >
-                <item.icon className="w-5 h-5 flex-shrink-0" />
-                <span className="text-[11px] font-semibold leading-tight whitespace-nowrap">{itemLabel}</span>
+                <div className={cn(
+                  'flex items-center justify-center w-9 h-7 rounded-full transition-colors',
+                  isActive && 'bg-primary/10'
+                )}>
+                  <item.icon className="w-[18px] h-[18px] flex-shrink-0" strokeWidth={isActive ? 2.4 : 2} />
+                </div>
+                <span className={cn('text-[10px] leading-tight whitespace-nowrap', isActive ? 'font-bold' : 'font-medium')}>{itemLabel}</span>
               </Link>
             );
           })}

@@ -110,12 +110,12 @@ export default function Students({ role }) {
       />
 
       {/* Filters */}
-      <div className="flex gap-3 flex-wrap" dir="rtl">
+      <div className="flex gap-2 flex-wrap" dir="rtl">
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
           <Input
             placeholder="חיפוש לפי שם או מספר..."
-            className="pe-9"
+            className="pr-9 pl-3 text-right"
             value={search}
             onChange={e => setSearch(e.target.value)}
           />

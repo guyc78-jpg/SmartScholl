@@ -5,9 +5,10 @@ import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { CLASS_ID } from '@/lib/demoData';
 import StatCard from '@/components/ui/StatCard';
+import TodayHighlights from '@/components/dashboard/TodayHighlights';
 import {
   Users, Clock, AlertTriangle, BookOpen, CheckSquare,
-  Shield, Heart, UserCheck, Plus, Calendar, MessageSquare,
+  Shield, Heart, UserCheck, Calendar, MessageSquare,
   Megaphone, Star, ChevronLeft, TrendingUp, Settings
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -171,26 +172,26 @@ export default function Dashboard({ user, role }) {
 
       {isAdmin && (
         <section>
-          <h2 className="text-lg font-bold text-foreground mb-3 flex items-center gap-2">
+          <h2 className="text-sm font-bold text-foreground mb-2.5 flex items-center gap-2">
             <Settings className="w-4 h-4 text-primary" />
             ניהול מערכת
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
             {[
-              { to: '/users', label: 'הרשאות משתמשים', icon: UserCheck, bg: 'bg-[#047857]', text: 'text-white', chip: 'bg-white/15 text-white' },
-              { to: '/approvals', label: 'אישורי הרשמה', icon: CheckSquare, bg: 'bg-[#F59E0B]', text: 'text-[#3D2A05]', chip: 'bg-white/30 text-[#3D2A05]' },
-              { to: '/reports', label: 'דוחות', icon: TrendingUp, bg: 'bg-[#C97264]', text: 'text-white', chip: 'bg-white/20 text-white' },
-              { to: '/grade-monitor', label: 'מעקב שכבה', icon: Shield, bg: 'bg-[#A0522D]', text: 'text-white', chip: 'bg-white/20 text-white' },
+              { to: '/users', label: 'הרשאות', icon: UserCheck },
+              { to: '/approvals', label: 'אישורי הרשמה', icon: CheckSquare },
+              { to: '/reports', label: 'דוחות', icon: TrendingUp },
+              { to: '/grade-monitor', label: 'מעקב שכבה', icon: Shield },
             ].map(item => (
               <Link
                 key={item.to}
                 to={item.to}
-                className={`flex flex-col items-center justify-center gap-2 p-5 rounded-2xl transition-shadow hover:shadow-lg ${item.bg} ${item.text}`}
+                className="flex items-center gap-3 px-3 py-3 rounded-xl bg-card border border-border hover:border-primary/40 hover:bg-primary/[0.04] transition-colors"
               >
-                <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${item.chip}`}>
-                  <item.icon className="w-5 h-5" strokeWidth={2} />
+                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <item.icon className="w-4 h-4 text-primary" strokeWidth={2.2} />
                 </div>
-                <span className="text-sm font-semibold text-center leading-tight">{item.label}</span>
+                <span className="text-sm font-semibold text-foreground/85 truncate">{item.label}</span>
               </Link>
             ))}
           </div>
@@ -211,61 +212,69 @@ export default function Dashboard({ user, role }) {
         </div>
       )}
 
-      {/* Stat Cards */}
+      {/* Today Highlights — what really matters today */}
+      {(() => {
+        const highlights = [];
+        if (absentToday + lateToday > 0) highlights.push({
+          id: 'absent', icon: AlertTriangle, label: `${absentToday + lateToday} נעדרים/מאחרים היום`,
+          hint: `${absentToday} נעדר · ${lateToday} מאחר`, value: absentToday + lateToday,
+          tone: absentToday + lateToday > 2 ? 'urgent' : 'warn', to: '/class-attendance'
+        });
+        if (openDiscipline > 0) highlights.push({
+          id: 'disc', icon: Shield, label: 'אירועי משמעת פתוחים', hint: 'דורש טיפול ומעקב',
+          value: openDiscipline, tone: 'urgent', to: '/discipline'
+        });
+        if (urgentTasks.length > 0) highlights.push({
+          id: 'tasks', icon: CheckSquare, label: 'משימות דחופות',
+          hint: urgentTasks[0]?.title, value: urgentTasks.length, tone: 'warn', to: '/tasks'
+        });
+        if (nextExams.length > 0) highlights.push({
+          id: 'exams', icon: BookOpen, label: 'מבחנים קרובים',
+          hint: nextExams[0]?.title, value: nextExams.length, tone: 'info', to: '/exams'
+        });
+        if (attendanceAlertStudents.length > 0) highlights.push({
+          id: 'att-alerts', icon: Users, label: 'תלמידים עם בעיית נוכחות',
+          hint: 'חצו סף היעדרויות/איחורים', value: attendanceAlertStudents.length,
+          tone: 'warn', to: '/class-attendance'
+        });
+        return <TodayHighlights items={highlights} />;
+      })()}
+
+      {/* Stat Cards — KPI overview */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard icon={Users} title="תלמידים" value={students.length} subtitle="בכיתה" color="blue" />
         <StatCard icon={UserCheck} title="נוכחים היום" value={presentToday} subtitle={`מתוך ${todayAttendance.length}`} color="green" />
-        <StatCard
-          icon={AlertTriangle}
-          title="נעדרים/מאחרים"
-          value={absentToday + lateToday}
-          subtitle={`${absentToday} נעדר · ${lateToday} מאחר`}
-          color={absentToday + lateToday > 2 ? 'red' : 'amber'}
-          urgent={absentToday + lateToday > 3}
-        />
-        <StatCard icon={Shield} title="משמעת פתוחה" value={openDiscipline} subtitle="אירועים" color={openDiscipline > 0 ? 'red' : 'slate'} urgent={openDiscipline > 0} />
-      </div>
-
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard icon={BookOpen} title="מבחנים קרובים" value={nextExams.length} subtitle="השבוע הקרוב" color="purple" />
         <StatCard icon={CheckSquare} title="משימות פתוחות" value={openTasks} subtitle="לטיפול" color={openTasks > 3 ? 'amber' : 'slate'} />
-        <StatCard icon={Heart} title="מעורבות נמוכה" value={communityBehind.length} subtitle="תלמידים בפיגור" color={communityBehind.length > 0 ? 'amber' : 'green'} />
-        <StatCard icon={AlertTriangle} title="דורשים מעקב" value={watchStudents.length} subtitle="תלמידים" color={watchStudents.length > 0 ? 'amber' : 'green'} />
       </div>
 
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold">פעולות מהירות</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            {[
-              { icon: Clock, label: 'סימון נוכחות', action: 'attendance', tile: 'bg-[#DDEAF5]', chip: 'bg-white text-[#1E5F8C]', roles: ['admin', 'homeroom_teacher'] },
-              { icon: Shield, label: 'אירוע משמעת', action: 'discipline', tile: 'bg-[#FBE3DA]', chip: 'bg-white text-[#B91C1C]', roles: ['admin', 'homeroom_teacher'] },
-              { icon: BookOpen, label: 'הוספת מבחן', action: 'exam', tile: 'bg-[#EDE3F1]', chip: 'bg-white text-[#6D28D9]', roles: ['admin', 'coordinator', 'homeroom_teacher'] },
-              { icon: Megaphone, label: 'הודעה לכיתה', action: 'announcement', tile: 'bg-[#FBEBC1]', chip: 'bg-white text-[#B45309]', roles: ['admin', 'coordinator', 'homeroom_teacher'] },
-              { icon: Star, label: 'הערת מחנך', action: 'note', tile: 'bg-[#E7F1EB]', chip: 'bg-white text-[#047857]', roles: ['admin', 'homeroom_teacher'] },
-              { icon: MessageSquare, label: 'שיחה עם הורים', action: 'communication', tile: 'bg-[#D7EEEC]', chip: 'bg-white text-[#0E7490]', roles: ['admin', 'homeroom_teacher'] },
-              { icon: CheckSquare, label: 'משימה חדשה', action: 'task', tile: 'bg-[#E0E2F5]', chip: 'bg-white text-[#3730A3]', roles: ['admin', 'coordinator', 'homeroom_teacher'] },
-              { icon: Heart, label: 'עדכון מעורבות', action: 'community', tile: 'bg-[#F8DCE5]', chip: 'bg-white text-[#BE185D]', roles: ['admin', 'homeroom_teacher'] },
-            ].filter(btn => btn.roles.some(itemRole => approvedRoles.includes(itemRole))).map(btn => (
-              <motion.button
-                key={btn.action}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => setQuickAction(btn.action)}
-                className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl transition-shadow hover:shadow-md ${btn.tile} dark:bg-muted`}
-              >
-                <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${btn.chip}`}>
-                  <btn.icon className="w-5 h-5" strokeWidth={2} />
-                </div>
-                <span className="text-xs font-semibold text-foreground/80 text-center leading-tight">{btn.label}</span>
-              </motion.button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Quick Actions — compact icon grid */}
+      <section>
+        <h2 className="text-sm font-bold text-foreground mb-2.5">פעולות מהירות</h2>
+        <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+          {[
+            { icon: Clock, label: 'נוכחות', action: 'attendance', roles: ['admin', 'homeroom_teacher'] },
+            { icon: Shield, label: 'משמעת', action: 'discipline', roles: ['admin', 'homeroom_teacher'] },
+            { icon: BookOpen, label: 'מבחן', action: 'exam', roles: ['admin', 'coordinator', 'homeroom_teacher'] },
+            { icon: Megaphone, label: 'הודעה', action: 'announcement', roles: ['admin', 'coordinator', 'homeroom_teacher'] },
+            { icon: Star, label: 'הערה', action: 'note', roles: ['admin', 'homeroom_teacher'] },
+            { icon: MessageSquare, label: 'הורים', action: 'communication', roles: ['admin', 'homeroom_teacher'] },
+            { icon: CheckSquare, label: 'משימה', action: 'task', roles: ['admin', 'coordinator', 'homeroom_teacher'] },
+            { icon: Heart, label: 'מעורבות', action: 'community', roles: ['admin', 'homeroom_teacher'] },
+          ].filter(btn => btn.roles.some(itemRole => approvedRoles.includes(itemRole))).map(btn => (
+            <button
+              key={btn.action}
+              onClick={() => setQuickAction(btn.action)}
+              className="group flex flex-col items-center justify-center gap-1.5 py-3 px-1.5 rounded-xl bg-card border border-border hover:border-primary/40 hover:bg-primary/[0.04] transition-colors"
+            >
+              <div className="w-9 h-9 rounded-lg bg-primary/10 group-hover:bg-primary/15 flex items-center justify-center transition-colors">
+                <btn.icon className="w-4 h-4 text-primary" strokeWidth={2.2} />
+              </div>
+              <span className="text-[11px] font-semibold text-foreground/80 leading-tight">{btn.label}</span>
+            </button>
+          ))}
+        </div>
+      </section>
 
       <div className="grid lg:grid-cols-2 gap-4">
         {/* Upcoming Exams */}
@@ -318,76 +327,6 @@ export default function Dashboard({ user, role }) {
             ))}
           </CardContent>
         </Card>
-
-        {/* Watch Students */}
-        {watchStudents.length > 0 && (
-          <Card className="border-amber-200 dark:border-amber-800">
-            <CardHeader className="pb-3 flex flex-row items-center justify-between">
-              <CardTitle className="text-base font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4" />
-                תלמידים למעקב
-              </CardTitle>
-              <Link to="/students" className="text-xs text-primary flex items-center gap-1 hover:underline">
-                הכל <ChevronLeft className="w-3 h-3" />
-              </Link>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {watchStudents.slice(0, 3).map(s => (
-                <Link key={s.id} to={`/students/${s.id}`} className="flex items-center gap-3 p-2.5 rounded-xl bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors">
-                  <div className="w-9 h-9 bg-amber-200 dark:bg-amber-800 rounded-full flex items-center justify-center text-amber-700 dark:text-amber-300 font-bold text-sm">
-                    {s.full_name.charAt(0)}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{s.full_name}</p>
-                    <div className="flex gap-1 flex-wrap mt-0.5">
-                      {s.tags?.map(tag => (
-                        <span key={tag} className="text-[10px] bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 px-1.5 py-0.5 rounded-full">{tag}</span>
-                      ))}
-                    </div>
-                  </div>
-                  <ChevronLeft className="w-4 h-4 text-muted-foreground" />
-                </Link>
-              ))}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Attendance Alerts */}
-        {attendanceAlertStudents.length > 0 && (
-          <Card className="border-red-200 dark:border-red-800">
-            <CardHeader className="pb-3 flex flex-row items-center justify-between">
-              <CardTitle className="text-base font-semibold text-red-700 dark:text-red-400 flex items-center gap-2">
-                <AlertTriangle className="w-4 h-4" />
-                התראות נוכחות
-              </CardTitle>
-              <Link to="/class-attendance" className="text-xs text-primary flex items-center gap-1 hover:underline">
-                לניהול <ChevronLeft className="w-3 h-3" />
-              </Link>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {attendanceAlertStudents.slice(0, 3).map(s => {
-                const abs = allAttRecords.filter(r => r.student_id === s.id && r.status === 'נעדר/ת').length;
-                const lt  = allAttRecords.filter(r => r.student_id === s.id && r.status === 'מאחר/ת').length;
-                return (
-                  <Link key={s.id} to="/class-attendance" className="flex items-center gap-3 p-2.5 rounded-xl bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors">
-                    <div className="w-9 h-9 bg-red-200 dark:bg-red-800 rounded-full flex items-center justify-center text-red-700 dark:text-red-300 font-bold text-sm flex-shrink-0">
-                      {s.full_name.charAt(0)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium">{s.full_name}</p>
-                      <p className="text-xs text-red-600 dark:text-red-400">
-                        {abs >= THRESHOLDS.absences && `${abs} היעדרויות`}
-                        {abs >= THRESHOLDS.absences && lt >= THRESHOLDS.lates && ' · '}
-                        {lt >= THRESHOLDS.lates && `${lt} איחורים`}
-                      </p>
-                    </div>
-                    <ChevronLeft className="w-4 h-4 text-muted-foreground" />
-                  </Link>
-                );
-              })}
-            </CardContent>
-          </Card>
-        )}
 
         {/* Recent Announcements */}
         <Card>
