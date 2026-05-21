@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Save, UserRound, Send } from 'lucide-react';
 import GradeClassSelect from '@/components/profile/GradeClassSelect';
 import UserPermissionEditor from '@/components/profile/UserPermissionEditor';
+import WorkModeSelector from '@/components/layout/WorkModeSelector';
 import { extractGradeFromClass } from '@/lib/schoolStructure';
 import { getAvailableRoles, getSystemRole, getUserDisplayName, getRoleLabel, GENDER_OPTIONS } from '@/lib/roleUtils';
 import { useAuth } from '@/lib/AuthContext';
@@ -21,7 +22,7 @@ const roles = [
   { value: 'parent', label: 'הורה' },
 ];
 
-export default function Profile({ user, role }) {
+export default function Profile({ user, role, onRoleChange }) {
   const { updateCurrentUser } = useAuth();
   const [saving, setSaving] = useState(false);
   const [requestedRole, setRequestedRole] = useState('');
@@ -88,6 +89,7 @@ export default function Profile({ user, role }) {
   const primaryRole = getSystemRole(user);
   const currentRoleLabel = getRoleLabel(primaryRole, user);
   const additionalRoleLabels = approvedRoles.filter(item => item !== primaryRole).map(item => getRoleLabel(item, user)).filter(Boolean).join(', ') || 'אין';
+  const hasMultipleRoles = approvedRoles.length > 1;
 
   return (
     <div className="min-h-full bg-background p-4 md:p-8" dir="rtl">
@@ -147,6 +149,20 @@ export default function Profile({ user, role }) {
               </div>
             </CardContent>
           </Card>
+
+          {hasMultipleRoles && onRoleChange && (
+            <Card>
+              <CardHeader>
+                <CardTitle>מצב עבודה</CardTitle>
+                <CardDescription>בחר/י את התפקיד הפעיל שיוצג בתפריט ובדשבורד.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="max-w-xs">
+                  <WorkModeSelector user={user} activeRole={role} onRoleChange={onRoleChange} />
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {isAdmin ? (
             <UserPermissionEditor

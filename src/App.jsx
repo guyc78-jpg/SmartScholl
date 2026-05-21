@@ -119,7 +119,7 @@ const AuthenticatedApp = () => {
         <Route path="/tasks" element={<Tasks role={role} />} />
         <Route path="/announcements" element={<Announcements role={role} />} />
         <Route path="/reports" element={<Reports role={role} />} />
-        <Route path="/profile" element={<Profile user={user} role={role} />} />
+        <Route path="/profile" element={<Profile user={user} role={role} onRoleChange={setWorkRole} />} />
         {approvedRoles.includes('admin') && (
           <>
             <Route path="/approvals" element={<ApprovalManagement role={role} />} />
@@ -138,7 +138,7 @@ const AuthenticatedApp = () => {
         <Route path="/exams" element={<Exams role={role} user={user} />} />
         <Route path="/announcements" element={<Announcements role={role} />} />
         <Route path="/community" element={<Community role={role} />} />
-        <Route path="/profile" element={<Profile user={user} role={role} />} />
+        <Route path="/profile" element={<Profile user={user} role={role} onRoleChange={setWorkRole} />} />
       </>}
 
       {/* Block students from any staff route — redirect to their home */}

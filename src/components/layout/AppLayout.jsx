@@ -9,7 +9,6 @@ import {
   UserCheck, UserRound, ShieldCheck, Settings, LogOut
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import WorkModeSelector from '@/components/layout/WorkModeSelector';
 import { getAvailableRoles, getUserContextLabel, getUserDisplayName } from '@/lib/roleUtils';
 import { getDashboardLabel } from '@/lib/dashboardLabels';
 
@@ -82,16 +81,15 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
     <div className="flex flex-col h-full text-right" dir="rtl">
       {/* User */}
       <div className="px-4 py-4 border-b border-sidebar-border">
-        <div className="flex items-center gap-2.5 mb-2">
+        <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 bg-primary/15 rounded-lg flex items-center justify-center text-sidebar-primary font-bold text-sm flex-shrink-0">
             {displayName?.charAt(0) || '?'}
           </div>
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 text-right">
             <p className="font-semibold text-sm text-sidebar-foreground truncate">{displayName}</p>
             <p className="text-[11px] text-sidebar-foreground/60 truncate">{contextLabel}</p>
           </div>
         </div>
-        <WorkModeSelector user={user} activeRole={role} onRoleChange={onRoleChange} />
       </div>
 
       {/* Nav */}
