@@ -160,7 +160,7 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
        <aside className={cn(
          'hidden lg:flex w-56 flex-col flex-shrink-0 border-s transition-all shadow-lg',
          darkMode
-           ? 'bg-purple-950 border-purple-800/40 shadow-[0_0_24px_rgba(88,28,135,0.4)]'
+           ? 'bg-slate-700 border-slate-600/40 shadow-[0_0_24px_rgba(0,0,0,0.4)]'
            : 'bg-sidebar border-sidebar-border shadow-lg'
        )}>
          <SidebarContent />
@@ -179,7 +179,7 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
            <aside className={cn(
              'fixed right-0 top-0 h-full w-72 z-50 lg:hidden border-s',
              darkMode
-               ? 'bg-purple-950 border-purple-800/40 shadow-[0_0_40px_rgba(88,28,135,0.5)]'
+               ? 'bg-slate-700 border-slate-600/40 shadow-[0_0_40px_rgba(0,0,0,0.5)]'
                : 'bg-sidebar border-sidebar-border shadow-2xl'
            )}>
              <button
