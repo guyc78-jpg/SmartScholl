@@ -210,7 +210,7 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
             <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center">
               <BookMarked className="w-3.5 h-3.5 text-white" />
             </div>
-            <span className="font-bold text-foreground text-[13px]">ניהול כיתה חכם</span>
+            <span className="font-bold text-foreground text-[13px]">ניהול כיתת חינוך</span>
           </div>
           <button
             type="button"
