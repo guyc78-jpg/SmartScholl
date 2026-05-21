@@ -13,8 +13,9 @@ import StatusBadge from '@/components/ui/StatusBadge';
 import PageHeader from '@/components/ui/PageHeader';
 import EmptyState from '@/components/ui/EmptyState';
 import { toast } from 'sonner';
-import { BookOpen, Plus, Edit, Trash2, Calendar, Clock, User, AlertTriangle, FileUp, Check, RotateCcw, Eraser } from 'lucide-react';
+import { BookOpen, Plus, Edit, Trash2, Calendar, Clock, User, AlertTriangle, FileUp, Check, RotateCcw, Eraser, Loader2 } from 'lucide-react';
 import ImportExamsDialog from '@/components/exams/ImportExamsDialog';
+import ImportExamsPreview from '@/components/exams/ImportExamsPreview';
 
 const SUBJECTS = ['מתמטיקה', 'עברית', 'ספרות', 'אנגלית', 'היסטוריה', 'גיאוגרפיה', 'פיזיקה', 'כימיה', 'ביולוגיה', 'חינוך גופני', 'אמנות', 'אחר'];
 const TYPES = ['מבחן', 'בחן', 'עבודה', 'פרויקט', 'הגשה', 'בגרות', 'מתכונת', 'מועד ב׳', 'חזרה', 'חג', 'אירוע שכבתי', 'אחר'];
@@ -24,6 +25,9 @@ export default function Exams({ role, user }) {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewEvents, setPreviewEvents] = useState([]);
+  const [importing, setImporting] = useState(false);
   const [examCompletions, setExamCompletions] = useState([]);
   const [studentData, setStudentData] = useState(null);
   const [celebratingExamId, setCelebratingExamId] = useState(null);
@@ -77,6 +81,57 @@ export default function Exams({ role, user }) {
     await Promise.all(exams.map(e => base44.entities.Exam.delete(e.id)));
     toast.success('כל המבחנים נמחקו');
     loadExams();
+  }
+
+  async function handleFileUpload(file) {
+    if (!file) return;
+    setImporting(true);
+    try {
+      const fileData = new FormData();
+      fileData.append('file', file);
+      const uploadResponse = await base44.integrations.Core.UploadFile({ file });
+      const parseResponse = await base44.functions.invoke('parseExamsFromFile', { file_url: uploadResponse.file_url });
+      if (parseResponse.data.events && parseResponse.data.events.length > 0) {
+        setPreviewEvents(parseResponse.data.events);
+        setShowPreview(true);
+      } else {
+        toast.error('לא נמצאו אירועים בקובץ');
+      }
+    } catch (err) {
+      toast.error('שגיאה בעיבוד הקובץ: ' + err.message);
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  async function handleConfirmImport(events) {
+    if (events.length === 0) {
+      toast.error('אין אירועים לייבוא');
+      return;
+    }
+    setImporting(true);
+    try {
+      const toCreate = events.map(e => ({
+        class_id: CLASS_ID,
+        title: e.title || '',
+        subject: e.subject || '',
+        type: e.type || 'מבחן',
+        date: e.date,
+        time: e.time || '',
+        class_or_grade: e.class_or_grade || '',
+        teacher: e.teacher || '',
+        material: '',
+        notes: e.notes || ''
+      }));
+      await Promise.all(toCreate.map(e => base44.entities.Exam.create(e)));
+      toast.success(`${events.length} אירועים יובאו בהצלחה!`);
+      setShowPreview(false);
+      loadExams();
+    } catch (err) {
+      toast.error('שגיאה בשמירת האירועים: ' + err.message);
+    } finally {
+      setImporting(false);
+    }
   }
 
   async function toggleExamCompletion(exam) {
@@ -183,6 +238,39 @@ export default function Exams({ role, user }) {
           </>
         ) : null}
       />
+
+      {showPreview && (
+        <Dialog open onOpenChange={() => !importing && setShowPreview(false)}>
+          <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-y-auto" dir="rtl">
+            <DialogHeader><DialogTitle>בדיקת ייבוא אירועים</DialogTitle></DialogHeader>
+            <ImportExamsPreview
+              events={previewEvents}
+              classId={CLASS_ID}
+              onConfirm={handleConfirmImport}
+              onCancel={() => setShowPreview(false)}
+            />
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {!showPreview && !showForm && !showImport && canEditExams && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
+          <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">רוצה לייבא אירועים מקובץ?</p>
+          <label className="inline-flex items-center gap-2 cursor-pointer">
+            <input
+              type="file"
+              accept=".pdf,.docx,.xlsx,.csv,.txt"
+              onChange={(e) => handleFileUpload(e.target.files?.[0])}
+              disabled={importing}
+              className="hidden"
+            />
+            <Button variant="outline" className="gap-2" disabled={importing}>
+              {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileUp className="w-4 h-4" />}
+              {importing ? 'עיבוד...' : 'בחר קובץ (PDF, Word, Excel)'}
+            </Button>
+          </label>
+        </div>
+      )}
 
       {overloadWeeks.length > 0 && (
         <div className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl">
