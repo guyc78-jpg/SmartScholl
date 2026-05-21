@@ -33,8 +33,8 @@ function KindChip({ value, onChange }) {
         )}
       >
         <div className="flex items-center gap-1.5 min-w-0 flex-1 justify-center">
-          <Icon className={cn('w-3 h-3 flex-shrink-0', meta.color)} />
           <span className="whitespace-nowrap">{meta.label}</span>
+          <Icon className={cn('w-3 h-3 flex-shrink-0', meta.color)} />
         </div>
       </SelectTrigger>
       <SelectContent>
@@ -123,7 +123,7 @@ function PeriodRow({ period, lessonNumber, isActive, onChange, onRemove }) {
 function ColumnHeaders() {
   return (
     <div className="flex items-center gap-1.5 sm:gap-2 px-1.5 pb-1.5 mb-1 border-b border-border/60 text-[10px] sm:text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-      <div className="w-6 text-center flex-shrink-0">#</div>
+      <div className="w-6 text-center flex-shrink-0">מס׳</div>
       <div className="w-[118px] sm:w-[132px] text-center flex-shrink-0">סוג</div>
       <div className="flex-1 min-w-0" />
       <div className="w-[72px] sm:w-[82px] text-center flex-shrink-0">התחלה</div>
