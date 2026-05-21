@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getAvailableRoles, ROLE_LABELS } from '@/lib/roleUtils';
+import { getAvailableRoles, getRoleLabel } from '@/lib/roleUtils';
 import { logActivity } from '@/lib/activityLogger';
 
 export default function WorkModeSelector({ user, activeRole, onRoleChange }) {
@@ -19,7 +19,7 @@ export default function WorkModeSelector({ user, activeRole, onRoleChange }) {
       user,
       role: nextRole,
       actionName: 'work_mode_changed',
-      details: `המשתמש עבר למצב עבודה: ${ROLE_LABELS[nextRole] || nextRole}`,
+      details: `המשתמש עבר למצב עבודה: ${getRoleLabel(nextRole, user)}`,
     });
     setSaving(false);
   }
@@ -32,8 +32,8 @@ export default function WorkModeSelector({ user, activeRole, onRoleChange }) {
           <SelectValue />
         </SelectTrigger>
         <SelectContent dir="rtl" align="start">
-          {roles.map(role => (
-            <SelectItem key={role} value={role}>{ROLE_LABELS[role] || role}</SelectItem>
+          {roles.map(roleOption => (
+            <SelectItem key={roleOption} value={roleOption}>{getRoleLabel(roleOption, user)}</SelectItem>
           ))}
         </SelectContent>
       </Select>

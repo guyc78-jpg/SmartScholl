@@ -17,7 +17,7 @@ import StatusBadge from '@/components/ui/StatusBadge';
 import QuickActionModal from '@/components/dashboard/QuickActionModal';
 import NotificationsDropdown from '@/components/dashboard/NotificationsDropdown';
 import { isStudentInApprovedScope, getUserApprovedClass, getUserApprovedGrade } from '@/lib/schoolStructure';
-import { getAvailableRoles, getUserFirstName, hasApprovedRole, getRoleHomeLabel } from '@/lib/roleUtils';
+import { getAvailableRoles, getUserFirstName, hasApprovedRole, getRoleHomeLabel, getRoleShort } from '@/lib/roleUtils';
 
 const HEBREW_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 const HEBREW_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
@@ -46,9 +46,9 @@ export default function Dashboard({ user, role }) {
   const isActiveAdmin = role === 'admin';
   const dashboardTitle = getRoleHomeLabel(user, role);
   const scopeLabels = [
-    isActiveAdmin ? 'ניהול מערכת' : null,
-    isActiveHomeroom ? `מחנך${getUserApprovedClass(user) ? ` · ${getUserApprovedClass(user)}` : ''}` : null,
-    isActiveCoordinator ? `רכז${getUserApprovedGrade(user) ? ` · ${getUserApprovedGrade(user)}` : ''}` : null,
+    isActiveAdmin ? getRoleShort('admin', user) + ' מערכת' : null,
+    isActiveHomeroom ? `${getRoleShort('homeroom_teacher', user)}${getUserApprovedClass(user) ? ` · ${getUserApprovedClass(user)}` : ''}` : null,
+    isActiveCoordinator ? `${getRoleShort('coordinator', user)}${getUserApprovedGrade(user) ? ` · ${getUserApprovedGrade(user)}` : ''}` : null,
   ].filter(Boolean).join(' | ') || 'מערכת כללית';
 
   useEffect(() => {

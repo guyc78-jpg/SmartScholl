@@ -10,7 +10,7 @@ import { Save, UserRound, Send } from 'lucide-react';
 import GradeClassSelect from '@/components/profile/GradeClassSelect';
 import UserPermissionEditor from '@/components/profile/UserPermissionEditor';
 import { extractGradeFromClass } from '@/lib/schoolStructure';
-import { getAvailableRoles, getSystemRole, getUserDisplayName, ROLE_LABELS } from '@/lib/roleUtils';
+import { getAvailableRoles, getSystemRole, getUserDisplayName, getRoleLabel, GENDER_OPTIONS } from '@/lib/roleUtils';
 import { useAuth } from '@/lib/AuthContext';
 
 const roles = [
@@ -31,6 +31,7 @@ export default function Profile({ user, role }) {
     profile_phone: user?.profile_phone || '',
     profile_email: user?.profile_email || user?.email || '',
     profile_address: user?.profile_address || '',
+    profile_gender: user?.profile_gender || '',
     role: user?.role || 'student',
     profile_homeroom_class: user?.profile_homeroom_class || user?.profile_class || '',
     profile_grade_managed: user?.profile_grade_managed || extractGradeFromClass(user?.profile_homeroom_class || user?.profile_class || ''),
@@ -40,6 +41,10 @@ export default function Profile({ user, role }) {
 
   const handleSave = async (event) => {
     event.preventDefault();
+    if (!form.profile_gender) {
+      toast.error('יש לבחור לשון פנייה (שדה חובה)');
+      return;
+    }
     setSaving(true);
 
     const personalData = {
@@ -47,6 +52,7 @@ export default function Profile({ user, role }) {
       profile_phone: form.profile_phone,
       profile_email: form.profile_email,
       profile_address: form.profile_address,
+      profile_gender: form.profile_gender,
     };
 
     const savedUser = await base44.auth.updateMe(personalData);
@@ -80,8 +86,8 @@ export default function Profile({ user, role }) {
   const approvedRoles = getAvailableRoles(user);
   const isAdmin = approvedRoles.includes('admin');
   const primaryRole = getSystemRole(user);
-  const currentRoleLabel = ROLE_LABELS[primaryRole] || 'משתמש';
-  const additionalRoleLabels = approvedRoles.filter(item => item !== primaryRole).map(item => ROLE_LABELS[item]).filter(Boolean).join(', ') || 'אין';
+  const currentRoleLabel = getRoleLabel(primaryRole, user);
+  const additionalRoleLabels = approvedRoles.filter(item => item !== primaryRole).map(item => getRoleLabel(item, user)).filter(Boolean).join(', ') || 'אין';
 
   return (
     <div className="min-h-full bg-background p-4 md:p-8" dir="rtl">
@@ -116,6 +122,28 @@ export default function Profile({ user, role }) {
               <div className="space-y-2">
                 <Label>כתובת</Label>
                 <Input value={form.profile_address} onChange={(e) => updateField('profile_address', e.target.value)} />
+              </div>
+              <div className="space-y-2 md:col-span-2">
+                <Label>
+                  לשון פנייה <span className="text-destructive">*</span>
+                </Label>
+                <div className="grid grid-cols-2 gap-3">
+                  {GENDER_OPTIONS.map(option => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => updateField('profile_gender', option.value)}
+                      className={`py-2.5 px-4 rounded-lg border-2 text-sm font-semibold transition-colors ${
+                        form.profile_gender === option.value
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-border bg-card text-foreground/80 hover:border-primary/40'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">משפיע רק על ניסוחי תפקיד במערכת (לא על הרשאות).</p>
               </div>
             </CardContent>
           </Card>

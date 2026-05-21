@@ -6,6 +6,76 @@ export const ROLE_LABELS = {
   parent: 'הורה',
 };
 
+// תוויות תפקיד לפי לשון פנייה (זכר/נקבה)
+export const ROLE_LABELS_BY_GENDER = {
+  male: {
+    admin: 'מנהל מערכת',
+    homeroom_teacher: 'מחנך כיתה',
+    coordinator: 'רכז שכבה',
+    student: 'תלמיד',
+    parent: 'הורה',
+  },
+  female: {
+    admin: 'מנהלת מערכת',
+    homeroom_teacher: 'מחנכת כיתה',
+    coordinator: 'רכזת שכבה',
+    student: 'תלמידה',
+    parent: 'הורה',
+  },
+};
+
+// תווית תפקיד קצרה (ללא ״כיתה״/״שכבה״) – לשימוש לצד שם הכיתה
+export const ROLE_SHORT_BY_GENDER = {
+  male: {
+    admin: 'מנהל',
+    homeroom_teacher: 'מחנך',
+    coordinator: 'רכז',
+    student: 'תלמיד',
+    parent: 'הורה',
+  },
+  female: {
+    admin: 'מנהלת',
+    homeroom_teacher: 'מחנכת',
+    coordinator: 'רכזת',
+    student: 'תלמידה',
+    parent: 'הורה',
+  },
+};
+
+export const GENDER_OPTIONS = [
+  { value: 'male', label: 'זכר' },
+  { value: 'female', label: 'נקבה' },
+];
+
+export function getUserGender(user) {
+  const value = user?.profile_gender;
+  return value === 'male' || value === 'female' ? value : null;
+}
+
+export function getRoleLabel(role, user) {
+  const gender = getUserGender(user);
+  if (gender && ROLE_LABELS_BY_GENDER[gender]?.[role]) {
+    return ROLE_LABELS_BY_GENDER[gender][role];
+  }
+  return ROLE_LABELS[role] || 'משתמש';
+}
+
+export function getRoleShort(role, user) {
+  const gender = getUserGender(user);
+  if (gender && ROLE_SHORT_BY_GENDER[gender]?.[role]) {
+    return ROLE_SHORT_BY_GENDER[gender][role];
+  }
+  // ברירת מחדל ניטרלית (זהה ל־ROLE_LABELS אבל מקוצרת)
+  const fallback = {
+    admin: 'מנהל/ת',
+    homeroom_teacher: 'מחנך/ת',
+    coordinator: 'רכז/ת',
+    student: 'תלמיד/ה',
+    parent: 'הורה',
+  };
+  return fallback[role] || 'משתמש';
+}
+
 export const VALID_ROLES = ['admin', 'homeroom_teacher', 'coordinator', 'student', 'parent'];
 export const SYSTEM_ROLE_PRIORITY = ['admin', 'coordinator', 'homeroom_teacher', 'student', 'parent'];
 
@@ -80,32 +150,32 @@ export function getUserContextLabel(user, activeRole) {
   const role = activeRole || getInitialWorkRole(user);
 
   if (role === 'homeroom_teacher' && roles.includes('homeroom_teacher')) {
-    return `${ROLE_LABELS.homeroom_teacher} ${user?.profile_homeroom_class || user?.profile_class || ''}`.trim();
+    const klass = user?.profile_homeroom_class || user?.profile_class || '';
+    return `${getRoleShort('homeroom_teacher', user)} ${klass}`.trim();
   }
 
   if (role === 'coordinator' && roles.includes('coordinator')) {
-    return `${ROLE_LABELS.coordinator} ${user?.profile_grade_managed || ''}`.trim();
+    const grade = user?.profile_grade_managed || '';
+    return `${getRoleShort('coordinator', user)} ${grade}`.trim();
   }
 
-  return ROLE_LABELS[role] || 'משתמש';
+  return getRoleLabel(role, user);
 }
 
 export function getRoleHomeLabel(user, activeRole) {
   const role = activeRole || getInitialWorkRole(user);
 
   if (role === 'homeroom_teacher') {
-    return user?.profile_homeroom_class || user?.profile_class
-      ? `מחנך ${user?.profile_homeroom_class || user?.profile_class}`
-      : 'מחנך/ת כיתה';
+    const klass = user?.profile_homeroom_class || user?.profile_class;
+    return klass ? `${getRoleShort('homeroom_teacher', user)} ${klass}` : getRoleLabel('homeroom_teacher', user);
   }
 
   if (role === 'coordinator') {
-    return user?.profile_grade_managed
-      ? `רכז ${user.profile_grade_managed}`
-      : 'רכז/ת שכבה';
+    const grade = user?.profile_grade_managed;
+    return grade ? `${getRoleShort('coordinator', user)} ${grade}` : getRoleLabel('coordinator', user);
   }
 
-  return ROLE_LABELS[role] || 'משתמש';
+  return getRoleLabel(role, user);
 }
 
 export function getRoleDisplayLines(user, activeRole) {

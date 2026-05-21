@@ -29,13 +29,14 @@ import ApprovalManagement from './pages/ApprovalManagement';
 import GradeMonitor from './pages/GradeMonitor';
 import Onboarding from './pages/Onboarding';
 import PendingApproval from './pages/PendingApproval';
+import GenderRequiredGate from '@/components/profile/GenderRequiredGate';
 import Profile from './pages/Profile';
 import UserManagement from './pages/UserManagement';
 import { isStaff, isStudent, defaultRoute } from './lib/permissions';
 import { getAvailableRoles, getInitialWorkRole, getSystemRole } from './lib/roleUtils';
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user, updateCurrentUser } = useAuth();
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('darkMode') === 'true' || window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -86,6 +87,11 @@ const AuthenticatedApp = () => {
     if (onboardingStatus === 'awaiting_approval' || onboardingStatus === 'rejected') {
       return <PendingApproval user={user} />;
     }
+  }
+
+  // Gender gate — שדה חובה ראשוני לפני המשך שימוש
+  if (user && !user.profile_gender) {
+    return <GenderRequiredGate user={user} onSaved={(updated) => updateCurrentUser(updated)} />;
   }
 
   // Roles are approved by admin; system access is separated from current work mode
