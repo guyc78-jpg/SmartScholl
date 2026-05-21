@@ -125,7 +125,7 @@ const AuthenticatedApp = () => {
           <>
             <Route path="/approvals" element={<ApprovalManagement role={role} />} />
             <Route path="/users" element={<UserManagement />} />
-            <Route path="/bell-schedule" element={<BellScheduleSettings role={role} />} />
+            <Route path="/bell-schedule" element={<BellScheduleSettings user={user} role={role} />} />
           </>
         )}
         {(approvedRoles.includes('admin') || approvedRoles.includes('homeroom_teacher') || approvedRoles.includes('coordinator')) && (

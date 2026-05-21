@@ -12,6 +12,7 @@ import {
   loadBellSchedule, saveBellSchedule,
   DEFAULT_SUN_THU, DEFAULT_FRI
 } from '@/lib/bellSchedule';
+import { hasApprovedRole } from '@/lib/roleUtils';
 
 const KIND_LABEL = {
   pre_bell: 'צלצול מקדים',
@@ -80,8 +81,8 @@ function PeriodEditor({ periods, onChange }) {
   );
 }
 
-export default function BellScheduleSettings({ role }) {
-  const isAdmin = role === 'admin';
+export default function BellScheduleSettings({ user, role }) {
+  const isAdmin = role === 'admin' || hasApprovedRole(user, 'admin');
   const [sunThu, setSunThu] = useState([]);
   const [fri, setFri] = useState([]);
   const [tab, setTab] = useState('sun_thu');
