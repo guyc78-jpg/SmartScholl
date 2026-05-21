@@ -15,7 +15,7 @@ const SUBJECTS = [
 // Cell editor — add / edit / delete a single ScheduleSlot
 export default function CellEditorDialog({ open, onOpenChange, slot, day, period, periodTime, onSave, onDelete }) {
   const isEdit = !!slot?.id;
-  const [form, setForm] = useState({ subject: '', teacher: '', room: '', group: '', notes: '' });
+  const [form, setForm] = useState({ subject: '', teacher: '', room: '', group: '', notes: '', customSubject: '' });
 
   useEffect(() => {
     if (open) {
@@ -36,8 +36,9 @@ export default function CellEditorDialog({ open, onOpenChange, slot, day, period
     const combinedNotes = form.group
       ? `[קבוצה: ${form.group}]${form.notes ? ' ' + form.notes : ''}`
       : (form.notes || '');
+    const finalSubject = form.subject === 'אחר' ? (form.customSubject || '') : form.subject;
     onSave({
-      subject: form.subject,
+      subject: finalSubject,
       teacher: form.teacher,
       room: form.room,
       notes: combinedNotes,
@@ -59,10 +60,16 @@ export default function CellEditorDialog({ open, onOpenChange, slot, day, period
         <div className="space-y-3 text-right">
           <div className="space-y-1">
             <Label className="text-xs">מקצוע *</Label>
-            <Select value={form.subject} onValueChange={v => set('subject', v)}>
-              <SelectTrigger><SelectValue placeholder="בחר מקצוע" /></SelectTrigger>
-              <SelectContent>{SUBJECTS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-            </Select>
+            {form.subject === 'אחר' ? (
+              <Input value={form.subject === 'אחר' ? form.customSubject || '' : form.subject}
+                onChange={e => set('customSubject', e.target.value)}
+                placeholder="הזן מקצוע" />
+            ) : (
+              <Select value={form.subject} onValueChange={v => set('subject', v)}>
+                <SelectTrigger><SelectValue placeholder="בחר מקצוע" /></SelectTrigger>
+                <SelectContent>{SUBJECTS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+              </Select>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
@@ -92,7 +99,7 @@ export default function CellEditorDialog({ open, onOpenChange, slot, day, period
           ) : <span />}
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>ביטול</Button>
-            <Button onClick={handleSubmit} disabled={!form.subject}>{isEdit ? 'עדכן' : 'הוסף'}</Button>
+            <Button onClick={handleSubmit} disabled={!form.subject || (form.subject === 'אחר' && !form.customSubject)}>{isEdit ? 'עדכן' : 'הוסף'}</Button>
           </div>
         </DialogFooter>
       </DialogContent>
