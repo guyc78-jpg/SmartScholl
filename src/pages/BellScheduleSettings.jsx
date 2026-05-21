@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
+import { Select, SelectTrigger, SelectContent, SelectItem } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import PageHeader from '@/components/ui/PageHeader';
 import { Plus, Trash2, Save, RotateCcw, Bell, BookOpen, Coffee, Sunrise, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
@@ -14,10 +15,10 @@ import {
 import { hasApprovedRole } from '@/lib/roleUtils';
 
 const KIND_META = {
-  lesson:   { label: 'שיעור',         icon: BookOpen, color: 'text-primary'      },
-  break:    { label: 'הפסקה',         icon: Coffee,   color: 'text-amber-600 dark:text-amber-400' },
-  homeroom: { label: 'בוקר טוב',      icon: Sunrise,  color: 'text-sky-600 dark:text-sky-400' },
-  pre_bell: { label: 'צלצול מקדים',   icon: Bell,     color: 'text-muted-foreground' },
+  lesson:   { label: 'שיעור',       icon: BookOpen, color: 'text-primary' },
+  break:    { label: 'הפסקה',       icon: Coffee,   color: 'text-amber-600 dark:text-amber-400' },
+  homeroom: { label: 'בוקר טוב',    icon: Sunrise,  color: 'text-sky-600 dark:text-sky-400' },
+  pre_bell: { label: 'צלצול מקדים', icon: Bell,     color: 'text-muted-foreground' },
 };
 
 function KindChip({ value, onChange }) {
@@ -27,8 +28,8 @@ function KindChip({ value, onChange }) {
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger
         className={cn(
-          'h-7 w-[92px] sm:w-28 px-2 rounded-full border bg-muted/60 hover:bg-muted',
-          'text-[11px] sm:text-[12px] font-medium gap-1 [&>svg:last-child]:hidden'
+          'h-7 w-[88px] sm:w-[104px] px-2 rounded-full border bg-muted/60 hover:bg-muted',
+          'text-[11px] font-medium gap-1 [&>svg:last-child]:hidden'
         )}
       >
         <div className="flex items-center gap-1 min-w-0 flex-1 justify-center">
@@ -53,29 +54,43 @@ function KindChip({ value, onChange }) {
   );
 }
 
-function PeriodRow({ period, index, onChange, onRemove }) {
+// Compute lesson number for a given row (only counts kind="lesson" rows)
+function computeLessonNumber(periods, idx) {
+  if (periods[idx]?.kind !== 'lesson') return null;
+  let n = 0;
+  for (let i = 0; i <= idx; i++) if (periods[i]?.kind === 'lesson') n++;
+  return n;
+}
+
+function PeriodRow({ period, lessonNumber, isActive, onChange, onRemove }) {
   const set = (field, value) => onChange({ ...period, [field]: value });
-  const isLesson = period.kind === 'lesson';
 
   return (
-    <div className="flex items-center gap-1.5 sm:gap-2 px-1.5 py-1 rounded-md hover:bg-muted/40 group transition-colors">
-      {/* Row number */}
-      <div className="w-5 text-center text-[10px] sm:text-[11px] font-bold text-muted-foreground/60 tabular-nums flex-shrink-0">
-        {index + 1}
+    <div
+      className={cn(
+        'flex items-center gap-1.5 sm:gap-2 px-1.5 h-10 rounded-md transition-colors',
+        isActive
+          ? 'bg-primary/8 ring-1 ring-primary/30'
+          : 'hover:bg-muted/40'
+      )}
+    >
+      {/* Row index — lesson number only */}
+      <div className={cn(
+        'w-6 text-center text-[11px] font-bold tabular-nums flex-shrink-0',
+        lessonNumber ? 'text-primary' : 'text-transparent'
+      )}>
+        {lessonNumber ?? '·'}
       </div>
 
-      {/* Kind chip - uniform size */}
       <KindChip value={period.kind} onChange={(v) => set('kind', v)} />
 
-      {/* Label - flexible */}
       <Input
         value={period.label || ''}
         onChange={(e) => set('label', e.target.value)}
-        placeholder={isLesson ? `שיעור ${period.period || ''}` : KIND_META[period.kind]?.label}
+        placeholder={KIND_META[period.kind]?.label}
         className="h-7 text-[12px] flex-1 min-w-0 px-2"
       />
 
-      {/* Start time */}
       <Input
         type="time"
         value={period.start_time || ''}
@@ -83,7 +98,6 @@ function PeriodRow({ period, index, onChange, onRemove }) {
         className="h-7 w-[72px] sm:w-[82px] text-[11px] sm:text-[12px] force-ltr px-1.5 flex-shrink-0"
       />
 
-      {/* End time */}
       <Input
         type="time"
         value={period.end_time || ''}
@@ -91,7 +105,6 @@ function PeriodRow({ period, index, onChange, onRemove }) {
         className="h-7 w-[72px] sm:w-[82px] text-[11px] sm:text-[12px] force-ltr px-1.5 flex-shrink-0"
       />
 
-      {/* Delete */}
       <Button
         variant="ghost"
         size="icon"
@@ -104,25 +117,41 @@ function PeriodRow({ period, index, onChange, onRemove }) {
   );
 }
 
-function PeriodEditor({ periods, onChange }) {
+function ColumnHeaders() {
+  return (
+    <div className="flex items-center gap-1.5 sm:gap-2 px-1.5 pb-1.5 mb-1 border-b border-border/60 text-[10px] sm:text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+      <div className="w-6 text-center flex-shrink-0">#</div>
+      <div className="w-[88px] sm:w-[104px] text-center flex-shrink-0">סוג</div>
+      <div className="flex-1 min-w-0 px-2">שם</div>
+      <div className="w-[72px] sm:w-[82px] text-center flex-shrink-0">התחלה</div>
+      <div className="w-[72px] sm:w-[82px] text-center flex-shrink-0">סיום</div>
+      <div className="w-7 text-center flex-shrink-0">מחק</div>
+    </div>
+  );
+}
+
+function PeriodEditor({ periods, onChange, activeIndex, onRequestRemove }) {
   const update = (idx, next) => onChange(periods.map((p, i) => i === idx ? next : p));
-  const remove = (idx) => onChange(periods.filter((_, i) => i !== idx));
   const add = () => onChange([
     ...periods,
     { kind: 'lesson', label: '', start_time: '08:00', end_time: '08:45' }
   ]);
 
   return (
-    <div className="space-y-0.5" dir="rtl">
-      {periods.map((p, i) => (
-        <PeriodRow
-          key={i}
-          period={p}
-          index={i}
-          onChange={(next) => update(i, next)}
-          onRemove={() => remove(i)}
-        />
-      ))}
+    <div dir="rtl">
+      <ColumnHeaders />
+      <div className="space-y-0.5">
+        {periods.map((p, i) => (
+          <PeriodRow
+            key={i}
+            period={p}
+            lessonNumber={computeLessonNumber(periods, i)}
+            isActive={activeIndex === i}
+            onChange={(next) => update(i, next)}
+            onRemove={() => onRequestRemove(i)}
+          />
+        ))}
+      </div>
       <button
         onClick={add}
         className="w-full mt-2 flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-border hover:border-primary hover:bg-primary/5 hover:text-primary text-muted-foreground text-[12px] font-medium transition-colors"
@@ -133,10 +162,34 @@ function PeriodEditor({ periods, onChange }) {
   );
 }
 
-function DayPanel({ dayType, periods, onChange, onSave, onReset, saving }) {
+// Find currently active row by clock (HH:MM within [start,end))
+function findActiveIndex(periods) {
+  if (!periods?.length) return -1;
+  const now = new Date();
+  const hhmm = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  return periods.findIndex(p => p.start_time && p.end_time && hhmm >= p.start_time && hhmm < p.end_time);
+}
+
+function DayPanel({ periods, onChange, onSave, onReset, saving, isCurrentDay, onRequestRemove }) {
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    if (!isCurrentDay) return;
+    const t = setInterval(() => setTick(x => x + 1), 30000);
+    return () => clearInterval(t);
+  }, [isCurrentDay]);
+  const activeIndex = useMemo(
+    () => isCurrentDay ? findActiveIndex(periods) : -1,
+    [periods, isCurrentDay, tick]
+  );
+
   return (
     <div className="space-y-3">
-      <PeriodEditor periods={periods} onChange={onChange} />
+      <PeriodEditor
+        periods={periods}
+        onChange={onChange}
+        activeIndex={activeIndex}
+        onRequestRemove={onRequestRemove}
+      />
       <div className="flex items-center justify-end gap-2 pt-2 border-t border-border/60">
         <Button variant="ghost" onClick={onReset} className="h-8 text-[12px] gap-1.5 text-muted-foreground hover:text-foreground">
           <RotateCcw className="w-3.5 h-3.5" /> ברירת מחדל
@@ -156,8 +209,14 @@ export default function BellScheduleSettings({ user, role }) {
   const [tab, setTab] = useState('sun_thu');
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [confirmDelete, setConfirmDelete] = useState(null); // { dayType, index, period }
 
   useEffect(() => { load(); }, []);
+
+  // Current day is Friday in JS getDay() === 5
+  const today = new Date().getDay();
+  const isCurrentDay = (dayType) =>
+    (dayType === 'fri' && today === 5) || (dayType === 'sun_thu' && today >= 0 && today <= 4);
 
   async function load() {
     setLoading(true);
@@ -184,6 +243,19 @@ export default function BellScheduleSettings({ user, role }) {
     toast.info('שוחזרה ברירת המחדל (לא נשמר עדיין)');
   }
 
+  function requestRemove(dayType, index) {
+    const list = dayType === 'fri' ? fri : sunThu;
+    setConfirmDelete({ dayType, index, period: list[index] });
+  }
+
+  function confirmRemove() {
+    if (!confirmDelete) return;
+    const { dayType, index } = confirmDelete;
+    if (dayType === 'fri') setFri(fri.filter((_, i) => i !== index));
+    else setSunThu(sunThu.filter((_, i) => i !== index));
+    setConfirmDelete(null);
+  }
+
   if (!isAdmin) {
     return (
       <div className="p-6 flex flex-col items-center justify-center min-h-64 text-center" dir="rtl">
@@ -201,6 +273,8 @@ export default function BellScheduleSettings({ user, role }) {
       </div>
     );
   }
+
+  const deleteMeta = confirmDelete ? KIND_META[confirmDelete.period?.kind] : null;
 
   return (
     <div className="p-3 lg:p-5 max-w-3xl mx-auto space-y-3 text-right" dir="rtl">
@@ -220,27 +294,60 @@ export default function BellScheduleSettings({ user, role }) {
           <div className="p-3">
             <TabsContent value="sun_thu" className="mt-0">
               <DayPanel
-                dayType="sun_thu"
                 periods={sunThu}
                 onChange={setSunThu}
                 onSave={() => handleSave('sun_thu')}
                 onReset={() => reset('sun_thu')}
+                onRequestRemove={(i) => requestRemove('sun_thu', i)}
                 saving={saving}
+                isCurrentDay={isCurrentDay('sun_thu')}
               />
             </TabsContent>
             <TabsContent value="fri" className="mt-0">
               <DayPanel
-                dayType="fri"
                 periods={fri}
                 onChange={setFri}
                 onSave={() => handleSave('fri')}
                 onReset={() => reset('fri')}
+                onRequestRemove={(i) => requestRemove('fri', i)}
                 saving={saving}
+                isCurrentDay={isCurrentDay('fri')}
               />
             </TabsContent>
           </div>
         </Tabs>
       </div>
+
+      {/* Delete confirmation */}
+      <Dialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
+        <DialogContent className="sm:max-w-sm" dir="rtl">
+          <DialogHeader>
+            <div className="mx-auto w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mb-2">
+              <AlertTriangle className="w-6 h-6 text-destructive" />
+            </div>
+            <DialogTitle className="text-center">מחיקת שורה</DialogTitle>
+            <DialogDescription className="text-center pt-1">
+              האם למחוק את{' '}
+              <span className="font-semibold text-foreground">
+                {deleteMeta?.label || 'השורה'}
+                {confirmDelete?.period?.label ? ` — ${confirmDelete.period.label}` : ''}
+              </span>
+              {confirmDelete?.period?.start_time && (
+                <> בשעה <span className="force-ltr font-semibold text-foreground">{confirmDelete.period.start_time}</span></>
+              )}
+              ?<br />פעולה זו אינה ניתנת לביטול.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-row gap-2 sm:justify-center">
+            <Button variant="outline" onClick={() => setConfirmDelete(null)} className="flex-1 sm:flex-none">
+              ביטול
+            </Button>
+            <Button variant="destructive" onClick={confirmRemove} className="flex-1 sm:flex-none gap-2">
+              <Trash2 className="w-4 h-4" /> מחק
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
