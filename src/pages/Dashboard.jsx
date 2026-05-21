@@ -7,6 +7,7 @@ import { CLASS_ID } from '@/lib/demoData';
 import StatCard from '@/components/ui/StatCard';
 import TodayHighlights from '@/components/dashboard/TodayHighlights';
 import DailySmartCard from '@/components/dashboard/DailySmartCard';
+import WatchStudentsSection from '@/components/dashboard/WatchStudentsSection';
 import {
   Users, Clock, AlertTriangle, BookOpen, CheckSquare,
   Shield, Heart, UserCheck, Calendar, MessageSquare,
@@ -108,8 +109,15 @@ export default function Dashboard({ user, role }) {
 
   // Class attendance pattern alerts
   const [allAttRecords, setAllAttRecords] = useState([]);
+  const [performanceReviews, setPerformanceReviews] = useState([]);
   useEffect(() => {
-    base44.entities.AttendanceRecord.filter({ class_id: CLASS_ID }).then(setAllAttRecords);
+    Promise.all([
+      base44.entities.AttendanceRecord.filter({ class_id: CLASS_ID }),
+      base44.entities.PerformanceReview.filter({ class_id: CLASS_ID })
+    ]).then(([att, perf]) => {
+      setAllAttRecords(att);
+      setPerformanceReviews(perf);
+    });
   }, []);
   const attendanceAlertStudents = students.filter(s => {
     const absences = allAttRecords.filter(r => r.student_id === s.id && ['נעדר/ת'].includes(r.status)).length;
@@ -195,6 +203,18 @@ export default function Dashboard({ user, role }) {
           announcements={announcements}
           role={role}
           user={user}
+        />
+      )}
+
+      {/* Watch Students Section — identify students needing attention */}
+      {(isActiveHomeroom || isActiveAdmin || isActiveCoordinator) && (
+        <WatchStudentsSection
+          students={students}
+          allAttendanceRecords={allAttRecords}
+          performanceReviews={performanceReviews}
+          disciplineEvents={discipline}
+          tasks={tasks}
+          classId={CLASS_ID}
         />
       )}
 

@@ -12,8 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import StatusBadge from '@/components/ui/StatusBadge';
 import { ChevronRight, Phone, Mail, Edit, Plus, Calendar, Shield, Heart, Star, MessageSquare, BarChart2, CheckSquare } from 'lucide-react';
 import AddStudentModal from '@/components/students/AddStudentModal';
+import ParentContactLog from '@/components/student/ParentContactLog';
 import { CLASS_ID } from '@/lib/demoData';
 import { toast } from 'sonner';
+import { useAuth } from '@/lib/AuthContext';
 
 const RatingDots = ({ value }) => (
   <div className="flex flex-row-reverse gap-1">
@@ -25,6 +27,7 @@ const RatingDots = ({ value }) => (
 
 export default function StudentProfile() {
   const { id } = useParams();
+  const { user } = useAuth();
   const [student, setStudent] = useState(null);
   const [attendance, setAttendance] = useState([]);
   const [discipline, setDiscipline] = useState([]);
@@ -191,11 +194,12 @@ export default function StudentProfile() {
 
       {/* Tabs */}
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="w-full grid grid-cols-4 sm:grid-cols-6 mb-4">
+        <TabsList className="w-full grid grid-cols-5 sm:grid-cols-7 mb-4">
           <TabsTrigger value="overview">סקירה</TabsTrigger>
           <TabsTrigger value="attendance">נוכחות</TabsTrigger>
           <TabsTrigger value="discipline">משמעת</TabsTrigger>
           <TabsTrigger value="performance">תפקוד</TabsTrigger>
+          <TabsTrigger value="contacts" className="hidden sm:flex">קשרים</TabsTrigger>
           <TabsTrigger value="notes" className="hidden sm:flex">הערות</TabsTrigger>
           <TabsTrigger value="comms" className="hidden sm:flex">תקשורת</TabsTrigger>
         </TabsList>
@@ -300,8 +304,20 @@ export default function StudentProfile() {
           </Card>
         </TabsContent>
 
+        {/* Parent Contact Log */}
+        <TabsContent value="contacts">
+          <ParentContactLog 
+            studentId={id}
+            classId={student.class_id || CLASS_ID}
+            studentName={student.full_name}
+            parentPhone1={student.parent1_phone}
+            parentPhone2={student.parent2_phone}
+            user={user}
+          />
+        </TabsContent>
+
         {/* Discipline */}
-        <TabsContent value="discipline">
+         <TabsContent value="discipline">
           <Card>
             <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">אירועי משמעת</CardTitle></CardHeader>
             <CardContent>

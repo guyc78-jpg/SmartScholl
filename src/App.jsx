@@ -33,6 +33,7 @@ import GenderRequiredGate from '@/components/profile/GenderRequiredGate';
 import Profile from './pages/Profile';
 import UserManagement from './pages/UserManagement';
 import BellScheduleSettings from './pages/BellScheduleSettings';
+import TreatmentCenter from './pages/TreatmentCenter';
 import { isStaff, isStudent, defaultRoute } from './lib/permissions';
 import { getAvailableRoles, getInitialWorkRole, getSystemRole } from './lib/roleUtils';
 
@@ -118,6 +119,7 @@ const AuthenticatedApp = () => {
         <Route path="/performance" element={<Performance role={role} />} />
         <Route path="/communications" element={<Communications role={role} />} />
         <Route path="/tasks" element={<Tasks role={role} />} />
+        <Route path="/treatment-center" element={<TreatmentCenter />} />
         <Route path="/announcements" element={<Announcements role={role} />} />
         <Route path="/reports" element={<Reports role={role} />} />
         <Route path="/profile" element={<Profile user={user} role={role} onRoleChange={setWorkRole} />} />
