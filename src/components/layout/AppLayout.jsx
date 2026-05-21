@@ -227,7 +227,7 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
                   'flex items-center justify-center w-10 h-6 rounded-full transition-colors flex-shrink-0',
                   isActive && 'bg-primary/10'
                 )}>
-                  <item.icon className="w-[18px] h-[18px]" strokeWidth={isActive ? 2.4 : 2} />
+                  <item.icon className="w-4 h-4" strokeWidth={isActive ? 2.4 : 2} />
                 </div>
                 <span
                   className={cn(
