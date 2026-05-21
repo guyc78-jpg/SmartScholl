@@ -28,8 +28,8 @@ export default function WorkModeSelector({ user, activeRole, onRoleChange }) {
     <div className="mt-2 space-y-1" dir="rtl">
       <p className="text-[11px] text-sidebar-foreground/50 text-right">מצב עבודה</p>
       <Select value={activeRole} onValueChange={handleChange} disabled={saving}>
-        <SelectTrigger className="h-8 bg-sidebar-accent border-sidebar-border text-sidebar-foreground text-xs w-full flex justify-between items-center px-2 [&_svg]:ms-auto [&_svg]:me-0">
-          <SelectValue className="text-right flex-1" />
+        <SelectTrigger className="h-8 bg-sidebar-accent border-sidebar-border text-sidebar-foreground text-xs w-full px-2 [&>span]:flex-1 [&>span]:text-right [&_svg]:ms-2 [&_svg]:me-0">
+          <SelectValue />
         </SelectTrigger>
         <SelectContent dir="rtl" align="start">
           {roles.map(role => (
