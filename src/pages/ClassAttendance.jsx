@@ -166,8 +166,8 @@ export default function ClassAttendance({ role }) {
         }
       />
 
-      <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="mb-4">
+      <Tabs value={tab} onValueChange={setTab} dir="rtl">
+        <TabsList className="mb-4 flex flex-row-reverse w-fit ms-0 me-auto sm:ms-0 sm:me-0">
           <TabsTrigger value="daily">סימון יומי</TabsTrigger>
           <TabsTrigger value="patterns">דפוסים והתראות</TabsTrigger>
         </TabsList>
@@ -175,12 +175,12 @@ export default function ClassAttendance({ role }) {
         {/* ── DAILY TAB ── */}
         <TabsContent value="daily" className="space-y-4">
           {/* Date + Summary */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-right" dir="rtl">
-            <div className="flex items-center flex-row-reverse gap-2">
+          <div className="flex flex-col sm:flex-row-reverse sm:items-center sm:justify-end gap-3 text-right" dir="rtl">
+            <div className="flex items-center flex-row-reverse gap-2 justify-end">
               <Label htmlFor="date" className="text-sm flex-shrink-0">תאריך:</Label>
               <Input id="date" type="date" value={date} onChange={e => setDate(e.target.value)} className="w-40" />
             </div>
-            <div className="flex gap-2 flex-wrap flex-row-reverse text-sm">
+            <div className="flex gap-2 flex-wrap flex-row-reverse text-sm justify-end sm:me-auto">
               <span className="px-3 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-xl font-medium">✓ {presentCount} נוכחים</span>
               <span className="px-3 py-1 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl font-medium">✗ {absentCount} נעדרים</span>
               <span className="px-3 py-1 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-xl font-medium">⏰ {lateCount} מאחרים</span>
@@ -189,7 +189,7 @@ export default function ClassAttendance({ role }) {
           </div>
 
           {/* Mark All */}
-          <div className="flex items-center flex-row-reverse gap-2 flex-wrap text-right" dir="rtl">
+          <div className="flex items-center flex-row-reverse gap-2 flex-wrap text-right justify-end" dir="rtl">
             <span className="text-xs text-muted-foreground">סמן הכל:</span>
             {STATUSES.map(st => (
               <button key={st} onClick={() => markAll(st)}
