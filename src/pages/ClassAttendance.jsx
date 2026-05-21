@@ -174,29 +174,31 @@ export default function ClassAttendance({ role }) {
 
         {/* ── DAILY TAB ── */}
         <TabsContent value="daily" className="space-y-4">
-          {/* Date + Summary */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-right" dir="rtl">
-            <div className="flex items-center gap-2">
-              <Label htmlFor="date" className="text-sm flex-shrink-0">תאריך:</Label>
-              <Input id="date" type="date" value={date} onChange={e => setDate(e.target.value)} className="w-40" />
-            </div>
-            <div className="flex gap-2 flex-wrap text-sm justify-start">
-              <span className="px-3 py-1 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-xl font-medium">✓ {presentCount} נוכחים</span>
-              <span className="px-3 py-1 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl font-medium">✗ {absentCount} נעדרים</span>
-              <span className="px-3 py-1 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-xl font-medium">⏰ {lateCount} מאחרים</span>
-              <span className="px-3 py-1 bg-muted text-muted-foreground rounded-xl font-medium">{markedCount}/{students.length} סומנו</span>
-            </div>
+          {/* Date */}
+          <div className="flex items-center gap-2 text-right" dir="rtl">
+            <Label htmlFor="date" className="text-sm flex-shrink-0">תאריך:</Label>
+            <Input id="date" type="date" value={date} onChange={e => setDate(e.target.value)} className="w-40" />
           </div>
 
-          {/* Mark All */}
-          <div className="flex items-center gap-2 flex-wrap text-right" dir="rtl">
+          {/* Summary chips — equal width, evenly distributed across the row */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-sm" dir="rtl">
+            <span className="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400 rounded-xl font-medium text-center truncate">✓ {presentCount} נוכחים</span>
+            <span className="px-3 py-1.5 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl font-medium text-center truncate">✗ {absentCount} נעדרים</span>
+            <span className="px-3 py-1.5 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-xl font-medium text-center truncate">⏰ {lateCount} מאחרים</span>
+            <span className="px-3 py-1.5 bg-muted text-muted-foreground rounded-xl font-medium text-center truncate">{markedCount}/{students.length} סומנו</span>
+          </div>
+
+          {/* Mark All — equal width status filter chips */}
+          <div className="space-y-2 text-right" dir="rtl">
             <span className="text-xs text-muted-foreground">סמן הכל:</span>
-            {STATUSES.map(st => (
-              <button key={st} onClick={() => markAll(st)}
-                className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-all ${statusStyle[st].idle}`}>
-                {st}
-              </button>
-            ))}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {STATUSES.map(st => (
+                <button key={st} onClick={() => markAll(st)}
+                  className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-all text-center truncate ${statusStyle[st].idle}`}>
+                  {st}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Students */}
