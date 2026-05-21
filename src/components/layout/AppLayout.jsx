@@ -183,8 +183,10 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
                : 'bg-sidebar border-sidebar-border shadow-2xl'
            )}>
              <button
+               type="button"
                onClick={() => setSidebarOpen(false)}
-               className="absolute top-4 end-4 w-8 h-8 flex items-center justify-center text-sidebar-foreground/70 hover:text-sidebar-foreground rounded-lg hover:bg-sidebar-accent">
+               aria-label="סגור תפריט"
+               className="absolute top-2 end-2 w-11 h-11 flex items-center justify-center text-sidebar-foreground/70 hover:text-sidebar-foreground rounded-lg hover:bg-sidebar-accent active:bg-sidebar-accent/80 touch-manipulation z-10">
                <X className="w-5 h-5" />
              </button>
              <SidebarContent />
@@ -195,18 +197,28 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile Header — compact */}
-        <header className="lg:hidden flex items-center justify-between px-3 h-12 bg-card/95 backdrop-blur border-b border-border flex-shrink-0">
-          <button onClick={() => setSidebarOpen(true)} className="w-8 h-8 flex items-center justify-center text-foreground rounded-lg hover:bg-muted transition-colors">
-            <Menu className="w-4.5 h-4.5" />
+        <header className="lg:hidden relative z-30 flex items-center justify-between px-2 h-14 bg-card/95 backdrop-blur border-b border-border flex-shrink-0">
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(true)}
+            aria-label="פתח תפריט"
+            className="w-11 h-11 flex items-center justify-center text-foreground rounded-lg hover:bg-muted active:bg-muted/80 touch-manipulation"
+          >
+            <Menu className="w-5 h-5" />
           </button>
-          <div className="flex items-center gap-1.5 min-w-0">
+          <div className="flex items-center gap-1.5 min-w-0 pointer-events-none">
             <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center">
               <BookMarked className="w-3.5 h-3.5 text-white" />
             </div>
             <span className="font-bold text-foreground text-[13px]">ניהול כיתה חכם</span>
           </div>
-          <button onClick={() => setDarkMode(!darkMode)} className="w-8 h-8 flex items-center justify-center text-muted-foreground rounded-lg hover:bg-muted transition-colors">
-            {darkMode ? <Sun className="w-4.5 h-4.5" /> : <Moon className="w-4.5 h-4.5" />}
+          <button
+            type="button"
+            onClick={() => setDarkMode(!darkMode)}
+            aria-label={darkMode ? 'מצב בהיר' : 'מצב כהה'}
+            className="w-11 h-11 flex items-center justify-center text-muted-foreground rounded-lg hover:bg-muted active:bg-muted/80 touch-manipulation"
+          >
+            {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </button>
         </header>
 
