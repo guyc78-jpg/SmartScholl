@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { CLASS_ID } from '@/lib/demoData';
@@ -33,6 +33,7 @@ export default function Exams({ role, user }) {
   const [celebratingExamId, setCelebratingExamId] = useState(null);
   const [editExam, setEditExam] = useState(null);
   const [form, setForm] = useState({ title: '', subject: '', type: 'מבחן', date: '', time: '', class_or_grade: '', teacher: '', material: '', notes: '' });
+  const fileInputRef = useRef(null);
   const canEditExams = ['admin', 'homeroom_teacher', 'coordinator'].includes(role);
   const isStudentView = role === 'student';
 
@@ -256,19 +257,25 @@ export default function Exams({ role, user }) {
       {!showPreview && !showForm && !showImport && canEditExams && (
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
           <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">רוצה לייבא אירועים מקובץ?</p>
-          <label className="inline-flex items-center gap-2 cursor-pointer">
+          <div className="flex items-center gap-2">
             <input
+              ref={fileInputRef}
               type="file"
               accept=".pdf,.docx,.xlsx,.csv,.txt"
               onChange={(e) => handleFileUpload(e.target.files?.[0])}
               disabled={importing}
               className="hidden"
             />
-            <Button variant="outline" className="gap-2" disabled={importing}>
+            <Button 
+              variant="outline" 
+              className="gap-2" 
+              disabled={importing}
+              onClick={() => fileInputRef.current?.click()}
+            >
               {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileUp className="w-4 h-4" />}
               {importing ? 'עיבוד...' : 'בחר קובץ (PDF, Word, Excel)'}
             </Button>
-          </label>
+          </div>
         </div>
       )}
 
