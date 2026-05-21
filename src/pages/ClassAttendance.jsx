@@ -14,6 +14,7 @@ import AttendanceAlerts from '@/components/attendance/AttendanceAlerts';
 import AttendancePatterns from '@/components/attendance/AttendancePatterns';
 import { isStudentInApprovedScope, getUserApprovedClass } from '@/lib/schoolStructure';
 import { useAuth } from '@/lib/AuthContext';
+import { formatAttendanceStatus } from '@/lib/genderUtils';
 
 const STATUSES = ['נוכח/ת', 'מאחר/ת', 'נעדר/ת', 'שוחרר/ה'];
 
@@ -230,7 +231,7 @@ export default function ClassAttendance({ role }) {
                               <button key={st} onClick={() => setStatus(student.id, st)}
                                 className={`text-[11px] px-1.5 sm:px-2 py-1.5 rounded-lg border font-medium transition-all whitespace-nowrap
                                   ${current?.status === st ? statusStyle[st].active : statusStyle[st].idle}`}>
-                                {st}
+                                {formatAttendanceStatus(st, student)}
                               </button>
                             ))}
                           </div>
@@ -253,7 +254,7 @@ export default function ClassAttendance({ role }) {
                           <div className="mt-3 me-12 p-2 bg-muted/40 rounded-lg flex flex-row-reverse gap-4 text-xs flex-wrap text-right">
                             <span className="text-red-600 dark:text-red-400 font-medium">היעדרויות: {stats.absences}</span>
                             <span className="text-amber-600 dark:text-amber-400 font-medium">איחורים: {stats.lates}</span>
-                            <span className="text-purple-600 dark:text-purple-400 font-medium">שוחרר/ה: {stats.released}</span>
+                            <span className="text-purple-600 dark:text-purple-400 font-medium">{formatAttendanceStatus('שוחרר/ה', student)}: {stats.released}</span>
                             <span className="text-muted-foreground">סה"כ רשומות: {stats.total}</span>
                           </div>
                         )}

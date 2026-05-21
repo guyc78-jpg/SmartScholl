@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils';
+import { formatAttendanceStatus, formatStudentStatus } from '@/lib/genderUtils';
 
 const statusConfig = {
   // Attendance
@@ -43,11 +44,15 @@ const statusConfig = {
   'בינונית': 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
 };
 
-export default function StatusBadge({ status, className }) {
+export default function StatusBadge({ status, className, subject }) {
   const style = statusConfig[status] || 'bg-slate-100 text-slate-600';
+  // Format display by subject gender (does not affect stored value)
+  const displayed = subject
+    ? formatStudentStatus(formatAttendanceStatus(status, subject), subject)
+    : status;
   return (
     <span className={cn('inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium', style, className)}>
-      {status}
+      {displayed}
     </span>
   );
 }
