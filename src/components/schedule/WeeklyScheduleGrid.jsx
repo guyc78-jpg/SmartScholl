@@ -56,20 +56,21 @@ export default function WeeklyScheduleGrid({ periods, slotsByKey, todayDayName, 
                 <tr key={p.period}>
                   <td
                     className={cn(
-                      'w-16 sm:w-20 text-center font-bold border-b border-l border-border',
-                      'flex flex-col items-center justify-center gap-1.5 py-3 px-1',
+                      'w-16 sm:w-20 font-bold border-b border-l border-border align-middle p-0',
                       rowIdx % 2 === 0 ? 'bg-muted/40' : 'bg-card',
                       isCurrentRow && 'bg-primary/10 text-primary',
                     )}
                   >
-                    <div className={cn('text-sm sm:text-base leading-none', isCurrentRow ? 'text-primary' : 'text-foreground')}>
-                      {p.period}
-                    </div>
-                    {p.start_time && (
-                      <div className="force-ltr text-xs sm:text-sm font-bold leading-none text-foreground/85 dark:text-foreground/90">
-                        {p.start_time}
+                    <div className="flex flex-col items-center justify-center gap-1.5 px-1 min-h-[58px] sm:min-h-[68px]">
+                      <div className={cn('text-sm sm:text-base leading-none', isCurrentRow ? 'text-primary' : 'text-foreground')}>
+                        {p.period}
                       </div>
-                    )}
+                      {p.start_time && (
+                        <div className="force-ltr text-xs sm:text-sm font-bold leading-none text-foreground/85 dark:text-foreground/90">
+                          {p.start_time}
+                        </div>
+                      )}
+                    </div>
                   </td>
                   {DAYS.map(day => {
                     const slot = slotsByKey[`${day}|${p.period}`];
