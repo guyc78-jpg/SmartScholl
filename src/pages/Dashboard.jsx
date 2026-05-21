@@ -6,6 +6,7 @@ import { base44 } from '@/api/base44Client';
 import { CLASS_ID } from '@/lib/demoData';
 import StatCard from '@/components/ui/StatCard';
 import TodayHighlights from '@/components/dashboard/TodayHighlights';
+import DailySmartCard from '@/components/dashboard/DailySmartCard';
 import {
   Users, Clock, AlertTriangle, BookOpen, CheckSquare,
   Shield, Heart, UserCheck, Calendar, MessageSquare,
@@ -181,6 +182,21 @@ export default function Dashboard({ user, role }) {
 
       {/* Now / Next — only useful for homeroom teachers (have a class) */}
       {(isActiveHomeroom || isActiveAdmin) && <NowNextCard classId={CLASS_ID} />}
+
+      {/* Daily Smart Card — unified intelligence on what matters today */}
+      {(isActiveHomeroom || isActiveAdmin || isActiveCoordinator) && (
+        <DailySmartCard
+          classId={CLASS_ID}
+          students={students}
+          todayAttendance={todayAttendance}
+          exams={exams}
+          tasks={tasks}
+          discipline={discipline}
+          announcements={announcements}
+          role={role}
+          user={user}
+        />
+      )}
 
       {isAdmin && (
         <section>
