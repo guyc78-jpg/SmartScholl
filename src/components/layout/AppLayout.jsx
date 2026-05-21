@@ -195,19 +195,19 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Mobile Header */}
-        <header className="lg:hidden flex items-center justify-between px-4 h-14 bg-card border-b border-border flex-shrink-0">
-          <button onClick={() => setSidebarOpen(true)} className="w-9 h-9 flex items-center justify-center text-foreground rounded-lg hover:bg-muted transition-colors">
-            <Menu className="w-5 h-5" />
+        {/* Mobile Header — compact */}
+        <header className="lg:hidden flex items-center justify-between px-3 h-12 bg-card/95 backdrop-blur border-b border-border flex-shrink-0">
+          <button onClick={() => setSidebarOpen(true)} className="w-8 h-8 flex items-center justify-center text-foreground rounded-lg hover:bg-muted transition-colors">
+            <Menu className="w-4.5 h-4.5" />
           </button>
-          <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-primary rounded-lg flex items-center justify-center">
-              <BookMarked className="w-4 h-4 text-white" />
+          <div className="flex items-center gap-1.5">
+            <div className="w-6 h-6 bg-primary rounded-md flex items-center justify-center">
+              <BookMarked className="w-3.5 h-3.5 text-white" />
             </div>
-            <span className="font-bold text-foreground text-sm">כיתה חכמה</span>
+            <span className="font-bold text-foreground text-[13px]">כיתה חכמה</span>
           </div>
-          <button onClick={() => setDarkMode(!darkMode)} className="w-9 h-9 flex items-center justify-center text-muted-foreground rounded-lg hover:bg-muted transition-colors">
-            {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          <button onClick={() => setDarkMode(!darkMode)} className="w-8 h-8 flex items-center justify-center text-muted-foreground rounded-lg hover:bg-muted transition-colors">
+            {darkMode ? <Sun className="w-4.5 h-4.5" /> : <Moon className="w-4.5 h-4.5" />}
           </button>
         </header>
 

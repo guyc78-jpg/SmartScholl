@@ -30,7 +30,13 @@ export default function TodayHighlights({ items = [] }) {
       </div>
 
       {items.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-4 text-center">אין מה לטפל היום — יום שקט 👌</p>
+        <div className="flex flex-col items-center justify-center text-center py-8 px-4">
+          <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-3">
+            <Sparkles className="w-6 h-6 text-primary" />
+          </div>
+          <p className="text-base font-semibold text-foreground">הכול מסודר להיום 👌</p>
+          <p className="text-xs text-muted-foreground mt-1">אין משימות, התראות או אירועים שדורשים טיפול עכשיו.</p>
+        </div>
       ) : (
         <ul className="space-y-2">
           {items.map(item => {

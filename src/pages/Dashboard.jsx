@@ -165,11 +165,11 @@ export default function Dashboard({ user, role }) {
   return (
     <div className="p-4 lg:p-6 space-y-6" dir="rtl">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">שלום, {getUserFirstName(user)} 👋</h1>
-          <p className="text-sm text-muted-foreground mt-1">{dashboardTitle}</p>
-          <p className="text-sm text-muted-foreground/70 mt-0.5">{hebrewDate()} · {scopeLabels}</p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-xl lg:text-2xl font-bold text-foreground leading-tight">שלום, {getUserFirstName(user)} 👋</h1>
+          <p className="text-sm font-medium text-foreground/70 mt-0.5">{dashboardTitle}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">{hebrewDate()}</p>
         </div>
         <NotificationsDropdown notifications={notifications} />
       </div>
@@ -202,20 +202,6 @@ export default function Dashboard({ user, role }) {
         </section>
       )}
 
-      {isActiveHomeroom && (
-        <div className="space-y-1">
-          <h2 className="text-lg font-bold text-foreground">מחנך {getUserApprovedClass(user) || 'לא הוגדרה כיתה'}</h2>
-          <p className="text-sm text-muted-foreground">אזור נתוני הכיתה המשויכת המאושרת שלך.</p>
-        </div>
-      )}
-
-      {isActiveCoordinator && (
-        <div className="space-y-1">
-          <h2 className="text-lg font-bold text-foreground">רכז {getUserApprovedGrade(user) || 'לא הוגדרה שכבה'}</h2>
-          <p className="text-sm text-muted-foreground">אזור נתוני השכבה המשויכת המאושרת שלך.</p>
-        </div>
-      )}
-
       {/* Today Highlights — what really matters today */}
       {(() => {
         const highlights = [];
@@ -223,6 +209,10 @@ export default function Dashboard({ user, role }) {
           id: 'absent', icon: AlertTriangle, label: `${absentToday + lateToday} נעדרים/מאחרים היום`,
           hint: `${absentToday} נעדר · ${lateToday} מאחר`, value: absentToday + lateToday,
           tone: absentToday + lateToday > 2 ? 'urgent' : 'warn', to: '/class-attendance'
+        });
+        if (todayAttendance.length === 0 && (isActiveHomeroom || isActiveAdmin) && students.length > 0) highlights.push({
+          id: 'no-att', icon: Clock, label: 'נוכחות היום טרם סומנה', hint: 'התחילו לסמן נוכחות לכיתה',
+          tone: 'info', to: '/class-attendance'
         });
         if (openDiscipline > 0) highlights.push({
           id: 'disc', icon: Shield, label: 'אירועי משמעת פתוחים', hint: 'דורש טיפול ומעקב',
@@ -241,118 +231,167 @@ export default function Dashboard({ user, role }) {
           hint: 'חצו סף היעדרויות/איחורים', value: attendanceAlertStudents.length,
           tone: 'warn', to: '/class-attendance'
         });
+        if (announcements.length > 0) highlights.push({
+          id: 'ann', icon: Megaphone, label: 'הודעה אחרונה לכיתה',
+          hint: announcements[0]?.title, tone: 'info', to: '/announcements'
+        });
         return <TodayHighlights items={highlights} />;
       })()}
 
-      {/* Stat Cards — KPI overview */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <StatCard icon={Users} title="תלמידים" value={students.length} subtitle="בכיתה" color="blue" />
-        <StatCard icon={UserCheck} title="נוכחים היום" value={presentToday} subtitle={`מתוך ${todayAttendance.length}`} color="green" />
-        <StatCard icon={BookOpen} title="מבחנים קרובים" value={nextExams.length} subtitle="השבוע הקרוב" color="purple" />
-        <StatCard icon={CheckSquare} title="משימות פתוחות" value={openTasks} subtitle="לטיפול" color={openTasks > 3 ? 'amber' : 'slate'} />
-      </div>
+      {/* Admin: 4 main management actions */}
+      {isActiveAdmin && (
+        <section>
+          <h2 className="text-sm font-bold text-foreground mb-2.5 flex items-center gap-2">
+            <Settings className="w-4 h-4 text-primary" />
+            ניהול מערכת
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+            {[
+              { to: '/users', label: 'הרשאות', icon: UserCheck },
+              { to: '/approvals', label: 'אישורי הרשמה', icon: CheckSquare },
+              { to: '/reports', label: 'דוחות', icon: TrendingUp },
+              { to: '/grade-monitor', label: 'מעקב שכבה', icon: Shield },
+            ].map(item => (
+              <Link
+                key={item.to}
+                to={item.to}
+                className="flex items-center gap-3 px-3 py-3 rounded-xl bg-card border border-border hover:border-primary/40 hover:bg-primary/[0.04] transition-colors"
+              >
+                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <item.icon className="w-4 h-4 text-primary" strokeWidth={2.2} />
+                </div>
+                <span className="text-sm font-semibold text-foreground/85 truncate">{item.label}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
-      {/* Quick Actions — compact icon grid */}
-      <section>
-        <h2 className="text-sm font-bold text-foreground mb-2.5">פעולות מהירות</h2>
-        <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
-          {[
-            { icon: Clock, label: 'נוכחות', action: 'attendance', roles: ['admin', 'homeroom_teacher'] },
-            { icon: Shield, label: 'משמעת', action: 'discipline', roles: ['admin', 'homeroom_teacher'] },
-            { icon: BookOpen, label: 'מבחן', action: 'exam', roles: ['admin', 'coordinator', 'homeroom_teacher'] },
-            { icon: Megaphone, label: 'הודעה', action: 'announcement', roles: ['admin', 'coordinator', 'homeroom_teacher'] },
-            { icon: Star, label: 'הערה', action: 'note', roles: ['admin', 'homeroom_teacher'] },
-            { icon: MessageSquare, label: 'הורים', action: 'communication', roles: ['admin', 'homeroom_teacher'] },
-            { icon: CheckSquare, label: 'משימה', action: 'task', roles: ['admin', 'coordinator', 'homeroom_teacher'] },
-            { icon: Heart, label: 'מעורבות', action: 'community', roles: ['admin', 'homeroom_teacher'] },
-          ].filter(btn => btn.roles.some(itemRole => approvedRoles.includes(itemRole))).map(btn => (
-            <button
-              key={btn.action}
-              onClick={() => setQuickAction(btn.action)}
-              className="group flex flex-col items-center justify-center gap-1.5 py-3 px-1.5 rounded-xl bg-card border border-border hover:border-primary/40 hover:bg-primary/[0.04] transition-colors"
-            >
-              <div className="w-9 h-9 rounded-lg bg-primary/10 group-hover:bg-primary/15 flex items-center justify-center transition-colors">
-                <btn.icon className="w-4 h-4 text-primary" strokeWidth={2.2} />
-              </div>
-              <span className="text-[11px] font-semibold text-foreground/80 leading-tight">{btn.label}</span>
-            </button>
-          ))}
+      {/* Stat Cards — show only non-zero KPIs to avoid empty look */}
+      {(() => {
+        const kpis = [
+          students.length > 0 && { icon: Users, title: 'תלמידים', value: students.length, subtitle: 'בכיתה', color: 'blue' },
+          presentToday > 0 && { icon: UserCheck, title: 'נוכחים היום', value: presentToday, subtitle: `מתוך ${todayAttendance.length}`, color: 'green' },
+          nextExams.length > 0 && { icon: BookOpen, title: 'מבחנים קרובים', value: nextExams.length, subtitle: 'השבוע הקרוב', color: 'purple' },
+          openTasks > 0 && { icon: CheckSquare, title: 'משימות פתוחות', value: openTasks, subtitle: 'לטיפול', color: openTasks > 3 ? 'amber' : 'slate' },
+        ].filter(Boolean);
+        if (kpis.length === 0) return null;
+        return (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {kpis.map(k => <StatCard key={k.title} {...k} />)}
+          </div>
+        );
+      })()}
+
+      {/* Quick Actions — compact 4-col grid */}
+      {(isActiveHomeroom || isActiveCoordinator || isActiveAdmin) && (() => {
+        const quickActions = [
+          { icon: Clock, label: 'נוכחות', action: 'attendance', roles: ['admin', 'homeroom_teacher'] },
+          { icon: Shield, label: 'משמעת', action: 'discipline', roles: ['admin', 'homeroom_teacher'] },
+          { icon: BookOpen, label: 'מבחן', action: 'exam', roles: ['admin', 'coordinator', 'homeroom_teacher'] },
+          { icon: Megaphone, label: 'הודעה', action: 'announcement', roles: ['admin', 'coordinator', 'homeroom_teacher'] },
+          { icon: Star, label: 'הערה', action: 'note', roles: ['admin', 'homeroom_teacher'] },
+          { icon: MessageSquare, label: 'הורים', action: 'communication', roles: ['admin', 'homeroom_teacher'] },
+          { icon: CheckSquare, label: 'משימה', action: 'task', roles: ['admin', 'coordinator', 'homeroom_teacher'] },
+          { icon: Heart, label: 'מעורבות', action: 'community', roles: ['admin', 'homeroom_teacher'] },
+        ].filter(btn => btn.roles.some(itemRole => approvedRoles.includes(itemRole)));
+        if (!quickActions.length) return null;
+        return (
+          <section>
+            <h2 className="text-sm font-bold text-foreground mb-2.5">פעולות מהירות</h2>
+            <div className="grid grid-cols-4 gap-2">
+              {quickActions.map(btn => (
+                <button
+                  key={btn.action}
+                  onClick={() => setQuickAction(btn.action)}
+                  className="group flex flex-col items-center justify-center gap-1.5 py-3 px-1.5 rounded-xl bg-card border border-border hover:border-primary/40 hover:bg-primary/[0.04] transition-colors"
+                >
+                  <div className="w-9 h-9 rounded-lg bg-primary/10 group-hover:bg-primary/15 flex items-center justify-center transition-colors">
+                    <btn.icon className="w-4 h-4 text-primary" strokeWidth={2.2} />
+                  </div>
+                  <span className="text-[11px] font-semibold text-foreground/80 leading-tight">{btn.label}</span>
+                </button>
+              ))}
+            </div>
+          </section>
+        );
+      })()}
+
+      {/* Lists — show only when there is content */}
+      {(nextExams.length > 0 || urgentTasks.length > 0 || announcements.length > 0) && (
+        <div className="grid lg:grid-cols-2 gap-4">
+          {nextExams.length > 0 && (
+            <Card>
+              <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                <CardTitle className="text-base font-semibold">מבחנים קרובים</CardTitle>
+                <Link to="/exams" className="text-xs text-primary flex items-center gap-1 hover:underline">
+                  הכל <ChevronLeft className="w-3 h-3" />
+                </Link>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {nextExams.map(exam => (
+                  <div key={exam.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-muted/50">
+                    <div className="w-10 h-10 bg-primary/10 rounded-xl flex flex-col items-center justify-center text-primary">
+                      <span className="text-[10px] font-bold">{new Date(exam.date).getDate()}</span>
+                      <span className="text-[8px]">{['ינו', 'פבר', 'מרץ', 'אפר', 'מאי', 'יונ', 'יול', 'אוג', 'ספט', 'אוק', 'נוב', 'דצמ'][new Date(exam.date).getMonth()]}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{exam.title}</p>
+                      <p className="text-xs text-muted-foreground">{exam.subject} · {exam.teacher}</p>
+                    </div>
+                    <StatusBadge status={exam.type} />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {urgentTasks.length > 0 && (
+            <Card>
+              <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                <CardTitle className="text-base font-semibold">משימות ותזכורות דחופות</CardTitle>
+                <Link to="/tasks" className="text-xs text-primary flex items-center gap-1 hover:underline">
+                  הכל <ChevronLeft className="w-3 h-3" />
+                </Link>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {urgentTasks.map(task => (
+                  <div key={task.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-muted/50">
+                    <div className={`w-1.5 h-10 rounded-full ${task.priority === 'דחופה' ? 'bg-destructive' : 'bg-amber-500'}`} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{task.title}</p>
+                      {task.student_name && <p className="text-xs text-muted-foreground">{task.category === 'הורים' ? 'תזכורת שיחה · ' : ''}{task.student_name}</p>}
+                    </div>
+                    <StatusBadge status={task.priority} />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {announcements.length > 0 && (
+            <Card>
+              <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                <CardTitle className="text-base font-semibold">הודעות אחרונות</CardTitle>
+                <Link to="/announcements" className="text-xs text-primary flex items-center gap-1 hover:underline">
+                  הכל <ChevronLeft className="w-3 h-3" />
+                </Link>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {announcements.slice(0, 3).map(ann => (
+                  <div key={ann.id} className="flex items-start gap-3 p-2.5 rounded-xl bg-muted/50">
+                    <div className="mt-0.5"><StatusBadge status={ann.type} /></div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{ann.title}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-1">{ann.content}</p>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
         </div>
-      </section>
-
-      <div className="grid lg:grid-cols-2 gap-4">
-        {/* Upcoming Exams */}
-        <Card>
-          <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <CardTitle className="text-base font-semibold">מבחנים קרובים</CardTitle>
-            <Link to="/exams" className="text-xs text-primary flex items-center gap-1 hover:underline">
-              הכל <ChevronLeft className="w-3 h-3" />
-            </Link>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {nextExams.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">אין מבחנים קרובים</p>
-            ) : nextExams.map(exam => (
-              <div key={exam.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-muted/50">
-                <div className="w-10 h-10 bg-purple-100 dark:bg-purple-900/30 rounded-xl flex flex-col items-center justify-center text-purple-600 dark:text-purple-400">
-                  <span className="text-[10px] font-bold">{new Date(exam.date).getDate()}</span>
-                  <span className="text-[8px]">{['ינו', 'פבר', 'מרץ', 'אפר', 'מאי', 'יונ', 'יול', 'אוג', 'ספט', 'אוק', 'נוב', 'דצמ'][new Date(exam.date).getMonth()]}</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{exam.title}</p>
-                  <p className="text-xs text-muted-foreground">{exam.subject} · {exam.teacher}</p>
-                </div>
-                <StatusBadge status={exam.type} />
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* Open Tasks */}
-        <Card>
-          <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <CardTitle className="text-base font-semibold">משימות ותזכורות דחופות</CardTitle>
-            <Link to="/tasks" className="text-xs text-primary flex items-center gap-1 hover:underline">
-              הכל <ChevronLeft className="w-3 h-3" />
-            </Link>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {urgentTasks.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">אין משימות דחופות 🎉</p>
-            ) : urgentTasks.map(task => (
-              <div key={task.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-muted/50">
-                <div className={`w-2 h-10 rounded-full ${task.priority === 'דחופה' ? 'bg-red-500' : 'bg-orange-500'}`} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{task.title}</p>
-                  {task.student_name && <p className="text-xs text-muted-foreground">{task.category === 'הורים' ? 'תזכורת שיחה · ' : ''}{task.student_name}</p>}
-                </div>
-                <StatusBadge status={task.priority} />
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* Recent Announcements */}
-        <Card>
-          <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <CardTitle className="text-base font-semibold">הודעות אחרונות</CardTitle>
-            <Link to="/announcements" className="text-xs text-primary flex items-center gap-1 hover:underline">
-              הכל <ChevronLeft className="w-3 h-3" />
-            </Link>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {announcements.slice(0, 3).map(ann => (
-              <div key={ann.id} className="flex items-start gap-3 p-2.5 rounded-xl bg-muted/50">
-                <div className="mt-0.5"><StatusBadge status={ann.type} /></div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{ann.title}</p>
-                  <p className="text-xs text-muted-foreground line-clamp-1">{ann.content}</p>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
+      )}
 
       {quickAction && (
         <QuickActionModal
