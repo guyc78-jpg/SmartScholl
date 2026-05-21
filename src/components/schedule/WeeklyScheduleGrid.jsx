@@ -56,16 +56,17 @@ export default function WeeklyScheduleGrid({ periods, slotsByKey, todayDayName, 
                 <tr key={p.period}>
                   <td
                     className={cn(
-                      'w-16 sm:w-20 align-middle text-center font-bold py-3 px-1 border-b border-l border-border',
+                      'w-16 sm:w-20 text-center font-bold border-b border-l border-border',
+                      'flex flex-col items-center justify-center gap-1.5 py-3 px-1',
                       rowIdx % 2 === 0 ? 'bg-muted/40' : 'bg-card',
                       isCurrentRow && 'bg-primary/10 text-primary',
                     )}
                   >
-                    <div className={cn('text-sm sm:text-base', isCurrentRow ? 'text-primary' : 'text-foreground')}>
+                    <div className={cn('text-sm sm:text-base leading-none', isCurrentRow ? 'text-primary' : 'text-foreground')}>
                       {p.period}
                     </div>
                     {p.start_time && (
-                      <div className="force-ltr text-[10px] sm:text-xs font-semibold text-foreground/70 dark:text-foreground/60 mt-1">
+                      <div className="force-ltr text-xs sm:text-sm font-bold leading-none text-foreground/85 dark:text-foreground/90">
                         {p.start_time}
                       </div>
                     )}
