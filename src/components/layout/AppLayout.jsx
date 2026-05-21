@@ -158,10 +158,10 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
     <div className="flex h-screen bg-background overflow-hidden" dir="rtl">
       {/* Desktop Sidebar */}
        <aside className={cn(
-         'hidden lg:flex w-56 flex-col flex-shrink-0 border-s transition-all',
+         'hidden lg:flex w-56 flex-col flex-shrink-0 border-s transition-all shadow-lg',
          darkMode
-           ? 'bg-slate-950 border-slate-800'
-           : 'bg-sidebar border-sidebar-border'
+           ? 'bg-slate-900 border-slate-700/40 shadow-[0_0_24px_rgba(0,0,0,0.5)]'
+           : 'bg-sidebar border-sidebar-border shadow-lg'
        )}>
          <SidebarContent />
        </aside>
@@ -179,7 +179,7 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
            <aside className={cn(
              'fixed right-0 top-0 h-full w-72 z-50 lg:hidden border-s',
              darkMode
-               ? 'bg-slate-950 dark:bg-slate-950 border-slate-800 shadow-[0_0_32px_rgba(0,0,0,0.6)]'
+               ? 'bg-slate-900 border-slate-700/40 shadow-[0_0_40px_rgba(0,0,0,0.7)]'
                : 'bg-sidebar border-sidebar-border shadow-2xl'
            )}>
              <button
