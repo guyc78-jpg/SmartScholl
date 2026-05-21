@@ -170,42 +170,45 @@ export default function Dashboard({ user, role }) {
       </div>
 
       {isAdmin && (
-        <Card className="border-primary/20 bg-primary/5">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Settings className="w-4 h-4 text-primary" />
-              ניהול מערכת
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            <Button asChild variant="outline"><Link to="/users">הרשאות משתמשים</Link></Button>
-            <Button asChild variant="outline"><Link to="/approvals">אישורי הרשמה</Link></Button>
-            <Button asChild variant="outline"><Link to="/reports">דוחות</Link></Button>
-            <Button asChild variant="outline"><Link to="/grade-monitor">מעקב שכבה</Link></Button>
-          </CardContent>
-        </Card>
+        <section>
+          <h2 className="text-lg font-bold text-foreground mb-3 flex items-center gap-2">
+            <Settings className="w-4 h-4 text-primary" />
+            ניהול מערכת
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              { to: '/users', label: 'הרשאות משתמשים', icon: UserCheck, bg: 'bg-[#047857]', text: 'text-white', chip: 'bg-white/15 text-white' },
+              { to: '/approvals', label: 'אישורי הרשמה', icon: CheckSquare, bg: 'bg-[#F59E0B]', text: 'text-[#3D2A05]', chip: 'bg-white/30 text-[#3D2A05]' },
+              { to: '/reports', label: 'דוחות', icon: TrendingUp, bg: 'bg-[#C97264]', text: 'text-white', chip: 'bg-white/20 text-white' },
+              { to: '/grade-monitor', label: 'מעקב שכבה', icon: Shield, bg: 'bg-[#A0522D]', text: 'text-white', chip: 'bg-white/20 text-white' },
+            ].map(item => (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={`flex flex-col items-center justify-center gap-2 p-5 rounded-2xl transition-shadow hover:shadow-lg ${item.bg} ${item.text}`}
+              >
+                <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${item.chip}`}>
+                  <item.icon className="w-5 h-5" strokeWidth={2} />
+                </div>
+                <span className="text-sm font-semibold text-center leading-tight">{item.label}</span>
+              </Link>
+            ))}
+          </div>
+        </section>
       )}
 
       {hasClassRole && (
-        <Card className="border-emerald-200 dark:border-emerald-800">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold">הכיתה שלי · {getUserApprovedClass(user) || 'לא הוגדרה כיתה'}</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            אזור נתוני הכיתה המשויכת המאושרת שלך.
-          </CardContent>
-        </Card>
+        <div className="space-y-1">
+          <h2 className="text-lg font-bold text-foreground">הכיתה שלי · {getUserApprovedClass(user) || 'לא הוגדרה כיתה'}</h2>
+          <p className="text-sm text-muted-foreground">אזור נתוני הכיתה המשויכת המאושרת שלך.</p>
+        </div>
       )}
 
       {hasCoordinatorRole && (
-        <Card className="border-purple-200 dark:border-purple-800">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base font-semibold">השכבה שלי · {getUserApprovedGrade(user) || 'לא הוגדרה שכבה'}</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            אזור נתוני השכבה המשויכת המאושרת שלך.
-          </CardContent>
-        </Card>
+        <div className="space-y-1">
+          <h2 className="text-lg font-bold text-foreground">השכבה שלי · {getUserApprovedGrade(user) || 'לא הוגדרה שכבה'}</h2>
+          <p className="text-sm text-muted-foreground">אזור נתוני השכבה המשויכת המאושרת שלך.</p>
+        </div>
       )}
 
       {/* Stat Cards */}
@@ -238,26 +241,26 @@ export default function Dashboard({ user, role }) {
         <CardContent>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {[
-              { icon: Clock, label: 'סימון נוכחות', action: 'attendance', color: 'bg-blue-500', roles: ['admin', 'homeroom_teacher'] },
-              { icon: Shield, label: 'אירוע משמעת', action: 'discipline', color: 'bg-red-500', roles: ['admin', 'homeroom_teacher'] },
-              { icon: BookOpen, label: 'הוספת מבחן', action: 'exam', color: 'bg-purple-500', roles: ['admin', 'coordinator', 'homeroom_teacher'] },
-              { icon: Megaphone, label: 'הודעה לכיתה', action: 'announcement', color: 'bg-amber-500', roles: ['admin', 'coordinator', 'homeroom_teacher'] },
-              { icon: Star, label: 'הערת מחנך', action: 'note', color: 'bg-emerald-500', roles: ['admin', 'homeroom_teacher'] },
-              { icon: MessageSquare, label: 'שיחה עם הורים', action: 'communication', color: 'bg-cyan-500', roles: ['admin', 'homeroom_teacher'] },
-              { icon: CheckSquare, label: 'משימה חדשה', action: 'task', color: 'bg-indigo-500', roles: ['admin', 'coordinator', 'homeroom_teacher'] },
-              { icon: Heart, label: 'עדכון מעורבות', action: 'community', color: 'bg-pink-500', roles: ['admin', 'homeroom_teacher'] },
+              { icon: Clock, label: 'סימון נוכחות', action: 'attendance', tile: 'bg-[#DDEAF5]', chip: 'bg-white text-[#1E5F8C]', roles: ['admin', 'homeroom_teacher'] },
+              { icon: Shield, label: 'אירוע משמעת', action: 'discipline', tile: 'bg-[#FBE3DA]', chip: 'bg-white text-[#B91C1C]', roles: ['admin', 'homeroom_teacher'] },
+              { icon: BookOpen, label: 'הוספת מבחן', action: 'exam', tile: 'bg-[#EDE3F1]', chip: 'bg-white text-[#6D28D9]', roles: ['admin', 'coordinator', 'homeroom_teacher'] },
+              { icon: Megaphone, label: 'הודעה לכיתה', action: 'announcement', tile: 'bg-[#FBEBC1]', chip: 'bg-white text-[#B45309]', roles: ['admin', 'coordinator', 'homeroom_teacher'] },
+              { icon: Star, label: 'הערת מחנך', action: 'note', tile: 'bg-[#E7F1EB]', chip: 'bg-white text-[#047857]', roles: ['admin', 'homeroom_teacher'] },
+              { icon: MessageSquare, label: 'שיחה עם הורים', action: 'communication', tile: 'bg-[#D7EEEC]', chip: 'bg-white text-[#0E7490]', roles: ['admin', 'homeroom_teacher'] },
+              { icon: CheckSquare, label: 'משימה חדשה', action: 'task', tile: 'bg-[#E0E2F5]', chip: 'bg-white text-[#3730A3]', roles: ['admin', 'coordinator', 'homeroom_teacher'] },
+              { icon: Heart, label: 'עדכון מעורבות', action: 'community', tile: 'bg-[#F8DCE5]', chip: 'bg-white text-[#BE185D]', roles: ['admin', 'homeroom_teacher'] },
             ].filter(btn => btn.roles.some(itemRole => approvedRoles.includes(itemRole))).map(btn => (
               <motion.button
                 key={btn.action}
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => setQuickAction(btn.action)}
-                className="flex flex-col items-center gap-2 p-3 rounded-xl bg-muted hover:bg-accent transition-colors"
+                className={`flex flex-col items-center justify-center gap-2 p-4 rounded-2xl transition-shadow hover:shadow-md ${btn.tile} dark:bg-muted`}
               >
-                <div className={`w-10 h-10 ${btn.color} rounded-xl flex items-center justify-center shadow-sm`}>
-                  <btn.icon className="w-5 h-5 text-white" />
+                <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${btn.chip}`}>
+                  <btn.icon className="w-5 h-5" strokeWidth={2} />
                 </div>
-                <span className="text-xs font-medium text-foreground text-center">{btn.label}</span>
+                <span className="text-xs font-semibold text-foreground/80 text-center leading-tight">{btn.label}</span>
               </motion.button>
             ))}
           </div>
