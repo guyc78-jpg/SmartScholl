@@ -28,11 +28,8 @@ export default function WeeklyScheduleGrid({ periods, slotsByKey, todayDayName, 
         <table className="w-full min-w-[640px] table-fixed border-collapse text-center">
           <thead>
             <tr>
-              <th className="bg-primary text-primary-foreground text-[11px] font-bold w-16 sm:w-20 py-2 px-1 border-b border-l border-primary/30">
-                <div className="leading-tight">
-                  <div>יום</div>
-                  <div className="opacity-80">שעה</div>
-                </div>
+              <th className="bg-primary text-primary-foreground w-16 sm:w-20 p-0 border-b border-l border-primary/30 align-middle">
+                <CornerHeader />
               </th>
               {DAYS.map(day => (
                 <th
@@ -92,6 +89,37 @@ export default function WeeklyScheduleGrid({ periods, slotsByKey, todayDayName, 
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+function CornerHeader() {
+  // Diagonal-split corner: "יום" top-left, "שעה" bottom-right.
+  // Triangles use primary + a slightly lighter shade, separated by a clean diagonal line.
+  return (
+    <div className="relative w-full h-12 sm:h-14 overflow-hidden select-none" aria-label="יום / שעה">
+      {/* Top-left triangle (darker primary) */}
+      <div
+        className="absolute inset-0 bg-primary"
+        style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }}
+      />
+      {/* Bottom-right triangle (lighter shade for contrast) */}
+      <div
+        className="absolute inset-0 bg-primary/75 dark:bg-primary/55"
+        style={{ clipPath: 'polygon(100% 0, 100% 100%, 0 100%)' }}
+      />
+      {/* Diagonal divider line */}
+      <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none" viewBox="0 0 100 100">
+        <line x1="100" y1="0" x2="0" y2="100" stroke="hsl(var(--primary-foreground))" strokeOpacity="0.45" strokeWidth="1.2" vectorEffect="non-scaling-stroke" />
+      </svg>
+      {/* "יום" — top-left triangle area */}
+      <span className="absolute top-0.5 left-1 sm:left-1.5 text-[10px] sm:text-[11px] font-bold text-primary-foreground leading-none">
+        יום
+      </span>
+      {/* "שעה" — bottom-right triangle area */}
+      <span className="absolute bottom-0.5 right-1 sm:right-1.5 text-[10px] sm:text-[11px] font-bold text-primary-foreground leading-none">
+        שעה
+      </span>
     </div>
   );
 }
