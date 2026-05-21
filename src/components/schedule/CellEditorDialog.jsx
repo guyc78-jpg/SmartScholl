@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trash2 } from 'lucide-react';
+import { Trash2, AlertTriangle } from 'lucide-react';
 
 const SUBJECTS = [
   'מתמטיקה','עברית','ספרות','אנגלית','היסטוריה','גיאוגרפיה',
@@ -16,6 +16,7 @@ const SUBJECTS = [
 export default function CellEditorDialog({ open, onOpenChange, slot, day, period, periodTime, onSave, onDelete }) {
   const isEdit = !!slot?.id;
   const [form, setForm] = useState({ subject: '', teacher: '', room: '', group: '', notes: '', customSubject: '' });
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -27,6 +28,7 @@ export default function CellEditorDialog({ open, onOpenChange, slot, day, period
         group: extractGroup(slot?.notes),
         notes: stripGroup(slot?.notes),
       });
+      setConfirmDelete(false);
     }
   }, [open, slot]);
 
@@ -95,7 +97,7 @@ export default function CellEditorDialog({ open, onOpenChange, slot, day, period
 
         <DialogFooter className="flex-row gap-2 sm:justify-between">
           {isEdit ? (
-            <Button variant="ghost" className="text-destructive hover:text-destructive gap-2" onClick={() => onDelete(slot.id)}>
+            <Button variant="ghost" className="text-destructive hover:text-destructive gap-2" onClick={() => setConfirmDelete(true)}>
               <Trash2 className="w-4 h-4" /> מחק
             </Button>
           ) : <span />}
@@ -105,6 +107,37 @@ export default function CellEditorDialog({ open, onOpenChange, slot, day, period
           </div>
         </DialogFooter>
       </DialogContent>
+
+      {/* Confirm delete dialog */}
+      <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <DialogContent className="sm:max-w-sm" dir="rtl">
+          <DialogHeader>
+            <div className="mx-auto w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center mb-2">
+              <AlertTriangle className="w-6 h-6 text-destructive" />
+            </div>
+            <DialogTitle className="text-center">מחיקת שיעור</DialogTitle>
+            <DialogDescription className="text-center pt-1">
+              האם אתה בטוח שברצונך למחוק את השיעור
+              {slot?.subject ? <> <span className="font-semibold text-foreground">"{slot.subject}"</span></> : null}
+              {' '}ביום {day}, שיעור {period}?
+              <br />
+              פעולה זו אינה ניתנת לביטול.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-row gap-2 sm:justify-center">
+            <Button variant="outline" onClick={() => setConfirmDelete(false)} className="flex-1 sm:flex-none">
+              ביטול
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => { setConfirmDelete(false); onDelete(slot.id); }}
+              className="flex-1 sm:flex-none gap-2"
+            >
+              <Trash2 className="w-4 h-4" /> אישור
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Dialog>
   );
 }
