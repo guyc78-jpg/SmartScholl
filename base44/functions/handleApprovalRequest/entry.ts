@@ -65,11 +65,12 @@ function buildStaffUserUpdate(staff) {
     pre_created_by_admin: true,
     must_change_password: false,
     profile_full_name: staff.full_name || '',
+    profile_phone: staff.phone || '',
     profile_subject: staff.subject || '',
     profile_school_role: staff.school_role || '',
-    profile_grade_managed: staff.grade || '',
-    profile_class_id: staff.role === 'homeroom_teacher' ? staff.class_id || '' : '',
-    profile_homeroom_class: staff.role === 'homeroom_teacher' ? staff.class_name || '' : '',
+    profile_grade_managed: staff.role === 'coordinator' ? (staff.grades || []).join(', ') || staff.grade || '' : staff.grade || '',
+    profile_class_id: staff.role === 'homeroom_teacher' ? staff.class_id || (staff.class_ids || [])[0] || '' : '',
+    profile_homeroom_class: staff.role === 'homeroom_teacher' ? staff.class_name || (staff.class_names || [])[0] || '' : '',
   };
 }
 
@@ -369,7 +370,7 @@ ${suspicionNote}
         return Response.json({ error: 'Invalid staff details' }, { status: 400 });
       }
       const existing = await base44.asServiceRole.entities.ApprovedStaff.filter({ email });
-      const data = { ...staff, email, status: staff.status || 'waiting' };
+      const data = { ...staff, email, grades: staff.grades || [staff.grade].filter(Boolean), class_ids: staff.class_ids || [staff.class_id].filter(Boolean), class_names: staff.class_names || [staff.class_name].filter(Boolean), status: staff.status || 'waiting' };
       const saved = existing[0]
         ? await base44.asServiceRole.entities.ApprovedStaff.update(existing[0].id, data)
         : await base44.asServiceRole.entities.ApprovedStaff.create(data);
@@ -384,7 +385,7 @@ ${suspicionNote}
         const email = normalizeEmail(staff.email);
         if (!email || !staff.full_name || !['homeroom_teacher', 'coordinator'].includes(staff.role)) continue;
         const existing = await base44.asServiceRole.entities.ApprovedStaff.filter({ email });
-        const data = { ...staff, email, status: staff.status || 'waiting' };
+        const data = { ...staff, email, grades: staff.grades || [staff.grade].filter(Boolean), class_ids: staff.class_ids || [staff.class_id].filter(Boolean), class_names: staff.class_names || [staff.class_name].filter(Boolean), status: staff.status || 'waiting' };
         if (existing[0]) await base44.asServiceRole.entities.ApprovedStaff.update(existing[0].id, data);
         else await base44.asServiceRole.entities.ApprovedStaff.create(data);
         savedCount += 1;

@@ -35,6 +35,7 @@ import UserManagement from './pages/UserManagement';
 import BellScheduleSettings from './pages/BellScheduleSettings';
 import TreatmentCenter from './pages/TreatmentCenter';
 import Classrooms from './pages/Classrooms';
+import ApprovedStaff from './pages/ApprovedStaff';
 import { isStaff, isStudent, defaultRoute } from './lib/permissions';
 import { getAvailableRoles, getInitialWorkRole, getSystemRole } from './lib/roleUtils';
 
@@ -130,6 +131,7 @@ const AuthenticatedApp = () => {
         {approvedRoles.includes('admin') && (
           <>
             <Route path="/users" element={<UserManagement />} />
+            <Route path="/approved-staff" element={<ApprovedStaff />} />
             <Route path="/classrooms" element={<Classrooms />} />
             <Route path="/bell-schedule" element={<BellScheduleSettings user={user} role={role} />} />
           </>

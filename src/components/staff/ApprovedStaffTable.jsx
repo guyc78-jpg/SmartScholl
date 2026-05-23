@@ -6,6 +6,8 @@ import { Trash2 } from 'lucide-react';
 const roleLabel = { homeroom_teacher: 'מחנך/ת', coordinator: 'רכז/ת שכבה' };
 const statusLabel = { waiting: 'ממתין להתחברות', active: 'פעיל', disabled: 'מבוטל' };
 
+const joinOrDash = (items, fallback = '') => (Array.isArray(items) && items.length ? items.join(', ') : fallback || '-');
+
 export default function ApprovedStaffTable({ staff, onDelete }) {
   if (!staff.length) return <div className="bg-card rounded-2xl border p-6 text-center text-muted-foreground">עדיין אין אנשי צוות מאושרים.</div>;
 
@@ -16,6 +18,7 @@ export default function ApprovedStaffTable({ staff, onDelete }) {
           <TableRow>
             <TableHead className="text-right">שם</TableHead>
             <TableHead className="text-right">אימייל</TableHead>
+            <TableHead className="text-right">טלפון</TableHead>
             <TableHead className="text-right">תפקיד</TableHead>
             <TableHead className="text-right">שיוך</TableHead>
             <TableHead className="text-right">סטטוס</TableHead>
@@ -27,8 +30,9 @@ export default function ApprovedStaffTable({ staff, onDelete }) {
             <TableRow key={item.id}>
               <TableCell className="font-medium">{item.full_name}</TableCell>
               <TableCell className="force-ltr text-left">{item.email}</TableCell>
+              <TableCell className="force-ltr text-left">{item.phone || '-'}</TableCell>
               <TableCell>{roleLabel[item.role] || item.role}</TableCell>
-              <TableCell>{item.role === 'coordinator' ? `שכבה ${item.grade || '-'}` : item.class_name || item.grade || '-'}</TableCell>
+              <TableCell>{item.role === 'coordinator' ? `שכבות ${joinOrDash(item.grades, item.grade)}` : joinOrDash(item.class_names, item.class_name || item.grade)}</TableCell>
               <TableCell><Badge variant={item.status === 'active' ? 'default' : 'outline'}>{statusLabel[item.status] || 'ממתין'}</Badge></TableCell>
               <TableCell>
                 <Button variant="ghost" size="icon" onClick={() => onDelete(item.id)}><Trash2 className="w-4 h-4 text-destructive" /></Button>

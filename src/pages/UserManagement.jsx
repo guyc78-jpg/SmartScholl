@@ -3,7 +3,6 @@ import { base44 } from '@/api/base44Client';
 import PageHeader from '@/components/ui/PageHeader';
 import { ShieldCheck } from 'lucide-react';
 import UserPermissionEditor from '@/components/profile/UserPermissionEditor';
-import ApprovedStaffManager from '@/components/staff/ApprovedStaffManager';
 
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
@@ -29,8 +28,6 @@ export default function UserManagement() {
         subtitle="הפרדה בין הרשאת מערכת, תפקידים מאושרים ושיוך חינוכי לכיתה או שכבה"
         actions={<ShieldCheck className="w-6 h-6 text-primary" />}
       />
-      <ApprovedStaffManager />
-
       <div className="space-y-3">
         <h2 className="text-xl font-bold">משתמשים קיימים</h2>
         {users.map(user => <UserPermissionEditor key={user.id} targetUser={user} onSaved={loadUsers} />)}

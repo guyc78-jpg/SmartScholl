@@ -32,6 +32,7 @@ const sidebarGroups = [
     title: 'ניהול מערכת',
     items: [
       { path: '/approvals', icon: UserCheck, label: 'אישורים', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
+      { path: '/approved-staff', icon: UserCheck, label: 'צוות מאושר', roles: ['admin'] },
       { path: '/users', icon: ShieldCheck, label: 'הרשאות משתמשים', roles: ['admin'] },
       { path: '/classrooms', icon: School, label: 'ניהול כיתות', roles: ['admin'] },
       { path: '/bell-schedule', icon: Bell, label: 'צלצולים והפסקות', roles: ['admin'] },
