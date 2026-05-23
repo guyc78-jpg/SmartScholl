@@ -38,6 +38,8 @@ export default function Profile({ user, role, onRoleChange }) {
     role: user?.role || 'student',
     profile_class_id: user?.profile_class_id || '',
     profile_homeroom_class: user?.profile_homeroom_class || user?.profile_class || '',
+    profile_homeroom_teacher: user?.profile_homeroom_teacher || '',
+    profile_tracks: user?.profile_tracks || '',
     profile_grade_managed: user?.profile_grade_managed || extractGradeFromClass(user?.profile_homeroom_class || user?.profile_class || ''),
     school_name: user?.school_name || '',
   });
@@ -97,7 +99,10 @@ export default function Profile({ user, role, onRoleChange }) {
   const currentRoleLabel = getRoleLabel(primaryRole, user);
   const additionalRoleLabels = approvedRoles.filter(item => item !== primaryRole).map(item => getRoleLabel(item, user)).filter(Boolean).join(', ') || 'אין';
   const hasMultipleRoles = approvedRoles.length > 1;
-  const isStudentProfile = approvedRoles.includes('student') && !approvedRoles.some(item => ['admin', 'homeroom_teacher', 'coordinator'].includes(item));
+  const staffRoles = ['admin', 'homeroom_teacher', 'coordinator'];
+  const isStaffProfile = approvedRoles.some(item => staffRoles.includes(item));
+  const isStudentProfile = approvedRoles.includes('student') && !isStaffProfile;
+  const canRequestRoleChange = isStaffProfile && !isAdmin;
 
   return (
     <div className="min-h-full bg-background p-4 md:p-8" dir="rtl">
@@ -200,6 +205,32 @@ export default function Profile({ user, role, onRoleChange }) {
               currentUser={user}
               onSaved={(savedUser) => updateCurrentUser(savedUser)}
             />
+          ) : isStudentProfile ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>פרטי תלמיד/ה</CardTitle>
+                <CardDescription>שיוך הכיתה מוצג לפי ההרשאה המאושרת. שינוי כיתה מתבצע רק דרך בקשת שינוי כיתה.</CardDescription>
+              </CardHeader>
+              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <GradeClassSelect
+                  grade={form.profile_grade_managed}
+                  classNameValue={form.profile_homeroom_class}
+                  classId={form.profile_class_id}
+                  onGradeChange={(value) => updateField('profile_grade_managed', value)}
+                  onClassChange={(value) => updateField('profile_homeroom_class', value)}
+                  onClassIdChange={(value) => updateField('profile_class_id', value)}
+                  disabled
+                />
+                <div className="space-y-2">
+                  <Label>מחנך/ת</Label>
+                  <Input value={form.profile_homeroom_teacher || 'לא הוגדר'} disabled className="bg-muted" />
+                </div>
+                <div className="space-y-2">
+                  <Label>מגמה</Label>
+                  <Input value={form.profile_tracks || 'לא הוגדרה'} disabled className="bg-muted" />
+                </div>
+              </CardContent>
+            </Card>
           ) : (
             <Card>
               <CardHeader>
@@ -232,7 +263,7 @@ export default function Profile({ user, role, onRoleChange }) {
             <ClassChangeRequestCard user={user} displayName={form.profile_full_name} />
           )}
 
-          {!isAdmin && (
+          {canRequestRoleChange && (
             <Card>
               <CardHeader>
                 <CardTitle>בקשת שינוי תפקיד</CardTitle>
