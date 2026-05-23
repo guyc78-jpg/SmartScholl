@@ -215,12 +215,8 @@ export default function Onboarding({ user, onComplete }) {
     return 'role';
   });
 
-  const [selectedRole, setSelectedRole] = useState(isAdminCreated ? null : 'student');
   const [profileForm, setProfileForm] = useState({});
   const [saving, setSaving] = useState(false);
-
-  const selectedRoleConfig = ROLE_OPTIONS.find(item => item.id === selectedRole);
-  const isStaffSelection = selectedRoleConfig?.disabled;
 
   /* Admin-created flow */
   if (isAdminCreated) {
@@ -308,41 +304,44 @@ export default function Onboarding({ user, onComplete }) {
             <motion.div key="role" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
               <div className="text-center mb-6">
                 <h1 className="text-2xl font-bold text-foreground">ברוך/ה הבא/ה לכיתה חכמה!</h1>
-                <p className="text-muted-foreground mt-1 text-sm">בחר/י את תפקידך כדי להתאים את הממשק</p>
+                <p className="text-muted-foreground mt-1 text-sm">צוות בית הספר מזוהה אוטומטית לפי מייל Google מאושר מראש</p>
               </div>
-              <div className="space-y-3">
-                {ROLE_OPTIONS.map(r => {
-                  const Icon = r.icon;
-                  return (
-                    <button
-                      key={r.id}
-                      onClick={() => setSelectedRole(r.id)}
-                      className={`w-full text-right p-4 rounded-2xl border-2 transition-all flex items-center gap-4
-                        ${selectedRole === r.id ? 'border-primary bg-primary/5' : 'border-border bg-card hover:border-primary/40 hover:bg-muted/50'}`}
-                    >
-                      <div className={`w-12 h-12 ${r.color} rounded-xl flex items-center justify-center flex-shrink-0 ${r.disabled ? 'opacity-60' : ''}`}>
-                        <Icon className="w-6 h-6 text-white" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-semibold text-foreground">{r.label}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{r.desc}</p>
-                        <p className={`text-xs font-medium mt-1 ${r.approvalColor}`}>{r.approval}</p>
-                        </div>
-                        {r.disabled && <Lock className="w-4 h-4 text-muted-foreground flex-shrink-0" />}
-                        </button>
-                  );
-                })}
+
+              <div className="bg-card rounded-2xl border p-4 mb-3">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center flex-shrink-0">
+                    <ShieldCheck className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-semibold text-foreground">כניסת צוות מאושר</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">אין בחירת תפקיד ידנית — המערכת תטען תפקיד ושיוך לפי המייל שלך</p>
+                    <p className="text-xs font-medium mt-1 text-primary">ללא סיסמה זמנית</p>
+                  </div>
+                  <Lock className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                </div>
+                <Button className="w-full mt-4 gap-2" disabled={saving} onClick={activateApprovedStaff}>
+                  {saving ? 'בודק הרשאה...' : 'בדוק הרשאת צוות והמשך'}
+                </Button>
               </div>
+
+              <button
+                onClick={() => setStep('profile')}
+                className="w-full text-right p-4 rounded-2xl border-2 transition-all flex items-center gap-4 border-border bg-card hover:border-primary/40 hover:bg-muted/50"
+              >
+                <div className="w-12 h-12 bg-blue-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <GraduationCap className="w-6 h-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <p className="font-semibold text-foreground">תלמיד/ה</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">גישה ללוח שעות, מבחנים, הודעות ומעורבות חברתית</p>
+                  <p className="text-xs font-medium mt-1 text-emerald-600">אישור מיידי</p>
+                </div>
+                <ChevronLeft className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+              </button>
+
               <div className="mt-4 p-3 bg-muted rounded-xl text-xs text-muted-foreground">
                 <strong>מחנכים ורכזי שכבה</strong> — התחברו עם Google באימייל שאושר מראש על ידי מנהל/ת המערכת.
               </div>
-              <Button
-                className="w-full mt-4 gap-2"
-                disabled={!selectedRole || saving}
-                onClick={() => isStaffSelection ? activateApprovedStaff() : setStep('profile')}
-              >
-                {saving ? 'בודק הרשאה...' : (isStaffSelection ? 'בדוק הרשאת צוות והמשך' : <>המשך <ChevronLeft className="w-4 h-4" /></>)}
-              </Button>
             </motion.div>
           )}
 
