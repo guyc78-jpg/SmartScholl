@@ -48,6 +48,31 @@ function requireApprover(user) {
   return getApprovedRoles(user).some(role => ['admin', 'homeroom_teacher', 'coordinator'].includes(role));
 }
 
+function normalizeEmail(email) {
+  return String(email || '').trim().toLowerCase();
+}
+
+function buildStaffUserUpdate(staff) {
+  const roles = [staff.role];
+  return {
+    role: staff.role,
+    roles,
+    available_roles: roles,
+    active_work_role: staff.role,
+    onboarding_status: 'approved',
+    onboardingCompleted: false,
+    login_type: 'google',
+    pre_created_by_admin: true,
+    must_change_password: false,
+    profile_full_name: staff.full_name || '',
+    profile_subject: staff.subject || '',
+    profile_school_role: staff.school_role || '',
+    profile_grade_managed: staff.grade || '',
+    profile_class_id: staff.role === 'homeroom_teacher' ? staff.class_id || '' : '',
+    profile_homeroom_class: staff.role === 'homeroom_teacher' ? staff.class_name || '' : '',
+  };
+}
+
 function detectSuspicion(data) {
   const flags = [];
   const name = (data.full_name || '').toLowerCase();
@@ -328,6 +353,64 @@ ${suspicionNote}
       if (!requireAdmin(user)) return Response.json({ error: 'Forbidden' }, { status: 403 });
       const users = await base44.asServiceRole.entities.User.list('-updated_date', 200);
       return Response.json({ users });
+    }
+
+    if (action === 'list_approved_staff') {
+      if (!requireAdmin(user)) return Response.json({ error: 'Forbidden' }, { status: 403 });
+      const staff = await base44.asServiceRole.entities.ApprovedStaff.list('-updated_date', 500);
+      return Response.json({ staff });
+    }
+
+    if (action === 'save_approved_staff') {
+      if (!requireAdmin(user)) return Response.json({ error: 'Forbidden' }, { status: 403 });
+      const staff = body.staff || {};
+      const email = normalizeEmail(staff.email);
+      if (!email || !staff.full_name || !['homeroom_teacher', 'coordinator'].includes(staff.role)) {
+        return Response.json({ error: 'Invalid staff details' }, { status: 400 });
+      }
+      const existing = await base44.asServiceRole.entities.ApprovedStaff.filter({ email });
+      const data = { ...staff, email, status: staff.status || 'waiting' };
+      const saved = existing[0]
+        ? await base44.asServiceRole.entities.ApprovedStaff.update(existing[0].id, data)
+        : await base44.asServiceRole.entities.ApprovedStaff.create(data);
+      return Response.json({ success: true, staff: saved });
+    }
+
+    if (action === 'bulk_save_approved_staff') {
+      if (!requireAdmin(user)) return Response.json({ error: 'Forbidden' }, { status: 403 });
+      const staffList = Array.isArray(body.staff_list) ? body.staff_list : [];
+      let savedCount = 0;
+      for (const staff of staffList) {
+        const email = normalizeEmail(staff.email);
+        if (!email || !staff.full_name || !['homeroom_teacher', 'coordinator'].includes(staff.role)) continue;
+        const existing = await base44.asServiceRole.entities.ApprovedStaff.filter({ email });
+        const data = { ...staff, email, status: staff.status || 'waiting' };
+        if (existing[0]) await base44.asServiceRole.entities.ApprovedStaff.update(existing[0].id, data);
+        else await base44.asServiceRole.entities.ApprovedStaff.create(data);
+        savedCount += 1;
+      }
+      return Response.json({ success: true, savedCount });
+    }
+
+    if (action === 'delete_approved_staff') {
+      if (!requireAdmin(user)) return Response.json({ error: 'Forbidden' }, { status: 403 });
+      await base44.asServiceRole.entities.ApprovedStaff.delete(body.staff_id);
+      return Response.json({ success: true });
+    }
+
+    if (action === 'activate_approved_staff') {
+      const email = normalizeEmail(user.email);
+      const matches = await base44.asServiceRole.entities.ApprovedStaff.filter({ email });
+      const staff = matches.find(item => item.status !== 'disabled');
+      if (!staff) return Response.json({ found: false });
+
+      const updatedUser = await base44.asServiceRole.entities.User.update(user.id, buildStaffUserUpdate(staff));
+      await base44.asServiceRole.entities.ApprovedStaff.update(staff.id, {
+        status: 'active',
+        activated_user_id: user.id,
+        activated_at: new Date().toISOString(),
+      });
+      return Response.json({ found: true, user: updatedUser });
     }
 
     if (action === 'admin_update_user') {

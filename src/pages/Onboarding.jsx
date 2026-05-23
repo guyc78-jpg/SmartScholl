@@ -66,8 +66,8 @@ const ROLE_OPTIONS = [
     label: 'מורה / מחנך/ת',
     icon: BookOpen,
     color: 'bg-emerald-500',
-    desc: 'דורש חשבון שנוצר מראש ע"י מנהל בית הספר',
-    approval: 'חשבון מנהל בלבד',
+    desc: 'כניסה עם Google לפי מייל שאושר מראש ע״י מנהל בית הספר',
+    approval: 'מייל מאושר מראש',
     approvalColor: 'text-red-500',
     disabled: true,
   },
@@ -76,8 +76,8 @@ const ROLE_OPTIONS = [
     label: 'רכז/ת שכבה',
     icon: Users,
     color: 'bg-purple-500',
-    desc: 'דורש חשבון שנוצר מראש ע"י מנהל בית הספר',
-    approval: 'חשבון מנהל בלבד',
+    desc: 'כניסה עם Google לפי מייל שאושר מראש ע״י מנהל בית הספר',
+    approval: 'מייל מאושר מראש',
     approvalColor: 'text-red-500',
     disabled: true,
   },
@@ -130,7 +130,7 @@ function ChangePasswordForm({ onSave }) {
       <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-3 flex items-start gap-2">
         <Lock className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
         <p className="text-xs text-amber-700 dark:text-amber-400">
-          חשבון זה נוצר על ידי מנהל בית הספר עם סיסמה זמנית. עליך להגדיר סיסמה אישית לפני הכניסה.
+          חשבון זה נוצר על ידי מנהל בית הספר. עליך להגדיר סיסמה אישית לפני הכניסה.
         </p>
       </div>
       <div className="space-y-1">
@@ -219,6 +219,9 @@ export default function Onboarding({ user, onComplete }) {
   const [profileForm, setProfileForm] = useState({});
   const [saving, setSaving] = useState(false);
 
+  const selectedRoleConfig = ROLE_OPTIONS.find(item => item.id === selectedRole);
+  const isStaffSelection = selectedRoleConfig?.disabled;
+
   /* Admin-created flow */
   if (isAdminCreated) {
     return (
@@ -254,6 +257,17 @@ export default function Onboarding({ user, onComplete }) {
         </div>
       </div>
     );
+  }
+
+  async function activateApprovedStaff() {
+    setSaving(true);
+    const res = await base44.functions.invoke('handleApprovalRequest', { action: 'activate_approved_staff' });
+    if (res.data.found) {
+      onComplete(res.data.user);
+      return;
+    }
+    toast.error('המייל שלך לא נמצא ברשימת הצוות המאושרת. יש לפנות למנהל/ת המערכת.');
+    setSaving(false);
   }
 
   /* New user self-registration flow — only students allowed to self-register */
@@ -302,11 +316,9 @@ export default function Onboarding({ user, onComplete }) {
                   return (
                     <button
                       key={r.id}
-                      onClick={() => !r.disabled && setSelectedRole(r.id)}
-                      disabled={r.disabled}
+                      onClick={() => setSelectedRole(r.id)}
                       className={`w-full text-right p-4 rounded-2xl border-2 transition-all flex items-center gap-4
-                        ${r.disabled ? 'opacity-50 cursor-not-allowed border-border bg-muted' :
-                          selectedRole === r.id ? 'border-primary bg-primary/5' : 'border-border bg-card hover:border-primary/40 hover:bg-muted/50'}`}
+                        ${selectedRole === r.id ? 'border-primary bg-primary/5' : 'border-border bg-card hover:border-primary/40 hover:bg-muted/50'}`}
                     >
                       <div className={`w-12 h-12 ${r.color} rounded-xl flex items-center justify-center flex-shrink-0 ${r.disabled ? 'opacity-60' : ''}`}>
                         <Icon className="w-6 h-6 text-white" />
@@ -315,21 +327,21 @@ export default function Onboarding({ user, onComplete }) {
                         <p className="font-semibold text-foreground">{r.label}</p>
                         <p className="text-xs text-muted-foreground mt-0.5">{r.desc}</p>
                         <p className={`text-xs font-medium mt-1 ${r.approvalColor}`}>{r.approval}</p>
-                      </div>
-                      {r.disabled && <Lock className="w-4 h-4 text-muted-foreground flex-shrink-0" />}
-                    </button>
+                        </div>
+                        {r.disabled && <Lock className="w-4 h-4 text-muted-foreground flex-shrink-0" />}
+                        </button>
                   );
                 })}
               </div>
               <div className="mt-4 p-3 bg-muted rounded-xl text-xs text-muted-foreground">
-                <strong>מחנכים ורכזי שכבה</strong> — חשבון ייפתח עבורך על ידי מנהל בית הספר עם סיסמה זמנית.
+                <strong>מחנכים ורכזי שכבה</strong> — התחברו עם Google באימייל שאושר מראש על ידי מנהל/ת המערכת.
               </div>
               <Button
                 className="w-full mt-4 gap-2"
-                disabled={!selectedRole}
-                onClick={() => setStep('profile')}
+                disabled={!selectedRole || saving}
+                onClick={() => isStaffSelection ? activateApprovedStaff() : setStep('profile')}
               >
-                המשך <ChevronLeft className="w-4 h-4" />
+                {saving ? 'בודק הרשאה...' : (isStaffSelection ? 'בדוק הרשאת צוות והמשך' : <>המשך <ChevronLeft className="w-4 h-4" /></>)}
               </Button>
             </motion.div>
           )}
