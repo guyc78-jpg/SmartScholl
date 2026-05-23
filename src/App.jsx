@@ -82,7 +82,7 @@ const AuthenticatedApp = () => {
 
   // Onboarding gate — admin always bypasses
   const onboardingStatus = user?.onboarding_status;
-  if (user && user.role !== 'admin') {
+  if (user && user.role !== 'admin' && !user.onboardingCompleted) {
     if (!onboardingStatus || onboardingStatus === 'pending') {
       return <Onboarding user={user} onComplete={() => window.location.reload()} />;
     }

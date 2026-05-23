@@ -64,6 +64,11 @@
       "description": "\u05e1\u05d8\u05d8\u05d5\u05e1 \u05d4\u05e8\u05e9\u05de\u05d4",
       "default": "pending"
     },
+    "onboardingCompleted": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u05d4\u05d0\u05dd \u05ea\u05d4\u05dc\u05d9\u05da \u05d4\u05d4\u05e8\u05e9\u05de\u05d4 \u05d4\u05e8\u05d0\u05e9\u05d5\u05e0\u05d9 \u05d4\u05d5\u05e9\u05dc\u05dd"
+    },
     "requested_role": {
       "type": "string",
       "enum": [

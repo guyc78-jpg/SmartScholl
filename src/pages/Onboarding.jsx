@@ -264,16 +264,19 @@ export default function Onboarding({ user, onComplete }) {
     if (!profileForm.profile_class?.trim()) { toast.error('יש לבחור כיתה'); return; }
     setSaving(true);
     try {
-      // Do NOT update role from client — only profile fields.
-      // role is assigned server-side / by admin. Self-registered users get 'student' by default.
+      // Do NOT update role/permissions from client — only safe profile fields.
       const updateData = {
-        ...profileForm,
-        requested_role: 'student',
-        login_type: 'google',
+        profile_full_name: profileForm.profile_full_name?.trim(),
+        profile_grade_managed: profileForm.profile_grade_managed,
+        profile_class: profileForm.profile_class,
+        profile_homeroom_class: profileForm.profile_class,
+        profile_homeroom_teacher: profileForm.profile_homeroom_teacher?.trim() || '',
+        profile_tracks: profileForm.profile_tracks?.trim() || '',
         onboarding_status: 'approved',
+        onboardingCompleted: true,
       };
-      await base44.auth.updateMe(updateData);
-      setStep('student_guide');
+      const updatedUser = await base44.auth.updateMe(updateData);
+      onComplete(updatedUser);
     } catch (err) {
       toast.error('שגיאה בשמירת הפרופיל: ' + (err?.message || 'אנא נסה שוב'));
     } finally {
