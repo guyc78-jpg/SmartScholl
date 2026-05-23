@@ -264,10 +264,11 @@ export default function Onboarding({ user, onComplete }) {
     if (!profileForm.profile_class?.trim()) { toast.error('יש לבחור כיתה'); return; }
     setSaving(true);
     try {
+      // Do NOT update role from client — only profile fields.
+      // role is assigned server-side / by admin. Self-registered users get 'student' by default.
       const updateData = {
         ...profileForm,
         requested_role: 'student',
-        role: 'student',
         login_type: 'google',
         onboarding_status: 'approved',
       };
