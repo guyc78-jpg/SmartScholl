@@ -94,13 +94,12 @@ function StudentProfileForm({ form, setForm }) {
       <GradeClassSelect
         grade={form.profile_grade_managed || extractGradeFromClass(form.profile_class || '')}
         classNameValue={form.profile_class || ''}
-        onGradeChange={(value) => setForm(p => ({ ...p, profile_grade_managed: value, profile_class: '' }))}
+        classId={form.profile_class_id || ''}
+        onGradeChange={(value) => setForm(p => ({ ...p, profile_grade_managed: value, profile_class: '', profile_class_id: '' }))}
         onClassChange={(value) => setForm(p => ({ ...p, profile_class: value, profile_homeroom_class: value }))}
+        onClassIdChange={(value) => setForm(p => ({ ...p, profile_class_id: value }))}
       />
-      <div className="space-y-1">
-        <Label>שם מחנך/ת</Label>
-        <Input value={form.profile_homeroom_teacher || ''} onChange={e => setForm(p => ({ ...p, profile_homeroom_teacher: e.target.value }))} placeholder="למשל: ד״ר אבי לוי" />
-      </div>
+
       <div className="space-y-1">
         <Label>מגמה/ות</Label>
         <Input value={form.profile_tracks || ''} onChange={e => setForm(p => ({ ...p, profile_tracks: e.target.value }))} placeholder="למשל: מדעים, מחשבים" />
@@ -261,13 +260,14 @@ export default function Onboarding({ user, onComplete }) {
   async function handleSubmitStudent() {
     if (!profileForm.profile_full_name?.trim()) { toast.error('יש להזין שם מלא'); return; }
     if (!profileForm.profile_grade_managed?.trim()) { toast.error('יש לבחור שכבה'); return; }
-    if (!profileForm.profile_class?.trim()) { toast.error('יש לבחור כיתה'); return; }
+    if (!profileForm.profile_class_id?.trim()) { toast.error('יש לבחור כיתה מתוך הרשימה'); return; }
     setSaving(true);
     try {
       // Do NOT update role/permissions from client — only safe profile fields.
       const updateData = {
         profile_full_name: profileForm.profile_full_name?.trim(),
         profile_grade_managed: profileForm.profile_grade_managed,
+        profile_class_id: profileForm.profile_class_id,
         profile_class: profileForm.profile_class,
         profile_homeroom_class: profileForm.profile_class,
         profile_homeroom_teacher: profileForm.profile_homeroom_teacher?.trim() || '',

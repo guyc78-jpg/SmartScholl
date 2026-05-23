@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import { Save, AlertTriangle, TrendingUp, Users, Clock, UserX, ChevronDown, ChevronUp } from 'lucide-react';
 import AttendanceAlerts from '@/components/attendance/AttendanceAlerts';
 import AttendancePatterns from '@/components/attendance/AttendancePatterns';
-import { isStudentInApprovedScope, getUserApprovedClass } from '@/lib/schoolStructure';
+import { isStudentInApprovedScope, getUserApprovedClass, getUserApprovedClassId } from '@/lib/schoolStructure';
 import { useAuth } from '@/lib/AuthContext';
 import { formatAttendanceStatus } from '@/lib/genderUtils';
 
@@ -31,6 +31,7 @@ export const THRESHOLDS = { absences: 5, lates: 8 };
 export default function ClassAttendance({ role }) {
   const { user } = useAuth();
   const isHomeroomTeacher = role === 'homeroom_teacher' || role === 'admin';
+  const classId = getUserApprovedClassId(user, CLASS_ID);
 
   const [students, setStudents] = useState([]);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -49,8 +50,8 @@ export default function ClassAttendance({ role }) {
   async function loadAll() {
     setLoading(true);
     const [sts, recs] = await Promise.all([
-      base44.entities.Student.filter({ class_id: CLASS_ID }),
-      base44.entities.AttendanceRecord.filter({ class_id: CLASS_ID }),
+      base44.entities.Student.filter({ class_id: classId }),
+      base44.entities.AttendanceRecord.filter({ class_id: classId }),
     ]);
     const scopedStudents = sts.filter(s => isStudentInApprovedScope(s, user, role) && (s.status === 'פעיל' || s.status === 'דורש מעקב'));
     const scopedIds = new Set(scopedStudents.map(s => s.id));
@@ -61,7 +62,7 @@ export default function ClassAttendance({ role }) {
   }
 
   async function loadDay() {
-    const att = await base44.entities.AttendanceRecord.filter({ class_id: CLASS_ID, date });
+    const att = await base44.entities.AttendanceRecord.filter({ class_id: classId, date });
     const map = {}, ids = {};
     att.filter(r => STATUSES.includes(r.status)).forEach(a => {
       map[a.student_id] = { status: a.status, note: a.note || '' };
@@ -105,7 +106,7 @@ export default function ClassAttendance({ role }) {
       const data = {
         student_id: student.id,
         student_name: student.full_name,
-        class_id: CLASS_ID,
+        class_id: classId,
         date,
         status: a.status,
         note: a.note || '',

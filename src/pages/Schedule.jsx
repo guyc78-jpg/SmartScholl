@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { CLASS_ID } from '@/lib/demoData';
 import { getStudentClassId } from '@/lib/studentProfile';
+import { getUserApprovedClassId } from '@/lib/schoolStructure';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -45,7 +46,7 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
   const [currentPeriod, setCurrentPeriod] = useState(null);
 
   const canEdit = role === 'homeroom_teacher' || role === 'admin';
-  const classId = role === 'student' ? getStudentClassId(user, CLASS_ID) : CLASS_ID;
+  const classId = role === 'student' ? getStudentClassId(user, CLASS_ID) : getUserApprovedClassId(user, CLASS_ID);
   const todayDayName = HEBREW_DAY_NAMES[new Date().getDay()];
 
   // Update current-period highlight every 30s

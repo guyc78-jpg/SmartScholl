@@ -21,7 +21,7 @@ import QuickActionModal from '@/components/dashboard/QuickActionModal';
 import NotificationsDropdown from '@/components/dashboard/NotificationsDropdown';
 import SchoolNameBanner from '@/components/layout/SchoolNameBanner';
 import NowNextCard from '@/components/schedule/NowNextCard';
-import { isStudentInApprovedScope, getUserApprovedClass, getUserApprovedGrade } from '@/lib/schoolStructure';
+import { isStudentInApprovedScope, getUserApprovedClass, getUserApprovedGrade, getUserApprovedClassId } from '@/lib/schoolStructure';
 import { getAvailableRoles, getUserFirstName, hasApprovedRole, getRoleHomeLabel, getRoleShort } from '@/lib/roleUtils';
 
 const HEBREW_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
@@ -50,6 +50,7 @@ export default function Dashboard({ user, role }) {
   const isActiveCoordinator = role === 'coordinator';
   const isActiveAdmin = role === 'admin';
   const dashboardTitle = getRoleHomeLabel(user, role);
+  const classId = getUserApprovedClassId(user, CLASS_ID);
   const scopeLabels = [
     isActiveAdmin ? getRoleShort('admin', user) + ' מערכת' : null,
     isActiveHomeroom ? `${getRoleShort('homeroom_teacher', user)}${getUserApprovedClass(user) ? ` · ${getUserApprovedClass(user)}` : ''}` : null,
@@ -63,12 +64,12 @@ export default function Dashboard({ user, role }) {
   async function loadData() {
     setLoading(true);
     const [sts, att, exs, tks, dis, ann] = await Promise.all([
-      base44.entities.Student.filter({ class_id: CLASS_ID }),
-      base44.entities.AttendanceRecord.filter({ class_id: CLASS_ID, date: today }),
-      base44.entities.Exam.filter({ class_id: CLASS_ID }),
-      base44.entities.Task.filter({ class_id: CLASS_ID }),
-      base44.entities.DisciplineEvent.filter({ class_id: CLASS_ID }),
-      base44.entities.Announcement.filter({ class_id: CLASS_ID }),
+      base44.entities.Student.filter({ class_id: classId }),
+      base44.entities.AttendanceRecord.filter({ class_id: classId, date: today }),
+      base44.entities.Exam.filter({ class_id: classId }),
+      base44.entities.Task.filter({ class_id: classId }),
+      base44.entities.DisciplineEvent.filter({ class_id: classId }),
+      base44.entities.Announcement.filter({ class_id: classId }),
     ]);
     const scopeRole = hasApprovedRole(user, 'homeroom_teacher') ? 'homeroom_teacher' : hasApprovedRole(user, 'coordinator') ? 'coordinator' : role;
     const scopedStudents = isAdmin && !hasClassRole && !hasCoordinatorRole ? sts : sts.filter(student => isStudentInApprovedScope(student, user, scopeRole));
@@ -113,8 +114,8 @@ export default function Dashboard({ user, role }) {
   const [performanceReviews, setPerformanceReviews] = useState([]);
   useEffect(() => {
     Promise.all([
-      base44.entities.AttendanceRecord.filter({ class_id: CLASS_ID }),
-      base44.entities.PerformanceReview.filter({ class_id: CLASS_ID })
+      base44.entities.AttendanceRecord.filter({ class_id: classId }),
+      base44.entities.PerformanceReview.filter({ class_id: classId })
     ]).then(([att, perf]) => {
       setAllAttRecords(att);
       setPerformanceReviews(perf);
@@ -190,12 +191,12 @@ export default function Dashboard({ user, role }) {
       </div>
 
       {/* Now / Next — only useful for homeroom teachers (have a class) */}
-      {(isActiveHomeroom || isActiveAdmin) && <NowNextCard classId={CLASS_ID} />}
+      {(isActiveHomeroom || isActiveAdmin) && <NowNextCard classId={classId} />}
 
       {/* Daily Smart Card — unified intelligence on what matters today */}
       {(isActiveHomeroom || isActiveAdmin || isActiveCoordinator) && (
         <DailySmartCard
-          classId={CLASS_ID}
+          classId={classId}
           students={students}
           todayAttendance={todayAttendance}
           exams={exams}
@@ -220,7 +221,7 @@ export default function Dashboard({ user, role }) {
           performanceReviews={performanceReviews}
           disciplineEvents={discipline}
           tasks={tasks}
-          classId={CLASS_ID}
+          classId={classId}
         />
       )}
 
@@ -233,9 +234,9 @@ export default function Dashboard({ user, role }) {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
             {[
               { to: '/users', label: 'הרשאות', icon: UserCheck },
+              { to: '/classrooms', label: 'כיתות', icon: Users },
               { to: '/approvals', label: 'אישורי הרשמה', icon: CheckSquare },
               { to: '/reports', label: 'דוחות', icon: TrendingUp },
-              { to: '/grade-monitor', label: 'מעקב שכבה', icon: Shield },
             ].map(item => (
               <Link
                 key={item.to}
@@ -298,9 +299,9 @@ export default function Dashboard({ user, role }) {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
             {[
               { to: '/users', label: 'הרשאות', icon: UserCheck },
+              { to: '/classrooms', label: 'כיתות', icon: Users },
               { to: '/approvals', label: 'אישורי הרשמה', icon: CheckSquare },
               { to: '/reports', label: 'דוחות', icon: TrendingUp },
-              { to: '/grade-monitor', label: 'מעקב שכבה', icon: Shield },
             ].map(item => (
               <Link
                 key={item.to}
@@ -447,7 +448,7 @@ export default function Dashboard({ user, role }) {
         <QuickActionModal
           action={quickAction}
           students={students}
-          classId={CLASS_ID}
+          classId={classId}
           onClose={() => setQuickAction(null)}
           user={user}
           role={role}

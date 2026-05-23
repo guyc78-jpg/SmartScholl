@@ -17,6 +17,7 @@ export default function UserPermissionEditor({ targetUser, currentUser, onSaved 
   const [form, setForm] = useState({
     primaryRole: targetUser.role || currentRoles[0] || 'student',
     approvedRoles: currentRoles,
+    profile_class_id: targetUser.profile_class_id || '',
     profile_homeroom_class: targetUser.profile_homeroom_class || targetUser.profile_class || '',
     profile_grade_managed: targetUser.profile_grade_managed || extractGradeFromClass(targetUser.profile_homeroom_class || targetUser.profile_class || ''),
   });
@@ -43,6 +44,7 @@ export default function UserPermissionEditor({ targetUser, currentUser, onSaved 
       target_email: targetUser.email,
       target_role: form.primaryRole,
       approved_roles: form.approvedRoles,
+      profile_class_id: form.profile_class_id,
       profile_homeroom_class: form.profile_homeroom_class,
       profile_grade_managed: form.profile_grade_managed,
     });
@@ -71,8 +73,10 @@ export default function UserPermissionEditor({ targetUser, currentUser, onSaved 
           <GradeClassSelect
             grade={form.profile_grade_managed}
             classNameValue={form.profile_homeroom_class}
-            onGradeChange={(value) => setForm(prev => ({ ...prev, profile_grade_managed: value, profile_homeroom_class: '' }))}
+            classId={form.profile_class_id}
+            onGradeChange={(value) => setForm(prev => ({ ...prev, profile_grade_managed: value, profile_homeroom_class: '', profile_class_id: '' }))}
             onClassChange={(value) => setForm(prev => ({ ...prev, profile_homeroom_class: value }))}
+            onClassIdChange={(value) => setForm(prev => ({ ...prev, profile_class_id: value }))}
             showClass
           />
           <Button onClick={save} disabled={saving}>

@@ -11,12 +11,13 @@ import { extractGradeFromClass, formatGrade } from '@/lib/schoolStructure';
 
 export default function ClassChangeRequestCard({ user, displayName }) {
   const currentClass = user?.profile_class || user?.profile_homeroom_class || '';
+  const currentClassId = user?.profile_class_id || '';
   const currentGrade = user?.profile_grade_managed || extractGradeFromClass(currentClass) || '';
-  const [request, setRequest] = useState({ grade: '', className: '', reason: '' });
+  const [request, setRequest] = useState({ grade: '', className: '', classId: '', reason: '' });
   const [sending, setSending] = useState(false);
 
   const submitRequest = async () => {
-    if (!request.grade || !request.className || !request.reason.trim()) {
+    if (!request.grade || !request.classId || !request.reason.trim()) {
       toast.error('יש לבחור שכבה, כיתה ולכתוב סיבת בקשה');
       return;
     }
@@ -25,14 +26,16 @@ export default function ClassChangeRequestCard({ user, displayName }) {
     await base44.functions.invoke('handleApprovalRequest', {
       action: 'submit_class_change',
       full_name: displayName,
+      current_class_id: currentClassId,
       current_grade: currentGrade,
       current_class: currentClass,
+      requested_class_id: request.classId,
       requested_grade: request.grade,
       requested_class: request.className,
       request_reason: request.reason.trim(),
     });
     toast.success('בקשת שינוי הכיתה נשלחה לאישור');
-    setRequest({ grade: '', className: '', reason: '' });
+    setRequest({ grade: '', className: '', classId: '', reason: '' });
     setSending(false);
   };
 
@@ -60,8 +63,10 @@ export default function ClassChangeRequestCard({ user, displayName }) {
           <GradeClassSelect
             grade={request.grade}
             classNameValue={request.className}
-            onGradeChange={(value) => setRequest(prev => ({ ...prev, grade: value, className: '' }))}
+            classId={request.classId}
+            onGradeChange={(value) => setRequest(prev => ({ ...prev, grade: value, className: '', classId: '' }))}
             onClassChange={(value) => setRequest(prev => ({ ...prev, className: value }))}
+            onClassIdChange={(value) => setRequest(prev => ({ ...prev, classId: value }))}
           />
         </div>
 

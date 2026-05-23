@@ -23,7 +23,7 @@ import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/lib/AuthContext';
 import { logActivity } from '@/lib/activityLogger';
-import { isStudentInApprovedScope, getUserApprovedClass, getUserApprovedGrade } from '@/lib/schoolStructure';
+import { isStudentInApprovedScope, getUserApprovedClass, getUserApprovedGrade, getUserApprovedClassId } from '@/lib/schoolStructure';
 import AddStudentModal from '@/components/students/AddStudentModal';
 import ImportStudentsModal from '@/components/students/ImportStudentsModal';
 
@@ -38,12 +38,13 @@ export default function Students({ role }) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const canDeleteAllStudents = role === 'admin' || role === 'coordinator' || role === 'homeroom_teacher';
+  const classId = getUserApprovedClassId(user, CLASS_ID);
 
   useEffect(() => { loadStudents(); }, []);
 
   async function loadStudents() {
     setLoading(true);
-    const data = await base44.entities.Student.filter({ class_id: CLASS_ID });
+    const data = await base44.entities.Student.filter({ class_id: classId });
     setStudents(data.filter(student => isStudentInApprovedScope(student, user, role)));
     setLoading(false);
   }
@@ -210,8 +211,8 @@ export default function Students({ role }) {
         </div>
       )}
 
-      {showAdd && <AddStudentModal classId={CLASS_ID} onClose={() => setShowAdd(false)} onSuccess={() => { setShowAdd(false); loadStudents(); }} />}
-      {showImport && <ImportStudentsModal classId={CLASS_ID} onClose={() => setShowImport(false)} onSuccess={() => { setShowImport(false); loadStudents(); }} />}
+      {showAdd && <AddStudentModal classId={classId} onClose={() => setShowAdd(false)} onSuccess={() => { setShowAdd(false); loadStudents(); }} />}
+      {showImport && <ImportStudentsModal classId={classId} onClose={() => setShowImport(false)} onSuccess={() => { setShowImport(false); loadStudents(); }} />}
 
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent dir="rtl" className="text-right">

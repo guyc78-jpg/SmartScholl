@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { CLASS_ID } from '@/lib/demoData';
 import { getStudentClassId } from '@/lib/studentProfile';
+import { getUserApprovedClassId } from '@/lib/schoolStructure';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -37,7 +38,7 @@ export default function Exams({ role, user }) {
   const fileInputRef = useRef(null);
   const canEditExams = ['admin', 'homeroom_teacher', 'coordinator'].includes(role);
   const isStudentView = role === 'student';
-  const classId = isStudentView ? getStudentClassId(user, CLASS_ID) : CLASS_ID;
+  const classId = isStudentView ? getStudentClassId(user, CLASS_ID) : getUserApprovedClassId(user, CLASS_ID);
 
   useEffect(() => { loadExams(); }, []);
 
@@ -332,7 +333,7 @@ export default function Exams({ role, user }) {
           open={showImport}
           onOpenChange={setShowImport}
           onImported={loadExams}
-          classId={CLASS_ID}
+          classId={classId}
         />
       )}
 

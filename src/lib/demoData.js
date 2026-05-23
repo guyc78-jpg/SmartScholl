@@ -9,13 +9,16 @@ export async function seedDemoData() {
     if (existing.length > 0) return;
 
     // Create classroom
-    await base44.entities.ClassRoom.create({
+    const classRoom = await base44.entities.ClassRoom.create({
       name: 'י׳1',
       grade: 'י',
       homeroom_teacher_name: 'מורת הכיתה',
+      coordinator_name: 'רכז/ת שכבה י׳',
       year: '2024-2025',
-      room_number: '201'
+      room_number: '201',
+      is_active: true
     });
+    const demoClassId = classRoom.id || CLASS_ID;
 
     const students = [
       { full_name: 'אלון כהן', gender: 'זכר', phone: '050-1234567', email: 'alon@school.il', parent1_name: 'דוד כהן', parent1_phone: '052-1234567', parent1_email: 'david@email.com', parent2_name: 'שרה כהן', parent2_phone: '054-1234567', community_service_goal: 60, community_service_done: 45, community_service_place: 'בית אבות', community_service_status: 'בתהליך', status: 'פעיל', tags: ['מצטיין'] },
@@ -30,7 +33,7 @@ export async function seedDemoData() {
 
     const createdStudents = [];
     for (const s of students) {
-      const st = await base44.entities.Student.create({ ...s, class_id: CLASS_ID, class_name: 'י׳1', grade: 'י', student_number: `1000${createdStudents.length + 1}` });
+      const st = await base44.entities.Student.create({ ...s, class_id: demoClassId, class_name: 'י׳1', grade: 'י', student_number: `1000${createdStudents.length + 1}` });
       createdStudents.push(st);
     }
 
@@ -41,17 +44,17 @@ export async function seedDemoData() {
     for (const s of createdStudents) {
       const statuses = ['נוכח', 'נוכח', 'נוכח', 'מאחר', 'נוכח', 'נוכח', 'נוכח', 'נעדר'];
       const st = statuses[Math.floor(Math.random() * statuses.length)];
-      await base44.entities.AttendanceRecord.create({ student_id: s.id, student_name: s.full_name, class_id: CLASS_ID, date: today, status: st });
-      await base44.entities.AttendanceRecord.create({ student_id: s.id, student_name: s.full_name, class_id: CLASS_ID, date: yesterday, status: 'נוכח' });
+      await base44.entities.AttendanceRecord.create({ student_id: s.id, student_name: s.full_name, class_id: demoClassId, date: today, status: st });
+      await base44.entities.AttendanceRecord.create({ student_id: s.id, student_name: s.full_name, class_id: demoClassId, date: yesterday, status: 'נוכח' });
     }
 
     // Exams
     const futureDate1 = new Date(Date.now() + 3 * 86400000).toISOString().split('T')[0];
     const futureDate2 = new Date(Date.now() + 5 * 86400000).toISOString().split('T')[0];
     const futureDate3 = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
-    await base44.entities.Exam.create({ class_id: CLASS_ID, title: 'מבחן מתמטיקה – פונקציות', subject: 'מתמטיקה', type: 'מבחן', date: futureDate1, time: '09:00', teacher: 'גב׳ רבין', material: 'פרקים 5-7', notes: 'מחשבון מורשה' });
-    await base44.entities.Exam.create({ class_id: CLASS_ID, title: 'בחן ספרות', subject: 'ספרות', type: 'בחן', date: futureDate2, time: '11:00', teacher: 'מר לוי', material: 'פרק א בספר', notes: '' });
-    await base44.entities.Exam.create({ class_id: CLASS_ID, title: 'פרויקט אנגלית', subject: 'אנגלית', type: 'פרויקט', date: futureDate3, time: '08:00', teacher: 'גב׳ גרין', material: 'הגשה דיגיטלית', notes: 'יש לשלוח למייל' });
+    await base44.entities.Exam.create({ class_id: demoClassId, title: 'מבחן מתמטיקה – פונקציות', subject: 'מתמטיקה', type: 'מבחן', date: futureDate1, time: '09:00', teacher: 'גב׳ רבין', material: 'פרקים 5-7', notes: 'מחשבון מורשה' });
+    await base44.entities.Exam.create({ class_id: demoClassId, title: 'בחן ספרות', subject: 'ספרות', type: 'בחן', date: futureDate2, time: '11:00', teacher: 'מר לוי', material: 'פרק א בספר', notes: '' });
+    await base44.entities.Exam.create({ class_id: demoClassId, title: 'פרויקט אנגלית', subject: 'אנגלית', type: 'פרויקט', date: futureDate3, time: '08:00', teacher: 'גב׳ גרין', material: 'הגשה דיגיטלית', notes: 'יש לשלוח למייל' });
 
     // Schedule
     const schedule = [
@@ -75,33 +78,33 @@ export async function seedDemoData() {
       { day: 'חמישי', period: 3, start_time: '09:40', end_time: '10:25', subject: 'אמנות', teacher: 'גב׳ רוזן', room: '210' },
     ];
     for (const slot of schedule) {
-      await base44.entities.ScheduleSlot.create({ ...slot, class_id: CLASS_ID });
+      await base44.entities.ScheduleSlot.create({ ...slot, class_id: demoClassId });
     }
 
     // Discipline Events
-    await base44.entities.DisciplineEvent.create({ student_id: createdStudents[2].id, student_name: createdStudents[2].full_name, class_id: CLASS_ID, date: yesterday, time: '10:00', severity: 'בינונית', category: 'התנהגות', description: 'שיחה בשעת שיעור', treatment: 'שיחה פרטית', parents_updated: false, status: 'פתוח' });
-    await base44.entities.DisciplineEvent.create({ student_id: createdStudents[5].id, student_name: createdStudents[5].full_name, class_id: CLASS_ID, date: yesterday, time: '11:30', severity: 'קלה', category: 'נוכחות', description: 'איחור לשיעור', treatment: 'התראה', parents_updated: false, status: 'בטיפול' });
+    await base44.entities.DisciplineEvent.create({ student_id: createdStudents[2].id, student_name: createdStudents[2].full_name, class_id: demoClassId, date: yesterday, time: '10:00', severity: 'בינונית', category: 'התנהגות', description: 'שיחה בשעת שיעור', treatment: 'שיחה פרטית', parents_updated: false, status: 'פתוח' });
+    await base44.entities.DisciplineEvent.create({ student_id: createdStudents[5].id, student_name: createdStudents[5].full_name, class_id: demoClassId, date: yesterday, time: '11:30', severity: 'קלה', category: 'נוכחות', description: 'איחור לשיעור', treatment: 'התראה', parents_updated: false, status: 'בטיפול' });
 
     // Tasks
-    await base44.entities.Task.create({ class_id: CLASS_ID, student_id: createdStudents[2].id, student_name: createdStudents[2].full_name, title: 'שיחה עם הורי יונתן', description: 'לעדכן על היעדרויות חוזרות', due_date: futureDate1, priority: 'גבוהה', status: 'לביצוע', category: 'הורים' });
-    await base44.entities.Task.create({ class_id: CLASS_ID, student_id: createdStudents[5].id, student_name: createdStudents[5].full_name, title: 'מעקב אחר מיה פרץ', description: 'בדיקת מעורבות חברתית', due_date: futureDate2, priority: 'בינונית', status: 'לביצוע', category: 'תפקוד' });
-    await base44.entities.Task.create({ class_id: CLASS_ID, title: 'הכנת דוח רבעוני', description: 'הכנת ציוני תפקוד לסיום הרבעון', due_date: futureDate3, priority: 'גבוהה', status: 'לביצוע', category: 'כללי' });
+    await base44.entities.Task.create({ class_id: demoClassId, student_id: createdStudents[2].id, student_name: createdStudents[2].full_name, title: 'שיחה עם הורי יונתן', description: 'לעדכן על היעדרויות חוזרות', due_date: futureDate1, priority: 'גבוהה', status: 'לביצוע', category: 'הורים' });
+    await base44.entities.Task.create({ class_id: demoClassId, student_id: createdStudents[5].id, student_name: createdStudents[5].full_name, title: 'מעקב אחר מיה פרץ', description: 'בדיקת מעורבות חברתית', due_date: futureDate2, priority: 'בינונית', status: 'לביצוע', category: 'תפקוד' });
+    await base44.entities.Task.create({ class_id: demoClassId, title: 'הכנת דוח רבעוני', description: 'הכנת ציוני תפקוד לסיום הרבעון', due_date: futureDate3, priority: 'גבוהה', status: 'לביצוע', category: 'כללי' });
 
     // Announcements
-    await base44.entities.Announcement.create({ class_id: CLASS_ID, title: 'מבחן מתמטיקה בקרוב!', content: 'תזכורת: מבחן מתמטיקה ביום שלישי. חומר: פרקים 5-7. יש להתכונן!', type: 'חשובה', requires_confirmation: true, published_at: today, is_published: true });
-    await base44.entities.Announcement.create({ class_id: CLASS_ID, title: 'טיול שנתי', content: 'טיול שנתי יתקיים בחודש הבא. יש להגיש טופס הסכמת הורים עד לסוף השבוע.', type: 'כיתתית', requires_confirmation: false, published_at: yesterday, is_published: true });
-    await base44.entities.Announcement.create({ class_id: CLASS_ID, title: 'שינוי בלוח שיעורים', content: 'ביום חמישי הקרוב שיעור חינוך גופני מועבר לשעה 12:00', type: 'כיתתית', requires_confirmation: false, published_at: today, is_published: true });
+    await base44.entities.Announcement.create({ class_id: demoClassId, title: 'מבחן מתמטיקה בקרוב!', content: 'תזכורת: מבחן מתמטיקה ביום שלישי. חומר: פרקים 5-7. יש להתכונן!', type: 'חשובה', requires_confirmation: true, published_at: today, is_published: true });
+    await base44.entities.Announcement.create({ class_id: demoClassId, title: 'טיול שנתי', content: 'טיול שנתי יתקיים בחודש הבא. יש להגיש טופס הסכמת הורים עד לסוף השבוע.', type: 'כיתתית', requires_confirmation: false, published_at: yesterday, is_published: true });
+    await base44.entities.Announcement.create({ class_id: demoClassId, title: 'שינוי בלוח שיעורים', content: 'ביום חמישי הקרוב שיעור חינוך גופני מועבר לשעה 12:00', type: 'כיתתית', requires_confirmation: false, published_at: today, is_published: true });
 
     // Communications
-    await base44.entities.Communication.create({ student_id: createdStudents[2].id, student_name: createdStudents[2].full_name, class_id: CLASS_ID, date: yesterday, type: 'שיחה טלפונית', with_whom: 'הורה 1', summary: 'שיחה על היעדרויות – ההורה מודע לבעיה, יש בעיה רפואית', follow_up: 'לבדוק שוב בעוד שבועיים' });
+    await base44.entities.Communication.create({ student_id: createdStudents[2].id, student_name: createdStudents[2].full_name, class_id: demoClassId, date: yesterday, type: 'שיחה טלפונית', with_whom: 'הורה 1', summary: 'שיחה על היעדרויות – ההורה מודע לבעיה, יש בעיה רפואית', follow_up: 'לבדוק שוב בעוד שבועיים' });
 
     // Teacher Notes
-    await base44.entities.TeacherNote.create({ student_id: createdStudents[0].id, student_name: createdStudents[0].full_name, class_id: CLASS_ID, date: yesterday, content: 'אלון מראה שיפור ניכר בהשתתפות בשיעורים. יש לעודד את הצטרפותו לתפקיד מנהיגות.', category: 'אקדמי', is_private: true });
-    await base44.entities.TeacherNote.create({ student_id: createdStudents[2].id, student_name: createdStudents[2].full_name, class_id: CLASS_ID, date: today, content: 'יונתן נראה עייף ומנותק. כדאי לשוחח עמו בנפרד ולברר אם יש קשיים בבית.', category: 'רגשי', is_private: true });
+    await base44.entities.TeacherNote.create({ student_id: createdStudents[0].id, student_name: createdStudents[0].full_name, class_id: demoClassId, date: yesterday, content: 'אלון מראה שיפור ניכר בהשתתפות בשיעורים. יש לעודד את הצטרפותו לתפקיד מנהיגות.', category: 'אקדמי', is_private: true });
+    await base44.entities.TeacherNote.create({ student_id: createdStudents[2].id, student_name: createdStudents[2].full_name, class_id: demoClassId, date: today, content: 'יונתן נראה עייף ומנותק. כדאי לשוחח עמו בנפרד ולברר אם יש קשיים בבית.', category: 'רגשי', is_private: true });
 
     // Performance Reviews
-    await base44.entities.PerformanceReview.create({ student_id: createdStudents[0].id, student_name: createdStudents[0].full_name, class_id: CLASS_ID, period: 'רבעון א׳', date: yesterday, learning_habits: 4, participation: 5, responsibility: 4, behavior: 5, social_functioning: 4, emotional_state: 4, notes: 'תלמיד מצטיין עם מנהיגות טבעית' });
-    await base44.entities.PerformanceReview.create({ student_id: createdStudents[2].id, student_name: createdStudents[2].full_name, class_id: CLASS_ID, period: 'רבעון א׳', date: yesterday, learning_habits: 2, participation: 2, responsibility: 3, behavior: 3, social_functioning: 3, emotional_state: 2, notes: 'דורש מעקב צמוד' });
+    await base44.entities.PerformanceReview.create({ student_id: createdStudents[0].id, student_name: createdStudents[0].full_name, class_id: demoClassId, period: 'רבעון א׳', date: yesterday, learning_habits: 4, participation: 5, responsibility: 4, behavior: 5, social_functioning: 4, emotional_state: 4, notes: 'תלמיד מצטיין עם מנהיגות טבעית' });
+    await base44.entities.PerformanceReview.create({ student_id: createdStudents[2].id, student_name: createdStudents[2].full_name, class_id: demoClassId, period: 'רבעון א׳', date: yesterday, learning_habits: 2, participation: 2, responsibility: 3, behavior: 3, social_functioning: 3, emotional_state: 2, notes: 'דורש מעקב צמוד' });
 
   } catch (e) {
     console.error('Error seeding demo data:', e);

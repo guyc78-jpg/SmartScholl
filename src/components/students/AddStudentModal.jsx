@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,12 @@ export default function AddStudentModal({ classId, editData, onClose, onSuccess 
     community_service_status: 'לא התחיל', status: 'פעיל'
   });
   const [saving, setSaving] = useState(false);
+  const [classRoom, setClassRoom] = useState(null);
+
+  useEffect(() => {
+    if (!classId) return;
+    base44.entities.ClassRoom.filter({ id: classId }).then(data => setClassRoom(data[0] || null));
+  }, [classId]);
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
@@ -23,10 +29,15 @@ export default function AddStudentModal({ classId, editData, onClose, onSuccess 
     if (!form.full_name) { toast.error('שם מלא הוא שדה חובה'); return; }
     setSaving(true);
     try {
+      const classData = {
+        class_id: classId,
+        class_name: classRoom?.name || form.class_name || '',
+        grade: classRoom?.grade || form.grade || '',
+      };
       if (editData?.id) {
-        await base44.entities.Student.update(editData.id, { ...form, class_id: classId, class_name: 'י׳1' });
+        await base44.entities.Student.update(editData.id, { ...form, ...classData });
       } else {
-        await base44.entities.Student.create({ ...form, class_id: classId, class_name: 'י׳1' });
+        await base44.entities.Student.create({ ...form, ...classData });
       }
       toast.success(editData ? 'פרטי תלמיד עודכנו' : 'תלמיד נוסף בהצלחה!');
       onSuccess();

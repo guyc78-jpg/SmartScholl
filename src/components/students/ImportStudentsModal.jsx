@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
@@ -13,6 +13,12 @@ export default function ImportStudentsModal({ classId, onClose, onSuccess }) {
   const [step, setStep] = useState('upload'); // upload | preview | done
   const [fileName, setFileName] = useState('');
   const [error, setError] = useState('');
+  const [classRoom, setClassRoom] = useState(null);
+
+  useEffect(() => {
+    if (!classId) return;
+    base44.entities.ClassRoom.filter({ id: classId }).then(data => setClassRoom(data[0] || null));
+  }, [classId]);
 
   async function handleFile(e) {
     const file = e.target.files[0];
@@ -26,6 +32,8 @@ export default function ImportStudentsModal({ classId, onClose, onSuccess }) {
       const wb = XLSX.read(buffer);
       const ws = wb.Sheets[wb.SheetNames[0]];
       const rows = XLSX.utils.sheet_to_json(ws);
+      const targetClassName = classRoom?.name || '';
+      const targetGrade = classRoom?.grade || 'י';
       const mapped = rows.map(row => ({
         full_name: row['שם מלא'] || row['name'] || '',
         student_number: String(row['מספר תלמיד'] || row['id'] || ''),
@@ -33,8 +41,8 @@ export default function ImportStudentsModal({ classId, onClose, onSuccess }) {
         email: row['מייל'] || row['email'] || '',
         parent1_name: row['הורה 1'] || row['parent1'] || '',
         parent1_phone: String(row['טלפון הורה 1'] || row['parent1_phone'] || ''),
-        grade: 'י', gender: row['מין'] || 'זכר',
-        class_id: classId, class_name: 'י׳1',
+        grade: targetGrade, gender: row['מין'] || 'זכר',
+        class_id: classId, class_name: targetClassName,
         status: 'פעיל', community_service_goal: 60, community_service_done: 0,
         community_service_status: 'לא התחיל'
       })).filter(r => r.full_name);

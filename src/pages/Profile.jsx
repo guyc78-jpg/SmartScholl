@@ -28,7 +28,7 @@ export default function Profile({ user, role, onRoleChange }) {
   const { updateCurrentUser } = useAuth();
   const [saving, setSaving] = useState(false);
   const [requestedRole, setRequestedRole] = useState('');
-  const [requestScope, setRequestScope] = useState({ grade: '', className: '' });
+  const [requestScope, setRequestScope] = useState({ grade: '', className: '', classId: '' });
   const [form, setForm] = useState({
     profile_full_name: getUserDisplayName(user) || '',
     profile_phone: user?.profile_phone || '',
@@ -36,6 +36,7 @@ export default function Profile({ user, role, onRoleChange }) {
     profile_address: user?.profile_address || '',
     profile_gender: user?.profile_gender || '',
     role: user?.role || 'student',
+    profile_class_id: user?.profile_class_id || '',
     profile_homeroom_class: user?.profile_homeroom_class || user?.profile_class || '',
     profile_grade_managed: user?.profile_grade_managed || extractGradeFromClass(user?.profile_homeroom_class || user?.profile_class || ''),
     school_name: user?.school_name || '',
@@ -79,13 +80,14 @@ export default function Profile({ user, role, onRoleChange }) {
       full_name: form.profile_full_name,
       requested_role: requestedRole,
       class_or_grade: requestScope.className,
+      class_id: requestScope.classId,
       subject: '',
       school_role: 'בקשת שינוי תפקיד מפרופיל אישי',
       extra_roles: ''
     });
     toast.success('בקשת שינוי התפקיד נשלחה לאישור מנהל מערכת');
     setRequestedRole('');
-    setRequestScope({ grade: '', className: '' });
+    setRequestScope({ grade: '', className: '', classId: '' });
     setSaving(false);
   };
 
@@ -216,8 +218,10 @@ export default function Profile({ user, role, onRoleChange }) {
                 <GradeClassSelect
                   grade={form.profile_grade_managed}
                   classNameValue={form.profile_homeroom_class}
+                  classId={form.profile_class_id}
                   onGradeChange={(value) => updateField('profile_grade_managed', value)}
                   onClassChange={(value) => updateField('profile_homeroom_class', value)}
+                  onClassIdChange={(value) => updateField('profile_class_id', value)}
                   disabled
                 />
               </CardContent>
@@ -247,11 +251,13 @@ export default function Profile({ user, role, onRoleChange }) {
                   <GradeClassSelect
                     grade={requestScope.grade}
                     classNameValue={requestScope.className}
-                    onGradeChange={(value) => setRequestScope({ grade: value, className: '' })}
+                    classId={requestScope.classId}
+                    onGradeChange={(value) => setRequestScope({ grade: value, className: '', classId: '' })}
                     onClassChange={(value) => setRequestScope(prev => ({ ...prev, className: value }))}
+                    onClassIdChange={(value) => setRequestScope(prev => ({ ...prev, classId: value }))}
                   />
                 )}
-                <Button type="button" variant="outline" onClick={handleRoleRequest} disabled={saving || !requestedRole || approvedRoles.includes(requestedRole) || !requestScope.grade || !requestScope.className}>
+                <Button type="button" variant="outline" onClick={handleRoleRequest} disabled={saving || !requestedRole || approvedRoles.includes(requestedRole) || !requestScope.grade || !requestScope.classId}>
                   <Send className="w-4 h-4" />
                   שלח בקשה לאישור
                 </Button>

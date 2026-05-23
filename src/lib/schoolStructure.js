@@ -34,10 +34,15 @@ export function getUserApprovedClass(user) {
   return user?.profile_homeroom_class || user?.profile_class || '';
 }
 
+export function getUserApprovedClassId(user, fallbackClassId = '') {
+  return user?.profile_class_id || fallbackClassId || getUserApprovedClass(user);
+}
+
 export function isStudentInApprovedScope(student, user, role) {
   if (role === 'admin') return true;
   const studentGrade = normalizeGrade(student?.grade || extractGradeFromClass(student?.class_name));
   const studentClass = normalizeClassName(student?.class_name || '');
+  const approvedClassId = user?.profile_class_id || '';
 
   if (role === 'coordinator') {
     const approvedGrade = getUserApprovedGrade(user);
@@ -46,7 +51,7 @@ export function isStudentInApprovedScope(student, user, role) {
 
   if (role === 'homeroom_teacher') {
     const approvedClass = normalizeClassName(getUserApprovedClass(user));
-    return !!approvedClass && studentClass === approvedClass;
+    return (!!approvedClassId && student?.class_id === approvedClassId) || (!!approvedClass && studentClass === approvedClass);
   }
 
   return false;

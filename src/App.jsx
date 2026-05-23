@@ -34,6 +34,7 @@ import Profile from './pages/Profile';
 import UserManagement from './pages/UserManagement';
 import BellScheduleSettings from './pages/BellScheduleSettings';
 import TreatmentCenter from './pages/TreatmentCenter';
+import Classrooms from './pages/Classrooms';
 import { isStaff, isStudent, defaultRoute } from './lib/permissions';
 import { getAvailableRoles, getInitialWorkRole, getSystemRole } from './lib/roleUtils';
 
@@ -121,7 +122,7 @@ const AuthenticatedApp = () => {
         <Route path="/discipline" element={<Discipline role={role} />} />
         <Route path="/performance" element={<Performance role={role} />} />
         <Route path="/communications" element={<Communications role={role} />} />
-        <Route path="/tasks" element={<Tasks role={role} />} />
+        <Route path="/tasks" element={<Tasks role={role} user={user} />} />
         <Route path="/treatment-center" element={<TreatmentCenter />} />
         <Route path="/announcements" element={<Announcements role={role} user={user} />} />
         <Route path="/reports" element={<Reports role={role} />} />
@@ -129,6 +130,7 @@ const AuthenticatedApp = () => {
         {approvedRoles.includes('admin') && (
           <>
             <Route path="/users" element={<UserManagement />} />
+            <Route path="/classrooms" element={<Classrooms />} />
             <Route path="/bell-schedule" element={<BellScheduleSettings user={user} role={role} />} />
           </>
         )}

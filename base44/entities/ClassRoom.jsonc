@@ -9,6 +9,9 @@
     "grade": {
       "type": "string",
       "enum": [
+        "\u05d6",
+        "\u05d7",
+        "\u05d8",
         "\u05d9",
         "\u05d9\u05d0",
         "\u05d9\u05d1"
@@ -17,11 +20,23 @@
     },
     "homeroom_teacher_email": {
       "type": "string",
-      "description": "\u05d0\u05d9\u05de\u05d9\u05d9\u05dc \u05de\u05d7\u05e0\u05da"
+      "description": "\u05d0\u05d9\u05de\u05d9\u05d9\u05dc \u05de\u05d7\u05e0\u05da/\u05ea"
     },
     "homeroom_teacher_name": {
       "type": "string",
-      "description": "\u05e9\u05dd \u05de\u05d7\u05e0\u05da"
+      "description": "\u05e9\u05dd \u05de\u05d7\u05e0\u05da/\u05ea"
+    },
+    "coordinator_email": {
+      "type": "string",
+      "description": "\u05d0\u05d9\u05de\u05d9\u05d9\u05dc \u05e8\u05db\u05d6/\u05ea \u05e9\u05db\u05d1\u05d4"
+    },
+    "coordinator_name": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05e8\u05db\u05d6/\u05ea \u05e9\u05db\u05d1\u05d4"
+    },
+    "class_code": {
+      "type": "string",
+      "description": "\u05e7\u05d5\u05d3 \u05db\u05d9\u05ea\u05d4 \u05d0\u05d5\u05e4\u05e6\u05d9\u05d5\u05e0\u05dc\u05d9 \u05dc\u05d4\u05e6\u05d8\u05e8\u05e4\u05d5\u05ea"
     },
     "year": {
       "type": "string",
@@ -30,6 +45,11 @@
     "room_number": {
       "type": "string",
       "description": "\u05de\u05e1\u05e4\u05e8 \u05d7\u05d3\u05e8"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "\u05d4\u05d0\u05dd \u05d4\u05db\u05d9\u05ea\u05d4 \u05e4\u05e2\u05d9\u05dc\u05d4 \u05dc\u05d1\u05d7\u05d9\u05e8\u05d4"
     }
   },
   "required": [

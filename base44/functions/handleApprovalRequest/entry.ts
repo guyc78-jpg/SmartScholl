@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
     const { action, request_id, rejection_reason } = body;
 
     if (action === 'submit') {
-      const { full_name, requested_role, class_or_grade, subject, school_role, extra_roles } = body;
+      const { full_name, requested_role, class_or_grade, class_id, subject, school_role, extra_roles } = body;
       if (!VALID_ROLES.includes(requested_role) || requested_role === 'admin') {
         return Response.json({ error: 'Invalid role' }, { status: 400 });
       }
@@ -90,6 +90,7 @@ Deno.serve(async (req) => {
         full_name,
         requested_role,
         class_or_grade: class_or_grade || '',
+        requested_class_id: class_id || '',
         subject: subject || '',
         school_role: school_role || '',
         extra_roles: extra_roles || '',
@@ -155,9 +156,15 @@ ${suspicionNote}
     }
 
     if (action === 'submit_class_change') {
-      const { full_name, current_grade, current_class, requested_grade, requested_class, request_reason } = body;
-      if (!requested_grade || !requested_class || !request_reason) {
+      const { full_name, current_class_id, current_grade, current_class, requested_class_id, requested_grade, requested_class, request_reason } = body;
+      if (!requested_grade || !requested_class_id || !request_reason) {
         return Response.json({ error: 'Missing class change details' }, { status: 400 });
+      }
+
+      const classRecords = await base44.asServiceRole.entities.ClassRoom.filter({ id: requested_class_id });
+      const selectedClass = classRecords[0];
+      if (!selectedClass || selectedClass.is_active === false) {
+        return Response.json({ error: 'Class not found' }, { status: 400 });
       }
 
       const approvalReq = await base44.asServiceRole.entities.ApprovalRequest.create({
@@ -165,11 +172,13 @@ ${suspicionNote}
         full_name,
         request_type: 'class_change',
         requested_role: 'student',
-        class_or_grade: requested_class,
+        class_or_grade: selectedClass.name,
+        current_class_id: current_class_id || '',
         current_grade: current_grade || '',
         current_class: current_class || '',
-        requested_grade,
-        requested_class,
+        requested_class_id,
+        requested_grade: selectedClass.grade || requested_grade,
+        requested_class: selectedClass.name,
         request_reason,
         school_role: 'בקשת שינוי כיתה מפרופיל תלמיד/ה',
         status: 'pending',
@@ -182,14 +191,14 @@ ${suspicionNote}
         actor_email: user.email,
         target_email: user.email,
         target_name: full_name,
-        details: `בקשת שינוי כיתה: ${current_class || 'לא הוגדר'} → ${requested_class}`,
-        metadata: JSON.stringify({ request_type: 'class_change', current_grade, current_class, requested_grade, requested_class, request_reason }),
+        details: `בקשת שינוי כיתה: ${current_class || 'לא הוגדר'} → ${selectedClass.name}`,
+        metadata: JSON.stringify({ request_type: 'class_change', current_class_id, current_grade, current_class, requested_class_id, requested_grade: selectedClass.grade, requested_class: selectedClass.name, request_reason }),
         severity: 'info',
       });
 
       const allUsers = await base44.asServiceRole.entities.User.list('-updated_date', 200);
       const notifyEmails = new Set(allUsers.filter(u => getApprovedRoles(u).some(role => ['admin', 'homeroom_teacher', 'coordinator'].includes(role))).map(u => u.email));
-      const emailBody = `שלום,\n\nהתקבלה בקשת שינוי כיתה הדורשת אישור.\n\nשם: ${full_name}\nאימייל: ${user.email}\nכיתה נוכחית: ${current_class || 'לא הוגדרה'}\nכיתה מבוקשת: ${requested_class}\nסיבה: ${request_reason}\n\nלאישור או דחייה, היכנס/י לדף ניהול האישורים במערכת.\n\nבברכה,\nמערכת כיתה חכמה`;
+      const emailBody = `שלום,\n\nהתקבלה בקשת שינוי כיתה הדורשת אישור.\n\nשם: ${full_name}\nאימייל: ${user.email}\nכיתה נוכחית: ${current_class || 'לא הוגדרה'}\nכיתה מבוקשת: ${selectedClass.name}\nסיבה: ${request_reason}\n\nלאישור או דחייה, היכנס/י לדף ניהול האישורים במערכת.\n\nבברכה,\nמערכת כיתה חכמה`;
 
       await Promise.all([...notifyEmails].map(email => base44.asServiceRole.integrations.Core.SendEmail({
         to: email,
@@ -222,6 +231,7 @@ ${suspicionNote}
         const target = targetUsers[0];
         if (approvalReq.request_type === 'class_change') {
           await base44.asServiceRole.entities.User.update(target.id, {
+            profile_class_id: approvalReq.requested_class_id || '',
             profile_class: approvalReq.requested_class || approvalReq.class_or_grade || '',
             profile_homeroom_class: approvalReq.requested_class || approvalReq.class_or_grade || '',
             profile_grade_managed: approvalReq.requested_grade || '',
@@ -238,6 +248,7 @@ ${suspicionNote}
             available_roles: approvedRoles,
             active_work_role: approvedRoles.includes(target.active_work_role) ? target.active_work_role : primaryRole,
             onboarding_status: 'approved',
+            profile_class_id: approvalReq.requested_role === 'homeroom_teacher' || approvalReq.requested_role === 'student' ? approvalReq.requested_class_id || approvalReq.current_class_id || '' : target.profile_class_id || '',
             profile_homeroom_class: approvalReq.requested_role === 'homeroom_teacher' || approvalReq.requested_role === 'student' ? classOrGrade : target.profile_homeroom_class || '',
             profile_class: approvalReq.requested_role === 'student' ? classOrGrade : target.profile_class || '',
             profile_grade_managed: approvedGrade || target.profile_grade_managed || '',
@@ -322,7 +333,7 @@ ${suspicionNote}
     if (action === 'admin_update_user') {
       if (!requireAdmin(user)) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
-      const { target_user_id, target_role, approved_roles, profile_homeroom_class, profile_grade_managed } = body;
+      const { target_user_id, target_role, approved_roles, profile_class_id, profile_homeroom_class, profile_grade_managed } = body;
       const approvedRoles = normalizeRoles(approved_roles, [target_role]);
       if (!approvedRoles.length || !approvedRoles.every(role => VALID_ROLES.includes(role)) || !approvedRoles.includes(target_role)) {
         return Response.json({ error: 'Invalid role' }, { status: 400 });
@@ -336,6 +347,7 @@ ${suspicionNote}
         roles: approvedRoles,
         available_roles: approvedRoles,
         active_work_role: approvedRoles.includes(target.active_work_role) ? target.active_work_role : target_role,
+        profile_class_id: profile_class_id || '',
         profile_homeroom_class: profile_homeroom_class || '',
         profile_class: approvedRoles.includes('student') ? profile_homeroom_class || '' : target.profile_class || '',
         profile_grade_managed: profile_grade_managed || '',
@@ -348,7 +360,7 @@ ${suspicionNote}
         action_name: 'admin_update_user_role',
         target_email: body.target_email || '',
         details: `הרשאות משתמש עודכנו: ${approvedRoles.map(role => ROLE_LABELS[role] || role).join(', ')}`,
-        metadata: JSON.stringify({ target_user_id, target_role, approvedRoles, profile_homeroom_class, profile_grade_managed }),
+        metadata: JSON.stringify({ target_user_id, target_role, approvedRoles, profile_class_id, profile_homeroom_class, profile_grade_managed }),
         severity: 'warning',
       });
 

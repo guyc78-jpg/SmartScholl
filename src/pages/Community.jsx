@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { CLASS_ID } from '@/lib/demoData';
 import { getStudentClassId } from '@/lib/studentProfile';
+import { getUserApprovedClassId } from '@/lib/schoolStructure';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -21,7 +22,7 @@ export default function Community({ role = 'homeroom_teacher', user }) {
   const [editStudent, setEditStudent] = useState(null);
   const [form, setForm] = useState({});
   const [filter, setFilter] = useState('הכל');
-  const classId = role === 'student' ? getStudentClassId(user, CLASS_ID) : CLASS_ID;
+  const classId = role === 'student' ? getStudentClassId(user, CLASS_ID) : getUserApprovedClassId(user, CLASS_ID);
 
   useEffect(() => { loadStudents(); }, []);
   async function loadStudents() {

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { CLASS_ID } from '@/lib/demoData';
+import { getUserApprovedClassId } from '@/lib/schoolStructure';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -15,7 +16,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import { toast } from 'sonner';
 import { CheckSquare, Plus, Edit, Trash2, Check } from 'lucide-react';
 
-export default function Tasks({ role = 'homeroom_teacher' }) {
+export default function Tasks({ role = 'homeroom_teacher', user }) {
   const [tasks, setTasks] = useState([]);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -24,13 +25,14 @@ export default function Tasks({ role = 'homeroom_teacher' }) {
   const [statusFilter, setStatusFilter] = useState('הכל');
   const today = new Date().toISOString().split('T')[0];
   const [form, setForm] = useState({ student_id: '', student_name: '', title: '', description: '', due_date: today, priority: 'בינונית', status: 'לביצוע', category: 'כללי' });
+  const classId = getUserApprovedClassId(user, CLASS_ID);
 
   useEffect(() => { loadData(); }, []);
   async function loadData() {
     setLoading(true);
     const [tks, sts] = await Promise.all([
-      base44.entities.Task.filter({ class_id: CLASS_ID }),
-      base44.entities.Student.filter({ class_id: CLASS_ID }),
+      base44.entities.Task.filter({ class_id: classId }),
+      base44.entities.Student.filter({ class_id: classId }),
     ]);
     setTasks(tks.sort((a,b) => a.due_date?.localeCompare(b.due_date || '') || 0));
     setStudents(sts);
@@ -44,7 +46,7 @@ export default function Tasks({ role = 'homeroom_teacher' }) {
   async function handleSave() {
     if (!form.title) { toast.error('כותרת היא שדה חובה'); return; }
     const student = form.student_id !== 'none' ? students.find(s => s.id === form.student_id) : null;
-    const data = { ...form, student_id: student?.id || '', student_name: student?.full_name || '', class_id: CLASS_ID };
+    const data = { ...form, student_id: student?.id || '', student_name: student?.full_name || '', class_id: classId };
     try {
       if (editTask) { await base44.entities.Task.update(editTask.id, data); toast.success('עודכן'); }
       else { await base44.entities.Task.create(data); toast.success('משימה נוספה!'); }

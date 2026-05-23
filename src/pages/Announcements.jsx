@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { CLASS_ID } from '@/lib/demoData';
 import { getStudentClassId } from '@/lib/studentProfile';
+import { getUserApprovedClassId } from '@/lib/schoolStructure';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -24,7 +25,7 @@ export default function Announcements({ role = 'homeroom_teacher', user }) {
   const [editAnn, setEditAnn] = useState(null);
   const [typeFilter, setTypeFilter] = useState('הכל');
   const today = new Date().toISOString().split('T')[0];
-  const classId = role === 'student' ? getStudentClassId(user, CLASS_ID) : CLASS_ID;
+  const classId = role === 'student' ? getStudentClassId(user, CLASS_ID) : getUserApprovedClassId(user, CLASS_ID);
   const [form, setForm] = useState({ title: '', content: '', type: 'כיתתית', requires_confirmation: false });
   const [readCounts, setReadCounts] = useState({});
 

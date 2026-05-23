@@ -7,5 +7,5 @@ export function getStudentGrade(user) {
 }
 
 export function getStudentClassId(user, fallbackClassId = '') {
-  return getStudentClassName(user) || fallbackClassId;
+  return user?.profile_class_id || fallbackClassId || getStudentClassName(user);
 }
