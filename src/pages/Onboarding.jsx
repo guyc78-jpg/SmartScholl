@@ -263,16 +263,21 @@ export default function Onboarding({ user, onComplete }) {
     if (!profileForm.profile_grade_managed?.trim()) { toast.error('יש לבחור שכבה'); return; }
     if (!profileForm.profile_class?.trim()) { toast.error('יש לבחור כיתה'); return; }
     setSaving(true);
-    const updateData = {
-      ...profileForm,
-      requested_role: 'student',
-      role: 'student',
-      login_type: 'google',
-      onboarding_status: 'approved',
-    };
-    await base44.auth.updateMe(updateData);
-    setSaving(false);
-    setStep('student_guide');
+    try {
+      const updateData = {
+        ...profileForm,
+        requested_role: 'student',
+        role: 'student',
+        login_type: 'google',
+        onboarding_status: 'approved',
+      };
+      await base44.auth.updateMe(updateData);
+      setStep('student_guide');
+    } catch (err) {
+      toast.error('שגיאה בשמירת הפרופיל: ' + (err?.message || 'אנא נסה שוב'));
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
