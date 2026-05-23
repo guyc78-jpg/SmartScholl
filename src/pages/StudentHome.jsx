@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { CLASS_ID } from '@/lib/demoData';
+import { getStudentClassId, getStudentClassName } from '@/lib/studentProfile';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import StatusBadge from '@/components/ui/StatusBadge';
@@ -24,21 +25,23 @@ export default function StudentHome({ user }) {
   const today = new Date().toISOString().split('T')[0];
   const dayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
   const todayDayName = dayNames[new Date().getDay()];
+  const studentClassId = getStudentClassId(user, CLASS_ID);
+  const studentClassName = getStudentClassName(user);
 
   useEffect(() => { loadData(); }, []);
 
   async function loadData() {
     setLoading(true);
     const [anns, exs, tks, slots, students] = await Promise.all([
-      base44.entities.Announcement.filter({ class_id: CLASS_ID, is_published: true }),
-      base44.entities.Exam.filter({ class_id: CLASS_ID }),
-      base44.entities.Task.filter({ class_id: CLASS_ID }),
-      base44.entities.ScheduleSlot.filter({ class_id: CLASS_ID, day: todayDayName }),
-      base44.entities.Student.filter({ class_id: CLASS_ID }),
+      base44.entities.Announcement.filter({ class_id: studentClassId, is_published: true }),
+      base44.entities.Exam.filter({ class_id: studentClassId }),
+      base44.entities.Task.filter({ class_id: studentClassId }),
+      base44.entities.ScheduleSlot.filter({ class_id: studentClassId, day: todayDayName }),
+      base44.entities.Student.filter({ class_id: studentClassId }),
     ]);
 
     const myStudent = students.find(s => s.email === user?.email || s.user_email === user?.email);
-    setStudentData(myStudent || students[0]); // fallback to first student for demo
+    setStudentData(myStudent || null);
 
     const [myReads, myExamCompletions] = myStudent ? await Promise.all([
       base44.entities.AnnouncementRead.filter({ student_id: myStudent.id }),
@@ -101,11 +104,11 @@ export default function StudentHome({ user }) {
     <div className="p-4 lg:p-6 space-y-5 text-right" dir="rtl">
       <div>
         <h1 className="text-2xl font-bold text-foreground">שלום, {getUserFirstName(user)} 👋</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">יום {todayDayName} · כיתה {studentData?.class_name || 'י׳1'}</p>
+        <p className="text-sm text-muted-foreground mt-0.5">יום {todayDayName}{studentClassName ? ` · כיתה ${studentClassName}` : ''}</p>
       </div>
 
       {/* Now / Next smart card */}
-      <NowNextCard classId={CLASS_ID} />
+      <NowNextCard classId={studentClassId} />
 
       {/* Today's Schedule */}
       {scheduleToday.length > 0 && (

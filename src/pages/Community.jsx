@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { CLASS_ID } from '@/lib/demoData';
+import { getStudentClassId } from '@/lib/studentProfile';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -14,17 +15,18 @@ import EmptyState from '@/components/ui/EmptyState';
 import { toast } from 'sonner';
 import { Heart, Edit, AlertTriangle, TrendingUp } from 'lucide-react';
 
-export default function Community({ role = 'homeroom_teacher' }) {
+export default function Community({ role = 'homeroom_teacher', user }) {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editStudent, setEditStudent] = useState(null);
   const [form, setForm] = useState({});
   const [filter, setFilter] = useState('הכל');
+  const classId = role === 'student' ? getStudentClassId(user, CLASS_ID) : CLASS_ID;
 
   useEffect(() => { loadStudents(); }, []);
   async function loadStudents() {
     setLoading(true);
-    const data = await base44.entities.Student.filter({ class_id: CLASS_ID });
+    const data = await base44.entities.Student.filter({ class_id: classId });
     setStudents(data.filter(s => s.status !== 'מועבר' && s.status !== 'סיים'));
     setLoading(false);
   }

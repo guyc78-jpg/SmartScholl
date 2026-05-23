@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { CLASS_ID } from '@/lib/demoData';
+import { getStudentClassId } from '@/lib/studentProfile';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -16,20 +17,21 @@ import EmptyState from '@/components/ui/EmptyState';
 import { toast } from 'sonner';
 import { Megaphone, Plus, Edit, Trash2, Eye, Check } from 'lucide-react';
 
-export default function Announcements({ role = 'homeroom_teacher' }) {
+export default function Announcements({ role = 'homeroom_teacher', user }) {
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editAnn, setEditAnn] = useState(null);
   const [typeFilter, setTypeFilter] = useState('הכל');
   const today = new Date().toISOString().split('T')[0];
+  const classId = role === 'student' ? getStudentClassId(user, CLASS_ID) : CLASS_ID;
   const [form, setForm] = useState({ title: '', content: '', type: 'כיתתית', requires_confirmation: false });
   const [readCounts, setReadCounts] = useState({});
 
   useEffect(() => { loadData(); }, []);
   async function loadData() {
     setLoading(true);
-    const data = await base44.entities.Announcement.filter({ class_id: CLASS_ID });
+    const data = await base44.entities.Announcement.filter({ class_id: classId });
     const sorted = data.sort((a,b) => (b.published_at || '').localeCompare(a.published_at || ''));
     setAnnouncements(sorted);
     // Load read counts for important announcements
@@ -49,7 +51,7 @@ export default function Announcements({ role = 'homeroom_teacher' }) {
 
   async function handleSave() {
     if (!form.title || !form.content) { toast.error('כותרת ותוכן הם שדות חובה'); return; }
-    const data = { ...form, class_id: CLASS_ID, published_at: today, is_published: true };
+    const data = { ...form, class_id: classId, published_at: today, is_published: true };
     try {
       if (editAnn) { await base44.entities.Announcement.update(editAnn.id, data); toast.success('עודכן'); }
       else { await base44.entities.Announcement.create(data); toast.success('הודעה פורסמה!'); }

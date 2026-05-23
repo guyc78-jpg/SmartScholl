@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { CLASS_ID } from '@/lib/demoData';
+import { getStudentClassId } from '@/lib/studentProfile';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -36,16 +37,17 @@ export default function Exams({ role, user }) {
   const fileInputRef = useRef(null);
   const canEditExams = ['admin', 'homeroom_teacher', 'coordinator'].includes(role);
   const isStudentView = role === 'student';
+  const classId = isStudentView ? getStudentClassId(user, CLASS_ID) : CLASS_ID;
 
   useEffect(() => { loadExams(); }, []);
 
   async function loadExams() {
     setLoading(true);
-    const data = await base44.entities.Exam.filter({ class_id: CLASS_ID });
+    const data = await base44.entities.Exam.filter({ class_id: classId });
     setExams(data.sort((a,b) => a.date.localeCompare(b.date)));
 
     if (isStudentView) {
-      const students = await base44.entities.Student.filter({ class_id: CLASS_ID });
+      const students = await base44.entities.Student.filter({ class_id: classId });
       const myStudent = students.find(s => s.email === user?.email || s.user_email === user?.email) || students[0];
       setStudentData(myStudent || null);
       const completions = myStudent ? await base44.entities.ExamCompletion.filter({ student_id: myStudent.id }) : [];
@@ -63,8 +65,8 @@ export default function Exams({ role, user }) {
   async function handleSave() {
     if (!form.title || !form.subject || !form.date) { toast.error('כותרת, מקצוע ותאריך הם שדות חובה'); return; }
     try {
-      if (editExam) { await base44.entities.Exam.update(editExam.id, { ...form, class_id: CLASS_ID }); toast.success('מבחן עודכן'); }
-      else { await base44.entities.Exam.create({ ...form, class_id: CLASS_ID }); toast.success('מבחן נוסף!'); }
+      if (editExam) { await base44.entities.Exam.update(editExam.id, { ...form, class_id: classId }); toast.success('מבחן עודכן'); }
+      else { await base44.entities.Exam.create({ ...form, class_id: classId }); toast.success('מבחן נוסף!'); }
       setShowForm(false);
       loadExams();
     } catch { toast.error('שגיאה בשמירה'); }
@@ -113,7 +115,7 @@ export default function Exams({ role, user }) {
     setImporting(true);
     try {
       const toCreate = events.map(e => ({
-        class_id: CLASS_ID,
+        class_id: classId,
         title: e.title || '',
         subject: e.subject || '',
         type: e.type || 'מבחן',
@@ -246,7 +248,7 @@ export default function Exams({ role, user }) {
             <DialogHeader><DialogTitle>בדיקת ייבוא אירועים</DialogTitle></DialogHeader>
             <ImportExamsPreview
               events={previewEvents}
-              classId={CLASS_ID}
+              classId={classId}
               onConfirm={handleConfirmImport}
               onCancel={() => setShowPreview(false)}
             />

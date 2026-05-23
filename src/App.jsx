@@ -38,7 +38,7 @@ import { isStaff, isStudent, defaultRoute } from './lib/permissions';
 import { getAvailableRoles, getInitialWorkRole, getSystemRole } from './lib/roleUtils';
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user, updateCurrentUser } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user, updateCurrentUser, checkUserAuth } = useAuth();
   const [darkMode, setDarkMode] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('darkMode') === 'true' || window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -84,7 +84,10 @@ const AuthenticatedApp = () => {
   const onboardingStatus = user?.onboarding_status;
   if (user && user.role !== 'admin' && !user.onboardingCompleted) {
     if (!onboardingStatus || onboardingStatus === 'pending') {
-      return <Onboarding user={user} onComplete={() => window.location.reload()} />;
+      return <Onboarding user={user} onComplete={async (updatedUser) => {
+        if (updatedUser) updateCurrentUser(updatedUser);
+        await checkUserAuth();
+      }} />;
     }
     if (onboardingStatus === 'awaiting_approval' || onboardingStatus === 'rejected') {
       return <PendingApproval user={user} />;
@@ -112,15 +115,15 @@ const AuthenticatedApp = () => {
         <Route path="/students/:id" element={<StudentProfile role={role} />} />
         <Route path="/attendance" element={<Attendance />} />
         <Route path="/class-attendance" element={<ClassAttendance role={role} />} />
-        <Route path="/schedule" element={<Schedule role={role} />} />
+        <Route path="/schedule" element={<Schedule role={role} user={user} />} />
         <Route path="/exams" element={<Exams role={role} user={user} />} />
-        <Route path="/community" element={<Community role={role} />} />
+        <Route path="/community" element={<Community role={role} user={user} />} />
         <Route path="/discipline" element={<Discipline role={role} />} />
         <Route path="/performance" element={<Performance role={role} />} />
         <Route path="/communications" element={<Communications role={role} />} />
         <Route path="/tasks" element={<Tasks role={role} />} />
         <Route path="/treatment-center" element={<TreatmentCenter />} />
-        <Route path="/announcements" element={<Announcements role={role} />} />
+        <Route path="/announcements" element={<Announcements role={role} user={user} />} />
         <Route path="/reports" element={<Reports role={role} />} />
         <Route path="/profile" element={<Profile user={user} role={role} onRoleChange={setWorkRole} />} />
         {approvedRoles.includes('admin') && (
@@ -138,10 +141,10 @@ const AuthenticatedApp = () => {
       {/* Student routes */}
       {studentRole && <>
         <Route path="/student-home" element={<StudentHome user={user} />} />
-        <Route path="/schedule" element={<Schedule role={role} />} />
+        <Route path="/schedule" element={<Schedule role={role} user={user} />} />
         <Route path="/exams" element={<Exams role={role} user={user} />} />
-        <Route path="/announcements" element={<Announcements role={role} />} />
-        <Route path="/community" element={<Community role={role} />} />
+        <Route path="/announcements" element={<Announcements role={role} user={user} />} />
+        <Route path="/community" element={<Community role={role} user={user} />} />
         <Route path="/profile" element={<Profile user={user} role={role} onRoleChange={setWorkRole} />} />
       </>}
 

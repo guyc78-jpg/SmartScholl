@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { CLASS_ID } from '@/lib/demoData';
+import { getStudentClassId } from '@/lib/studentProfile';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -33,7 +34,7 @@ function buildPeriodRows(bellPeriods) {
   });
 }
 
-export default function Schedule({ role = 'homeroom_teacher' }) {
+export default function Schedule({ role = 'homeroom_teacher', user }) {
   const [slots, setSlots] = useState([]);
   const [periods, setPeriods] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -44,6 +45,7 @@ export default function Schedule({ role = 'homeroom_teacher' }) {
   const [currentPeriod, setCurrentPeriod] = useState(null);
 
   const canEdit = role === 'homeroom_teacher' || role === 'admin';
+  const classId = role === 'student' ? getStudentClassId(user, CLASS_ID) : CLASS_ID;
   const todayDayName = HEBREW_DAY_NAMES[new Date().getDay()];
 
   // Update current-period highlight every 30s
@@ -65,7 +67,7 @@ export default function Schedule({ role = 'homeroom_teacher' }) {
     setLoading(true);
     const dayType = getTodayDayType();
     const [data, bellPeriods] = await Promise.all([
-      base44.entities.ScheduleSlot.filter({ class_id: CLASS_ID }),
+      base44.entities.ScheduleSlot.filter({ class_id: classId }),
       loadBellSchedule(dayType === 'fri' ? 'sun_thu' : dayType), // weekly view shows Sun–Thu
     ]);
     setSlots(data);
@@ -87,7 +89,7 @@ export default function Schedule({ role = 'homeroom_teacher' }) {
   const handleSaveCell = useCallback(async (payload) => {
     const { day, period, slot, periodRow } = editor;
     const base = {
-      class_id: CLASS_ID,
+      class_id: classId,
       day,
       period: Number(period),
       start_time: periodRow?.start_time || '',
@@ -113,7 +115,7 @@ export default function Schedule({ role = 'homeroom_teacher' }) {
   }, []);
 
   const handleDeleteAll = useCallback(async () => {
-    const all = await base44.entities.ScheduleSlot.filter({ class_id: CLASS_ID });
+    const all = await base44.entities.ScheduleSlot.filter({ class_id: classId });
     await Promise.all(all.map(s => base44.entities.ScheduleSlot.delete(s.id)));
     toast.success('המערכת נמחקה');
     setConfirmDeleteAll(false);
@@ -140,7 +142,7 @@ export default function Schedule({ role = 'homeroom_teacher' }) {
       />
 
       {/* Smart card synced with bells */}
-      <NowNextCard classId={CLASS_ID} />
+      <NowNextCard classId={classId} />
 
       {loading ? (
         <div className="flex justify-center py-12">
@@ -162,7 +164,7 @@ export default function Schedule({ role = 'homeroom_teacher' }) {
           open={showImport}
           onOpenChange={setShowImport}
           onImported={load}
-          classId={CLASS_ID}
+          classId={classId}
         />
       )}
 
