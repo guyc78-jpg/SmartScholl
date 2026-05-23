@@ -10,17 +10,47 @@
       "type": "string",
       "description": "\u05e9\u05dd \u05de\u05dc\u05d0"
     },
+    "request_type": {
+      "type": "string",
+      "enum": [
+        "role_approval",
+        "class_change"
+      ],
+      "default": "role_approval",
+      "description": "\u05e1\u05d5\u05d2 \u05d4\u05d1\u05e7\u05e9\u05d4"
+    },
     "requested_role": {
       "type": "string",
       "enum": [
         "homeroom_teacher",
-        "coordinator"
+        "coordinator",
+        "student"
       ],
       "description": "\u05ea\u05e4\u05e7\u05d9\u05d3 \u05de\u05d1\u05d5\u05e7\u05e9"
     },
     "class_or_grade": {
       "type": "string",
       "description": "\u05db\u05d9\u05ea\u05d4/\u05e9\u05db\u05d1\u05d4"
+    },
+    "current_grade": {
+      "type": "string",
+      "description": "\u05e9\u05db\u05d1\u05d4 \u05e0\u05d5\u05db\u05d7\u05d9\u05ea"
+    },
+    "current_class": {
+      "type": "string",
+      "description": "\u05db\u05d9\u05ea\u05d4 \u05e0\u05d5\u05db\u05d7\u05d9\u05ea"
+    },
+    "requested_grade": {
+      "type": "string",
+      "description": "\u05e9\u05db\u05d1\u05d4 \u05de\u05d1\u05d5\u05e7\u05e9\u05ea"
+    },
+    "requested_class": {
+      "type": "string",
+      "description": "\u05db\u05d9\u05ea\u05d4 \u05de\u05d1\u05d5\u05e7\u05e9\u05ea"
+    },
+    "request_reason": {
+      "type": "string",
+      "description": "\u05e1\u05d9\u05d1\u05ea \u05d4\u05d1\u05e7\u05e9\u05d4"
     },
     "subject": {
       "type": "string",
@@ -60,7 +90,7 @@
     "is_suspicious": {
       "type": "boolean",
       "default": false,
-      "description": "\u05e1\u05d5\u05de\u05df \u05db\u05d7\u05e9\u05d5\u05d3"
+      "description": "\u05de\u05e1\u05d5\u05de\u05df \u05db\u05d7\u05e9\u05d5\u05d3"
     },
     "suspicious_notes": {
       "type": "string",

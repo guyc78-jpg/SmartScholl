@@ -128,13 +128,15 @@ const AuthenticatedApp = () => {
         <Route path="/profile" element={<Profile user={user} role={role} onRoleChange={setWorkRole} />} />
         {approvedRoles.includes('admin') && (
           <>
-            <Route path="/approvals" element={<ApprovalManagement role={role} />} />
             <Route path="/users" element={<UserManagement />} />
             <Route path="/bell-schedule" element={<BellScheduleSettings user={user} role={role} />} />
           </>
         )}
         {(approvedRoles.includes('admin') || approvedRoles.includes('homeroom_teacher') || approvedRoles.includes('coordinator')) && (
-          <Route path="/grade-monitor" element={<GradeMonitor user={user} role={role} />} />
+          <>
+            <Route path="/approvals" element={<ApprovalManagement role={role} />} />
+            <Route path="/grade-monitor" element={<GradeMonitor user={user} role={role} />} />
+          </>
         )}
       </>}
 

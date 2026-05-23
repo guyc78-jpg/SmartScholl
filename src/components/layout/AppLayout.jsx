@@ -30,9 +30,8 @@ const sidebarGroups = [
   },
   {
     title: 'ניהול מערכת',
-    adminOnly: true,
     items: [
-      { path: '/approvals', icon: UserCheck, label: 'אישורי הרשמה', roles: ['admin'] },
+      { path: '/approvals', icon: UserCheck, label: 'אישורים', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
       { path: '/users', icon: ShieldCheck, label: 'הרשאות משתמשים', roles: ['admin'] },
       { path: '/bell-schedule', icon: Bell, label: 'צלצולים והפסקות', roles: ['admin'] },
     ],
@@ -70,7 +69,7 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
   const contextLabel = getUserContextLabel(user, role);
 
   useEffect(() => {
-    if (!approvedRoles.includes('admin')) {
+    if (!approvedRoles.some(role => ['admin', 'homeroom_teacher', 'coordinator'].includes(role))) {
       setPendingCount(0);
       return;
     }

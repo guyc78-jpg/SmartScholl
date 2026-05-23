@@ -10,6 +10,7 @@ import { Save, UserRound, Send, School } from 'lucide-react';
 import GradeClassSelect from '@/components/profile/GradeClassSelect';
 import UserPermissionEditor from '@/components/profile/UserPermissionEditor';
 import WorkModeSelector from '@/components/layout/WorkModeSelector';
+import ClassChangeRequestCard from '@/components/profile/ClassChangeRequestCard';
 import { invalidateSchoolNameCache } from '@/components/layout/SchoolNameBanner';
 import { extractGradeFromClass } from '@/lib/schoolStructure';
 import { getAvailableRoles, getSystemRole, getUserDisplayName, getRoleLabel, GENDER_OPTIONS } from '@/lib/roleUtils';
@@ -94,6 +95,7 @@ export default function Profile({ user, role, onRoleChange }) {
   const currentRoleLabel = getRoleLabel(primaryRole, user);
   const additionalRoleLabels = approvedRoles.filter(item => item !== primaryRole).map(item => getRoleLabel(item, user)).filter(Boolean).join(', ') || 'אין';
   const hasMultipleRoles = approvedRoles.length > 1;
+  const isStudentProfile = approvedRoles.includes('student') && !approvedRoles.some(item => ['admin', 'homeroom_teacher', 'coordinator'].includes(item));
 
   return (
     <div className="min-h-full bg-background p-4 md:p-8" dir="rtl">
@@ -220,6 +222,10 @@ export default function Profile({ user, role, onRoleChange }) {
                 />
               </CardContent>
             </Card>
+          )}
+
+          {isStudentProfile && (
+            <ClassChangeRequestCard user={user} displayName={form.profile_full_name} />
           )}
 
           {!isAdmin && (

@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import {
   CheckCircle, XCircle, AlertTriangle, Clock, User,
-  BookOpen, Users, ChevronDown, ChevronUp, Shield, ScrollText
+  BookOpen, Users, ChevronDown, ChevronUp, Shield, ScrollText, School
 } from 'lucide-react';
 import PageHeader from '@/components/ui/PageHeader';
 
@@ -48,7 +48,9 @@ function RequestCard({ req, onApprove, onReject, processing }) {
           <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isSuspicious ? 'bg-red-100 dark:bg-red-900/30' : 'bg-primary/10'}`}>
             {isSuspicious
               ? <AlertTriangle className="w-5 h-5 text-red-600" />
-              : (req.requested_role === 'coordinator' ? <Users className="w-5 h-5 text-primary" /> : <BookOpen className="w-5 h-5 text-primary" />)
+              : (req.request_type === 'class_change'
+                ? <School className="w-5 h-5 text-primary" />
+                : (req.requested_role === 'coordinator' ? <Users className="w-5 h-5 text-primary" /> : <BookOpen className="w-5 h-5 text-primary" />))
             }
           </div>
           <div className="flex-1 min-w-0">
@@ -63,9 +65,19 @@ function RequestCard({ req, onApprove, onReject, processing }) {
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">{req.user_email}</p>
             <p className="text-xs text-foreground mt-1">
-              <span className="text-muted-foreground">תפקיד: </span>{ROLE_LABELS[req.requested_role]}
-              {req.class_or_grade && <> · <span className="text-muted-foreground">כיתה: </span>{req.class_or_grade}</>}
-              {req.subject && <> · <span className="text-muted-foreground">מקצוע: </span>{req.subject}</>}
+              {req.request_type === 'class_change' ? (
+                <>
+                  <span className="text-muted-foreground">בקשה: </span>שינוי כיתה
+                  <span> · </span><span className="text-muted-foreground">מ־</span>{req.current_class || 'לא הוגדרה'}
+                  <span> </span><span className="text-muted-foreground">אל </span>{req.requested_class || req.class_or_grade}
+                </>
+              ) : (
+                <>
+                  <span className="text-muted-foreground">תפקיד: </span>{ROLE_LABELS[req.requested_role]}
+                  {req.class_or_grade && <> · <span className="text-muted-foreground">כיתה: </span>{req.class_or_grade}</>}
+                  {req.subject && <> · <span className="text-muted-foreground">מקצוע: </span>{req.subject}</>}
+                </>
+              )}
             </p>
             {req.extra_roles && <p className="text-xs text-muted-foreground mt-0.5">תפקידים נוספים: {req.extra_roles}</p>}
             {isSuspicious && req.suspicious_notes && (
@@ -87,6 +99,7 @@ function RequestCard({ req, onApprove, onReject, processing }) {
             >
               <div className="mt-3 pt-3 border-t space-y-1 text-xs text-muted-foreground">
                 {req.school_role && <p><span className="font-medium">תפקיד בביה"ס:</span> {req.school_role}</p>}
+                {req.request_type === 'class_change' && req.request_reason && <p><span className="font-medium">סיבת הבקשה:</span> {req.request_reason}</p>}
                 <p><span className="font-medium">נשלח:</span> {req.created_date ? new Date(req.created_date).toLocaleString('he-IL') : '-'}</p>
                 {req.reviewed_by && <p><span className="font-medium">טופל ע"י:</span> {req.reviewed_by}</p>}
                 {req.rejection_reason && <p><span className="font-medium">סיבת דחייה:</span> {req.rejection_reason}</p>}
@@ -193,8 +206,8 @@ export default function ApprovalManagement({ role }) {
   return (
     <div className="p-4 lg:p-6 space-y-6" dir="rtl">
       <PageHeader
-        title="ניהול אישורי הרשמה"
-        subtitle="אישור ודחיית בקשות צוות להצטרפות למערכת"
+        title="ניהול אישורים"
+        subtitle="אישור ודחיית בקשות הרשאה ושינוי כיתה"
         actions={
           <div className="flex items-center gap-2">
             {pendingReqs.length > 0 && (
