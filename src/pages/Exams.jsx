@@ -175,11 +175,24 @@ export default function Exams({ role, user }) {
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         {isStudent && <Button size="sm" variant={onlyMine ? 'default' : 'outline'} onClick={() => setOnlyMine(v => !v)}>{onlyMine ? 'הלוח שלי' : 'כל הלוח השכבתי'}</Button>}
-        <div className="flex gap-1 rounded-lg border bg-card p-1 ms-auto overflow-x-auto max-w-full">
-          <Button size="sm" className="whitespace-nowrap" variant={view === 'month' ? 'default' : 'ghost'} onClick={() => { setView('month'); setOffset(0); }}><CalendarDays className="w-4 h-4" />חודש</Button>
-          <Button size="sm" className="whitespace-nowrap" variant={view === 'week' ? 'default' : 'ghost'} onClick={() => { setView('week'); setOffset(0); }}><LayoutGrid className="w-4 h-4" />שבוע</Button>
-          <Button size="sm" className="whitespace-nowrap" variant={view === 'day' ? 'default' : 'ghost'} onClick={() => { setView('day'); setOffset(0); }}><CalendarDays className="w-4 h-4" />יום</Button>
-          <Button size="sm" className="whitespace-nowrap" variant={view === 'list' ? 'default' : 'ghost'} onClick={() => setView('list')}><List className="w-4 h-4" />רשימה</Button>
+        <div className="grid grid-cols-4 gap-1 rounded-lg border bg-card p-1 ms-auto w-full sm:w-auto sm:min-w-[360px]">
+          {[
+            { key: 'month', label: 'חודש', icon: CalendarDays, action: () => { setView('month'); setOffset(0); } },
+            { key: 'week', label: 'שבוע', icon: LayoutGrid, action: () => { setView('week'); setOffset(0); } },
+            { key: 'day', label: 'יום', icon: CalendarDays, action: () => { setView('day'); setOffset(0); } },
+            { key: 'list', label: 'רשימה', icon: List, action: () => setView('list') }
+          ].map(({ key, label, icon: Icon, action }) => (
+            <Button
+              key={key}
+              size="sm"
+              variant={view === key ? 'default' : 'ghost'}
+              onClick={action}
+              className="h-9 px-2 w-full flex items-center justify-center gap-1.5 text-xs sm:text-sm font-medium whitespace-nowrap"
+            >
+              <Icon className="w-4 h-4 shrink-0" />
+              <span>{label}</span>
+            </Button>
+          ))}
         </div>
       </div>
 
