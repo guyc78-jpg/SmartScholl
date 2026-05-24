@@ -19,7 +19,7 @@ export default function EventFilters({ activeGroup, onGroupChange, search, onSea
         <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input value={search} onChange={e => onSearchChange(e.target.value)} placeholder="חיפוש לפי שם, מקצוע, כיתה או קבוצה..." className="pr-9 h-9" />
       </div>
-      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
+      <div className="flex flex-wrap gap-2 pb-1">
         {groups.map(group => {
           const active = activeGroup === group.key;
           return (

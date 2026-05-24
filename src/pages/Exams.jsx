@@ -60,10 +60,13 @@ export default function Exams({ role, user }) {
 
   const currentStudent = useMemo(() => {
     if (!isStudent) return null;
-    return students.find(s => s.email === user?.email || s.user_email === user?.email) || students[0] || null;
+    return students.find(s => s.email === user?.email || s.user_email === user?.email) || null;
   }, [isStudent, students, user]);
 
-  const completionsByEvent = useMemo(() => Object.fromEntries(completions.map(c => [c.exam_id, c])), [completions]);
+  const completionsByEvent = useMemo(() => {
+    const relevantCompletions = currentStudent ? completions.filter(c => c.student_id === currentStudent.id) : completions;
+    return Object.fromEntries(relevantCompletions.map(c => [c.exam_id, c]));
+  }, [completions, currentStudent]);
 
   const demoEvents = useMemo(() => [
     { id: 'demo_1', class_id: classId, title: 'בגרות במתמטיקה', subject: 'מתמטיקה', type: 'בגרות', date: todayIso, time: '09:00', audience_scope: 'grade', audience_grades: ['יב'], material: 'חדו״א, הסתברות וגיאומטריה' },
@@ -76,7 +79,8 @@ export default function Exams({ role, user }) {
 
   const visibleEvents = useMemo(() => {
     let list = filterBySearch(filterByGroup(sourceEvents, filterGroup), search);
-    if (isStudent && currentStudent && onlyMine) {
+    if (isStudent && onlyMine) {
+      if (!currentStudent) return [];
       list = list.filter(event => isEventRelevantForStudent(event, currentStudent));
       list = list.filter(event => completionsByEvent[event.id]?.status !== 'not_relevant');
     }
@@ -127,9 +131,9 @@ export default function Exams({ role, user }) {
         subtitle="כל אירועי השכבה במקום אחד — מבחנים, בגרויות, חזרות, טקסים, חגים, צילומים ופעילויות"
         actions={
           <>
-            {canTrack && <Button variant={showTracking ? 'default' : 'outline'} size="sm" onClick={() => setShowTracking(v => !v)}><Users className="w-4 h-4" />מעקב כיתתי</Button>}
-            {canImport && <Button size="sm" onClick={() => setShowImport(true)}><FileUp className="w-4 h-4" />ייבוא לוח מקובץ</Button>}
+            {canImport && <Button size="lg" onClick={() => setShowImport(true)} className="font-bold shadow-sm"><FileUp className="w-4 h-4" />ייבוא לוח מקובץ</Button>}
             {canEdit && <Button variant="outline" size="sm" onClick={() => { setEditingEvent(null); setShowForm(true); }}><Plus className="w-4 h-4" />הוסף אירוע</Button>}
+            {canTrack && <Button variant={showTracking ? 'default' : 'outline'} size="sm" onClick={() => setShowTracking(v => !v)}><Users className="w-4 h-4" />מעקב כיתתי</Button>}
           </>
         }
       />

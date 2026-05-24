@@ -13,10 +13,12 @@ export default function SmartCalendarEmptyState({ canImport, canAdd, onImport, o
         <h3 className="text-xl font-bold mb-2">הלוח החכם מוכן לשימוש</h3>
         <p className="text-sm text-muted-foreground mb-5">ייבאו קובץ לוח מבחנים/פעילויות, הוסיפו אירוע ידנית או צפו בדוגמה כדי לראות איך הלוח ייראה.</p>
         <div className="flex flex-col sm:flex-row justify-center gap-2">
-          {canImport && <Button onClick={onImport} className="gap-2"><FileUp className="w-4 h-4" />ייבוא לוח מקובץ</Button>}
+          {canImport && <Button onClick={onImport} size="lg" className="gap-2 font-bold"><FileUp className="w-4 h-4" />ייבוא קובץ</Button>}
           {canAdd && <Button variant="outline" onClick={onAdd} className="gap-2"><Plus className="w-4 h-4" />הוסף אירוע</Button>}
-          <Button variant="secondary" onClick={onDemo} className="gap-2"><Eye className="w-4 h-4" />צפה בדוגמה</Button>
         </div>
+        <button onClick={onDemo} className="mt-3 inline-flex items-center gap-1 text-xs text-primary hover:underline">
+          <Eye className="w-3 h-3" />צפה בדוגמה
+        </button>
       </div>
     </Card>
   );
