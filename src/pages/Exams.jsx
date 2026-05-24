@@ -18,6 +18,7 @@ import ClassTrackingPanel from '@/components/exams/ClassTrackingPanel';
 import UpcomingEventsPanel from '@/components/exams/UpcomingEventsPanel';
 import SmartCalendarEmptyState from '@/components/exams/SmartCalendarEmptyState';
 import { isEventRelevantForStudent } from '@/components/exams/AudienceEditor';
+import { getAvailableRoles } from '@/lib/roleUtils';
 
 export default function Exams({ role, user }) {
   const [events, setEvents] = useState([]);
@@ -36,9 +37,10 @@ export default function Exams({ role, user }) {
   const [editingEvent, setEditingEvent] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
 
-  const canImport = ['admin', 'coordinator'].includes(role);
-  const canEdit = ['admin', 'coordinator', 'homeroom_teacher'].includes(role);
-  const canTrack = ['coordinator', 'homeroom_teacher'].includes(role);
+  const approvedRoles = getAvailableRoles(user);
+  const canImport = approvedRoles.includes('admin') || approvedRoles.includes('coordinator');
+  const canEdit = role !== 'student' && (approvedRoles.includes('admin') || approvedRoles.includes('coordinator') || approvedRoles.includes('homeroom_teacher'));
+  const canTrack = role !== 'student' && (approvedRoles.includes('coordinator') || approvedRoles.includes('homeroom_teacher'));
   const isStudent = role === 'student';
   const classId = isStudent ? getStudentClassId(user, CLASS_ID) : getUserApprovedClassId(user, CLASS_ID);
   const todayIso = new Date().toISOString().split('T')[0];
