@@ -70,52 +70,6 @@ export default function ImportScheduleDialog({ open, onOpenChange, onImported, c
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const parsePdfFile = async (file) => {
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    const schema = {
-      type: 'object',
-      properties: {
-        class_name: { type: 'string', description: 'שם הכיתה שעבורה הופקה המערכת, מתוך כותרת הדוח (למשל "י\"ב 8")' },
-        lessons: {
-          type: 'array',
-          description: 'כל השיעורים בכל התאים של הטבלה. בכל תא יכולים להופיע מספר שיעורים מקבילים מופרדים בקו "----------". כל שיעור הוא רשומה נפרדת.',
-          items: {
-            type: 'object',
-            properties: {
-              day: { type: 'string', description: 'יום בשבוע: ראשון/שני/שלישי/רביעי/חמישי/שישי - לפי העמודה בטבלה' },
-              period: { type: 'number', description: 'מספר השיעור 1-12 - לפי השורה בטבלה (העמודה הימנית ביותר עם המספר)' },
-              subject: { type: 'string', description: 'שם המקצוע בלבד (למשל "מתמטיקה", "אנגלית", "תנך-מורחב")' },
-              teacher: { type: 'string', description: 'שם המורה המלא (שם משפחה ושם פרטי, למשל "חגאי מיכל")' },
-              classes: { type: 'string', description: 'רשימת הכיתות שאליהן השיעור משויך, מופיעה אחרי שם המקצוע (למשל "י\"ב 1 י\"ב 2 י\"ב 7 י\"ב 8")' },
-              level: { type: 'string', description: 'רמת לימוד אם קיימת בסוגריים (למשל "3 יח\"ל", "5 יח\"ל", "תגבור לבגרות")' },
-              room: { type: 'string', description: 'חדר - הטקסט שאחרי "חדר:" (למשל "יב\' 1", "מקלט תקשורת", "חדר תקשורת")' }
-            },
-            required: ['day', 'period', 'subject']
-          }
-        }
-      }
-    };
-    const result = await base44.integrations.Core.ExtractDataFromUploadedFile({ file_url, json_schema: schema });
-    if (result.status !== 'success') throw new Error(result.details || 'נכשל חילוץ הנתונים מה-PDF');
-
-    const allLessons = result.output?.lessons || [];
-    const targetClass = className || result.output?.class_name || '';
-
-    return allLessons
-      .filter(row => row.subject && lessonBelongsToClass(row.classes, targetClass))
-      .map(row => ({
-        ...emptyRow,
-        day: normalizeDay(row.day),
-        period: Number(row.period || 1),
-        start_time: '',
-        end_time: '',
-        subject: String(row.subject || '').trim(),
-        teacher: String(row.teacher || '').trim(),
-        room: String(row.room || '').trim(),
-        notes: String(row.level || '').trim()
-      }));
-  };
-
   // Parse a single lesson text block, e.g.:
   //   "חגאי מיכל, מתמטיקה,  י\"ב 1 י\"ב 2 י\"ב 8 (רמה: 3 יח``ל)\nחדר: יב' 1"
   // Returns { teacher, subject, classes, level, room } or null.
@@ -253,8 +207,7 @@ export default function ImportScheduleDialog({ open, onOpenChange, onImported, c
     setIsParsing(true);
 
     try {
-      const isPdf = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';
-      const mappedRows = isPdf ? await parsePdfFile(file) : await parseSpreadsheetFile(file);
+      const mappedRows = await parseSpreadsheetFile(file);
 
       if (mappedRows.length === 0) {
         setError('לא נמצאו שיעורים בקובץ. ודאו שהקובץ מכיל מערכת שעות עם מקצועות.');
@@ -302,14 +255,14 @@ export default function ImportScheduleDialog({ open, onOpenChange, onImported, c
 
         <div className="space-y-4 text-right">
           <div className="rounded-xl border border-dashed border-border p-5 bg-muted/30">
-            <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv,.pdf" onChange={handleFileChange} className="hidden" />
+            <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" onChange={handleFileChange} className="hidden" />
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <p className="font-medium">העלאת קובץ Excel, CSV או PDF</p>
+                <p className="font-medium">העלאת קובץ Excel או CSV</p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  קבצי PDF (דוחות מערכת שעות) נקראים אוטומטית — השיעורים מסוננים לפי כיתה
+                  השיעורים מסוננים אוטומטית לפי כיתה
                   {className ? ` "${className}"` : ''}.
-                  בקובץ Excel/CSV: עמודות יום, שיעור, מקצוע, מורה, חדר.
+                  עמודות נתמכות: יום, שיעור, מקצוע, מורה, חדר.
                 </p>
                 <SelectedFileNotice fileName={fileName} onRemove={clearSelectedFile} disabled={isParsing || isImporting} />
               </div>
