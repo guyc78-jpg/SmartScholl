@@ -116,23 +116,131 @@ export default function ImportScheduleDialog({ open, onOpenChange, onImported, c
       }));
   };
 
+  // Parse a single lesson text block, e.g.:
+  //   "חגאי מיכל, מתמטיקה,  י\"ב 1 י\"ב 2 י\"ב 8 (רמה: 3 יח``ל)\nחדר: יב' 1"
+  // Returns { teacher, subject, classes, level, room } or null.
+  const parseLessonBlock = (block) => {
+    const text = String(block || '').trim();
+    if (!text) return null;
+
+    // Extract room (line starting with "חדר:")
+    let room = '';
+    const roomMatch = text.match(/חדר:\s*(.+?)(?:\n|$)/);
+    if (roomMatch) room = roomMatch[1].trim();
+
+    // Remove the room line for the rest of the parsing
+    const withoutRoom = text.replace(/חדר:\s*.+?(?:\n|$)/g, '').trim();
+
+    // Extract level "(רמה: X)"
+    let level = '';
+    const levelMatch = withoutRoom.match(/\(רמה:\s*([^)]+)\)/);
+    if (levelMatch) level = levelMatch[1].replace(/`/g, '').trim();
+    const withoutLevel = withoutRoom.replace(/\(רמה:[^)]+\)/, '').trim();
+
+    // The remaining structure is: "teacher, subject, classes"
+    const parts = withoutLevel.split(',').map(p => p.trim()).filter(Boolean);
+    if (parts.length < 2) return null;
+
+    const teacher = parts[0];
+    const subject = parts[1];
+    const classes = parts.slice(2).join(' ').trim();
+
+    return { teacher, subject, classes, level, room };
+  };
+
+  // Split a cell into parallel lesson blocks (separated by lines of dashes)
+  const splitLessonBlocks = (cellValue) => {
+    return String(cellValue || '')
+      .split(/\n?-{5,}\n?/)
+      .map(s => s.trim())
+      .filter(Boolean);
+  };
+
   const parseSpreadsheetFile = async (file) => {
     const buffer = await file.arrayBuffer();
     const workbook = XLSX.read(buffer);
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const data = XLSX.utils.sheet_to_json(sheet);
+    const grid = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
 
-    return data.map((row, index) => ({
-      ...emptyRow,
-      day: normalizeDay(row['יום'] || row['day'] || row['Day']),
-      period: Number(row['שיעור'] || row['שיעור מספר'] || row['period'] || index + 1),
-      start_time: String(row['שעת התחלה'] || row['start_time'] || row['start'] || ''),
-      end_time: String(row['שעת סיום'] || row['end_time'] || row['end'] || ''),
-      subject: String(row['מקצוע'] || row['subject'] || ''),
-      teacher: String(row['מורה'] || row['teacher'] || ''),
-      room: String(row['חדר'] || row['room'] || ''),
-      notes: String(row['הערות'] || row['notes'] || '')
-    })).filter(row => row.subject);
+    if (!grid || grid.length === 0) return [];
+
+    // 1) Locate the header row containing day names; map column index → day name
+    let headerRowIdx = -1;
+    let dayCols = {}; // colIndex -> day name
+    let periodCol = -1;
+    for (let r = 0; r < Math.min(grid.length, 10); r++) {
+      const row = grid[r] || [];
+      const foundDays = {};
+      row.forEach((cell, c) => {
+        const day = DAYS.find(d => String(cell).trim() === d);
+        if (day) foundDays[c] = day;
+      });
+      if (Object.keys(foundDays).length >= 3) {
+        headerRowIdx = r;
+        dayCols = foundDays;
+        // Period column: the one that is NOT a day column and has numeric values in following rows
+        const allCols = row.length;
+        for (let c = 0; c < allCols; c++) {
+          if (dayCols[c]) continue;
+          // Check if the column contains numbers in subsequent rows
+          let numericCount = 0;
+          for (let rr = r + 1; rr < grid.length; rr++) {
+            const v = (grid[rr] || [])[c];
+            if (v !== '' && v != null && !isNaN(Number(v))) numericCount++;
+          }
+          if (numericCount >= 3) { periodCol = c; break; }
+        }
+        break;
+      }
+    }
+
+    // Fallback to legacy column-name based parsing
+    if (headerRowIdx === -1) {
+      const data = XLSX.utils.sheet_to_json(sheet);
+      return data.map((row, index) => ({
+        ...emptyRow,
+        day: normalizeDay(row['יום'] || row['day'] || row['Day']),
+        period: Number(row['שיעור'] || row['שיעור מספר'] || row['period'] || index + 1),
+        start_time: String(row['שעת התחלה'] || row['start_time'] || row['start'] || ''),
+        end_time: String(row['שעת סיום'] || row['end_time'] || row['end'] || ''),
+        subject: String(row['מקצוע'] || row['subject'] || ''),
+        teacher: String(row['מורה'] || row['teacher'] || ''),
+        room: String(row['חדר'] || row['room'] || ''),
+        notes: String(row['הערות'] || row['notes'] || '')
+      })).filter(row => row.subject);
+    }
+
+    // 2) For each data row, read period number and each day column's lesson blocks
+    const results = [];
+    for (let r = headerRowIdx + 1; r < grid.length; r++) {
+      const row = grid[r] || [];
+      const periodValue = periodCol >= 0 ? row[periodCol] : (r - headerRowIdx);
+      const period = Number(periodValue);
+      if (!period || isNaN(period)) continue;
+
+      for (const colIndex of Object.keys(dayCols)) {
+        const day = dayCols[colIndex];
+        const cellValue = row[Number(colIndex)];
+        const blocks = splitLessonBlocks(cellValue);
+        for (const block of blocks) {
+          const parsed = parseLessonBlock(block);
+          if (!parsed) continue;
+          if (!lessonBelongsToClass(parsed.classes, className)) continue;
+          results.push({
+            ...emptyRow,
+            day,
+            period,
+            start_time: '',
+            end_time: '',
+            subject: parsed.subject,
+            teacher: parsed.teacher,
+            room: parsed.room,
+            notes: parsed.level
+          });
+        }
+      }
+    }
+    return results;
   };
 
   const handleFileChange = async (event) => {
