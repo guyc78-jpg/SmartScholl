@@ -9,6 +9,7 @@ import { useState, useEffect } from 'react';
 import { seedDemoData } from '@/lib/demoData';
 import AppLayout from '@/components/layout/AppLayout';
 import { Toaster as SonnerToaster } from 'sonner';
+import useThemePreference from '@/hooks/useThemePreference';
 
 import Dashboard from './pages/Dashboard';
 import Students from './pages/Students';
@@ -41,20 +42,9 @@ import { getAvailableRoles, getInitialWorkRole, getSystemRole } from './lib/role
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user, updateCurrentUser, checkUserAuth } = useAuth();
-  const [darkMode, setDarkMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('darkMode') === 'true' || window.matchMedia('(prefers-color-scheme: dark)').matches;
-    }
-    return false;
-  });
+  const { preference: themePreference, setPreference: setThemePreference, isDark: darkMode, toggleDark } = useThemePreference();
   const [seeded, setSeeded] = useState(false);
   const [workRole, setWorkRole] = useState(null);
-
-  useEffect(() => {
-    if (darkMode) document.documentElement.classList.add('dark');
-    else document.documentElement.classList.remove('dark');
-    localStorage.setItem('darkMode', darkMode);
-  }, [darkMode]);
 
   useEffect(() => {
     if (!seeded && !isLoadingAuth && !authError) {
@@ -127,7 +117,7 @@ const AuthenticatedApp = () => {
         <Route path="/treatment-center" element={<TreatmentCenter />} />
         <Route path="/announcements" element={<Announcements role={role} user={user} />} />
         <Route path="/reports" element={<Reports role={role} />} />
-        <Route path="/profile" element={<Profile user={user} role={role} onRoleChange={setWorkRole} />} />
+        <Route path="/profile" element={<Profile user={user} role={role} onRoleChange={setWorkRole} themePreference={themePreference} onThemePreferenceChange={setThemePreference} />} />
         {approvedRoles.includes('admin') && (
           <>
             <Route path="/users" element={<UserManagement />} />
@@ -151,7 +141,7 @@ const AuthenticatedApp = () => {
         <Route path="/exams" element={<Exams role={role} user={user} />} />
         <Route path="/announcements" element={<Announcements role={role} user={user} />} />
         <Route path="/community" element={<Community role={role} user={user} />} />
-        <Route path="/profile" element={<Profile user={user} role={role} onRoleChange={setWorkRole} />} />
+        <Route path="/profile" element={<Profile user={user} role={role} onRoleChange={setWorkRole} themePreference={themePreference} onThemePreferenceChange={setThemePreference} />} />
       </>}
 
       {/* Block students from any staff route — redirect to their home */}
@@ -171,7 +161,7 @@ const AuthenticatedApp = () => {
   );
 
   return (
-    <AppLayout user={user} role={role} darkMode={darkMode} setDarkMode={setDarkMode} onRoleChange={setWorkRole}>
+    <AppLayout user={user} role={role} darkMode={darkMode} toggleDark={toggleDark} onRoleChange={setWorkRole}>
       {renderRoutes()}
     </AppLayout>
   );

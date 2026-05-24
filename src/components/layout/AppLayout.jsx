@@ -54,7 +54,7 @@ const studentBottomNav = [
   { path: '/exams', icon: BookOpen, label: 'מבחנים', roles: ['student'] },
 ];
 
-export default function AppLayout({ children, user, role, darkMode, setDarkMode, onRoleChange }) {
+export default function AppLayout({ children, user, role, darkMode, toggleDark, onRoleChange }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
   const location = useLocation();
@@ -139,7 +139,7 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
 
       <div className="px-3 py-3 border-t border-sidebar-border space-y-0.5">
         <button
-          onClick={() => setDarkMode(!darkMode)}
+          onClick={toggleDark}
           className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground transition-colors"
         >
           {darkMode ? <Sun className="w-4 h-4 flex-shrink-0" /> : <Moon className="w-4 h-4 flex-shrink-0" />}
@@ -216,7 +216,7 @@ export default function AppLayout({ children, user, role, darkMode, setDarkMode,
           </div>
           <button
             type="button"
-            onClick={() => setDarkMode(!darkMode)}
+            onClick={toggleDark}
             aria-label={darkMode ? 'מצב בהיר' : 'מצב כהה'}
             className="w-11 h-11 flex items-center justify-center bg-transparent border-0 shadow-none hover:bg-transparent active:bg-transparent focus:bg-transparent text-foreground/70 dark:text-foreground/80 touch-manipulation"
           >

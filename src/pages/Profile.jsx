@@ -11,6 +11,7 @@ import GradeClassSelect from '@/components/profile/GradeClassSelect';
 import UserPermissionEditor from '@/components/profile/UserPermissionEditor';
 import WorkModeSelector from '@/components/layout/WorkModeSelector';
 import ClassChangeRequestCard from '@/components/profile/ClassChangeRequestCard';
+import ThemePreferenceCard from '@/components/profile/ThemePreferenceCard';
 import { invalidateSchoolNameCache } from '@/components/layout/SchoolNameBanner';
 import { extractGradeFromClass } from '@/lib/schoolStructure';
 import { getAvailableRoles, getSystemRole, getUserDisplayName, getRoleLabel, GENDER_OPTIONS } from '@/lib/roleUtils';
@@ -24,7 +25,7 @@ const roles = [
   { value: 'parent', label: 'הורה' },
 ];
 
-export default function Profile({ user, role, onRoleChange }) {
+export default function Profile({ user, role, onRoleChange, themePreference, onThemePreferenceChange }) {
   const { updateCurrentUser } = useAuth();
   const [saving, setSaving] = useState(false);
   const [requestedRole, setRequestedRole] = useState('');
@@ -183,6 +184,10 @@ export default function Profile({ user, role, onRoleChange }) {
                 </div>
               </CardContent>
             </Card>
+          )}
+
+          {onThemePreferenceChange && (
+            <ThemePreferenceCard preference={themePreference || 'system'} onChange={onThemePreferenceChange} />
           )}
 
           {hasMultipleRoles && onRoleChange && (
