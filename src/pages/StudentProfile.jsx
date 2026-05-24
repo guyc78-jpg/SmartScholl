@@ -164,22 +164,24 @@ export default function StudentProfile({ role }) {
                 </Button>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 text-sm">
+              <div className="flex flex-col md:flex-row md:flex-wrap md:items-center gap-2 text-sm w-full">
                 {student.phone && (
-                  <a href={`tel:${student.phone}`} className="inline-flex max-w-full items-center gap-1 rounded-full bg-muted px-3 py-1 text-primary hover:underline">
-                    <Phone className="w-3.5 h-3.5" />{student.phone}
+                  <a href={`tel:${student.phone}`} className="flex w-full md:w-auto md:max-w-full items-center gap-1 rounded-full bg-muted px-3 py-1.5 text-primary hover:underline justify-start">
+                    <Phone className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span className="truncate">{student.phone}</span>
                   </a>
                 )}
                 {student.email && (
-                  <a href={`mailto:${student.email}`} className="inline-flex max-w-full items-center gap-1 rounded-full bg-muted px-3 py-1 text-primary hover:underline force-ltr break-all">
-                    <Mail className="w-3.5 h-3.5" />{student.email}
+                  <a href={`mailto:${student.email}`} className="flex w-full md:w-auto md:max-w-full items-center gap-1 rounded-full bg-muted px-3 py-1.5 text-primary hover:underline justify-start">
+                    <Mail className="w-3.5 h-3.5 flex-shrink-0" />
+                    <span className="truncate force-ltr">{student.email}</span>
                   </a>
                 )}
                 {canViewStudentId && (
-                  <div className="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-1 text-muted-foreground">
-                    <span>ת.ז: {showStudentId ? (student.student_number || '—') : maskedStudentNumber}</span>
+                  <div className="flex w-full md:w-auto items-center gap-2 rounded-full bg-muted px-3 py-1.5 text-muted-foreground justify-start">
+                    <span className="truncate">ת.ז: {showStudentId ? (student.student_number || '—') : maskedStudentNumber}</span>
                     {student.student_number && (
-                      <button type="button" onClick={() => setShowStudentId(prev => !prev)} className="text-primary hover:text-primary/80" aria-label="הצג או הסתר תעודת זהות">
+                      <button type="button" onClick={() => setShowStudentId(prev => !prev)} className="text-primary hover:text-primary/80 flex-shrink-0 mr-auto" aria-label="הצג או הסתר תעודת זהות">
                         {showStudentId ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                       </button>
                     )}
