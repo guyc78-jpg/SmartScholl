@@ -1,4 +1,6 @@
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Search } from 'lucide-react';
 import { getEventTypeClasses } from './EventTypeBadge';
 
 const TYPE_GROUPS = [
@@ -7,26 +9,39 @@ const TYPE_GROUPS = [
   { key: 'events', label: 'אירועים', types: ['אירוע שכבתי', 'חזרה', 'חג'] }
 ];
 
-export default function EventFilters({ activeGroup, onGroupChange }) {
+export default function EventFilters({ activeGroup, onGroupChange, search = '', onSearchChange }) {
   return (
-    <div className="flex gap-2 flex-wrap" dir="rtl">
-      <Button
-        variant={activeGroup === 'all' ? 'default' : 'outline'}
-        size="sm"
-        onClick={() => onGroupChange('all')}
-      >
-        הכל
-      </Button>
-      {TYPE_GROUPS.map(group => (
+    <div className="flex flex-wrap items-center gap-2" dir="rtl">
+      <div className="flex gap-2 flex-wrap">
         <Button
-          key={group.key}
-          variant={activeGroup === group.key ? 'default' : 'outline'}
+          variant={activeGroup === 'all' ? 'default' : 'outline'}
           size="sm"
-          onClick={() => onGroupChange(group.key)}
+          onClick={() => onGroupChange('all')}
         >
-          {group.label}
+          הכל
         </Button>
-      ))}
+        {TYPE_GROUPS.map(group => (
+          <Button
+            key={group.key}
+            variant={activeGroup === group.key ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => onGroupChange(group.key)}
+          >
+            {group.label}
+          </Button>
+        ))}
+      </div>
+      {onSearchChange && (
+        <div className="relative ms-auto min-w-[200px] flex-1 max-w-sm">
+          <Search className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            value={search}
+            onChange={e => onSearchChange(e.target.value)}
+            placeholder="חיפוש אירוע..."
+            className="pr-8 h-9"
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -38,6 +53,16 @@ export const filterByGroup = (exams, group) => {
   return exams.filter(e => groupConfig.types.includes(e.type));
 };
 
-// Pull all event types for reuse in legend/details
+export const filterBySearch = (exams, search) => {
+  const q = (search || '').trim().toLowerCase();
+  if (!q) return exams;
+  return exams.filter(e =>
+    (e.title || '').toLowerCase().includes(q) ||
+    (e.subject || '').toLowerCase().includes(q) ||
+    (e.teacher || '').toLowerCase().includes(q) ||
+    (e.notes || '').toLowerCase().includes(q)
+  );
+};
+
 export const ALL_TYPE_GROUPS = TYPE_GROUPS;
 export { getEventTypeClasses };
