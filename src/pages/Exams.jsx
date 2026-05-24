@@ -6,7 +6,7 @@ import { getUserApprovedClassId } from '@/lib/schoolStructure';
 import PageHeader from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { CalendarDays, FileUp, LayoutGrid, List, Plus, Users } from 'lucide-react';
+import { CalendarDays, FileUp, LayoutGrid, List, Plus, Users, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import EventFilters, { filterByGroup, filterBySearch } from '@/components/exams/EventFilters';
 import EventTypeBadge from '@/components/exams/EventTypeBadge';
@@ -100,6 +100,15 @@ export default function Exams({ role, user }) {
     loadData();
   }
 
+  async function clearAllEvents() {
+    if (!events.length) return;
+    if (!window.confirm(`למחוק את כל ${events.length} האירועים בלוח? פעולה זו אינה הפיכה.`)) return;
+    if (!window.confirm('אישור סופי: כל האירועים יימחקו לצמיתות.')) return;
+    await Promise.all(events.map(e => base44.entities.Exam.delete(e.id)));
+    toast.success('הלוח נוקה');
+    loadData();
+  }
+
   async function deleteEvent(id) {
     if (String(id).startsWith('demo_')) return;
     if (!window.confirm('למחוק את האירוע?')) return;
@@ -136,6 +145,7 @@ export default function Exams({ role, user }) {
             {canImport && <Button size="lg" onClick={() => setShowImport(true)} className="font-bold shadow-sm"><FileUp className="w-4 h-4" />ייבוא לוח מקובץ</Button>}
             {canEdit && <Button variant="outline" size="sm" onClick={() => { setEditingEvent(null); setShowForm(true); }}><Plus className="w-4 h-4" />הוסף אירוע</Button>}
             {canTrack && <Button variant={showTracking ? 'default' : 'outline'} size="sm" onClick={() => setShowTracking(v => !v)}><Users className="w-4 h-4" />מעקב כיתתי</Button>}
+            {canImport && events.length > 0 && <Button variant="outline" size="sm" onClick={clearAllEvents} className="text-destructive hover:bg-destructive/10"><Trash2 className="w-4 h-4" />נקה הכל</Button>}
           </>
         }
       />
