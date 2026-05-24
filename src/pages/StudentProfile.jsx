@@ -15,6 +15,7 @@ import AddStudentModal from '@/components/students/AddStudentModal';
 import ParentContactLog from '@/components/student/ParentContactLog';
 import GrowthReport from '@/components/student/GrowthReport';
 import ParentDetailsCard from '@/components/student/ParentDetailsCard';
+import FamilySensitiveInfoCard from '@/components/student/FamilySensitiveInfoCard';
 import { CLASS_ID } from '@/lib/demoData';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/AuthContext';
@@ -79,6 +80,7 @@ export default function StudentProfile({ role }) {
   const communityPct = student.community_service_goal > 0
     ? Math.round((student.community_service_done / student.community_service_goal) * 100) : 0;
   const canEditParents = ['admin', 'homeroom_teacher', 'coordinator'].includes(role);
+  const canAccessSensitiveFamilyInfo = ['admin', 'homeroom_teacher', 'coordinator'].includes(role);
   const presentCount = attendance.filter(a => ['נוכח', 'נוכח/ת'].includes(a.status)).length;
   const absentCount = attendance.filter(a => ['נעדר', 'נעדר/ת'].includes(a.status)).length;
   const lateCount = attendance.filter(a => ['מאחר', 'מאחר/ת'].includes(a.status)).length;
@@ -224,6 +226,13 @@ export default function StudentProfile({ role }) {
             canEdit={canEditParents}
             onStudentUpdate={(updatedParents) => setStudent(prev => ({ ...prev, ...updatedParents }))}
           />
+
+          {canAccessSensitiveFamilyInfo && (
+            <FamilySensitiveInfoCard
+              student={student}
+              canEdit={canAccessSensitiveFamilyInfo}
+            />
+          )}
 
           {/* Community Service */}
           <Card>
