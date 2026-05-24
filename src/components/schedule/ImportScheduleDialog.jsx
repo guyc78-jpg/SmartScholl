@@ -53,21 +53,52 @@ export default function ImportScheduleDialog({ open, onOpenChange, onImported, c
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleFileChange = async (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const parsePdfFile = async (file) => {
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    const schema = {
+      type: 'object',
+      properties: {
+        lessons: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              day: { type: 'string', description: 'יום בשבוע: ראשון/שני/שלישי/רביעי/חמישי/שישי' },
+              period: { type: 'number', description: 'מספר שיעור' },
+              start_time: { type: 'string', description: 'שעת התחלה בפורמט HH:MM' },
+              end_time: { type: 'string', description: 'שעת סיום בפורמט HH:MM' },
+              subject: { type: 'string', description: 'שם המקצוע' },
+              teacher: { type: 'string', description: 'שם המורה' },
+              room: { type: 'string', description: 'חדר' },
+              notes: { type: 'string', description: 'הערות' }
+            }
+          }
+        }
+      }
+    };
+    const result = await base44.integrations.Core.ExtractDataFromUploadedFile({ file_url, json_schema: schema });
+    if (result.status !== 'success') throw new Error(result.details || 'נכשל חילוץ הנתונים מה-PDF');
+    const lessons = result.output?.lessons || [];
+    return lessons.map((row, index) => ({
+      ...emptyRow,
+      day: normalizeDay(row.day),
+      period: Number(row.period || index + 1),
+      start_time: String(row.start_time || ''),
+      end_time: String(row.end_time || ''),
+      subject: String(row.subject || ''),
+      teacher: String(row.teacher || ''),
+      room: String(row.room || ''),
+      notes: String(row.notes || '')
+    })).filter(row => row.subject);
+  };
 
-    setFileName(file.name);
-    setRows([]);
-    setError('');
-    setIsParsing(true);
-
+  const parseSpreadsheetFile = async (file) => {
     const buffer = await file.arrayBuffer();
     const workbook = XLSX.read(buffer);
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const data = XLSX.utils.sheet_to_json(sheet);
 
-    const mappedRows = data.map((row, index) => ({
+    return data.map((row, index) => ({
       ...emptyRow,
       day: normalizeDay(row['יום'] || row['day'] || row['Day']),
       period: Number(row['שיעור'] || row['שיעור מספר'] || row['period'] || index + 1),
@@ -78,11 +109,28 @@ export default function ImportScheduleDialog({ open, onOpenChange, onImported, c
       room: String(row['חדר'] || row['room'] || ''),
       notes: String(row['הערות'] || row['notes'] || '')
     })).filter(row => row.subject);
+  };
 
-    if (mappedRows.length === 0) {
-      setError('לא נמצאו שיעורים בקובץ. ודאו שיש עמודת מקצוע ושורות מלאות.');
-    } else {
-      setRows(mappedRows);
+  const handleFileChange = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setFileName(file.name);
+    setRows([]);
+    setError('');
+    setIsParsing(true);
+
+    try {
+      const isPdf = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';
+      const mappedRows = isPdf ? await parsePdfFile(file) : await parseSpreadsheetFile(file);
+
+      if (mappedRows.length === 0) {
+        setError('לא נמצאו שיעורים בקובץ. ודאו שהקובץ מכיל מערכת שעות עם מקצועות.');
+      } else {
+        setRows(mappedRows);
+      }
+    } catch (e) {
+      setError(e.message || 'אירעה שגיאה בקריאת הקובץ.');
     }
 
     setIsParsing(false);
@@ -122,11 +170,11 @@ export default function ImportScheduleDialog({ open, onOpenChange, onImported, c
 
         <div className="space-y-4 text-right">
           <div className="rounded-xl border border-dashed border-border p-5 bg-muted/30">
-            <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" onChange={handleFileChange} className="hidden" />
+            <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv,.pdf" onChange={handleFileChange} className="hidden" />
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
-                <p className="font-medium">העלאת קובץ Excel או CSV</p>
-                <p className="text-sm text-muted-foreground mt-1">עמודות מומלצות: יום, שיעור, שעת התחלה, שעת סיום, מקצוע, מורה, חדר, הערות.</p>
+                <p className="font-medium">העלאת קובץ Excel, CSV או PDF</p>
+                <p className="text-sm text-muted-foreground mt-1">עמודות מומלצות: יום, שיעור, שעת התחלה, שעת סיום, מקצוע, מורה, חדר, הערות. קבצי PDF ייקראו אוטומטית.</p>
                 <SelectedFileNotice fileName={fileName} onRemove={clearSelectedFile} disabled={isParsing || isImporting} />
               </div>
               <Button variant="outline" className="gap-2" onClick={() => fileInputRef.current?.click()} disabled={isParsing}>
