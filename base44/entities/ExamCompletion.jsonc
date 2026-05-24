@@ -14,6 +14,21 @@
       "type": "string",
       "description": "\u05e9\u05dd \u05ea\u05dc\u05de\u05d9\u05d3"
     },
+    "status": {
+      "type": "string",
+      "enum": [
+        "not_started",
+        "in_progress",
+        "ready",
+        "done"
+      ],
+      "default": "ready",
+      "description": "\u05e1\u05d8\u05d8\u05d5\u05e1 \u05d4\u05db\u05e0\u05d4 \u05d0\u05d9\u05e9\u05d9: \u05dc\u05d0 \u05d4\u05ea\u05d7\u05dc\u05ea\u05d9 / \u05d1\u05dc\u05de\u05d9\u05d3\u05d4 / \u05de\u05d5\u05db\u05df / \u05d1\u05d5\u05e6\u05e2"
+    },
+    "personal_note": {
+      "type": "string",
+      "description": "\u05d4\u05e2\u05e8\u05d4 \u05d0\u05d9\u05e9\u05d9\u05ea \u05e9\u05dc \u05d4\u05ea\u05dc\u05de\u05d9\u05d3"
+    },
     "completed_at": {
       "type": "string",
       "description": "\u05d6\u05de\u05df \u05e1\u05d9\u05de\u05d5\u05df \u05d4\u05e9\u05dc\u05de\u05d4"
