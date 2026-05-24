@@ -6,24 +6,31 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { AlertTriangle, FileUp, Loader2, Send, Trash2 } from 'lucide-react';
+import { AlertTriangle, FileUp, Loader2, Send, Trash2, CalendarDays, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import AudienceEditor from './AudienceEditor';
-import { EVENT_TYPES, normalizeEventType } from './eventConstants';
+import { EVENT_TYPES, normalizeEventType, TYPE_STYLES } from './eventConstants';
 import ImportStepIndicator from './import/ImportStepIndicator';
 import ImportReviewSummary from './import/ImportReviewSummary';
+import NeedsReviewPanel from './import/NeedsReviewPanel';
+import { parseWordCalendarFile, isWordFile } from '@/lib/wordCalendarParser';
+import { format } from 'date-fns';
+import { he } from 'date-fns/locale';
 
 const emptyRow = {
   title: '',
   subject: '',
   type: 'אחר',
   date: '',
+  day_of_week: '',
   time: '',
   end_time: '',
+  is_all_day: false,
   class_or_grade: '',
   teacher: '',
   material: '',
   notes: '',
+  raw_text: '',
   audience_scope: 'grade',
   audience_grades: ['יב'],
   audience_classes: [],
@@ -32,19 +39,19 @@ const emptyRow = {
   audience_group_label: ''
 };
 
-const toList = (value) => String(value || '').split(/[,.،;|\n]/).map(v => v.trim()).filter(Boolean);
+const HEB_DAY_NAMES = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 
-const inferAudience = (row) => {
-  const text = `${row.class_or_grade || ''} ${row.title || ''} ${row.notes || ''}`;
-  const classes = Array.from(new Set(text.match(/(?:י|יא|יב)[׳'״"]?\s?\d+/g) || []));
-  const grades = Array.from(new Set(text.match(/\b(?:י|יא|יב)\b/g) || []));
-  const tracks = toList(row.track || row.audience_tracks);
+const dayFromDate = (iso) => {
+  if (!iso) return '';
+  try {
+    const d = new Date(iso);
+    return HEB_DAY_NAMES[d.getDay()] || '';
+  } catch { return ''; }
+};
 
-  if (classes.length) return { audience_scope: 'class', audience_classes: classes };
-  if (tracks.length) return { audience_scope: 'track', audience_tracks: tracks };
-  if (row.subject) return { audience_scope: 'subject', audience_subjects: [row.subject] };
-  if (grades.length) return { audience_scope: 'grade', audience_grades: grades };
-  return { audience_scope: 'grade', audience_grades: ['יב'] };
+const formatDateLabel = (iso) => {
+  if (!iso) return '';
+  try { return format(new Date(iso), 'EEEE · d בMMMM', { locale: he }); } catch { return iso; }
 };
 
 const getRowErrors = (row) => {
@@ -58,6 +65,7 @@ const getRowErrors = (row) => {
 export default function SmartCalendarImportDialog({ open, onOpenChange, classId, onImported }) {
   const fileInputRef = useRef(null);
   const [rows, setRows] = useState([]);
+  const [reviewItems, setReviewItems] = useState([]);
   const [fileName, setFileName] = useState('');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -65,69 +73,98 @@ export default function SmartCalendarImportDialog({ open, onOpenChange, classId,
 
   const errorsCount = rows.reduce((sum, row) => sum + (getRowErrors(row).length ? 1 : 0), 0);
   const valid = rows.length > 0 && errorsCount === 0;
-  const currentStep = !fileName ? 0 : loading ? 2 : rows.length === 0 ? 1 : errorsCount ? 3 : 4;
+  const currentStep = !fileName ? 0 : loading ? 2 : rows.length === 0 && reviewItems.length === 0 ? 1 : errorsCount ? 3 : 4;
 
   const updateRow = (index, patch) => setRows(prev => prev.map((row, i) => i === index ? { ...row, ...patch } : row));
-  const removeRow = index => setRows(prev => prev.filter((_, i) => i !== index));
+  const removeRow = (index) => setRows(prev => prev.filter((_, i) => i !== index));
+
+  const promoteReviewItem = (index) => {
+    setReviewItems(prev => {
+      const item = prev[index];
+      if (item) {
+        setRows(rows => [...rows, {
+          ...emptyRow,
+          title: item.raw_text,
+          raw_text: item.raw_text,
+          type: normalizeEventType(item.raw_text)
+        }]);
+      }
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+  const dismissReviewItem = (index) => setReviewItems(prev => prev.filter((_, i) => i !== index));
+
+  const enrichRow = (row) => ({
+    ...emptyRow,
+    ...row,
+    type: normalizeEventType(`${row.type || ''} ${row.title || ''}`),
+    day_of_week: row.day_of_week || dayFromDate(row.date),
+    is_all_day: row.is_all_day ?? !row.time,
+    audience_grades: row.audience_grades || [],
+    audience_classes: row.audience_classes || [],
+    audience_tracks: row.audience_tracks || [],
+    audience_subjects: row.audience_subjects || []
+  });
 
   const handleFile = async (file) => {
     if (!file) return;
     setLoading(true);
     setError('');
     setRows([]);
+    setReviewItems([]);
     setFileName(file.name);
 
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    const result = await base44.integrations.Core.InvokeLLM({
-      file_urls: [file_url],
-      prompt: `חלץ מהקובץ את כל האירועים ללוח שכבתי חכם: מבחנים, בגרויות, מתכונות, מועדי ב׳, חזרות, ריקודים, משחקים, טקסים, חגים, ועדות, צילומים וכל פעילות שכבתית. לכל אירוע החזר: title, subject, type, date בפורמט YYYY-MM-DD, time בפורמט HH:MM אם קיים, end_time אם קיים, class_or_grade, teacher, material, notes, audience_grades, audience_classes, audience_tracks, audience_subjects, audience_group_label. סווג type לאחד מהערכים: ${EVENT_TYPES.join(', ')}. אם יש ספק בתאריך או בכותרת השאר ריק כדי שהמשתמש יתקן לפני פרסום.`,
-      response_json_schema: {
-        type: 'object',
-        properties: {
-          events: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                title: { type: 'string' },
-                subject: { type: 'string' },
-                type: { type: 'string' },
-                date: { type: 'string' },
-                time: { type: 'string' },
-                end_time: { type: 'string' },
-                class_or_grade: { type: 'string' },
-                teacher: { type: 'string' },
-                material: { type: 'string' },
-                notes: { type: 'string' },
-                audience_grades: { type: 'array', items: { type: 'string' } },
-                audience_classes: { type: 'array', items: { type: 'string' } },
-                audience_tracks: { type: 'array', items: { type: 'string' } },
-                audience_subjects: { type: 'array', items: { type: 'string' } },
-                audience_group_label: { type: 'string' }
-              }
-            }
-          }
-        },
-        required: ['events']
+    try {
+      let detected = [];
+      let review = [];
+
+      // קבצי Word — פירסור מקומי של טבלת השבועות
+      if (isWordFile(file)) {
+        const parsed = await parseWordCalendarFile(file);
+        detected = parsed.events.map(enrichRow);
+        review = parsed.needsReview;
       }
-    });
 
-    const detected = (result?.events || []).map(row => {
-      const withBase = {
-        ...emptyRow,
-        ...row,
-        audience_grades: row.audience_grades || [],
-        audience_classes: row.audience_classes || [],
-        audience_tracks: row.audience_tracks || [],
-        audience_subjects: row.audience_subjects || [],
-        type: normalizeEventType(`${row.type || ''} ${row.title || ''}`)
-      };
-      return { ...withBase, ...inferAudience(withBase) };
-    });
+      // אם הפירסור המקומי החזיר ריק (לא Word, או שאין טבלה) — חוזרים ל-LLM
+      if (detected.length === 0 && review.length === 0) {
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        const result = await base44.integrations.Core.InvokeLLM({
+          file_urls: [file_url],
+          prompt: `חלץ מהקובץ את כל האירועים ללוח שכבתי חכם: מבחנים, בגרויות, מתכונות, מועדי ב׳, חזרות, ריקודים, משחקים, טקסים, חגים, ועדות, צילומים וכל פעילות שכבתית. אל תתעלם מאף פריט, גם אם הוא לא מבחן. לכל אירוע החזר: title, subject, type, date (YYYY-MM-DD), time (HH:MM), end_time, class_or_grade, teacher, material, notes, audience_grades, audience_classes, audience_tracks, audience_subjects. סווג type לאחד מהערכים: ${EVENT_TYPES.join(', ')}.`,
+          response_json_schema: {
+            type: 'object',
+            properties: {
+              events: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    title: { type: 'string' }, subject: { type: 'string' }, type: { type: 'string' },
+                    date: { type: 'string' }, time: { type: 'string' }, end_time: { type: 'string' },
+                    class_or_grade: { type: 'string' }, teacher: { type: 'string' },
+                    material: { type: 'string' }, notes: { type: 'string' },
+                    audience_grades: { type: 'array', items: { type: 'string' } },
+                    audience_classes: { type: 'array', items: { type: 'string' } },
+                    audience_tracks: { type: 'array', items: { type: 'string' } },
+                    audience_subjects: { type: 'array', items: { type: 'string' } }
+                  }
+                }
+              }
+            },
+            required: ['events']
+          }
+        });
+        detected = (result?.events || []).map(enrichRow);
+      }
 
-    setRows(detected);
-    if (!detected.length) setError('לא נמצאו אירועים בקובץ. נסו קובץ ברור יותר.');
-    setLoading(false);
+      setRows(detected);
+      setReviewItems(review);
+      if (!detected.length && !review.length) setError('לא נמצאו אירועים בקובץ. נסו קובץ ברור יותר.');
+    } catch (e) {
+      setError(`שגיאה בקריאת הקובץ: ${e.message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const save = async () => {
@@ -142,8 +179,8 @@ export default function SmartCalendarImportDialog({ open, onOpenChange, classId,
       subject: row.subject,
       type: row.type,
       date: row.date,
-      time: row.time,
-      end_time: row.end_time,
+      time: row.is_all_day ? '' : row.time,
+      end_time: row.is_all_day ? '' : row.end_time,
       class_or_grade: row.class_or_grade,
       teacher: row.teacher,
       material: row.material,
@@ -174,7 +211,7 @@ export default function SmartCalendarImportDialog({ open, onOpenChange, classId,
           <div className="rounded-xl border border-dashed p-5 bg-muted/30 flex flex-col sm:flex-row justify-between gap-3">
             <div>
               <p className="font-medium">1. העלאת קובץ</p>
-              <p className="text-sm text-muted-foreground">המערכת תזהה אירועים, תסווג אותם ותציג הכול לאישור לפני פרסום.</p>
+              <p className="text-sm text-muted-foreground">תומך ב-Word (טבלת שבועות), Excel, PDF ועוד. כל תא בטבלה יפורק לאירועים נפרדים.</p>
               {fileName && <p className="text-xs mt-2 text-primary">קובץ: {fileName}</p>}
             </div>
             <input ref={fileInputRef} type="file" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.png,.jpg,.jpeg" onChange={e => handleFile(e.target.files?.[0])} />
@@ -186,13 +223,15 @@ export default function SmartCalendarImportDialog({ open, onOpenChange, classId,
 
           {error && <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive flex gap-2"><AlertTriangle className="w-4 h-4" />{error}</div>}
 
+          <NeedsReviewPanel items={reviewItems} onPromote={promoteReviewItem} onDismiss={dismissReviewItem} />
+
           {rows.length > 0 && (
             <div className="space-y-4">
               <ImportReviewSummary rows={rows} errorsCount={errorsCount} />
 
               <div className="rounded-xl border bg-card p-4">
                 <h3 className="font-semibold mb-1">2-5. תצוגה מקדימה, סיווג, תיקון ורלוונטיות</h3>
-                <p className="text-sm text-muted-foreground">עברו על השורות, תקנו שגיאות וסמנו למי כל אירוע רלוונטי לפי כיתה, מגמה, מקצוע או קבוצה.</p>
+                <p className="text-sm text-muted-foreground">עברו על השורות, תקנו שגיאות וסמנו למי כל אירוע רלוונטי. הפרסום ללוח יקרה רק לאחר אישור.</p>
               </div>
 
               <div className="space-y-3">
@@ -221,27 +260,41 @@ export default function SmartCalendarImportDialog({ open, onOpenChange, classId,
 
 function PreviewRow({ row, index, updateRow, removeRow }) {
   const rowErrors = getRowErrors(row);
+  const typeClass = TYPE_STYLES[row.type] || TYPE_STYLES['אחר'];
 
   return (
     <div className={`rounded-xl border bg-card p-3 space-y-3 ${rowErrors.length ? 'border-destructive/40' : ''}`}>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-        <div>
-          <p className="text-xs font-bold text-muted-foreground">אירוע #{index + 1}</p>
-          {rowErrors.length > 0 && <p className="text-xs text-destructive mt-1">{rowErrors.join(' · ')}</p>}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-xs font-bold text-muted-foreground">#{index + 1}</span>
+          <span className={`text-xs px-2 py-0.5 rounded-md border ${typeClass}`}>{row.type}</span>
+          {row.date && (
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
+              <CalendarDays className="w-3 h-3" />{formatDateLabel(row.date)}
+            </span>
+          )}
+          {row.is_all_day ? (
+            <span className="text-xs text-muted-foreground">יום מלא</span>
+          ) : row.time ? (
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
+              <Clock className="w-3 h-3" />{row.time}{row.end_time && `-${row.end_time}`}
+            </span>
+          ) : null}
+          {rowErrors.length > 0 && <span className="text-xs text-destructive">· {rowErrors.join(' · ')}</span>}
         </div>
         <Button variant="ghost" size="sm" className="text-destructive self-start sm:self-auto" onClick={() => removeRow(index)}><Trash2 className="w-4 h-4" />הסר</Button>
       </div>
 
       <div className="grid md:grid-cols-6 gap-2">
         <Input value={row.title} onChange={e => updateRow(index, { title: e.target.value })} placeholder="כותרת *" className={!row.title ? 'border-destructive' : ''} />
-        <Input type="date" value={row.date} onChange={e => updateRow(index, { date: e.target.value })} className={!row.date ? 'border-destructive' : ''} />
-        <Input type="time" value={row.time} onChange={e => updateRow(index, { time: e.target.value })} />
+        <Input type="date" value={row.date} onChange={e => updateRow(index, { date: e.target.value, day_of_week: dayFromDate(e.target.value) })} className={!row.date ? 'border-destructive' : ''} />
+        <Input type="time" value={row.time} onChange={e => updateRow(index, { time: e.target.value, is_all_day: !e.target.value })} placeholder="התחלה" />
+        <Input type="time" value={row.end_time} onChange={e => updateRow(index, { end_time: e.target.value })} placeholder="סיום" />
         <Select value={row.type} onValueChange={type => updateRow(index, { type })}>
           <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>{EVENT_TYPES.map(type => <SelectItem key={type} value={type}>{type}</SelectItem>)}</SelectContent>
         </Select>
         <Input value={row.subject} onChange={e => updateRow(index, { subject: e.target.value })} placeholder="מקצוע/תחום" />
-        <Input value={row.class_or_grade} onChange={e => updateRow(index, { class_or_grade: e.target.value })} placeholder="כיתה/שכבה" />
       </div>
 
       <div className="grid md:grid-cols-3 gap-3">
@@ -249,8 +302,8 @@ function PreviewRow({ row, index, updateRow, removeRow }) {
           <Label className="text-xs">רלוונטיות לפי כיתה / מגמה / מקצוע / קבוצה</Label>
           <AudienceEditor value={row} onChange={updated => updateRow(index, updated)} />
         </div>
-        <Textarea value={row.material} onChange={e => updateRow(index, { material: e.target.value })} placeholder="חומר / הכנה" rows={4} />
-        <Textarea value={row.notes} onChange={e => updateRow(index, { notes: e.target.value })} placeholder="הערות" rows={4} />
+        <Textarea value={row.material} onChange={e => updateRow(index, { material: e.target.value })} placeholder="חומר / הכנה" rows={3} />
+        <Textarea value={row.notes} onChange={e => updateRow(index, { notes: e.target.value })} placeholder={row.raw_text ? `מקור: ${row.raw_text}` : 'הערות'} rows={3} />
       </div>
     </div>
   );
