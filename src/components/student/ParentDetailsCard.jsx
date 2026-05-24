@@ -11,10 +11,8 @@ export default function ParentDetailsCard({ student, canEdit, onStudentUpdate })
   const [parentForm, setParentForm] = useState({
     parent1_name: '',
     parent1_phone: '',
-    parent1_email: '',
     parent2_name: '',
-    parent2_phone: '',
-    parent2_email: ''
+    parent2_phone: ''
   });
 
   useEffect(() => {
@@ -22,10 +20,8 @@ export default function ParentDetailsCard({ student, canEdit, onStudentUpdate })
     setParentForm({
       parent1_name: student.parent1_name || '',
       parent1_phone: student.parent1_phone || '',
-      parent1_email: student.parent1_email || '',
       parent2_name: student.parent2_name || '',
-      parent2_phone: student.parent2_phone || '',
-      parent2_email: student.parent2_email || ''
+      parent2_phone: student.parent2_phone || ''
     });
   }, [student]);
 
@@ -48,10 +44,8 @@ export default function ParentDetailsCard({ student, canEdit, onStudentUpdate })
     const updatedParents = {
       parent1_name: parentForm.parent1_name.trim(),
       parent1_phone: normalizePhone(parentForm.parent1_phone),
-      parent1_email: parentForm.parent1_email.trim(),
       parent2_name: parentForm.parent2_name.trim(),
-      parent2_phone: normalizePhone(parentForm.parent2_phone),
-      parent2_email: parentForm.parent2_email.trim()
+      parent2_phone: normalizePhone(parentForm.parent2_phone)
     };
 
     await base44.entities.Student.update(student.id, updatedParents);
@@ -60,8 +54,8 @@ export default function ParentDetailsCard({ student, canEdit, onStudentUpdate })
   }
 
   const parents = [
-    { label: 'הורה 1', name: parentForm.parent1_name, phone: parentForm.parent1_phone, email: parentForm.parent1_email },
-    { label: 'הורה 2', name: parentForm.parent2_name, phone: parentForm.parent2_phone, email: parentForm.parent2_email }
+    { label: 'הורה 1', name: parentForm.parent1_name, phone: parentForm.parent1_phone },
+    { label: 'הורה 2', name: parentForm.parent2_name, phone: parentForm.parent2_phone }
   ];
   const hasParentDetails = parents.some(parent => parent.name || parent.phone);
 
@@ -81,48 +75,38 @@ export default function ParentDetailsCard({ student, canEdit, onStudentUpdate })
               <p className="text-sm font-semibold text-foreground">{parent.label}</p>
 
               <div className="space-y-3 w-full">
-                <div className="space-y-1">
-                  <Label className="block">שם</Label>
-                  <Input
-                    value={index === 0 ? parentForm.parent1_name : parentForm.parent2_name}
-                    onChange={e => setParentField(index === 0 ? 'parent1_name' : 'parent2_name', e.target.value)}
-                    placeholder="שם מלא"
-                  />
-                </div>
+              <div className="space-y-1">
+                 <Label className="block">שם</Label>
+                 <Input
+                   value={index === 0 ? parentForm.parent1_name : parentForm.parent2_name}
+                   onChange={e => setParentField(index === 0 ? 'parent1_name' : 'parent2_name', e.target.value)}
+                   placeholder="שם מלא"
+                 />
+              </div>
 
-                <div className="space-y-1">
-                  <Label className="block">טלפון</Label>
-                  <Input
-                    type="tel"
-                    value={index === 0 ? parentForm.parent1_phone : parentForm.parent2_phone}
-                    onChange={e => setParentField(index === 0 ? 'parent1_phone' : 'parent2_phone', e.target.value)}
-                    placeholder="0547683142"
-                  />
-                  {(index === 0 ? parentForm.parent1_phone : parentForm.parent2_phone) && (
-                    <div className="flex flex-col gap-2 mt-2">
-                      <a href={`tel:${normalizePhone(index === 0 ? parentForm.parent1_phone : parentForm.parent2_phone)}`} className="w-full">
-                        <Button variant="outline" size="sm" className="h-8 gap-1 text-xs w-full">
-                          <Phone className="w-3.5 h-3.5" />שיחה
-                        </Button>
-                      </a>
-                      <a href={`https://wa.me/${whatsappPhone(index === 0 ? parentForm.parent1_phone : parentForm.parent2_phone)}`} target="_blank" rel="noreferrer" className="w-full">
-                        <Button variant="outline" size="sm" className="h-8 gap-1 text-xs w-full">
-                          <MessageCircle className="w-3.5 h-3.5" />וואטסאפ
-                        </Button>
-                      </a>
-                    </div>
-                  )}
-                </div>
-
-                <div className="space-y-1">
-                  <Label className="block">מייל</Label>
-                  <Input
-                    type="email"
-                    value={index === 0 ? parentForm.parent1_email : parentForm.parent2_email}
-                    onChange={e => setParentField(index === 0 ? 'parent1_email' : 'parent2_email', e.target.value)}
-                    placeholder="example@mail.com"
-                  />
-                </div>
+              <div className="space-y-1">
+                 <Label className="block">טלפון</Label>
+                 <Input
+                   type="tel"
+                   value={index === 0 ? parentForm.parent1_phone : parentForm.parent2_phone}
+                   onChange={e => setParentField(index === 0 ? 'parent1_phone' : 'parent2_phone', e.target.value)}
+                   placeholder="0547683142"
+                 />
+                 {(index === 0 ? parentForm.parent1_phone : parentForm.parent2_phone) && (
+                   <div className="flex flex-col gap-2 mt-2">
+                     <a href={`tel:${normalizePhone(index === 0 ? parentForm.parent1_phone : parentForm.parent2_phone)}`} className="w-full">
+                       <Button variant="outline" size="sm" className="h-8 gap-1 text-xs w-full">
+                         <Phone className="w-3.5 h-3.5" />שיחה
+                       </Button>
+                     </a>
+                     <a href={`https://wa.me/${whatsappPhone(index === 0 ? parentForm.parent1_phone : parentForm.parent2_phone)}`} target="_blank" rel="noreferrer" className="w-full">
+                       <Button variant="outline" size="sm" className="h-8 gap-1 text-xs w-full">
+                         <MessageCircle className="w-3.5 h-3.5" />וואטסאפ
+                       </Button>
+                     </a>
+                   </div>
+                 )}
+              </div>
               </div>
             </div>
           ))}
