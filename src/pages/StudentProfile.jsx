@@ -193,25 +193,17 @@ export default function StudentProfile({ role }) {
 
       {/* Tabs */}
       <Tabs value={tab} onValueChange={setTab}>
-        <div className="mb-4 w-full max-w-full overflow-x-auto overflow-y-hidden pb-1" dir="rtl">
-          <TabsList className="inline-flex w-max max-w-none min-w-full flex-nowrap justify-start gap-1 p-1">
-            <TabsTrigger value="overview" className="shrink-0 min-w-20">סקירה</TabsTrigger>
-            <TabsTrigger value="growth" className="shrink-0 min-w-20">צמיחה</TabsTrigger>
-            <TabsTrigger value="attendance" className="shrink-0 min-w-20">נוכחות</TabsTrigger>
-            <TabsTrigger value="discipline" className="shrink-0 min-w-20">משמעת</TabsTrigger>
-            <TabsTrigger value="performance" className="shrink-0 min-w-20">תפקוד</TabsTrigger>
-            <TabsTrigger value="contacts" className="shrink-0 min-w-20">קשרים</TabsTrigger>
-            <TabsTrigger value="notes" className="shrink-0 min-w-20">הערות</TabsTrigger>
-            <TabsTrigger value="comms" className="shrink-0 min-w-20">תקשורת</TabsTrigger>
+        <div className="mb-4 w-full max-w-full overflow-hidden" dir="rtl">
+          <TabsList className="grid w-full grid-cols-5 gap-1 p-1 h-auto">
+            <TabsTrigger value="overview" className="min-w-0 px-1.5 py-2 text-xs sm:text-sm whitespace-nowrap">סקירה</TabsTrigger>
+            <TabsTrigger value="attendance" className="min-w-0 px-1.5 py-2 text-xs sm:text-sm whitespace-nowrap">נוכחות</TabsTrigger>
+            <TabsTrigger value="discipline" className="min-w-0 px-1.5 py-2 text-xs sm:text-sm whitespace-nowrap">משמעת</TabsTrigger>
+            <TabsTrigger value="contacts" className="min-w-0 px-1.5 py-2 text-xs sm:text-sm whitespace-nowrap">קשרים</TabsTrigger>
+            <TabsTrigger value="notes" className="min-w-0 px-1.5 py-2 text-xs sm:text-sm whitespace-nowrap">הערות</TabsTrigger>
           </TabsList>
         </div>
 
-        {/* Growth Report */}
-         <TabsContent value="growth">
-           <GrowthReport studentId={id} studentName={student.full_name} />
-         </TabsContent>
-
-         {/* Overview */}
+        {/* Overview */}
          <TabsContent value="overview" className="space-y-4">
           {/* Parents */}
           <ParentDetailsCard
@@ -226,6 +218,8 @@ export default function StudentProfile({ role }) {
               canEdit={canAccessSensitiveFamilyInfo}
             />
           )}
+
+          <GrowthReport studentId={id} studentName={student.full_name} />
 
           {/* Community Service */}
           <Card>
@@ -293,8 +287,8 @@ export default function StudentProfile({ role }) {
           </Card>
         </TabsContent>
 
-        {/* Parent Contact Log */}
-        <TabsContent value="contacts">
+        {/* Contacts */}
+        <TabsContent value="contacts" className="space-y-4">
           <ParentContactLog 
             studentId={id}
             classId={student.class_id || CLASS_ID}
@@ -303,90 +297,7 @@ export default function StudentProfile({ role }) {
             parentPhone2={student.parent2_phone}
             user={user}
           />
-        </TabsContent>
 
-        {/* Discipline */}
-         <TabsContent value="discipline">
-          <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">אירועי משמעת</CardTitle></CardHeader>
-            <CardContent>
-              {discipline.length === 0 ? <p className="text-sm text-muted-foreground text-center py-6">אין אירועי משמעת 🎉</p> : (
-                <div className="space-y-3">
-                  {discipline.map(d => (
-                    <div key={d.id} className="p-3 rounded-xl bg-muted/50 space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium">{formatDate(d.date)}</span>
-                        <div className="flex gap-1"><StatusBadge status={d.severity} /><StatusBadge status={d.status} /></div>
-                      </div>
-                      <p className="text-xs text-muted-foreground">{d.category} · {d.description}</p>
-                      {d.treatment && <p className="text-xs text-foreground border-e-2 border-primary pe-2">{d.treatment}</p>}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Performance */}
-        <TabsContent value="performance">
-          <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">הערכות תפקוד</CardTitle></CardHeader>
-            <CardContent>
-              {reviews.length === 0 ? <p className="text-sm text-muted-foreground text-center py-6">לא בוצעו הערכות עדיין</p> : (
-                <div className="space-y-4">
-                  {reviews.map(r => (
-                    <div key={r.id} className="p-3 rounded-xl border space-y-3">
-                      <div className="flex justify-between items-center">
-                        <span className="font-medium text-sm">{r.period}</span>
-                        <span className="text-xs text-muted-foreground">{formatDate(r.date)}</span>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        {[['הרגלי למידה', r.learning_habits], ['השתתפות', r.participation], ['אחריות', r.responsibility], ['התנהגות', r.behavior], ['תפקוד חברתי', r.social_functioning], ['מצב רגשי', r.emotional_state]].map(([label, val]) => (
-                          <div key={label} className="flex items-center justify-between">
-                            <span className="text-xs text-muted-foreground">{label}</span>
-                            <RatingDots value={val || 0} />
-                          </div>
-                        ))}
-                      </div>
-                      {r.notes && <p className="text-xs text-muted-foreground border-t pt-2">{r.notes}</p>}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Notes */}
-        <TabsContent value="notes">
-          <Card>
-            <CardHeader className="pb-2">
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-sm font-semibold">הערות מחנך (פרטיות)</CardTitle>
-                <Star className="w-4 h-4 text-amber-500" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              {notes.length === 0 ? <p className="text-sm text-muted-foreground text-center py-6">אין הערות עדיין</p> : (
-                <div className="space-y-3">
-                  {notes.map(n => (
-                    <div key={n.id} className="p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/30">
-                      <div className="flex justify-between items-start mb-1">
-                        <span className="text-xs font-medium text-amber-700 dark:text-amber-400">{n.category}</span>
-                        <span className="text-xs text-muted-foreground">{formatDate(n.date)}</span>
-                      </div>
-                      <p className="text-sm text-foreground">{n.content}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Communications */}
-        <TabsContent value="comms" className="space-y-4">
           <Card>
             <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">סיכום שיחה חדש</CardTitle></CardHeader>
             <CardContent className="space-y-4">
@@ -435,15 +346,15 @@ export default function StudentProfile({ role }) {
           </Card>
 
           <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">תקשורת עם הורים</CardTitle></CardHeader>
+            <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">תקשורת מתועדת</CardTitle></CardHeader>
             <CardContent>
               {comms.length === 0 ? <p className="text-sm text-muted-foreground text-center py-6">אין תיעוד תקשורת</p> : (
                 <div className="space-y-3">
                   {comms.map(c => (
                     <div key={c.id} className="p-3 rounded-xl bg-muted/50 space-y-1">
-                      <div className="flex justify-between items-center">
+                      <div className="flex justify-between items-center gap-2">
                         <span className="text-sm font-medium">{c.type} · {c.with_whom}</span>
-                        <span className="text-xs text-muted-foreground">{formatDate(c.date)}</span>
+                        <span className="text-xs text-muted-foreground flex-shrink-0">{formatDate(c.date)}</span>
                       </div>
                       <p className="text-xs text-foreground">{c.summary}</p>
                       {c.follow_up && <p className="text-xs text-primary border-e-2 border-primary pe-2">פעולת המשך: {c.follow_up}</p>}
@@ -454,6 +365,84 @@ export default function StudentProfile({ role }) {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Discipline */}
+         <TabsContent value="discipline">
+          <Card>
+            <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">אירועי משמעת</CardTitle></CardHeader>
+            <CardContent>
+              {discipline.length === 0 ? <p className="text-sm text-muted-foreground text-center py-6">אין אירועי משמעת 🎉</p> : (
+                <div className="space-y-3">
+                  {discipline.map(d => (
+                    <div key={d.id} className="p-3 rounded-xl bg-muted/50 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">{formatDate(d.date)}</span>
+                        <div className="flex gap-1"><StatusBadge status={d.severity} /><StatusBadge status={d.status} /></div>
+                      </div>
+                      <p className="text-xs text-muted-foreground">{d.category} · {d.description}</p>
+                      {d.treatment && <p className="text-xs text-foreground border-e-2 border-primary pe-2">{d.treatment}</p>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Notes */}
+        <TabsContent value="notes" className="space-y-4">
+          <Card>
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-sm font-semibold">הערות מחנך (פרטיות)</CardTitle>
+                <Star className="w-4 h-4 text-amber-500" />
+              </div>
+            </CardHeader>
+            <CardContent>
+              {notes.length === 0 ? <p className="text-sm text-muted-foreground text-center py-6">אין הערות עדיין</p> : (
+                <div className="space-y-3">
+                  {notes.map(n => (
+                    <div key={n.id} className="p-3 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800/30">
+                      <div className="flex justify-between items-start gap-2 mb-1">
+                        <span className="text-xs font-medium text-amber-700 dark:text-amber-400">{n.category}</span>
+                        <span className="text-xs text-muted-foreground flex-shrink-0">{formatDate(n.date)}</span>
+                      </div>
+                      <p className="text-sm text-foreground">{n.content}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">הערכות תפקוד</CardTitle></CardHeader>
+            <CardContent>
+              {reviews.length === 0 ? <p className="text-sm text-muted-foreground text-center py-6">לא בוצעו הערכות עדיין</p> : (
+                <div className="space-y-4">
+                  {reviews.map(r => (
+                    <div key={r.id} className="p-3 rounded-xl border space-y-3">
+                      <div className="flex justify-between items-center gap-2">
+                        <span className="font-medium text-sm">{r.period}</span>
+                        <span className="text-xs text-muted-foreground flex-shrink-0">{formatDate(r.date)}</span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {[['הרגלי למידה', r.learning_habits], ['השתתפות', r.participation], ['אחריות', r.responsibility], ['התנהגות', r.behavior], ['תפקוד חברתי', r.social_functioning], ['מצב רגשי', r.emotional_state]].map(([label, val]) => (
+                          <div key={label} className="flex items-center justify-between gap-3">
+                            <span className="text-xs text-muted-foreground">{label}</span>
+                            <RatingDots value={val || 0} />
+                          </div>
+                        ))}
+                      </div>
+                      {r.notes && <p className="text-xs text-muted-foreground border-t pt-2">{r.notes}</p>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
       </Tabs>
 
       {showEdit && <AddStudentModal classId={CLASS_ID} editData={student} onClose={() => setShowEdit(false)} onSuccess={() => { setShowEdit(false); loadAll(); }} />}
