@@ -38,6 +38,7 @@ function buildPeriodRows(bellPeriods) {
 export default function Schedule({ role = 'homeroom_teacher', user }) {
   const [slots, setSlots] = useState([]);
   const [periods, setPeriods] = useState([]);
+  const [className, setClassName] = useState('');
   const [loading, setLoading] = useState(true);
 
   const [showImport, setShowImport] = useState(false);
@@ -67,12 +68,14 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
   async function load() {
     setLoading(true);
     const dayType = getTodayDayType();
-    const [data, bellPeriods] = await Promise.all([
+    const [data, bellPeriods, classRoom] = await Promise.all([
       base44.entities.ScheduleSlot.filter({ class_id: classId }),
       loadBellSchedule(dayType === 'fri' ? 'sun_thu' : dayType), // weekly view shows Sun–Thu
+      classId ? base44.entities.ClassRoom.get(classId).catch(() => null) : Promise.resolve(null),
     ]);
     setSlots(data);
     setPeriods(buildPeriodRows(bellPeriods));
+    setClassName(classRoom?.name || '');
     setLoading(false);
   }
 
@@ -166,6 +169,7 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
           onOpenChange={setShowImport}
           onImported={load}
           classId={classId}
+          className={className}
         />
       )}
 

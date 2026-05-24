@@ -16,6 +16,23 @@ const normalizeDay = (value = '') => {
   return DAYS.find(day => text.includes(day)) || 'ראשון';
 };
 
+// Normalize class names like י"ב 8, י''ב 8, יב' 8, י"ב8 → a comparable form
+const normalizeClassName = (value = '') => {
+  return String(value)
+    .replace(/["'`׳״]/g, '')
+    .replace(/\s+/g, '')
+    .trim();
+};
+
+// Does a lesson belong to the target class? matches against the comma-separated class list in the lesson text.
+const lessonBelongsToClass = (lessonClasses = '', targetClassName = '') => {
+  if (!targetClassName) return true;
+  const target = normalizeClassName(targetClassName);
+  if (!target) return true;
+  const haystack = normalizeClassName(lessonClasses);
+  return haystack.includes(target);
+};
+
 const emptyRow = {
   day: 'ראשון',
   period: 1,
@@ -27,7 +44,7 @@ const emptyRow = {
   notes: ''
 };
 
-export default function ImportScheduleDialog({ open, onOpenChange, onImported, classId }) {
+export default function ImportScheduleDialog({ open, onOpenChange, onImported, classId, className = '' }) {
   const fileInputRef = useRef(null);
   const [fileName, setFileName] = useState('');
   const [rows, setRows] = useState([]);
@@ -58,38 +75,45 @@ export default function ImportScheduleDialog({ open, onOpenChange, onImported, c
     const schema = {
       type: 'object',
       properties: {
+        class_name: { type: 'string', description: 'שם הכיתה שעבורה הופקה המערכת, מתוך כותרת הדוח (למשל "י\"ב 8")' },
         lessons: {
           type: 'array',
+          description: 'כל השיעורים בכל התאים של הטבלה. בכל תא יכולים להופיע מספר שיעורים מקבילים מופרדים בקו "----------". כל שיעור הוא רשומה נפרדת.',
           items: {
             type: 'object',
             properties: {
-              day: { type: 'string', description: 'יום בשבוע: ראשון/שני/שלישי/רביעי/חמישי/שישי' },
-              period: { type: 'number', description: 'מספר שיעור' },
-              start_time: { type: 'string', description: 'שעת התחלה בפורמט HH:MM' },
-              end_time: { type: 'string', description: 'שעת סיום בפורמט HH:MM' },
-              subject: { type: 'string', description: 'שם המקצוע' },
-              teacher: { type: 'string', description: 'שם המורה' },
-              room: { type: 'string', description: 'חדר' },
-              notes: { type: 'string', description: 'הערות' }
-            }
+              day: { type: 'string', description: 'יום בשבוע: ראשון/שני/שלישי/רביעי/חמישי/שישי - לפי העמודה בטבלה' },
+              period: { type: 'number', description: 'מספר השיעור 1-12 - לפי השורה בטבלה (העמודה הימנית ביותר עם המספר)' },
+              subject: { type: 'string', description: 'שם המקצוע בלבד (למשל "מתמטיקה", "אנגלית", "תנך-מורחב")' },
+              teacher: { type: 'string', description: 'שם המורה המלא (שם משפחה ושם פרטי, למשל "חגאי מיכל")' },
+              classes: { type: 'string', description: 'רשימת הכיתות שאליהן השיעור משויך, מופיעה אחרי שם המקצוע (למשל "י\"ב 1 י\"ב 2 י\"ב 7 י\"ב 8")' },
+              level: { type: 'string', description: 'רמת לימוד אם קיימת בסוגריים (למשל "3 יח\"ל", "5 יח\"ל", "תגבור לבגרות")' },
+              room: { type: 'string', description: 'חדר - הטקסט שאחרי "חדר:" (למשל "יב\' 1", "מקלט תקשורת", "חדר תקשורת")' }
+            },
+            required: ['day', 'period', 'subject']
           }
         }
       }
     };
     const result = await base44.integrations.Core.ExtractDataFromUploadedFile({ file_url, json_schema: schema });
     if (result.status !== 'success') throw new Error(result.details || 'נכשל חילוץ הנתונים מה-PDF');
-    const lessons = result.output?.lessons || [];
-    return lessons.map((row, index) => ({
-      ...emptyRow,
-      day: normalizeDay(row.day),
-      period: Number(row.period || index + 1),
-      start_time: String(row.start_time || ''),
-      end_time: String(row.end_time || ''),
-      subject: String(row.subject || ''),
-      teacher: String(row.teacher || ''),
-      room: String(row.room || ''),
-      notes: String(row.notes || '')
-    })).filter(row => row.subject);
+
+    const allLessons = result.output?.lessons || [];
+    const targetClass = className || result.output?.class_name || '';
+
+    return allLessons
+      .filter(row => row.subject && lessonBelongsToClass(row.classes, targetClass))
+      .map(row => ({
+        ...emptyRow,
+        day: normalizeDay(row.day),
+        period: Number(row.period || 1),
+        start_time: '',
+        end_time: '',
+        subject: String(row.subject || '').trim(),
+        teacher: String(row.teacher || '').trim(),
+        room: String(row.room || '').trim(),
+        notes: String(row.level || '').trim()
+      }));
   };
 
   const parseSpreadsheetFile = async (file) => {
@@ -174,7 +198,11 @@ export default function ImportScheduleDialog({ open, onOpenChange, onImported, c
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <p className="font-medium">העלאת קובץ Excel, CSV או PDF</p>
-                <p className="text-sm text-muted-foreground mt-1">עמודות מומלצות: יום, שיעור, שעת התחלה, שעת סיום, מקצוע, מורה, חדר, הערות. קבצי PDF ייקראו אוטומטית.</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  קבצי PDF (דוחות מערכת שעות) נקראים אוטומטית — השיעורים מסוננים לפי כיתה
+                  {className ? ` "${className}"` : ''}.
+                  בקובץ Excel/CSV: עמודות יום, שיעור, מקצוע, מורה, חדר.
+                </p>
                 <SelectedFileNotice fileName={fileName} onRemove={clearSelectedFile} disabled={isParsing || isImporting} />
               </div>
               <Button variant="outline" className="gap-2" onClick={() => fileInputRef.current?.click()} disabled={isParsing}>
