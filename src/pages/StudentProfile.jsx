@@ -14,6 +14,7 @@ import { ChevronRight, Phone, Mail, Edit, Plus, Calendar, Shield, Heart, Star, M
 import AddStudentModal from '@/components/students/AddStudentModal';
 import ParentContactLog from '@/components/student/ParentContactLog';
 import GrowthReport from '@/components/student/GrowthReport';
+import ParentDetailsCard from '@/components/student/ParentDetailsCard';
 import { CLASS_ID } from '@/lib/demoData';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/AuthContext';
@@ -26,7 +27,7 @@ const RatingDots = ({ value }) => (
   </div>
 );
 
-export default function StudentProfile() {
+export default function StudentProfile({ role }) {
   const { id } = useParams();
   const { user } = useAuth();
   const [student, setStudent] = useState(null);
@@ -77,6 +78,7 @@ export default function StudentProfile() {
 
   const communityPct = student.community_service_goal > 0
     ? Math.round((student.community_service_done / student.community_service_goal) * 100) : 0;
+  const canEditParents = ['admin', 'homeroom_teacher', 'coordinator'].includes(role);
   const presentCount = attendance.filter(a => ['נוכח', 'נוכח/ת'].includes(a.status)).length;
   const absentCount = attendance.filter(a => ['נעדר', 'נעדר/ת'].includes(a.status)).length;
   const lateCount = attendance.filter(a => ['מאחר', 'מאחר/ת'].includes(a.status)).length;
@@ -217,36 +219,11 @@ export default function StudentProfile() {
          {/* Overview */}
          <TabsContent value="overview" className="space-y-4">
           {/* Parents */}
-          <Card>
-            <CardHeader className="pb-2"><CardTitle className="text-sm font-semibold">הורים</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              {student.parent1_name && (
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium">{student.parent1_name}</p>
-                    {student.parent1_phone && <p className="text-xs text-muted-foreground">{student.parent1_phone}</p>}
-                  </div>
-                  <div className="flex gap-2">
-                    {student.parent1_phone && <a href={`tel:${student.parent1_phone}`}><Button variant="ghost" size="icon" className="w-8 h-8"><Phone className="w-4 h-4" /></Button></a>}
-                    {student.parent1_email && <a href={`mailto:${student.parent1_email}`}><Button variant="ghost" size="icon" className="w-8 h-8"><Mail className="w-4 h-4" /></Button></a>}
-                  </div>
-                </div>
-              )}
-              {student.parent2_name && (
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium">{student.parent2_name}</p>
-                    {student.parent2_phone && <p className="text-xs text-muted-foreground">{student.parent2_phone}</p>}
-                  </div>
-                  <div className="flex gap-2">
-                    {student.parent2_phone && <a href={`tel:${student.parent2_phone}`}><Button variant="ghost" size="icon" className="w-8 h-8"><Phone className="w-4 h-4" /></Button></a>}
-                    {student.parent2_email && <a href={`mailto:${student.parent2_email}`}><Button variant="ghost" size="icon" className="w-8 h-8"><Mail className="w-4 h-4" /></Button></a>}
-                  </div>
-                </div>
-              )}
-              {!student.parent1_name && <p className="text-sm text-muted-foreground">לא הוזנו פרטי הורים</p>}
-            </CardContent>
-          </Card>
+          <ParentDetailsCard
+            student={student}
+            canEdit={canEditParents}
+            onStudentUpdate={(updatedParents) => setStudent(prev => ({ ...prev, ...updatedParents }))}
+          />
 
           {/* Community Service */}
           <Card>
