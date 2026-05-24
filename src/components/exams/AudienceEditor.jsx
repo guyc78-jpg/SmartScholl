@@ -5,6 +5,8 @@ import { AUDIENCE_SCOPES } from './eventConstants';
 
 const toText = value => Array.isArray(value) ? value.join(', ') : '';
 const toList = value => String(value || '').split(',').map(v => v.trim()).filter(Boolean);
+const norm = value => String(value || '').trim().toLowerCase();
+const hasAny = (list, values) => (list || []).map(norm).some(item => values.map(norm).includes(item));
 
 export default function AudienceEditor({ value, onChange }) {
   const scope = value.audience_scope || 'grade';
@@ -41,10 +43,12 @@ function Field({ label, value, onChange, placeholder }) {
 export function isEventRelevantForStudent(event, student) {
   if (!event || !student) return true;
   const scope = event.audience_scope || 'grade';
+  const studentValues = [student.grade, student.class_name, student.class_id, ...(student.tags || [])];
   if (scope === 'school') return true;
-  if (scope === 'grade') return !(event.audience_grades || []).length || event.audience_grades.includes(student.grade);
-  if (scope === 'class') return !(event.audience_classes || []).length || event.audience_classes.includes(student.class_name);
-  if (scope === 'subject') return !(event.audience_subjects || []).length;
-  if (scope === 'track') return !(event.audience_tracks || []).length;
+  if (scope === 'grade') return !(event.audience_grades || []).length || hasAny(event.audience_grades, studentValues);
+  if (scope === 'class') return !(event.audience_classes || []).length || hasAny(event.audience_classes, studentValues);
+  if (scope === 'subject') return !(event.audience_subjects || []).length || hasAny(event.audience_subjects, studentValues);
+  if (scope === 'track') return !(event.audience_tracks || []).length || hasAny(event.audience_tracks, studentValues);
+  if (scope === 'group') return !event.audience_group_label || studentValues.map(norm).includes(norm(event.audience_group_label));
   return true;
 }

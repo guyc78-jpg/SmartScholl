@@ -15,6 +15,8 @@ import SmartCalendarImportDialog from '@/components/exams/SmartCalendarImportDia
 import EventFormDialog from '@/components/exams/EventFormDialog';
 import EventDetailsDialog from '@/components/exams/EventDetailsDialog';
 import ClassTrackingPanel from '@/components/exams/ClassTrackingPanel';
+import UpcomingEventsPanel from '@/components/exams/UpcomingEventsPanel';
+import SmartCalendarEmptyState from '@/components/exams/SmartCalendarEmptyState';
 import { isEventRelevantForStudent } from '@/components/exams/AudienceEditor';
 
 export default function Exams({ role, user }) {
@@ -29,12 +31,14 @@ export default function Exams({ role, user }) {
   const [onlyMine, setOnlyMine] = useState(true);
   const [showTracking, setShowTracking] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [showDemo, setShowDemo] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
 
-  const canManage = ['admin', 'coordinator'].includes(role);
+  const canImport = ['admin', 'coordinator'].includes(role);
   const canEdit = ['admin', 'coordinator', 'homeroom_teacher'].includes(role);
+  const canTrack = ['coordinator', 'homeroom_teacher'].includes(role);
   const isStudent = role === 'student';
   const classId = isStudent ? getStudentClassId(user, CLASS_ID) : getUserApprovedClassId(user, CLASS_ID);
   const todayIso = new Date().toISOString().split('T')[0];
@@ -61,17 +65,27 @@ export default function Exams({ role, user }) {
 
   const completionsByEvent = useMemo(() => Object.fromEntries(completions.map(c => [c.exam_id, c])), [completions]);
 
+  const demoEvents = useMemo(() => [
+    { id: 'demo_1', class_id: classId, title: 'בגרות במתמטיקה', subject: 'מתמטיקה', type: 'בגרות', date: todayIso, time: '09:00', audience_scope: 'grade', audience_grades: ['יב'], material: 'חדו״א, הסתברות וגיאומטריה' },
+    { id: 'demo_2', class_id: classId, title: 'חזרה לטקס סיום', subject: 'שכבה', type: 'טקס', date: todayIso, time: '12:00', audience_scope: 'school', notes: 'באולם הספורט' },
+    { id: 'demo_3', class_id: classId, title: 'צילומי מחזור', subject: 'שכבה', type: 'צילומים', date: new Date(Date.now() + 86400000).toISOString().split('T')[0], time: '10:30', audience_scope: 'class', audience_classes: ['יב5', 'יב7'] },
+    { id: 'demo_4', class_id: classId, title: 'מועד ב׳ באנגלית', subject: 'אנגלית', type: 'מועד ב׳', date: new Date(Date.now() + 4 * 86400000).toISOString().split('T')[0], time: '08:30', audience_scope: 'subject', audience_subjects: ['אנגלית'] }
+  ], [classId, todayIso]);
+
+  const sourceEvents = showDemo && events.length === 0 ? demoEvents : events;
+
   const visibleEvents = useMemo(() => {
-    let list = filterBySearch(filterByGroup(events, filterGroup), search);
+    let list = filterBySearch(filterByGroup(sourceEvents, filterGroup), search);
     if (isStudent && currentStudent && onlyMine) {
       list = list.filter(event => isEventRelevantForStudent(event, currentStudent));
       list = list.filter(event => completionsByEvent[event.id]?.status !== 'not_relevant');
     }
     return list;
-  }, [events, filterGroup, search, isStudent, currentStudent, onlyMine, completionsByEvent]);
+  }, [sourceEvents, filterGroup, search, isStudent, currentStudent, onlyMine, completionsByEvent]);
 
   async function saveEvent(form) {
     if (!form.title || !form.date) return;
+    if (editingEvent?.id?.startsWith('demo_')) return;
     if (editingEvent) await base44.entities.Exam.update(editingEvent.id, { ...form, class_id: classId });
     else await base44.entities.Exam.create({ ...form, class_id: classId });
     toast.success(editingEvent ? 'האירוע עודכן' : 'האירוע נוסף');
@@ -81,6 +95,7 @@ export default function Exams({ role, user }) {
   }
 
   async function deleteEvent(id) {
+    if (String(id).startsWith('demo_')) return;
     if (!window.confirm('למחוק את האירוע?')) return;
     await base44.entities.Exam.delete(id);
     toast.success('האירוע נמחק');
@@ -112,9 +127,9 @@ export default function Exams({ role, user }) {
         subtitle="כל אירועי השכבה במקום אחד — מבחנים, בגרויות, חזרות, טקסים, חגים, צילומים ופעילויות"
         actions={
           <>
-            {canEdit && <Button variant={showTracking ? 'default' : 'outline'} size="sm" onClick={() => setShowTracking(v => !v)}><Users className="w-4 h-4" />מעקב כיתתי</Button>}
-            {canManage && <Button variant="outline" size="sm" onClick={() => setShowImport(true)}><FileUp className="w-4 h-4" />ייבוא חכם</Button>}
-            {canEdit && <Button size="sm" onClick={() => { setEditingEvent(null); setShowForm(true); }}><Plus className="w-4 h-4" />הוסף אירוע</Button>}
+            {canTrack && <Button variant={showTracking ? 'default' : 'outline'} size="sm" onClick={() => setShowTracking(v => !v)}><Users className="w-4 h-4" />מעקב כיתתי</Button>}
+            {canImport && <Button size="sm" onClick={() => setShowImport(true)}><FileUp className="w-4 h-4" />ייבוא לוח מקובץ</Button>}
+            {canEdit && <Button variant="outline" size="sm" onClick={() => { setEditingEvent(null); setShowForm(true); }}><Plus className="w-4 h-4" />הוסף אירוע</Button>}
           </>
         }
       />
@@ -123,20 +138,28 @@ export default function Exams({ role, user }) {
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         {isStudent && <Button size="sm" variant={onlyMine ? 'default' : 'outline'} onClick={() => setOnlyMine(v => !v)}>{onlyMine ? 'הלוח שלי' : 'כל הלוח השכבתי'}</Button>}
-        <div className="flex gap-1 rounded-lg border bg-card p-1 ms-auto">
-          <Button size="sm" variant={view === 'month' ? 'default' : 'ghost'} onClick={() => { setView('month'); setOffset(0); }}><CalendarDays className="w-4 h-4" />חודש</Button>
-          <Button size="sm" variant={view === 'week' ? 'default' : 'ghost'} onClick={() => { setView('week'); setOffset(0); }}><LayoutGrid className="w-4 h-4" />שבוע</Button>
-          <Button size="sm" variant={view === 'day' ? 'default' : 'ghost'} onClick={() => { setView('day'); setOffset(0); }}><CalendarDays className="w-4 h-4" />יום</Button>
-          <Button size="sm" variant={view === 'list' ? 'default' : 'ghost'} onClick={() => setView('list')}><List className="w-4 h-4" />רשימה</Button>
+        <div className="flex gap-1 rounded-lg border bg-card p-1 ms-auto overflow-x-auto max-w-full">
+          <Button size="sm" className="whitespace-nowrap" variant={view === 'month' ? 'default' : 'ghost'} onClick={() => { setView('month'); setOffset(0); }}><CalendarDays className="w-4 h-4" />חודש</Button>
+          <Button size="sm" className="whitespace-nowrap" variant={view === 'week' ? 'default' : 'ghost'} onClick={() => { setView('week'); setOffset(0); }}><LayoutGrid className="w-4 h-4" />שבוע</Button>
+          <Button size="sm" className="whitespace-nowrap" variant={view === 'day' ? 'default' : 'ghost'} onClick={() => { setView('day'); setOffset(0); }}><CalendarDays className="w-4 h-4" />יום</Button>
+          <Button size="sm" className="whitespace-nowrap" variant={view === 'list' ? 'default' : 'ghost'} onClick={() => setView('list')}><List className="w-4 h-4" />רשימה</Button>
         </div>
       </div>
 
-      {showTracking && canEdit && <ClassTrackingPanel events={visibleEvents} classId={classId} todayIso={todayIso} />}
+      {visibleEvents.length > 0 && <UpcomingEventsPanel events={visibleEvents} todayIso={todayIso} onEventClick={setSelectedEvent} />}
+
+      {showTracking && canTrack && <ClassTrackingPanel events={visibleEvents} classId={classId} todayIso={todayIso} />}
 
       {loading ? (
         <div className="flex justify-center py-16"><div className="w-8 h-8 rounded-full border-4 border-primary/20 border-t-primary animate-spin" /></div>
       ) : visibleEvents.length === 0 ? (
-        <Card className="p-10 text-center"><CalendarDays className="w-12 h-12 mx-auto text-muted-foreground mb-3" /><h3 className="font-semibold mb-1">אין אירועים להצגה</h3><p className="text-sm text-muted-foreground">אפשר לייבא קובץ או להוסיף אירוע ידנית.</p></Card>
+        <SmartCalendarEmptyState
+          canImport={canImport}
+          canAdd={canEdit}
+          onImport={() => setShowImport(true)}
+          onAdd={() => { setEditingEvent(null); setShowForm(true); }}
+          onDemo={() => setShowDemo(true)}
+        />
       ) : view === 'month' ? (
         <MonthView events={visibleEvents} offset={offset} onOffsetChange={setOffset} onEventClick={setSelectedEvent} todayIso={todayIso} />
       ) : view === 'week' ? (
@@ -147,13 +170,13 @@ export default function Exams({ role, user }) {
         <div className="space-y-2">{upcoming.map(event => <Card key={event.id} className="p-3 cursor-pointer hover:shadow-sm" onClick={() => setSelectedEvent(event)}><div className="flex items-center justify-between gap-3"><div><h3 className="font-semibold">{event.title}</h3><p className="text-xs text-muted-foreground">{event.date}{event.time ? ` · ${event.time}` : ''}</p></div><EventTypeBadge type={event.type} /></div></Card>)}</div>
       )}
 
-      <SmartCalendarImportDialog open={showImport} onOpenChange={setShowImport} classId={classId} onImported={loadData} />
+      {canImport && <SmartCalendarImportDialog open={showImport} onOpenChange={setShowImport} classId={classId} onImported={loadData} />}
       <EventFormDialog open={showForm} onOpenChange={setShowForm} event={editingEvent} onSave={saveEvent} />
       <EventDetailsDialog
         event={selectedEvent}
         open={!!selectedEvent}
         onClose={() => setSelectedEvent(null)}
-        canEdit={canEdit}
+        canEdit={canEdit && !selectedEvent?.id?.startsWith('demo_')}
         isStudent={isStudent}
         completion={selectedEvent ? completions.find(c => c.exam_id === selectedEvent.id && c.student_id === currentStudent?.id) : null}
         onStudentUpdate={updateStudentStatus}

@@ -45,13 +45,13 @@ const teacherBottomNav = [
   { path: '/students', icon: Users, label: 'תלמידים', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
   { path: '/class-attendance', icon: Users, label: 'נוכחות', roles: ['homeroom_teacher'] },
   { path: '/schedule', icon: Calendar, label: 'מערכת', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
-  { path: '/exams', icon: BookOpen, label: 'מבחנים', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
+  { path: '/exams', icon: BookOpen, label: 'לוח חכם', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
 ];
 
 const studentBottomNav = [
   { path: '/student-home', icon: LayoutDashboard, label: 'היום שלי', dynamicLabel: true, roles: ['student'] },
   { path: '/schedule', icon: Calendar, label: 'מערכת', roles: ['student'] },
-  { path: '/exams', icon: BookOpen, label: 'מבחנים', roles: ['student'] },
+  { path: '/exams', icon: BookOpen, label: 'לוח חכם', roles: ['student'] },
 ];
 
 export default function AppLayout({ children, user, role, darkMode, toggleDark, onRoleChange }) {
