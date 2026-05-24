@@ -44,7 +44,7 @@ export default function Students({ role }) {
 
   async function loadStudents() {
     setLoading(true);
-    const data = await base44.entities.Student.filter({ class_id: classId });
+    const data = await base44.entities.Student.list();
     setStudents(data.filter(student => isStudentInApprovedScope(student, user, role)));
     setLoading(false);
   }

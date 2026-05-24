@@ -5,6 +5,30 @@ import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { Upload, FileText, Check, AlertCircle } from 'lucide-react';
 import SelectedFileNotice from '@/components/import/SelectedFileNotice';
+import { parseStudentsWorksheetRows } from '@/lib/studentImport';
+
+function parseGradeFromClassName(className = '') {
+  const clean = String(className).replace(/[\s״"׳']/g, '');
+  if (clean.startsWith('יב')) return 'יב';
+  if (clean.startsWith('יא')) return 'יא';
+  if (clean.startsWith('י')) return 'י';
+  if (clean.startsWith('ט')) return 'ט';
+  if (clean.startsWith('ח')) return 'ח';
+  if (clean.startsWith('ז')) return 'ז';
+  return 'י';
+}
+
+async function getOrCreateClassRoom(student) {
+  const className = student.class_name || '';
+  const existing = await base44.entities.ClassRoom.filter({ name: className });
+  if (existing[0]) return existing[0];
+  return base44.entities.ClassRoom.create({
+    name: className,
+    grade: student.grade || parseGradeFromClassName(className),
+    year: 'תשפ״ו',
+    is_active: true
+  });
+}
 
 export default function ImportStudentsModal({ classId, onClose, onSuccess }) {
   const fileInputRef = useRef(null);
@@ -16,8 +40,16 @@ export default function ImportStudentsModal({ classId, onClose, onSuccess }) {
   const [classRoom, setClassRoom] = useState(null);
 
   useEffect(() => {
-    if (!classId) return;
-    base44.entities.ClassRoom.filter({ id: classId }).then(data => setClassRoom(data[0] || null));
+    async function loadClassRoom() {
+      if (!classId) return;
+      const byId = await base44.entities.ClassRoom.filter({ id: classId });
+      if (byId[0]) {
+        setClassRoom(byId[0]);
+        return;
+      }
+      setClassRoom(null);
+    }
+    loadClassRoom();
   }, [classId]);
 
   async function handleFile(e) {
@@ -31,21 +63,13 @@ export default function ImportStudentsModal({ classId, onClose, onSuccess }) {
       const buffer = await file.arrayBuffer();
       const wb = XLSX.read(buffer);
       const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows = XLSX.utils.sheet_to_json(ws);
-      const targetClassName = classRoom?.name || '';
-      const targetGrade = classRoom?.grade || 'י';
-      const mapped = rows.map(row => ({
-        full_name: row['שם מלא'] || row['name'] || '',
-        student_number: String(row['מספר תלמיד'] || row['id'] || ''),
-        phone: String(row['טלפון'] || row['phone'] || ''),
-        email: row['מייל'] || row['email'] || '',
-        parent1_name: row['הורה 1'] || row['parent1'] || '',
-        parent1_phone: String(row['טלפון הורה 1'] || row['parent1_phone'] || ''),
-        grade: targetGrade, gender: row['מין'] || 'זכר',
-        class_id: classId, class_name: targetClassName,
-        status: 'פעיל', community_service_goal: 60, community_service_done: 0,
-        community_service_status: 'לא התחיל'
-      })).filter(r => r.full_name);
+      const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      const activeClassId = classRoom?.id || classId;
+      const mapped = parseStudentsWorksheetRows(rows, { classId: activeClassId, classRoom });
+      if (mapped.length === 0) {
+        setError('לא נמצאו תלמידים בקובץ. ודא שיש עמודות שם פרטי ושם משפחה.');
+        toast.error('לא נמצאו תלמידים בקובץ');
+      }
       setPreview(mapped);
       setStep('preview');
     } catch (err) {
@@ -68,7 +92,13 @@ export default function ImportStudentsModal({ classId, onClose, onSuccess }) {
     let success = 0;
     for (const student of preview) {
       try {
-        await base44.entities.Student.create(student);
+        const classForStudent = await getOrCreateClassRoom(student);
+        await base44.entities.Student.create({
+          ...student,
+          class_id: classForStudent.id,
+          class_name: classForStudent.name,
+          grade: classForStudent.grade || student.grade
+        });
         success++;
       } catch {}
     }
@@ -98,9 +128,9 @@ export default function ImportStudentsModal({ classId, onClose, onSuccess }) {
               {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
             </div>
             <div className="bg-muted rounded-xl p-4">
-              <p className="text-sm font-medium mb-2">עמודות נדרשות בקובץ:</p>
+              <p className="text-sm font-medium mb-2">הייבוא מזהה קבצי תלמידים עם עמודות:</p>
               <div className="grid grid-cols-2 gap-1 text-xs text-muted-foreground">
-                {['שם מלא', 'מספר תלמיד', 'טלפון', 'מייל', 'הורה 1', 'טלפון הורה 1', 'מין'].map(c => (
+                {['שם פרטי', 'שם משפחה', 'ת.ז', 'כיתה', 'מין', 'נייד', 'דואל', 'ת.לידה'].map(c => (
                   <span key={c}>• {c}</span>
                 ))}
               </div>
