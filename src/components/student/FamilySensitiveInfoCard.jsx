@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -74,98 +73,106 @@ export default function FamilySensitiveInfoCard({ student, canEdit }) {
 
   if (loading) {
     return (
-      <Card className="max-w-full overflow-hidden border-amber-200 dark:border-amber-900/50 bg-amber-50/50 dark:bg-amber-950/10" dir="rtl">
-        <CardContent className="py-6 text-sm text-muted-foreground">טוען מידע רגיש...</CardContent>
+      <Card className="max-w-full overflow-hidden" dir="rtl">
+        <CardContent className="py-4 text-sm text-muted-foreground/60">טוען...</CardContent>
       </Card>
     );
   }
 
   const hasSensitiveInfo = statuses.length > 0 || note.trim().length > 0;
   const showNoInfoState = noSensitiveInfo || !hasSensitiveInfo;
+  const displaySummary = noSensitiveInfo 
+    ? 'אין מידע רגיש מתועד' 
+    : statuses.length > 0 
+    ? statuses.join(', ') 
+    : null;
 
   return (
-    <Card className="border-amber-200 dark:border-amber-900/50 bg-amber-50/50 dark:bg-amber-950/10" dir="rtl">
-      <CardHeader className="pb-2">
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
-          <div>
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <ShieldAlert className="w-4 h-4 text-amber-600" />
-              מידע משפחתי רגיש
-            </CardTitle>
-            <p className="text-xs text-muted-foreground mt-1">מוצג רק למחנך/ת, רכז/ת שכבה ומנהל מערכת. נשמר בנפרד ואינו נכלל בדוחות או בייצוא כללי.</p>
+    <Card className="max-w-full overflow-hidden border border-border/40 bg-background/40 backdrop-blur-sm hover:border-border/60 transition-colors" dir="rtl">
+      <CardHeader className="pb-2.5 pt-4">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <ShieldAlert className="w-4 h-4 text-muted-foreground/50 flex-shrink-0" />
+            <CardTitle className="text-sm font-medium text-foreground">מידע משפחתי רגיש</CardTitle>
           </div>
           {canEdit && !isEditing && (
-            <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
-              עריכה/פתיחה
+            <Button variant="ghost" size="sm" className="text-xs h-7 px-2.5 flex-shrink-0 text-muted-foreground hover:text-foreground" onClick={() => setIsEditing(true)}>
+              עריכה
             </Button>
           )}
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4">
+      <CardContent className="pb-4">
         {!isEditing ? (
-          <div className="max-w-full rounded-xl border bg-card/70 p-3">
-            {showNoInfoState ? (
-              <p className="text-sm font-medium text-muted-foreground">אין מידע רגיש מתועד</p>
+          <div className="space-y-2">
+            {displaySummary ? (
+              <p className="text-sm text-foreground/75">{displaySummary}</p>
             ) : (
-              <div className="space-y-3">
-                <div className="flex flex-wrap gap-2">
-                  {statuses.map(status => (
-                    <Badge key={status} variant="secondary" className="rounded-full">{status}</Badge>
-                  ))}
-                </div>
-                {note.trim() && (
-                  <p className="text-sm leading-6 text-foreground whitespace-pre-wrap break-words">{note}</p>
-                )}
+              <p className="text-sm text-muted-foreground/70">אין מידע רגיש מתועד</p>
+            )}
+            {note.trim() && !isEditing && (
+              <div className="mt-3 pt-3 border-t border-border/30 space-y-1">
+                <p className="text-xs text-muted-foreground/60 font-medium">הערה:</p>
+                <p className="text-xs text-foreground/70 leading-5 whitespace-pre-wrap break-words">{note}</p>
               </div>
             )}
           </div>
         ) : (
-          <div className="space-y-4">
-            <Label className="flex items-center gap-2 rounded-xl border bg-card/70 p-3 text-sm cursor-pointer">
-              <Checkbox
-                checked={noSensitiveInfo}
-                disabled={!canEdit || saving}
-                onCheckedChange={(checked) => handleNoSensitiveChange(checked === true)}
-              />
-              <span>אין מידע רגיש</span>
-            </Label>
+          <div className="space-y-3.5">
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2.5 text-sm cursor-pointer py-1.5 px-2 rounded-md hover:bg-muted/30 transition-colors">
+                <Checkbox
+                  checked={noSensitiveInfo}
+                  disabled={!canEdit || saving}
+                  onCheckedChange={(checked) => handleNoSensitiveChange(checked === true)}
+                />
+                <span className="text-foreground/90">אין מידע רגיש</span>
+              </Label>
+            </div>
 
             {!noSensitiveInfo && (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-full">
-                  {FAMILY_OPTIONS.map(option => (
-                    <Label key={option} className="flex items-center gap-2 rounded-xl border bg-card/70 p-3 text-sm cursor-pointer">
-                      <Checkbox
-                        checked={statuses.includes(option)}
-                        disabled={!canEdit || saving}
-                        onCheckedChange={(checked) => toggleStatus(option, checked === true)}
-                      />
-                      <span>{option}</span>
-                    </Label>
-                  ))}
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium text-muted-foreground/70">בחר מצבים משפחתיים</Label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                    {FAMILY_OPTIONS.map(option => (
+                      <Label key={option} className="flex items-center gap-2.5 rounded-lg border border-border/30 bg-muted/15 px-3 py-2 text-sm cursor-pointer hover:bg-muted/30 hover:border-border/50 transition-colors">
+                        <Checkbox
+                          checked={statuses.includes(option)}
+                          disabled={!canEdit || saving}
+                          onCheckedChange={(checked) => toggleStatus(option, checked === true)}
+                        />
+                        <span className="text-foreground/85 text-sm">{option}</span>
+                      </Label>
+                    ))}
+                  </div>
                 </div>
 
-                <div className="space-y-1">
-                  <Label>הערה קצרה</Label>
-                  <Textarea
-                    value={note}
-                    onChange={(e) => setNote(e.target.value.slice(0, 180))}
-                    disabled={!canEdit || saving}
-                    rows={3}
-                    placeholder="הערה פנימית קצרה לצוות המורשה בלבד"
-                  />
-                  <div className="text-[11px] text-muted-foreground text-left">{note.length}/180</div>
-                </div>
+                {statuses.length > 0 && (
+                  <div className="space-y-2">
+                    <Label htmlFor="sensitive-note" className="text-xs font-medium text-muted-foreground/70">הערה פנימית (אופציונלי)</Label>
+                    <Textarea
+                      id="sensitive-note"
+                      value={note}
+                      onChange={(e) => setNote(e.target.value.slice(0, 180))}
+                      disabled={!canEdit || saving}
+                      rows={2}
+                      placeholder="הערה קצרה לצוות המורשה בלבד"
+                      className="text-sm border-border/40 resize-none"
+                    />
+                    <div className="text-[10px] text-muted-foreground/50 text-left">{note.length}/180</div>
+                  </div>
+                )}
               </>
             )}
 
             {canEdit && (
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Button onClick={handleSave} disabled={saving} size="sm">
-                  {saving ? 'שומר...' : 'שמור מידע רגיש'}
+              <div className="flex gap-2 pt-1">
+                <Button onClick={handleSave} disabled={saving} size="sm" className="text-xs h-8 px-3">
+                  {saving ? 'שומר...' : 'שמור'}
                 </Button>
-                <Button variant="outline" onClick={() => loadSensitiveInfo()} disabled={saving} size="sm">
+                <Button variant="outline" onClick={() => loadSensitiveInfo()} disabled={saving} size="sm" className="text-xs h-8 px-3">
                   ביטול
                 </Button>
               </div>
