@@ -1,7 +1,11 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CalendarDays, Clock } from 'lucide-react';
-import EventTypeBadge from './EventTypeBadge';
+import { CalendarDays, Clock, ChevronLeft } from 'lucide-react';
+import { format } from 'date-fns';
+import { he } from 'date-fns/locale';
+import { TYPE_STYLES } from './eventConstants';
+
+const HEB_DAYS = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳'];
 
 const addDays = (iso, days) => {
   const d = new Date(iso);
@@ -9,39 +13,101 @@ const addDays = (iso, days) => {
   return d.toISOString().split('T')[0];
 };
 
-export default function UpcomingEventsPanel({ events, todayIso, onEventClick }) {
+const formatHebDate = (iso) => {
+  if (!iso) return '';
+  try {
+    const d = new Date(iso);
+    return `${format(d, 'd.M.yy')} · יום ${HEB_DAYS[d.getDay()]}`;
+  } catch {
+    return iso;
+  }
+};
+
+// מיפוי קטגוריה לפס צד עדין
+const SIDE_COLORS = {
+  'מבחן': 'bg-purple-400', 'בחן': 'bg-violet-400',
+  'עבודה': 'bg-blue-400', 'פרויקט': 'bg-sky-400', 'הגשה': 'bg-cyan-400',
+  'בגרות': 'bg-red-400', 'מתכונת': 'bg-orange-400', 'מועד ב׳': 'bg-amber-400',
+  'חזרה': 'bg-pink-400', 'ריקודים': 'bg-fuchsia-400', 'משחק': 'bg-lime-400',
+  'טקס': 'bg-indigo-400', 'צילומים': 'bg-teal-400', 'ועדה': 'bg-stone-400',
+  'חג': 'bg-emerald-400', 'אירוע שכבתי': 'bg-primary', 'אחר': 'bg-slate-400'
+};
+
+function EventCard({ event, onClick, canEdit }) {
+  const sideColor = SIDE_COLORS[event.type] || SIDE_COLORS['אחר'];
+  const tagStyle = TYPE_STYLES[event.type] || TYPE_STYLES['אחר'];
+
+  return (
+    <button
+      onClick={() => onClick(event)}
+      className="group w-full text-right rounded-lg bg-card hover:bg-accent/40 border border-border/60 hover:border-border transition-colors overflow-hidden flex h-[68px]"
+    >
+      <div className={`w-1 shrink-0 ${sideColor}`} />
+      <div className="flex-1 min-w-0 px-2.5 py-2 flex flex-col justify-between">
+        <div className="flex items-start justify-between gap-2">
+          <h4 className="font-semibold text-sm text-foreground truncate leading-tight">{event.title}</h4>
+          <span className={`text-[10px] px-1.5 py-0.5 rounded border shrink-0 ${tagStyle}`}>{event.type}</span>
+        </div>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[11px] text-muted-foreground truncate flex items-center gap-1">
+            <span>{formatHebDate(event.date)}</span>
+            {event.time && <><span className="opacity-50">·</span><Clock className="w-2.5 h-2.5" />{event.time}</>}
+          </p>
+          {canEdit && <ChevronLeft className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />}
+        </div>
+      </div>
+    </button>
+  );
+}
+
+export default function UpcomingEventsPanel({ events, todayIso, onEventClick, canEdit = true }) {
   const tomorrowIso = addDays(todayIso, 1);
   const weekEndIso = addDays(todayIso, 7);
+
+  const today = events.filter(e => e.date === todayIso);
+  const tomorrow = events.filter(e => e.date === tomorrowIso);
+  const week = events.filter(e => e.date > tomorrowIso && e.date <= weekEndIso);
+
   const buckets = [
-    { key: 'today', label: 'היום', events: events.filter(e => e.date === todayIso) },
-    { key: 'tomorrow', label: 'מחר', events: events.filter(e => e.date === tomorrowIso) },
-    { key: 'week', label: 'השבוע', events: events.filter(e => e.date > tomorrowIso && e.date <= weekEndIso).slice(0, 6) }
+    { key: 'today', label: 'היום', events: today, accent: 'text-primary' },
+    { key: 'tomorrow', label: 'מחר', events: tomorrow, accent: 'text-secondary-foreground' },
+    { key: 'week', label: 'השבוע', events: week.slice(0, 6), accent: 'text-muted-foreground' }
   ];
+
+  const totalThisWeek = today.length + tomorrow.length + week.length;
 
   return (
     <Card className="p-4">
-      <div className="flex items-center gap-2 mb-3">
-        <CalendarDays className="w-4 h-4 text-primary" />
-        <h2 className="font-semibold">מה קרוב?</h2>
+      <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center">
+            <CalendarDays className="w-4 h-4 text-primary" />
+          </div>
+          <h2 className="font-semibold">מה קרוב?</h2>
+        </div>
+        <div className="flex items-center gap-1.5 text-xs flex-wrap">
+          <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">היום {today.length}</span>
+          <span className="px-2 py-0.5 rounded-full bg-secondary/40 text-secondary-foreground font-medium">מחר {tomorrow.length}</span>
+          <span className="px-2 py-0.5 rounded-full bg-muted text-muted-foreground font-medium">השבוע {week.length}</span>
+          <span className="text-muted-foreground hidden sm:inline">· סה״כ {totalThisWeek}</span>
+        </div>
       </div>
-      <div className="grid md:grid-cols-3 gap-3">
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {buckets.map(bucket => (
-          <div key={bucket.key} className="rounded-xl bg-muted/30 p-3 min-h-[110px]">
-            <p className="text-xs font-bold text-muted-foreground mb-2">{bucket.label}</p>
+          <div key={bucket.key} className="rounded-xl bg-muted/30 p-2.5">
+            <div className="flex items-center justify-between px-1 mb-2">
+              <p className={`text-xs font-bold ${bucket.accent}`}>{bucket.label}</p>
+              <span className="text-[11px] text-muted-foreground">{bucket.events.length}</span>
+            </div>
             {bucket.events.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">אין אירועים</p>
+              <div className="h-[68px] flex items-center justify-center">
+                <p className="text-xs text-muted-foreground">אין אירועים</p>
+              </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-1.5 max-h-[280px] overflow-y-auto pe-1 -me-1">
                 {bucket.events.map(event => (
-                  <Button key={event.id} variant="ghost" onClick={() => onEventClick(event)} className="w-full h-auto justify-start p-2 text-right rounded-lg bg-card/70">
-                    <div className="w-full min-w-0">
-                      <div className="flex items-center justify-between gap-2 flex-row-reverse">
-                        <span className="font-medium text-xs truncate">{event.title}</span>
-                        <EventTypeBadge type={event.type} />
-                      </div>
-                      <p className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1"><Clock className="w-3 h-3" />{event.date}{event.time ? ` · ${event.time}` : ''}</p>
-                    </div>
-                  </Button>
+                  <EventCard key={event.id} event={event} onClick={onEventClick} canEdit={canEdit} />
                 ))}
               </div>
             )}
