@@ -6,7 +6,8 @@ import { getUserApprovedClassId } from '@/lib/schoolStructure';
 import PageHeader from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { CalendarDays, FileUp, LayoutGrid, List, Plus, Users, Trash2 } from 'lucide-react';
+import { CalendarDays, FileUp, LayoutGrid, List, Plus, Users, Trash2, MoreVertical, Settings } from 'lucide-react';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import EventFilters, { filterByGroup, filterBySearch } from '@/components/exams/EventFilters';
 import EventTypeBadge from '@/components/exams/EventTypeBadge';
@@ -136,16 +137,36 @@ export default function Exams({ role, user }) {
   const upcoming = visibleEvents.filter(event => event.date >= todayIso).slice(0, 8);
 
   return (
-    <div className="p-4 lg:p-6 space-y-5" dir="rtl">
+    <div className="p-4 lg:p-6 space-y-5 pb-28 lg:pb-10" dir="rtl">
       <PageHeader
         title="לוח שנה שכבתי חכם"
         subtitle="כל אירועי השכבה במקום אחד — מבחנים, בגרויות, חזרות, טקסים, חגים, צילומים ופעילויות"
         actions={
           <>
-            {canImport && <Button size="lg" onClick={() => setShowImport(true)} className="font-bold shadow-sm"><FileUp className="w-4 h-4" />ייבוא לוח מקובץ</Button>}
-            {canEdit && <Button variant="outline" size="sm" onClick={() => { setEditingEvent(null); setShowForm(true); }}><Plus className="w-4 h-4" />הוסף אירוע</Button>}
+            {canEdit && <Button size="lg" onClick={() => { setEditingEvent(null); setShowForm(true); }} className="font-bold shadow-sm"><Plus className="w-4 h-4" />הוסף אירוע</Button>}
             {canTrack && <Button variant={showTracking ? 'default' : 'outline'} size="sm" onClick={() => setShowTracking(v => !v)}><Users className="w-4 h-4" />מעקב כיתתי</Button>}
-            {canImport && events.length > 0 && <Button variant="outline" size="sm" onClick={clearAllEvents} className="text-destructive hover:bg-destructive/10"><Trash2 className="w-4 h-4" />נקה הכל</Button>}
+            {canImport && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" aria-label="תפריט ניהול"><Settings className="w-4 h-4" />ניהול<MoreVertical className="w-3.5 h-3.5 opacity-60" /></Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52">
+                  <DropdownMenuLabel>פעולות ניהול</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => setShowImport(true)}>
+                    <FileUp className="w-4 h-4" /> ייבוא לוח מקובץ
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={clearAllEvents}
+                    disabled={events.length === 0}
+                    className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                  >
+                    <Trash2 className="w-4 h-4" /> נקה את כל האירועים
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </>
         }
       />

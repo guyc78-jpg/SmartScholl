@@ -40,13 +40,13 @@ function EventCard({ event, onClick, canEdit }) {
   return (
     <button
       onClick={() => onClick(event)}
-      className="group w-full text-right rounded-lg bg-card hover:bg-accent/40 border border-border/60 hover:border-border transition-colors overflow-hidden flex h-[68px]"
+      className="group w-full text-right rounded-lg bg-card hover:bg-accent/40 border border-border/60 hover:border-border transition-colors overflow-hidden flex h-[56px]"
     >
       <div className={`w-1 shrink-0 ${sideColor}`} />
-      <div className="flex-1 min-w-0 px-2.5 py-2 flex flex-col justify-between">
+      <div className="flex-1 min-w-0 px-2 py-1.5 flex flex-col justify-between">
         <div className="flex items-start justify-between gap-2">
-          <h4 className="font-semibold text-sm text-foreground truncate leading-tight">{event.title}</h4>
-          <span className={`text-[10px] px-1.5 py-0.5 rounded border shrink-0 ${tagStyle}`}>{event.type}</span>
+          <h4 className="font-semibold text-[13px] text-foreground truncate leading-tight">{event.title}</h4>
+          <span className={`text-[10px] px-1.5 py-0.5 rounded border shrink-0 leading-none ${tagStyle}`}>{event.type}</span>
         </div>
         <div className="flex items-center justify-between gap-2">
           <p className="text-[11px] text-muted-foreground truncate flex items-center gap-1">
@@ -68,10 +68,11 @@ export default function UpcomingEventsPanel({ events, todayIso, onEventClick, ca
   const tomorrow = events.filter(e => e.date === tomorrowIso);
   const week = events.filter(e => e.date > tomorrowIso && e.date <= weekEndIso);
 
+  const eventsWord = (n) => n === 1 ? 'אירוע' : 'אירועים';
   const buckets = [
-    { key: 'today', label: 'היום', events: today, accent: 'text-primary' },
-    { key: 'tomorrow', label: 'מחר', events: tomorrow, accent: 'text-secondary-foreground' },
-    { key: 'week', label: 'השבוע', events: week.slice(0, 6), accent: 'text-muted-foreground' }
+    { key: 'today', label: 'היום', events: today, accent: 'text-primary', dot: 'bg-primary' },
+    { key: 'tomorrow', label: 'מחר', events: tomorrow, accent: 'text-foreground', dot: 'bg-secondary' },
+    { key: 'week', label: 'השבוע', events: week.slice(0, 8), accent: 'text-muted-foreground', dot: 'bg-muted-foreground/60' }
   ];
 
   const totalThisWeek = today.length + tomorrow.length + week.length;
@@ -93,19 +94,21 @@ export default function UpcomingEventsPanel({ events, todayIso, onEventClick, ca
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5">
         {buckets.map(bucket => (
-          <div key={bucket.key} className="rounded-xl bg-muted/30 p-2.5">
-            <div className="flex items-center justify-between px-1 mb-2">
+          <div key={bucket.key} className="rounded-xl bg-muted/30 p-2">
+            <div className="flex items-center gap-2 px-1.5 mb-1.5">
+              <span className={`w-1.5 h-1.5 rounded-full ${bucket.dot}`} />
               <p className={`text-xs font-bold ${bucket.accent}`}>{bucket.label}</p>
-              <span className="text-[11px] text-muted-foreground">{bucket.events.length}</span>
+              <span className="text-[11px] text-muted-foreground">·</span>
+              <span className="text-[11px] text-muted-foreground">{bucket.events.length} {eventsWord(bucket.events.length)}</span>
             </div>
             {bucket.events.length === 0 ? (
-              <div className="h-[68px] flex items-center justify-center">
+              <div className="h-[56px] flex items-center justify-center">
                 <p className="text-xs text-muted-foreground">אין אירועים</p>
               </div>
             ) : (
-              <div className="space-y-1.5 max-h-[280px] overflow-y-auto pe-1 -me-1">
+              <div className="space-y-1 max-h-[300px] overflow-y-auto pe-1 -me-1 scroll-smooth">
                 {bucket.events.map(event => (
                   <EventCard key={event.id} event={event} onClick={onEventClick} canEdit={canEdit} />
                 ))}
