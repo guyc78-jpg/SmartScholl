@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Phone, MessageCircle, Users } from 'lucide-react';
+import { Phone, MessageCircle, Users, PhoneCall, MessageCircle as WhatsApp } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function ParentDetailsCard({ student, canEdit, onStudentUpdate }) {
@@ -86,26 +86,29 @@ export default function ParentDetailsCard({ student, canEdit, onStudentUpdate })
 
               <div className="space-y-1">
                  <Label className="block">טלפון</Label>
-                 <Input
-                   type="tel"
-                   value={index === 0 ? parentForm.parent1_phone : parentForm.parent2_phone}
-                   onChange={e => setParentField(index === 0 ? 'parent1_phone' : 'parent2_phone', e.target.value)}
-                   placeholder="0547683142"
-                 />
-                 {(index === 0 ? parentForm.parent1_phone : parentForm.parent2_phone) && (
-                   <div className="flex flex-col gap-2 mt-2">
-                     <a href={`tel:${normalizePhone(index === 0 ? parentForm.parent1_phone : parentForm.parent2_phone)}`} className="w-full">
-                       <Button variant="outline" size="sm" className="h-8 gap-1 text-xs w-full">
-                         <Phone className="w-3.5 h-3.5" />שיחה
-                       </Button>
-                     </a>
-                     <a href={`https://wa.me/${whatsappPhone(index === 0 ? parentForm.parent1_phone : parentForm.parent2_phone)}`} target="_blank" rel="noreferrer" className="w-full">
-                       <Button variant="outline" size="sm" className="h-8 gap-1 text-xs w-full">
-                         <MessageCircle className="w-3.5 h-3.5" />וואטסאפ
-                       </Button>
-                     </a>
-                   </div>
-                 )}
+                 <div className="flex items-center gap-2">
+                   <Input
+                     type="tel"
+                     value={index === 0 ? parentForm.parent1_phone : parentForm.parent2_phone}
+                     onChange={e => setParentField(index === 0 ? 'parent1_phone' : 'parent2_phone', e.target.value)}
+                     placeholder="0547683142"
+                     className="flex-1"
+                   />
+                   {(index === 0 ? parentForm.parent1_phone : parentForm.parent2_phone) && (
+                     <div className="flex gap-1">
+                       <a href={`tel:${normalizePhone(index === 0 ? parentForm.parent1_phone : parentForm.parent2_phone)}`} className="flex-shrink-0">
+                         <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-primary/10" title="שיחה">
+                           <Phone className="w-4 h-4 text-primary" />
+                         </Button>
+                       </a>
+                       <a href={`https://wa.me/${whatsappPhone(index === 0 ? parentForm.parent1_phone : parentForm.parent2_phone)}`} target="_blank" rel="noreferrer" className="flex-shrink-0">
+                         <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-primary/10" title="וואטסאפ">
+                           <MessageCircle className="w-4 h-4 text-primary" />
+                         </Button>
+                       </a>
+                     </div>
+                   )}
+                 </div>
               </div>
               </div>
             </div>
