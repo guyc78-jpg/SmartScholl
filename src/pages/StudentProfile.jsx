@@ -147,9 +147,12 @@ export default function StudentProfile() {
                 <StatusBadge status={student.status} />
               </div>
               <p className="text-sm text-muted-foreground mt-0.5">
-                כיתה {student.class_name || 'י׳1'} · ת.ז {student.student_number || '—'}
+                כיתה {student.class_name || 'י׳1'}
               </p>
-              <div className="flex flex-wrap gap-3 mt-2">
+              <p className="text-sm text-muted-foreground">
+                ת.ז: {student.student_number || '—'}
+              </p>
+              <div className="flex flex-wrap gap-3 mt-3">
                 {student.phone && (
                   <a href={`tel:${student.phone}`} className="flex items-center gap-1 text-xs text-primary hover:underline">
                     <Phone className="w-3 h-3" />{student.phone}
