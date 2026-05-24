@@ -62,6 +62,13 @@ export default function Students({ role }) {
   const communityPct = (s) => s.community_service_goal > 0
     ? Math.round((s.community_service_done / s.community_service_goal) * 100) : 0;
 
+  const formatStudentName = (fullName) => {
+    const parts = fullName.trim().split(' ');
+    if (parts.length < 2) return fullName;
+    const lastName = parts.pop();
+    return `${lastName} ${parts.join(' ')}`;
+  };
+
   async function deleteAllStudents() {
     setDeleting(true);
     const deletedCount = students.length;
@@ -168,7 +175,7 @@ export default function Students({ role }) {
                     </div>
                     <div className="min-w-0 text-right">
                                   <div className="flex items-center gap-2 mb-1 flex-row-reverse justify-end">
-                                    <h3 className="font-semibold text-foreground text-sm leading-tight">{student.full_name}</h3>
+                                    <h3 className="font-semibold text-foreground text-sm leading-tight">{formatStudentName(student.full_name)}</h3>
                                     <StatusBadge status={student.status} />
                                   </div>
                       <p className="text-xs text-muted-foreground">{student.class_name || 'כיתה י׳1'} · {student.grade || 'י'}</p>
