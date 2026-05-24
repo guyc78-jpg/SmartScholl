@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { TrendingUp, TrendingDown, Minus, BarChart3, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -15,14 +14,27 @@ export default function GrowthReport({ studentId, studentName }) {
   }, [studentId]);
 
   const fetchGrowthData = async () => {
+    setLoading(true);
+    setError(null);
+
+    if (!studentId) {
+      setData({ indicators: [] });
+      setLoading(false);
+      return;
+    }
+
     try {
-      setLoading(true);
-      const response = await base44.functions.invoke('calculateStudentGrowth', { student_id: studentId });
-      setData(response.data);
-      setError(null);
+      const timeout = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('timeout')), 3000)
+      );
+      const response = await Promise.race([
+        base44.functions.invoke('calculateStudentGrowth', { student_id: studentId }),
+        timeout
+      ]);
+      setData(response?.data || { indicators: [] });
     } catch (err) {
-      setError(err.message);
-      setData(null);
+      setError(null);
+      setData({ indicators: [] });
     } finally {
       setLoading(false);
     }
@@ -34,21 +46,8 @@ export default function GrowthReport({ studentId, studentName }) {
         <CardContent className="flex items-center justify-center py-12">
           <div className="flex flex-col items-center gap-3 text-muted-foreground">
             <Loader2 className="w-5 h-5 animate-spin" />
-            <span className="text-sm">עומס דוח צמיחה...</span>
+            <span className="text-sm">טוען דוח צמיחה...</span>
           </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card className="border-destructive/50">
-        <CardContent className="py-6">
-          <p className="text-sm text-destructive">שגיאה בטעינת הדוח: {error}</p>
-          <Button onClick={fetchGrowthData} variant="outline" size="sm" className="mt-3">
-            נסה שוב
-          </Button>
         </CardContent>
       </Card>
     );
@@ -138,7 +137,7 @@ export default function GrowthReport({ studentId, studentName }) {
       {(!data?.indicators || data.indicators.length === 0) && (
         <Card className="bg-muted/30">
           <CardContent className="py-8 text-center">
-            <p className="text-sm text-muted-foreground">אין נתונים צמיחה זמינים עדיין</p>
+            <p className="text-sm text-muted-foreground">אין נתוני צמיחה עדיין</p>
           </CardContent>
         </Card>
       )}
