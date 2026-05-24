@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Bell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-export default function NotificationsDropdown({ notifications }) {
+export default function NotificationsDropdown({ notifications, onRead }) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef(null);
   const count = notifications.length;
@@ -18,6 +18,11 @@ export default function NotificationsDropdown({ notifications }) {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const handleItemClick = (item) => {
+    if (onRead) onRead(item);
+    setOpen(false);
+  };
 
   return (
     <div ref={wrapperRef} className="relative z-50" dir="rtl">
@@ -54,7 +59,7 @@ export default function NotificationsDropdown({ notifications }) {
                 <Link
                   key={item.id}
                   to={item.to}
-                  onClick={() => setOpen(false)}
+                  onClick={() => handleItemClick(item)}
                   className="block rounded-lg px-3 py-2.5 hover:bg-muted transition-colors"
                 >
                   <p className="text-sm font-medium text-foreground">{item.title}</p>

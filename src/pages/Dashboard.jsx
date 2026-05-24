@@ -23,6 +23,7 @@ import SchoolNameBanner from '@/components/layout/SchoolNameBanner';
 import NowNextCard from '@/components/schedule/NowNextCard';
 import { isStudentInApprovedScope, getUserApprovedClass, getUserApprovedGrade, getUserApprovedClassId } from '@/lib/schoolStructure';
 import { getAvailableRoles, getUserFirstName, hasApprovedRole, getRoleHomeLabel, getRoleShort } from '@/lib/roleUtils';
+import useReadNotifications from '@/hooks/useReadNotifications';
 
 const HEBREW_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 const HEBREW_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
@@ -134,38 +135,54 @@ export default function Dashboard({ user, role }) {
 
   const canSeeClassAlerts = hasClassRole;
   const canSeeCoordinatorAlerts = isAdmin || hasCoordinatorRole;
-  const notifications = [
+  const { isRead, markAsRead } = useReadNotifications();
+
+  // Each notification has a "signature" derived from its current count.
+  // When the count changes (new event), the signature changes and the
+  // notification re-appears even if it was previously dismissed.
+  const allNotifications = [
     ...(canSeeClassAlerts && openDiscipline > 0 ? [{
       id: 'discipline',
+      signature: `discipline-${openDiscipline}`,
       title: `${openDiscipline} אירועי משמעת פתוחים`,
       description: 'דורש טיפול ומעקב',
       to: '/discipline'
     }] : []),
     ...(openTasks > 0 ? [{
       id: 'tasks',
+      signature: `tasks-${openTasks}`,
       title: `${openTasks} משימות פתוחות`,
       description: 'משימות שממתינות לטיפול',
       to: '/tasks'
     }] : []),
     ...(canSeeClassAlerts && attendanceAlertStudents.length > 0 ? [{
       id: 'attendance',
+      signature: `attendance-${attendanceAlertStudents.length}`,
       title: `${attendanceAlertStudents.length} התראות נוכחות`,
       description: 'תלמידים שחצו סף היעדרויות או איחורים',
       to: '/class-attendance'
     }] : []),
     ...(canSeeClassAlerts && watchStudents.length > 0 ? [{
       id: 'watch-students',
+      signature: `watch-${watchStudents.length}`,
       title: `${watchStudents.length} תלמידים למעקב`,
       description: 'תלמידים שסומנו כדורשים מעקב',
       to: '/students'
     }] : []),
     ...(canSeeCoordinatorAlerts && nextExams.length > 0 ? [{
       id: 'exams',
+      signature: `exams-${nextExams.length}`,
       title: `${nextExams.length} מבחנים קרובים`,
       description: 'מבחנים מתוכננים להמשך',
       to: '/exams'
     }] : []),
   ];
+
+  const notifications = allNotifications.filter(item => !isRead(item.id, item.signature));
+
+  const handleNotificationRead = (item) => {
+    markAsRead(item.id, item.signature);
+  };
 
   if (loading) {
     return (
@@ -187,7 +204,7 @@ export default function Dashboard({ user, role }) {
             <span>{hebrewDate()}</span>
           </p>
         </div>
-        <NotificationsDropdown notifications={notifications} />
+        <NotificationsDropdown notifications={notifications} onRead={handleNotificationRead} />
       </div>
 
       {/* Now / Next — only useful for homeroom teachers (have a class) */}
