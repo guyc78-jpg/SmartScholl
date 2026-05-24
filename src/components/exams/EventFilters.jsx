@@ -13,22 +13,37 @@ const GROUP_STYLES = {
 
 export default function EventFilters({ activeGroup, onGroupChange, search, onSearchChange }) {
   const groups = [{ key: 'all', label: 'הכל' }, ...EVENT_GROUPS];
+  const chipCount = groups.length;
+  const chipsPerRow = Math.ceil(chipCount / 2);
+  
   return (
-    <div className="rounded-2xl border bg-card p-2.5 space-y-2" dir="rtl">
+    <div className="rounded-2xl border bg-card p-3 space-y-3" dir="rtl">
+      {/* Search field — full width */}
       <div className="relative">
         <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input value={search} onChange={e => onSearchChange(e.target.value)} placeholder="חיפוש לפי שם, מקצוע, כיתה או קבוצה..." className="pr-9 h-9" />
+        <Input
+          value={search}
+          onChange={e => onSearchChange(e.target.value)}
+          placeholder="חיפוש לפי שם, מקצוע, כיתה או קבוצה..."
+          className="pr-9 h-9"
+        />
       </div>
-      <div className="flex flex-wrap gap-2 pb-1">
+      
+      {/* Chips grid — 2 balanced rows */}
+      <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${chipsPerRow}, minmax(0, 1fr))` }}>
         {groups.map(group => {
           const active = activeGroup === group.key;
           return (
             <Button
               key={group.key}
               size="sm"
-              variant="outline"
+              variant={active ? 'default' : 'outline'}
               onClick={() => onGroupChange(group.key)}
-              className={`h-8 rounded-full whitespace-nowrap border ${active ? GROUP_STYLES[group.key] : 'bg-background/60'}`}
+              className={`h-8 px-3 rounded-full border font-medium text-sm transition-all ${
+                active
+                  ? GROUP_STYLES[group.key]
+                  : 'bg-muted/50 text-foreground hover:bg-muted/80 border-border/60'
+              }`}
             >
               {group.label}
             </Button>
