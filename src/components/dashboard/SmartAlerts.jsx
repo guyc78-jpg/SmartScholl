@@ -29,18 +29,35 @@ export default function SmartAlerts({ userRole }) {
   const [dismissed, setDismissed] = useState(new Set());
 
   useEffect(() => {
+    let didFinish = false;
+
     const loadAlerts = async () => {
       try {
-        const result = await base44.functions.invoke('generateSmartAlerts', {});
-        setAlerts(result.data.alerts || []);
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('timeout')), 8000)
+        );
+        const result = await Promise.race([
+          base44.functions.invoke('generateSmartAlerts', {}),
+          timeoutPromise
+        ]);
+        setAlerts(result?.data?.alerts || []);
       } catch (error) {
         console.error('Failed to load alerts:', error);
+        setAlerts([]);
       } finally {
+        didFinish = true;
         setLoading(false);
       }
     };
 
     loadAlerts();
+
+    // Hard safety net — never leave the card in loading forever
+    const safetyTimer = setTimeout(() => {
+      if (!didFinish) setLoading(false);
+    }, 10000);
+
+    return () => clearTimeout(safetyTimer);
   }, []);
 
   // Only show for staff
