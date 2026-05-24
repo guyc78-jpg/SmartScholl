@@ -136,11 +136,9 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
             <Button size="sm" variant="outline" className="gap-2" onClick={() => setShowImport(true)}>
               <FileUp className="w-4 h-4" /> ייבוא קובץ
             </Button>
-            {slots.length > 0 && (
-              <Button size="sm" variant="outline" className="gap-2 text-destructive hover:text-destructive" onClick={() => setConfirmDeleteAll(true)}>
-                <Trash2 className="w-4 h-4" /> מחק מערכת
-              </Button>
-            )}
+            <Button size="sm" variant="outline" className="gap-2 text-destructive hover:text-destructive" onClick={() => setConfirmDeleteAll(true)}>
+              <Trash2 className="w-4 h-4" /> מחק מערכת
+            </Button>
           </>
         ) : null}
       />
