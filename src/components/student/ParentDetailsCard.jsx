@@ -60,7 +60,7 @@ export default function ParentDetailsCard({ student, canEdit, onStudentUpdate })
   const hasParentDetails = parents.some(parent => parent.name || parent.phone);
 
   return (
-    <Card dir="rtl">
+    <Card dir="rtl" className="max-w-full overflow-hidden">
       <CardHeader className="pb-3">
         <CardTitle className="text-base font-semibold flex items-center gap-2">
           <Users className="w-4 h-4 text-primary" />
@@ -69,13 +69,13 @@ export default function ParentDetailsCard({ student, canEdit, onStudentUpdate })
         <p className="text-xs text-muted-foreground">פרטי קשר משפחתיים לשימוש צוות מורשה בלבד.</p>
       </CardHeader>
       <CardContent className="space-y-5">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-full">
           {parents.map((parent, index) => (
-            <div key={parent.label} className="rounded-2xl border bg-muted/20 p-3 space-y-3">
-              <div className="flex items-center justify-between gap-2">
+            <div key={parent.label} className="min-w-0 rounded-2xl border bg-muted/20 p-3 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <p className="text-sm font-semibold text-foreground">{parent.label}</p>
                 {parent.phone && (
-                  <div className="flex items-center gap-1">
+                  <div className="flex flex-wrap items-center gap-1">
                     <a href={`tel:${normalizePhone(parent.phone)}`}>
                       <Button variant="outline" size="sm" className="h-8 gap-1">
                         <Phone className="w-3.5 h-3.5" />שיחה
@@ -89,7 +89,7 @@ export default function ParentDetailsCard({ student, canEdit, onStudentUpdate })
                   </div>
                 )}
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 min-w-0">
                 <div className="space-y-1">
                   <Label>שם</Label>
                   <Input

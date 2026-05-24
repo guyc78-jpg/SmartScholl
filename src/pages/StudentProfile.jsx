@@ -136,7 +136,7 @@ export default function StudentProfile({ role }) {
   }
 
   return (
-    <div className="p-4 lg:p-6" dir="rtl">
+    <div className="w-full max-w-full overflow-x-hidden p-3 sm:p-4 lg:p-6" dir="rtl">
       {/* Back */}
       <Link to="/students" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4 w-fit">
         <ChevronRight className="w-4 h-4" />
@@ -145,7 +145,7 @@ export default function StudentProfile({ role }) {
 
       {/* Student Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-5">
-        <Card className="p-4 sm:p-5 text-right">
+        <Card className="max-w-full overflow-hidden p-4 sm:p-5 text-right">
           <div className="flex flex-col sm:flex-row sm:items-start gap-4">
             <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-xl flex-shrink-0 ${student.gender === 'נקבה' ? 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'}`}>
               {student.full_name.charAt(0)}
@@ -166,12 +166,12 @@ export default function StudentProfile({ role }) {
 
               <div className="flex flex-wrap items-center gap-2 text-sm">
                 {student.phone && (
-                  <a href={`tel:${student.phone}`} className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-primary hover:underline">
+                  <a href={`tel:${student.phone}`} className="inline-flex max-w-full items-center gap-1 rounded-full bg-muted px-3 py-1 text-primary hover:underline">
                     <Phone className="w-3.5 h-3.5" />{student.phone}
                   </a>
                 )}
                 {student.email && (
-                  <a href={`mailto:${student.email}`} className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-primary hover:underline force-ltr">
+                  <a href={`mailto:${student.email}`} className="inline-flex max-w-full items-center gap-1 rounded-full bg-muted px-3 py-1 text-primary hover:underline force-ltr break-all">
                     <Mail className="w-3.5 h-3.5" />{student.email}
                   </a>
                 )}
@@ -193,16 +193,16 @@ export default function StudentProfile({ role }) {
 
       {/* Tabs */}
       <Tabs value={tab} onValueChange={setTab}>
-        <div className="mb-4 overflow-x-auto pb-1" dir="rtl">
-          <TabsList className="inline-flex w-max min-w-full justify-start gap-1 p-1">
-            <TabsTrigger value="overview" className="min-w-20">סקירה</TabsTrigger>
-            <TabsTrigger value="growth" className="min-w-20">צמיחה</TabsTrigger>
-            <TabsTrigger value="attendance" className="min-w-20">נוכחות</TabsTrigger>
-            <TabsTrigger value="discipline" className="min-w-20">משמעת</TabsTrigger>
-            <TabsTrigger value="performance" className="min-w-20">תפקוד</TabsTrigger>
-            <TabsTrigger value="contacts" className="min-w-20">קשרים</TabsTrigger>
-            <TabsTrigger value="notes" className="min-w-20">הערות</TabsTrigger>
-            <TabsTrigger value="comms" className="min-w-20">תקשורת</TabsTrigger>
+        <div className="mb-4 w-full max-w-full overflow-x-auto overflow-y-hidden pb-1" dir="rtl">
+          <TabsList className="inline-flex w-max max-w-none min-w-full flex-nowrap justify-start gap-1 p-1">
+            <TabsTrigger value="overview" className="shrink-0 min-w-20">סקירה</TabsTrigger>
+            <TabsTrigger value="growth" className="shrink-0 min-w-20">צמיחה</TabsTrigger>
+            <TabsTrigger value="attendance" className="shrink-0 min-w-20">נוכחות</TabsTrigger>
+            <TabsTrigger value="discipline" className="shrink-0 min-w-20">משמעת</TabsTrigger>
+            <TabsTrigger value="performance" className="shrink-0 min-w-20">תפקוד</TabsTrigger>
+            <TabsTrigger value="contacts" className="shrink-0 min-w-20">קשרים</TabsTrigger>
+            <TabsTrigger value="notes" className="shrink-0 min-w-20">הערות</TabsTrigger>
+            <TabsTrigger value="comms" className="shrink-0 min-w-20">תקשורת</TabsTrigger>
           </TabsList>
         </div>
 

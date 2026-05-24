@@ -74,7 +74,7 @@ export default function FamilySensitiveInfoCard({ student, canEdit }) {
 
   if (loading) {
     return (
-      <Card className="border-amber-200 dark:border-amber-900/50 bg-amber-50/50 dark:bg-amber-950/10" dir="rtl">
+      <Card className="max-w-full overflow-hidden border-amber-200 dark:border-amber-900/50 bg-amber-50/50 dark:bg-amber-950/10" dir="rtl">
         <CardContent className="py-6 text-sm text-muted-foreground">טוען מידע רגיש...</CardContent>
       </Card>
     );
@@ -86,7 +86,7 @@ export default function FamilySensitiveInfoCard({ student, canEdit }) {
   return (
     <Card className="border-amber-200 dark:border-amber-900/50 bg-amber-50/50 dark:bg-amber-950/10" dir="rtl">
       <CardHeader className="pb-2">
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div>
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <ShieldAlert className="w-4 h-4 text-amber-600" />
@@ -104,7 +104,7 @@ export default function FamilySensitiveInfoCard({ student, canEdit }) {
 
       <CardContent className="space-y-4">
         {!isEditing ? (
-          <div className="rounded-xl border bg-card/70 p-3">
+          <div className="max-w-full rounded-xl border bg-card/70 p-3">
             {showNoInfoState ? (
               <p className="text-sm font-medium text-muted-foreground">אין מידע רגיש מתועד</p>
             ) : (
@@ -115,7 +115,7 @@ export default function FamilySensitiveInfoCard({ student, canEdit }) {
                   ))}
                 </div>
                 {note.trim() && (
-                  <p className="text-sm leading-6 text-foreground whitespace-pre-wrap">{note}</p>
+                  <p className="text-sm leading-6 text-foreground whitespace-pre-wrap break-words">{note}</p>
                 )}
               </div>
             )}
@@ -133,7 +133,7 @@ export default function FamilySensitiveInfoCard({ student, canEdit }) {
 
             {!noSensitiveInfo && (
               <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-full">
                   {FAMILY_OPTIONS.map(option => (
                     <Label key={option} className="flex items-center gap-2 rounded-xl border bg-card/70 p-3 text-sm cursor-pointer">
                       <Checkbox
