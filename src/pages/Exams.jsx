@@ -13,33 +13,47 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import PageHeader from '@/components/ui/PageHeader';
 import { toast } from 'sonner';
-import { BookOpen, Plus, Edit, Trash2, Calendar, Clock, User, AlertTriangle, FileUp, Eraser, Loader2, LayoutGrid, List } from 'lucide-react';
+import { CalendarDays, Plus, Edit, Trash2, Calendar, Clock, User, AlertTriangle, FileUp, Eraser, Loader2, LayoutGrid, List, Filter, Heart } from 'lucide-react';
 import ImportExamsDialog from '@/components/exams/ImportExamsDialog';
 import ImportExamsPreview from '@/components/exams/ImportExamsPreview';
 import CalendarWeekView from '@/components/exams/CalendarWeekView';
+import CalendarMonthView from '@/components/exams/CalendarMonthView';
+import CalendarDayView from '@/components/exams/CalendarDayView';
 import ExamDetailsDialog from '@/components/exams/ExamDetailsDialog';
-import EventFilters, { filterByGroup } from '@/components/exams/EventFilters';
-import EventTypeBadge from '@/components/exams/EventTypeBadge';
+import EventFilters, { filterByGroup, filterBySearch } from '@/components/exams/EventFilters';
+import EventTypeBadge, { ALL_EVENT_TYPES } from '@/components/exams/EventTypeBadge';
+import AudienceEditor, { isEventRelevantForStudent } from '@/components/exams/AudienceEditor';
+import ClassTrackingPanel from '@/components/exams/ClassTrackingPanel';
 
-const SUBJECTS = ['מתמטיקה', 'עברית', 'ספרות', 'אנגלית', 'היסטוריה', 'גיאוגרפיה', 'פיזיקה', 'כימיה', 'ביולוגיה', 'חינוך גופני', 'אמנות', 'אחר'];
-const TYPES = ['מבחן', 'בחן', 'עבודה', 'פרויקט', 'הגשה', 'בגרות', 'מתכונת', 'מועד ב׳', 'חזרה', 'חג', 'אירוע שכבתי', 'אחר'];
+const SUBJECTS = ['מתמטיקה', 'עברית', 'ספרות', 'אנגלית', 'היסטוריה', 'גיאוגרפיה', 'פיזיקה', 'כימיה', 'ביולוגיה', 'חינוך גופני', 'אמנות', 'כללי', 'אחר'];
+
+const emptyForm = {
+  title: '', subject: '', type: 'אירוע שכבתי', date: '', time: '', end_time: '',
+  class_or_grade: '', teacher: '', material: '', notes: '',
+  audience_scope: 'grade', audience_grades: ['יב'], audience_classes: [], audience_tracks: [], audience_subjects: [], audience_group_label: ''
+};
 
 export default function Exams({ role, user }) {
   const [exams, setExams] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState('calendar'); // 'calendar' | 'list'
+  const [view, setView] = useState('week'); // 'month' | 'week' | 'day' | 'list'
   const [weekOffset, setWeekOffset] = useState(0);
+  const [monthOffset, setMonthOffset] = useState(0);
+  const [dayOffset, setDayOffset] = useState(0);
   const [filterGroup, setFilterGroup] = useState('all');
+  const [search, setSearch] = useState('');
+  const [onlyMine, setOnlyMine] = useState(true); // student-side "My calendar" toggle
   const [selectedExam, setSelectedExam] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [showTracking, setShowTracking] = useState(false);
   const [previewEvents, setPreviewEvents] = useState([]);
   const [importing, setImporting] = useState(false);
   const [examCompletions, setExamCompletions] = useState([]);
   const [studentData, setStudentData] = useState(null);
   const [editExam, setEditExam] = useState(null);
-  const [form, setForm] = useState({ title: '', subject: '', type: 'מבחן', date: '', time: '', class_or_grade: '', teacher: '', material: '', notes: '' });
+  const [form, setForm] = useState(emptyForm);
   const fileInputRef = useRef(null);
   const canEditExams = ['admin', 'homeroom_teacher', 'coordinator'].includes(role);
   const isStudentView = role === 'student';
@@ -65,20 +79,32 @@ export default function Exams({ role, user }) {
 
   const today = new Date().toISOString().split('T')[0];
 
-  // Lookup map: exam_id → completion record (for fast access in views).
+  // Quick lookup: exam_id → completion row.
   const completionsByExamId = useMemo(() => {
     const map = {};
     for (const c of examCompletions) map[c.exam_id] = c;
     return map;
   }, [examCompletions]);
 
-  const filteredExams = useMemo(() => filterByGroup(exams, filterGroup), [exams, filterGroup]);
+  // Apply all filters: group → search → audience relevance (student only, when toggle on) → hide "not_relevant" student-side.
+  const filteredExams = useMemo(() => {
+    let list = filterByGroup(exams, filterGroup);
+    list = filterBySearch(list, search);
+    if (isStudentView && studentData && onlyMine) {
+      list = list.filter(e => isEventRelevantForStudent(e, studentData));
+      list = list.filter(e => completionsByExamId[e.id]?.status !== 'not_relevant');
+    }
+    return list;
+  }, [exams, filterGroup, search, isStudentView, studentData, onlyMine, completionsByExamId]);
 
-  function openAdd() { setForm({ title: '', subject: '', type: 'מבחן', date: '', time: '', class_or_grade: '', teacher: '', material: '', notes: '' }); setEditExam(null); setShowForm(true); }
-  function openEdit(exam) { setForm({ ...exam }); setEditExam(exam); setShowForm(true); setSelectedExam(null); }
+  function openAdd() { setForm(emptyForm); setEditExam(null); setShowForm(true); }
+  function openEdit(exam) {
+    setForm({ ...emptyForm, ...exam });
+    setEditExam(exam); setShowForm(true); setSelectedExam(null);
+  }
 
   async function handleSave() {
-    if (!form.title || !form.subject || !form.date) { toast.error('כותרת, מקצוע ותאריך הם שדות חובה'); return; }
+    if (!form.title || !form.date) { toast.error('כותרת ותאריך הם שדות חובה'); return; }
     if (editExam) { await base44.entities.Exam.update(editExam.id, { ...form, class_id: classId }); toast.success('פריט עודכן'); }
     else { await base44.entities.Exam.create({ ...form, class_id: classId }); toast.success('פריט נוסף!'); }
     setShowForm(false);
@@ -126,7 +152,7 @@ export default function Exams({ role, user }) {
       class_id: classId,
       title: e.title || '',
       subject: e.subject || '',
-      type: e.type || 'מבחן',
+      type: e.type || 'אחר',
       date: e.date,
       time: e.time || '',
       class_or_grade: e.class_or_grade || '',
@@ -141,7 +167,7 @@ export default function Exams({ role, user }) {
     loadExams();
   }
 
-  // Persist student status + personal note. Creates record on first interaction, updates afterwards.
+  // Upsert student status + personal note for a calendar item.
   async function updateCompletion({ status, personal_note }) {
     if (!studentData || !selectedExam) return;
     const existing = completionsByExamId[selectedExam.id];
@@ -162,7 +188,7 @@ export default function Exams({ role, user }) {
     }
   }
 
-  // Highlight weeks with 3+ items as overload (used in list view).
+  // List-view helpers
   const getWeekKey = (date) => { const d = new Date(date); const day = d.getDay(); const mon = new Date(d); mon.setDate(d.getDate() - day); return mon.toISOString().split('T')[0]; };
   const weekCounts = {};
   filteredExams.filter(e => e.date >= today).forEach(e => { const k = getWeekKey(e.date); weekCounts[k] = (weekCounts[k] || 0) + 1; });
@@ -170,6 +196,11 @@ export default function Exams({ role, user }) {
 
   const upcoming = filteredExams.filter(e => e.date >= today);
   const past = filteredExams.filter(e => e.date < today);
+
+  // Today/Next-up at the top — works in any view.
+  const nextSoon = useMemo(() => {
+    return filteredExams.filter(e => e.date >= today).slice(0, 5);
+  }, [filteredExams, today]);
 
   const ExamRow = ({ exam }) => {
     const weekKey = getWeekKey(exam.date);
@@ -194,8 +225,8 @@ export default function Exams({ role, user }) {
               {isOverloaded && !isPast && <AlertTriangle className="w-4 h-4 text-amber-500" />}
             </div>
             <div className="flex flex-wrap gap-2 mt-1 text-xs text-muted-foreground flex-row-reverse justify-end">
-              {exam.subject && <span className="flex items-center gap-1"><BookOpen className="w-3 h-3" />{exam.subject}</span>}
-              {exam.time && <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{exam.time}</span>}
+              {exam.subject && <span>{exam.subject}</span>}
+              {exam.time && <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{exam.time}{exam.end_time ? `–${exam.end_time}` : ''}</span>}
               {exam.class_or_grade && <span>{exam.class_or_grade}</span>}
               {exam.teacher && <span className="flex items-center gap-1"><User className="w-3 h-3" />{exam.teacher}</span>}
             </div>
@@ -214,21 +245,28 @@ export default function Exams({ role, user }) {
   return (
     <div className="p-4 lg:p-6 space-y-5" dir="rtl">
       <PageHeader
-        title="לוח שנה"
-        subtitle="מבחנים, בגרויות, אירועים וחזרות"
-        actions={canEditExams ? (
+        title="לוח שנה שכבתי חכם"
+        subtitle="כל האירועים — מבחנים, בגרויות, חזרות, טקסים, אירועים שכבתיים וחגים"
+        actions={
           <>
-            {exams.length > 0 && (
+            {canEditExams && (
+              <Button size="sm" variant={showTracking ? 'default' : 'outline'} className="gap-2" onClick={() => setShowTracking(v => !v)}>
+                <Filter className="w-4 h-4" />מעקב כיתתי
+              </Button>
+            )}
+            {canEditExams && exams.length > 0 && (
               <Button size="sm" variant="outline" className="gap-2 text-red-500 hover:text-red-600 hover:border-red-300" onClick={handleDeleteAll}>
                 <Eraser className="w-4 h-4" />מחק הכל
               </Button>
             )}
-            <Button size="sm" variant="outline" className="gap-2" onClick={() => setShowImport(true)}>
-              <FileUp className="w-4 h-4" />ייבוא קובץ
-            </Button>
-            <Button size="sm" className="gap-2" onClick={openAdd}><Plus className="w-4 h-4" />הוסף</Button>
+            {canEditExams && (
+              <Button size="sm" variant="outline" className="gap-2" onClick={() => setShowImport(true)}>
+                <FileUp className="w-4 h-4" />ייבוא קובץ
+              </Button>
+            )}
+            {canEditExams && <Button size="sm" className="gap-2" onClick={openAdd}><Plus className="w-4 h-4" />הוסף</Button>}
           </>
-        ) : null}
+        }
       />
 
       {showPreview && (
@@ -242,38 +280,75 @@ export default function Exams({ role, user }) {
 
       {!showPreview && !showForm && !showImport && canEditExams && exams.length === 0 && (
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
-          <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">רוצה לייבא לוח אירועים שלם מקובץ?</p>
+          <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">העלה קובץ לוח אירועים שכבתי — נסווג אוטומטית בגרויות, חזרות, טקסים, חגים וכל פריט אחר.</p>
           <div className="flex items-center gap-2">
             <input ref={fileInputRef} type="file" accept=".pdf,.docx,.xlsx,.csv,.txt" onChange={(e) => handleFileUpload(e.target.files?.[0])} disabled={importing} className="hidden" />
             <Button variant="outline" className="gap-2" disabled={importing} onClick={() => fileInputRef.current?.click()}>
               {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileUp className="w-4 h-4" />}
               {importing ? 'עיבוד...' : 'בחר קובץ (PDF, Word, Excel)'}
             </Button>
+            <Button onClick={() => setShowImport(true)} className="gap-2">פתח חלון ייבוא מתקדם</Button>
           </div>
         </div>
       )}
 
-      {/* View switcher + filters */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <EventFilters activeGroup={filterGroup} onGroupChange={setFilterGroup} />
-        <div className="flex gap-1 rounded-lg border bg-card p-1">
-          <Button size="sm" variant={view === 'calendar' ? 'default' : 'ghost'} className="gap-1 h-8" onClick={() => setView('calendar')}>
-            <LayoutGrid className="w-4 h-4" />לוח
-          </Button>
-          <Button size="sm" variant={view === 'list' ? 'default' : 'ghost'} className="gap-1 h-8" onClick={() => setView('list')}>
-            <List className="w-4 h-4" />רשימה
-          </Button>
+      {/* Filters + Search + View switcher */}
+      <div className="flex flex-col gap-3">
+        <EventFilters activeGroup={filterGroup} onGroupChange={setFilterGroup} search={search} onSearchChange={setSearch} />
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          {isStudentView && (
+            <Button
+              size="sm"
+              variant={onlyMine ? 'default' : 'outline'}
+              className="gap-2"
+              onClick={() => setOnlyMine(v => !v)}
+            >
+              <Heart className="w-4 h-4" />{onlyMine ? 'הלוח שלי בלבד' : 'כל הלוח השכבתי'}
+            </Button>
+          )}
+          <div className="flex gap-1 rounded-lg border bg-card p-1 ms-auto">
+            <Button size="sm" variant={view === 'month' ? 'default' : 'ghost'} className="gap-1 h-8" onClick={() => setView('month')}>
+              <Calendar className="w-4 h-4" />חודש
+            </Button>
+            <Button size="sm" variant={view === 'week' ? 'default' : 'ghost'} className="gap-1 h-8" onClick={() => setView('week')}>
+              <LayoutGrid className="w-4 h-4" />שבוע
+            </Button>
+            <Button size="sm" variant={view === 'day' ? 'default' : 'ghost'} className="gap-1 h-8" onClick={() => setView('day')}>
+              <CalendarDays className="w-4 h-4" />יום
+            </Button>
+            <Button size="sm" variant={view === 'list' ? 'default' : 'ghost'} className="gap-1 h-8" onClick={() => setView('list')}>
+              <List className="w-4 h-4" />רשימה
+            </Button>
+          </div>
         </div>
       </div>
 
-      {overloadWeeks.length > 0 && view === 'list' && (
-        <div className="flex items-start gap-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl">
-          <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-medium text-amber-800 dark:text-amber-300">עומס מבחנים!</p>
-            <p className="text-xs text-amber-700 dark:text-amber-400">יש שבוע עם 3 מבחנים או יותר. שקול פיזור מחדש.</p>
+      {/* Tracking panel — staff only, toggled */}
+      {showTracking && canEditExams && (
+        <ClassTrackingPanel exams={filteredExams} classId={classId} todayIso={today} />
+      )}
+
+      {/* Compact next-up strip (works alongside any view) */}
+      {!loading && nextSoon.length > 0 && view !== 'list' && (
+        <Card className="p-3">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground mb-2">
+            <AlertTriangle className="w-3.5 h-3.5" />
+            <span className="font-medium">הקרובים אליך</span>
           </div>
-        </div>
+          <div className="flex gap-2 flex-wrap">
+            {nextSoon.map(exam => (
+              <button
+                key={exam.id}
+                onClick={() => setSelectedExam(exam)}
+                className="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-md border bg-card hover:shadow-sm transition-all"
+              >
+                <EventTypeBadge type={exam.type} />
+                <span className="font-medium">{exam.title}</span>
+                <span className="text-muted-foreground">· {exam.date}</span>
+              </button>
+            ))}
+          </div>
+        </Card>
       )}
 
       {loading ? (
@@ -281,21 +356,38 @@ export default function Exams({ role, user }) {
       ) : exams.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 px-4 text-center">
           <div className="w-20 h-20 bg-purple-50 dark:bg-purple-900/20 rounded-3xl flex items-center justify-center mb-5">
-            <BookOpen className="w-10 h-10 text-purple-400" />
+            <CalendarDays className="w-10 h-10 text-purple-400" />
           </div>
-          <h3 className="text-xl font-bold text-foreground mb-2">אין אירועים עדיין</h3>
-          <p className="text-sm text-muted-foreground mb-6 max-w-xs">העלה לוח מבחנים ואירועים, או הוסף ידנית כדי להתחיל.</p>
+          <h3 className="text-xl font-bold text-foreground mb-2">הלוח ריק עדיין</h3>
+          <p className="text-sm text-muted-foreground mb-6 max-w-xs">העלה קובץ לוח אירועים שכבתי כדי לסווג אוטומטית את כל הפריטים, או הוסף ידנית.</p>
           {canEditExams && (
             <Button onClick={openAdd} size="lg" className="gap-2 px-8"><Plus className="w-5 h-5" />הוסף פריט ראשון</Button>
           )}
         </div>
-      ) : view === 'calendar' ? (
+      ) : view === 'month' ? (
+        <CalendarMonthView
+          exams={filteredExams}
+          monthOffset={monthOffset}
+          onMonthChange={setMonthOffset}
+          onEventClick={setSelectedExam}
+          todayIso={today}
+          completionsByExamId={completionsByExamId}
+        />
+      ) : view === 'week' ? (
         <CalendarWeekView
           exams={filteredExams}
           weekOffset={weekOffset}
           onWeekChange={setWeekOffset}
           onEventClick={setSelectedExam}
           todayIso={today}
+          completionsByExamId={completionsByExamId}
+        />
+      ) : view === 'day' ? (
+        <CalendarDayView
+          exams={filteredExams}
+          dayOffset={dayOffset}
+          onDayChange={setDayOffset}
+          onEventClick={setSelectedExam}
           completionsByExamId={completionsByExamId}
         />
       ) : (
@@ -334,33 +426,39 @@ export default function Exams({ role, user }) {
 
       {showForm && (
         <Dialog open onOpenChange={() => setShowForm(false)}>
-          <DialogContent className="sm:max-w-md" dir="rtl">
+          <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto" dir="rtl">
             <DialogHeader><DialogTitle>{editExam ? 'עריכת פריט' : 'הוספת פריט חדש'}</DialogTitle></DialogHeader>
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="space-y-1"><Label>כותרת *</Label><Input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} /></div>
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label>מקצוע *</Label>
-                  <Select value={form.subject} onValueChange={v => setForm(p => ({ ...p, subject: v }))}>
-                    <SelectTrigger><SelectValue placeholder="בחר" /></SelectTrigger>
-                    <SelectContent>{SUBJECTS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
                 <div className="space-y-1">
                   <Label>סוג</Label>
                   <Select value={form.type} onValueChange={v => setForm(p => ({ ...p, type: v }))}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{TYPES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                    <SelectContent>{ALL_EVENT_TYPES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label>מקצוע</Label>
+                  <Select value={form.subject || ''} onValueChange={v => setForm(p => ({ ...p, subject: v }))}>
+                    <SelectTrigger><SelectValue placeholder="ללא" /></SelectTrigger>
+                    <SelectContent>{SUBJECTS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-1"><Label>תאריך *</Label><Input type="date" value={form.date} onChange={e => setForm(p => ({ ...p, date: e.target.value }))} /></div>
-                <div className="space-y-1"><Label>שעה</Label><Input type="time" value={form.time} onChange={e => setForm(p => ({ ...p, time: e.target.value }))} /></div>
+                <div className="space-y-1"><Label>שעת התחלה</Label><Input type="time" value={form.time} onChange={e => setForm(p => ({ ...p, time: e.target.value }))} /></div>
+                <div className="space-y-1"><Label>שעת סיום</Label><Input type="time" value={form.end_time} onChange={e => setForm(p => ({ ...p, end_time: e.target.value }))} /></div>
               </div>
-              <div className="space-y-1"><Label>כיתה/שכבה</Label><Input value={form.class_or_grade || ''} onChange={e => setForm(p => ({ ...p, class_or_grade: e.target.value }))} /></div>
-              <div className="space-y-1"><Label>מורה</Label><Input value={form.teacher || ''} onChange={e => setForm(p => ({ ...p, teacher: e.target.value }))} /></div>
-              <div className="space-y-1"><Label>חומר</Label><Textarea value={form.material} onChange={e => setForm(p => ({ ...p, material: e.target.value }))} rows={2} /></div>
+              <div className="space-y-1"><Label>חדר / מקום</Label><Input value={form.class_or_grade || ''} onChange={e => setForm(p => ({ ...p, class_or_grade: e.target.value }))} /></div>
+              <div className="space-y-1"><Label>מורה / אחראי</Label><Input value={form.teacher || ''} onChange={e => setForm(p => ({ ...p, teacher: e.target.value }))} /></div>
+
+              <div className="rounded-lg border p-3 bg-muted/30">
+                <AudienceEditor value={form} onChange={(v) => setForm(p => ({ ...p, ...v }))} />
+              </div>
+
+              <div className="space-y-1"><Label>חומר / הכנה</Label><Textarea value={form.material} onChange={e => setForm(p => ({ ...p, material: e.target.value }))} rows={2} /></div>
               <div className="space-y-1"><Label>הערות</Label><Textarea value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} rows={2} /></div>
               <div className="flex gap-2 pt-1">
                 <Button onClick={handleSave} className="flex-1">שמור</Button>
