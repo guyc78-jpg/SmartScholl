@@ -53,6 +53,10 @@ export default function Students({ role }) {
     const matchSearch = s.full_name.includes(search) || (s.student_number || '').includes(search);
     const matchStatus = statusFilter === 'הכל' || s.status === statusFilter;
     return matchSearch && matchStatus;
+  }).sort((a, b) => {
+    const lastNameA = a.full_name.split(' ').pop() || '';
+    const lastNameB = b.full_name.split(' ').pop() || '';
+    return lastNameA.localeCompare(lastNameB, 'he');
   });
 
   const communityPct = (s) => s.community_service_goal > 0
