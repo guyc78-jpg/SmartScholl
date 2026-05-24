@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import StatusBadge from '@/components/ui/StatusBadge';
-import { ChevronRight, Phone, Mail, Edit, Plus, Calendar, Shield, Heart, Star, MessageSquare, BarChart2, CheckSquare } from 'lucide-react';
+import { ChevronRight, Phone, Mail, Edit, Plus, Calendar, Shield, Heart, Star, MessageSquare, BarChart2, CheckSquare, Eye, EyeOff } from 'lucide-react';
 import AddStudentModal from '@/components/students/AddStudentModal';
 import ParentContactLog from '@/components/student/ParentContactLog';
 import GrowthReport from '@/components/student/GrowthReport';
@@ -41,6 +41,7 @@ export default function StudentProfile({ role }) {
   const [loading, setLoading] = useState(true);
   const [showEdit, setShowEdit] = useState(false);
   const [tab, setTab] = useState('overview');
+  const [showStudentId, setShowStudentId] = useState(false);
   const today = new Date().toISOString().split('T')[0];
   const [conversationForm, setConversationForm] = useState({
     date: today,
@@ -81,6 +82,10 @@ export default function StudentProfile({ role }) {
     ? Math.round((student.community_service_done / student.community_service_goal) * 100) : 0;
   const canEditParents = ['admin', 'homeroom_teacher', 'coordinator'].includes(role);
   const canAccessSensitiveFamilyInfo = ['admin', 'homeroom_teacher', 'coordinator'].includes(role);
+  const canViewStudentId = ['admin', 'homeroom_teacher', 'coordinator'].includes(role);
+  const maskedStudentNumber = student.student_number
+    ? `${student.student_number.slice(0, 2)}${'•'.repeat(Math.max(student.student_number.length - 4, 3))}${student.student_number.slice(-2)}`
+    : '—';
   const presentCount = attendance.filter(a => ['נוכח', 'נוכח/ת'].includes(a.status)).length;
   const absentCount = attendance.filter(a => ['נעדר', 'נעדר/ת'].includes(a.status)).length;
   const lateCount = attendance.filter(a => ['מאחר', 'מאחר/ת'].includes(a.status)).length;
@@ -140,61 +145,47 @@ export default function StudentProfile({ role }) {
 
       {/* Student Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-5">
-        <Card className="p-5 text-right">
-          <div className="flex items-start gap-4">
-            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center font-bold text-2xl flex-shrink-0 ${student.gender === 'נקבה' ? 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'}`}>
+        <Card className="p-4 sm:p-5 text-right">
+          <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-xl flex-shrink-0 ${student.gender === 'נקבה' ? 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'}`}>
               {student.full_name.charAt(0)}
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-xl font-bold text-foreground">{student.full_name}</h1>
-                <StatusBadge status={student.status} />
+            <div className="flex-1 min-w-0 space-y-3">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h1 className="text-xl sm:text-2xl font-bold text-foreground truncate">{student.full_name}</h1>
+                    <StatusBadge status={student.status} />
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-1">כיתה {student.class_name || 'י׳1'}</p>
+                </div>
+                <Button variant="outline" size="sm" className="gap-1.5 flex-shrink-0" onClick={() => setShowEdit(true)}>
+                  <Edit className="w-4 h-4" />עריכה
+                </Button>
               </div>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                כיתה {student.class_name || 'י׳1'}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                ת.ז: {student.student_number || '—'}
-              </p>
-              <div className="flex flex-wrap gap-3 mt-3">
+
+              <div className="flex flex-wrap items-center gap-2 text-sm">
                 {student.phone && (
-                  <a href={`tel:${student.phone}`} className="flex items-center gap-1 text-xs text-primary hover:underline">
-                    <Phone className="w-3 h-3" />{student.phone}
+                  <a href={`tel:${student.phone}`} className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-primary hover:underline">
+                    <Phone className="w-3.5 h-3.5" />{student.phone}
                   </a>
                 )}
                 {student.email && (
-                  <a href={`mailto:${student.email}`} className="flex items-center gap-1 text-xs text-primary hover:underline">
-                    <Mail className="w-3 h-3" />{student.email}
+                  <a href={`mailto:${student.email}`} className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-primary hover:underline force-ltr">
+                    <Mail className="w-3.5 h-3.5" />{student.email}
                   </a>
                 )}
+                {canViewStudentId && (
+                  <div className="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-1 text-muted-foreground">
+                    <span>ת.ז: {showStudentId ? (student.student_number || '—') : maskedStudentNumber}</span>
+                    {student.student_number && (
+                      <button type="button" onClick={() => setShowStudentId(prev => !prev)} className="text-primary hover:text-primary/80" aria-label="הצג או הסתר תעודת זהות">
+                        {showStudentId ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
-              {student.tags?.length > 0 && (
-                <div className="flex gap-1 mt-2 flex-wrap">
-                  {student.tags.map(tag => <span key={tag} className="text-[10px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full">{tag}</span>)}
-                </div>
-              )}
-            </div>
-            <Button variant="outline" size="sm" className="gap-1.5 flex-shrink-0" onClick={() => setShowEdit(true)}>
-              <Edit className="w-4 h-4" />עריכה
-            </Button>
-          </div>
-          {/* Quick stats */}
-          <div className="grid grid-cols-4 gap-3 mt-4 pt-4 border-t">
-            <div className="text-center">
-              <div className="text-lg font-bold text-emerald-600">{presentCount}</div>
-              <div className="text-[10px] text-muted-foreground">נוכח</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-bold text-red-500">{absentCount}</div>
-              <div className="text-[10px] text-muted-foreground">נעדר</div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-bold text-amber-500">{lateCount}</div>
-              <div className="text-[10px] text-muted-foreground">מאחר</div>
-            </div>
-            <div className="text-center">
-              <div className={`text-lg font-bold ${openDiscipline > 0 ? 'text-red-500' : 'text-emerald-600'}`}>{openDiscipline}</div>
-              <div className="text-[10px] text-muted-foreground">משמעת פתוח</div>
             </div>
           </div>
         </Card>
@@ -202,16 +193,18 @@ export default function StudentProfile({ role }) {
 
       {/* Tabs */}
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList className="w-full grid grid-cols-5 sm:grid-cols-8 mb-4 overflow-x-auto">
-            <TabsTrigger value="overview">סקירה</TabsTrigger>
-            <TabsTrigger value="growth">צמיחה</TabsTrigger>
-            <TabsTrigger value="attendance">נוכחות</TabsTrigger>
-            <TabsTrigger value="discipline">משמעת</TabsTrigger>
-            <TabsTrigger value="performance">תפקוד</TabsTrigger>
-            <TabsTrigger value="contacts" className="hidden sm:flex">קשרים</TabsTrigger>
-            <TabsTrigger value="notes" className="hidden sm:flex">הערות</TabsTrigger>
-            <TabsTrigger value="comms" className="hidden sm:flex">תקשורת</TabsTrigger>
+        <div className="mb-4 overflow-x-auto pb-1" dir="rtl">
+          <TabsList className="inline-flex w-max min-w-full justify-start gap-1 p-1">
+            <TabsTrigger value="overview" className="min-w-20">סקירה</TabsTrigger>
+            <TabsTrigger value="growth" className="min-w-20">צמיחה</TabsTrigger>
+            <TabsTrigger value="attendance" className="min-w-20">נוכחות</TabsTrigger>
+            <TabsTrigger value="discipline" className="min-w-20">משמעת</TabsTrigger>
+            <TabsTrigger value="performance" className="min-w-20">תפקוד</TabsTrigger>
+            <TabsTrigger value="contacts" className="min-w-20">קשרים</TabsTrigger>
+            <TabsTrigger value="notes" className="min-w-20">הערות</TabsTrigger>
+            <TabsTrigger value="comms" className="min-w-20">תקשורת</TabsTrigger>
           </TabsList>
+        </div>
 
         {/* Growth Report */}
          <TabsContent value="growth">
