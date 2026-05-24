@@ -19,7 +19,10 @@ export default function AddStudentModal({ classId, editData, onClose, onSuccess 
   const [classRoom, setClassRoom] = useState(null);
 
   useEffect(() => {
-    if (!classId) return;
+    if (!classId || !/^[a-f0-9]{24}$/i.test(classId)) {
+      setClassRoom(null);
+      return;
+    }
     base44.entities.ClassRoom.filter({ id: classId }).then(data => setClassRoom(data[0] || null));
   }, [classId]);
 

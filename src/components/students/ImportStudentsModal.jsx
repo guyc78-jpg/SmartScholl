@@ -41,13 +41,12 @@ export default function ImportStudentsModal({ classId, onClose, onSuccess }) {
 
   useEffect(() => {
     async function loadClassRoom() {
-      if (!classId) return;
-      const byId = await base44.entities.ClassRoom.filter({ id: classId });
-      if (byId[0]) {
-        setClassRoom(byId[0]);
+      if (!classId || !/^[a-f0-9]{24}$/i.test(classId)) {
+        setClassRoom(null);
         return;
       }
-      setClassRoom(null);
+      const byId = await base44.entities.ClassRoom.filter({ id: classId });
+      setClassRoom(byId[0] || null);
     }
     loadClassRoom();
   }, [classId]);
