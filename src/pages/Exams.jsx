@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import EventFilters, { filterByGroup, filterBySearch } from '@/components/exams/EventFilters';
 import EventTypeBadge from '@/components/exams/EventTypeBadge';
 import { MonthView, WeekView, DayView } from '@/components/exams/ExamCalendarViews';
+import EventListView from '@/components/exams/EventListView';
 import SmartCalendarImportDialog from '@/components/exams/SmartCalendarImportDialog';
 import EventFormDialog from '@/components/exams/EventFormDialog';
 import EventDetailsDialog from '@/components/exams/EventDetailsDialog';
@@ -217,7 +218,7 @@ export default function Exams({ role, user }) {
       ) : view === 'day' ? (
         <DayView events={visibleEvents} offset={offset} onOffsetChange={setOffset} onEventClick={setSelectedEvent} />
       ) : (
-        <div className="space-y-2">{upcoming.map(event => <Card key={event.id} className="p-3 cursor-pointer hover:shadow-sm" onClick={() => setSelectedEvent(event)}><div className="flex items-center justify-between gap-3"><div><h3 className="font-semibold">{event.title}</h3><p className="text-xs text-muted-foreground">{event.date}{event.time ? ` · ${event.time}` : ''}</p></div><EventTypeBadge type={event.type} /></div></Card>)}</div>
+        <EventListView events={visibleEvents} onEventClick={setSelectedEvent} todayIso={todayIso} />
       )}
 
       {canImport && <SmartCalendarImportDialog open={showImport} onOpenChange={setShowImport} classId={classId} onImported={loadData} />}
