@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
@@ -6,11 +6,10 @@ import { CLASS_ID } from '@/lib/demoData';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import StatusBadge from '@/components/ui/StatusBadge';
 import EmptyState from '@/components/ui/EmptyState';
 import PageHeader from '@/components/ui/PageHeader';
-import { Search, Plus, Upload, Users, ChevronLeft, Phone, Trash2 } from 'lucide-react';
+import { Search, Plus, Upload, Users, ChevronLeft, Phone, Trash2, AlertTriangle, RefreshCw } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -23,33 +22,90 @@ import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/lib/AuthContext';
 import { logActivity } from '@/lib/activityLogger';
-import { isStudentInApprovedScope, getUserApprovedClass, getUserApprovedGrade, getUserApprovedClassId } from '@/lib/schoolStructure';
+import {
+  getUserApprovedClass,
+  getUserApprovedGrade,
+  getUserApprovedClassId,
+  normalizeGrade,
+} from '@/lib/schoolStructure';
 import AddStudentModal from '@/components/students/AddStudentModal';
 import ImportStudentsModal from '@/components/students/ImportStudentsModal';
+
+const PAGE_SIZE = 40;
+const LOAD_TIMEOUT_MS = 15000;
+
+// Race a promise against a timeout — fail fast if the API hangs.
+const withTimeout = (promise, ms) => Promise.race([
+  promise,
+  new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
+]);
+
+// Build a server-side filter so we only fetch the students the user is allowed to see.
+const buildScopeFilter = (user, role) => {
+  if (role === 'admin') return {};
+  if (role === 'coordinator') {
+    const grade = getUserApprovedGrade(user);
+    return grade ? { grade: normalizeGrade(grade) } : null;
+  }
+  if (role === 'homeroom_teacher') {
+    const classId = user?.profile_class_id;
+    if (classId) return { class_id: classId };
+    const className = getUserApprovedClass(user);
+    if (className) return { class_name: className };
+    return null;
+  }
+  return null;
+};
 
 export default function Students({ role }) {
   const { user } = useAuth();
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('הכל');
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [showAdd, setShowAdd] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
   const canDeleteAllStudents = role === 'admin' || role === 'coordinator' || role === 'homeroom_teacher';
   const classId = getUserApprovedClassId(user, CLASS_ID);
 
-  useEffect(() => { loadStudents(); }, []);
-
-  async function loadStudents() {
+  const loadStudents = useCallback(async () => {
     setLoading(true);
-    const data = await base44.entities.Student.list();
-    setStudents(data.filter(student => isStudentInApprovedScope(student, user, role)));
-    setLoading(false);
-  }
+    setError('');
+    const scopeFilter = buildScopeFilter(user, role);
 
-  const filtered = students.filter(s => {
+    // No permission scope → no students to show, no API call needed.
+    if (scopeFilter === null) {
+      setStudents([]);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const data = await withTimeout(
+        Object.keys(scopeFilter).length === 0
+          ? base44.entities.Student.list('-updated_date', 500)
+          : base44.entities.Student.filter(scopeFilter, '-updated_date', 500),
+        LOAD_TIMEOUT_MS
+      );
+      setStudents(Array.isArray(data) ? data : []);
+    } catch (e) {
+      setError(e.message === 'timeout' ? 'הטעינה ארכה זמן רב מדי. נסה שוב.' : 'אירעה שגיאה בטעינת התלמידים.');
+      setStudents([]);
+    }
+    setLoading(false);
+  }, [user, role]);
+
+  useEffect(() => { loadStudents(); }, [loadStudents]);
+
+  // Reset pagination when search/filter changes.
+  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [search, statusFilter]);
+
+  const filtered = useMemo(() => students.filter(s => {
     const matchSearch = s.full_name.includes(search) || (s.student_number || '').includes(search);
     const matchStatus = statusFilter === 'הכל' || s.status === statusFilter;
     return matchSearch && matchStatus;
@@ -57,7 +113,10 @@ export default function Students({ role }) {
     const lastNameA = a.full_name.split(' ').pop() || '';
     const lastNameB = b.full_name.split(' ').pop() || '';
     return lastNameA.localeCompare(lastNameB, 'he');
-  });
+  }), [students, search, statusFilter]);
+
+  const visible = filtered.slice(0, visibleCount);
+  const hasMore = filtered.length > visibleCount;
 
   const communityPct = (s) => s.community_service_goal > 0
     ? Math.round((s.community_service_done / s.community_service_goal) * 100) : 0;
@@ -148,78 +207,96 @@ export default function Students({ role }) {
         <div className="flex justify-center py-12">
           <div className="w-7 h-7 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
         </div>
+      ) : error ? (
+        <div className="rounded-xl border border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-900/40 p-6 text-center space-y-3">
+          <AlertTriangle className="w-8 h-8 text-red-600 mx-auto" />
+          <p className="text-red-700 dark:text-red-300 font-medium">{error}</p>
+          <Button variant="outline" size="sm" onClick={loadStudents} className="gap-2">
+            <RefreshCw className="w-4 h-4" />
+            נסה שוב
+          </Button>
+        </div>
       ) : filtered.length === 0 ? (
         <EmptyState
           icon={Users}
           title="לא נמצאו תלמידים"
-          description="הוסף תלמידים לכיתה או שנה את הסינון"
+          description={students.length === 0 ? 'אין עדיין תלמידים בהיקף ההרשאות שלך' : 'נסה לשנות את החיפוש או הסינון'}
           action={<Button onClick={() => setShowAdd(true)} className="gap-2"><Plus className="w-4 h-4" />הוסף תלמיד</Button>}
         />
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
-          {filtered.map((student, i) => (
-            <motion.div
-              key={student.id}
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.04 }}
-            >
-              <Link to={`/students/${student.id}`}>
-                <Card className="p-4 hover:shadow-md transition-all cursor-pointer border hover:border-primary/30 text-right">
-                  <div className="grid grid-cols-[auto,1fr,auto] items-start gap-3" dir="rtl">
-                    <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-base flex-shrink-0
-                      ${student.status === 'דורש מעקב' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
-                        student.gender === 'נקבה' ? 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400' :
-                        'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'}`}>
-                      {student.full_name.charAt(0)}
-                    </div>
-                    <div className="min-w-0 text-right">
-                                  <div className="flex items-center gap-2 mb-1 flex-row-reverse justify-end">
-                                    <h3 className="font-semibold text-foreground text-sm leading-tight">{formatStudentName(student.full_name)}</h3>
-                                    <StatusBadge status={student.status} />
-                                  </div>
-                      <p className="text-xs text-muted-foreground">{student.class_name || 'כיתה י׳1'} · {student.grade || 'י'}</p>
-                      <div className="flex gap-3 mt-1.5 flex-wrap flex-row-reverse justify-end">
-                        {student.phone && (
-                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Phone className="w-3 h-3" />{student.phone}
-                          </span>
-                        )}
-                        {student.parent1_phone && !student.phone && (
-                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Phone className="w-3 h-3" />{student.parent1_phone}
-                          </span>
+        <>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {visible.map((student, i) => (
+              <motion.div
+                key={student.id}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: Math.min(i, 10) * 0.03 }}
+              >
+                <Link to={`/students/${student.id}`}>
+                  <Card className="p-4 hover:shadow-md transition-all cursor-pointer border hover:border-primary/30 text-right">
+                    <div className="grid grid-cols-[auto,1fr,auto] items-start gap-3" dir="rtl">
+                      <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-base flex-shrink-0
+                        ${student.status === 'דורש מעקב' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
+                          student.gender === 'נקבה' ? 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400' :
+                          'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'}`}>
+                        {student.full_name.charAt(0)}
+                      </div>
+                      <div className="min-w-0 text-right">
+                        <div className="flex items-center gap-2 mb-1 flex-row-reverse justify-end">
+                          <h3 className="font-semibold text-foreground text-sm leading-tight">{formatStudentName(student.full_name)}</h3>
+                          <StatusBadge status={student.status} />
+                        </div>
+                        <p className="text-xs text-muted-foreground">{student.class_name || 'כיתה י׳1'} · {student.grade || 'י'}</p>
+                        <div className="flex gap-3 mt-1.5 flex-wrap flex-row-reverse justify-end">
+                          {student.phone && (
+                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Phone className="w-3 h-3" />{student.phone}
+                            </span>
+                          )}
+                          {student.parent1_phone && !student.phone && (
+                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                              <Phone className="w-3 h-3" />{student.parent1_phone}
+                            </span>
+                          )}
+                        </div>
+                        {/* Community progress */}
+                        <div className="mt-3">
+                          <div className="flex items-center justify-between text-xs mb-1" dir="rtl">
+                            <span className="text-muted-foreground">מעורבות חברתית</span>
+                            <span className="font-medium">{student.community_service_done || 0}/{student.community_service_goal || 60} שע׳</span>
+                          </div>
+                          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all ${communityPct(student) >= 100 ? 'bg-emerald-500' : communityPct(student) >= 50 ? 'bg-blue-500' : 'bg-red-400'}`}
+                              style={{ width: `${Math.min(communityPct(student), 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                        {/* Tags */}
+                        {student.tags?.length > 0 && (
+                          <div className="flex gap-1 flex-wrap mt-2 flex-row-reverse justify-end">
+                            {student.tags.map(tag => (
+                              <span key={tag} className="text-[10px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full">{tag}</span>
+                            ))}
+                          </div>
                         )}
                       </div>
-                      {/* Community progress */}
-                      <div className="mt-3">
-                        <div className="flex items-center justify-between text-xs mb-1" dir="rtl">
-                          <span className="text-muted-foreground">מעורבות חברתית</span>
-                          <span className="font-medium">{student.community_service_done || 0}/{student.community_service_goal || 60} שע׳</span>
-                        </div>
-                        <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                          <div
-                            className={`h-full rounded-full transition-all ${communityPct(student) >= 100 ? 'bg-emerald-500' : communityPct(student) >= 50 ? 'bg-blue-500' : 'bg-red-400'}`}
-                            style={{ width: `${Math.min(communityPct(student), 100)}%` }}
-                          />
-                        </div>
-                      </div>
-                      {/* Tags */}
-                      {student.tags?.length > 0 && (
-                        <div className="flex gap-1 flex-wrap mt-2 flex-row-reverse justify-end">
-                          {student.tags.map(tag => (
-                            <span key={tag} className="text-[10px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full">{tag}</span>
-                          ))}
-                        </div>
-                      )}
+                      <ChevronLeft className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-1 justify-self-end" />
                     </div>
-                    <ChevronLeft className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-1 justify-self-end" />
-                  </div>
-                </Card>
-              </Link>
-            </motion.div>
-          ))}
-        </div>
+                  </Card>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+          {hasMore && (
+            <div className="flex justify-center pt-2">
+              <Button variant="outline" onClick={() => setVisibleCount(c => c + PAGE_SIZE)}>
+                טען עוד ({filtered.length - visibleCount} נוספים)
+              </Button>
+            </div>
+          )}
+        </>
       )}
 
       {showAdd && <AddStudentModal classId={classId} onClose={() => setShowAdd(false)} onSuccess={() => { setShowAdd(false); loadStudents(); }} />}
