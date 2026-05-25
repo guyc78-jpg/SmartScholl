@@ -8,10 +8,13 @@ export default function GradeClassSelect({ grade, classNameValue, classId, onGra
   const [classes, setClasses] = useState([]);
 
   useEffect(() => {
-    base44.entities.ClassRoom.list('grade').then(data => setClasses(data.filter(item => item.is_active !== false)));
+    base44.entities.ClassRoom.list('grade', 500).then(data => setClasses(data.filter(item => item.is_active !== false)));
   }, []);
 
-  const gradeClasses = useMemo(() => grade && grade !== 'all' ? classes.filter(item => item.grade === grade) : classes, [classes, grade]);
+  const gradeClasses = useMemo(() => {
+    if (!grade || grade === 'all') return classes;
+    return classes.filter(item => item.grade === grade);
+  }, [classes, grade]);
 
   const handleGradeChange = (value) => {
     const newGrade = value === 'all' ? '' : value;
