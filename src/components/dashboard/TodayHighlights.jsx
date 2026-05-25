@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
  */
 export default function TodayHighlights({ items = [] }) {
   // Harmonious accent palette — uses theme tokens + restrained tints.
-  // The "warn" tone is now a soft rose/coral (no yellow) to align with the
+  // The "warn" tone is a soft rose/coral (no yellow) to align with the
   // app's emerald-primary palette.
   const accents = {
     urgent: {
@@ -78,7 +78,7 @@ export default function TodayHighlights({ items = [] }) {
                   item.to && accent.ring
                 )}
               >
-                {/* Subtle accent dot on the leading edge */}
+                {/* Subtle accent bar on the leading edge */}
                 <span className={cn('absolute top-3 bottom-3 right-0 w-[3px] rounded-l-full', accent.dot)} aria-hidden />
 
                 <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ms-1', accent.icon)}>
