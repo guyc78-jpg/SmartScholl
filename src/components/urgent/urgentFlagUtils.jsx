@@ -51,15 +51,9 @@ export function daysUntil(dateStr) {
   return Math.round((due - today) / 86400000);
 }
 
-// Flag should appear on the dashboard if it's not closed AND
-// (pinned OR urgent OR due within the next 7 days OR overdue).
+// Flag should appear on the dashboard if it's not closed
 export function isDashboardRelevant(flag) {
-  if (isClosed(flag)) return false;
-  if (flag.is_pinned) return true;
-  if (flag.priority === 'דחוף') return true;
-  const days = daysUntil(flag.due_date);
-  if (days != null && days <= 7) return true;
-  return false;
+  return !isClosed(flag);
 }
 
 // Stable ordering: pinned → status (open first) → priority → due date

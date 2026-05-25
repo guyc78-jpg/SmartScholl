@@ -12,7 +12,7 @@ import { isDashboardRelevant, sortFlags } from './urgentFlagUtils';
  * Visible to homeroom_teacher / coordinator / admin only.
  * Provides quick add + manage actions.
  */
-export default function UrgentFlagsSection({ classId, user, canManage, maxItems = 4, onChanged }) {
+export default function UrgentFlagsSection({ classId, user, canManage, maxItems = 3, onChanged }) {
   const [flags, setFlags] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -115,13 +115,13 @@ export default function UrgentFlagsSection({ classId, user, canManage, maxItems 
               />
             ))}
           </div>
-          {hiddenCount > 0 && (
+          {relevant.length > maxItems && (
             <button
               type="button"
-              onClick={() => setShowAll(true)}
+              onClick={() => setShowAll(!showAll)}
               className="mt-3 w-full text-xs font-medium text-primary hover:underline flex items-center justify-center gap-1"
             >
-              הצג עוד {hiddenCount} דגשים <ChevronLeft className="w-3 h-3" />
+              {showAll ? 'הצג פחות' : 'הצג הכל'} <ChevronLeft className={`w-3 h-3 transition-transform ${showAll ? 'rotate-90' : ''}`} />
             </button>
           )}
         </>
