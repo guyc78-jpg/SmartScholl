@@ -356,6 +356,27 @@ ${suspicionNote}
       return Response.json({ users });
     }
 
+    if (action === 'delete_user') {
+      if (!requireAdmin(user)) return Response.json({ error: 'Forbidden' }, { status: 403 });
+      const { target_user_id, target_email } = body;
+      if (!target_user_id) return Response.json({ error: 'Missing target_user_id' }, { status: 400 });
+      if (target_user_id === user.id) return Response.json({ error: 'Cannot delete yourself' }, { status: 400 });
+
+      await base44.asServiceRole.entities.User.delete(target_user_id);
+
+      await base44.asServiceRole.entities.ActivityLog.create({
+        event_type: 'role_changed',
+        actor_email: user.email,
+        action_name: 'admin_delete_user',
+        target_email: target_email || '',
+        details: `נמחק משתמש מהמערכת: ${target_email || target_user_id}`,
+        metadata: JSON.stringify({ target_user_id, target_email }),
+        severity: 'critical',
+      });
+
+      return Response.json({ success: true });
+    }
+
     if (action === 'list_approved_staff') {
       if (!requireAdmin(user)) return Response.json({ error: 'Forbidden' }, { status: 403 });
       const staff = await base44.asServiceRole.entities.ApprovedStaff.list('-updated_date', 500);

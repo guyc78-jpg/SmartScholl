@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Trash2 } from 'lucide-react';
 import GradeClassSelect from '@/components/profile/GradeClassSelect';
 import { extractGradeFromClass } from '@/lib/schoolStructure';
 import { ROLE_LABELS, SYSTEM_ROLE_PRIORITY, getAvailableRoles, getUserDisplayName } from '@/lib/roleUtils';
@@ -12,9 +14,11 @@ import { toast } from 'sonner';
 
 const ROLE_OPTIONS = SYSTEM_ROLE_PRIORITY.filter(r => r !== 'parent').map(value => ({ value, label: ROLE_LABELS[value] }));
 
-export default function UserEditSheet({ targetUser, open, onOpenChange, onSaved, currentUserId }) {
+export default function UserEditSheet({ targetUser, open, onOpenChange, onSaved, onDeleted, currentUserId }) {
   const [form, setForm] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!targetUser) return;
@@ -123,7 +127,60 @@ export default function UserEditSheet({ targetUser, open, onOpenChange, onSaved,
               {saving ? 'שומר...' : 'שמור הרשאות'}
             </Button>
           </div>
+
+          {targetUser.id !== currentUserId && (
+            <div className="pt-4 border-t">
+              <Button
+                variant="ghost"
+                className="w-full text-destructive hover:text-destructive hover:bg-destructive/10 gap-2"
+                onClick={() => setConfirmDelete(true)}
+                disabled={saving || deleting}
+              >
+                <Trash2 className="w-4 h-4" />
+                מחק משתמש מהמערכת
+              </Button>
+            </div>
+          )}
         </div>
+
+        <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+          <AlertDialogContent dir="rtl" className="text-right">
+            <AlertDialogHeader>
+              <AlertDialogTitle>למחוק את המשתמש?</AlertDialogTitle>
+              <AlertDialogDescription>
+                המשתמש {getUserDisplayName(targetUser)} יימחק לצמיתות מהמערכת. הפעולה אינה ניתנת לביטול.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="gap-2">
+              <AlertDialogCancel disabled={deleting}>ביטול</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                onClick={async (e) => {
+                  e.preventDefault();
+                  setDeleting(true);
+                  try {
+                    await base44.functions.invoke('handleApprovalRequest', {
+                      action: 'delete_user',
+                      target_user_id: targetUser.id,
+                      target_email: targetUser.email,
+                    });
+                    toast.success('המשתמש נמחק');
+                    setConfirmDelete(false);
+                    onOpenChange(false);
+                    onDeleted?.();
+                  } catch (err) {
+                    toast.error('שגיאה במחיקת המשתמש');
+                  } finally {
+                    setDeleting(false);
+                  }
+                }}
+                disabled={deleting}
+              >
+                {deleting ? 'מוחק...' : 'מחק'}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </SheetContent>
     </Sheet>
   );

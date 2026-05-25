@@ -4,7 +4,9 @@ import PageHeader from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import EmptyState from '@/components/ui/EmptyState';
-import { ShieldCheck, Users, X } from 'lucide-react';
+import { ShieldCheck, Users, X, Trash2 } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { toast } from 'sonner';
 import { useAuth } from '@/lib/AuthContext';
 import { getAvailableRoles, getUserDisplayName } from '@/lib/roleUtils';
 import { normalizeGrade } from '@/lib/schoolStructure';
@@ -27,6 +29,8 @@ export default function UserManagement() {
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [editTarget, setEditTarget] = useState(null);
   const [bulkOpen, setBulkOpen] = useState(false);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   const loadUsers = async () => {
     setLoading(true);
@@ -104,6 +108,31 @@ export default function UserManagement() {
   };
 
   const selectedUsers = users.filter(u => selectedIds.has(u.id));
+  const selectedDeletable = selectedUsers.filter(u => u.id !== currentUser?.id);
+
+  const runBulkDelete = async () => {
+    setBulkDeleting(true);
+    let failed = 0;
+    for (let i = 0; i < selectedDeletable.length; i++) {
+      const u = selectedDeletable[i];
+      try {
+        await base44.functions.invoke('handleApprovalRequest', {
+          action: 'delete_user',
+          target_user_id: u.id,
+          target_email: u.email,
+        });
+      } catch (err) {
+        failed += 1;
+      }
+      if (i < selectedDeletable.length - 1) await new Promise(r => setTimeout(r, 250));
+    }
+    if (failed) toast.error(`נמחקו ${selectedDeletable.length - failed}, נכשלו ${failed}`);
+    else toast.success(`נמחקו ${selectedDeletable.length} משתמשים`);
+    setBulkDeleting(false);
+    setConfirmBulkDelete(false);
+    clearSelection();
+    loadUsers();
+  };
 
   if (loading) {
     return <div className="flex justify-center p-12"><div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" /></div>;
@@ -135,6 +164,16 @@ export default function UserManagement() {
           <span className="text-sm font-medium text-primary">{selectedIds.size} נבחרו</span>
           <div className="flex gap-2 mr-auto">
             <Button size="sm" onClick={() => setBulkOpen(true)}>עדכון מרובה</Button>
+            <Button
+              size="sm"
+              variant="outline"
+              className="text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive gap-1"
+              onClick={() => setConfirmBulkDelete(true)}
+              disabled={selectedDeletable.length === 0}
+            >
+              <Trash2 className="w-4 h-4" />
+              מחק ({selectedDeletable.length})
+            </Button>
             <Button size="sm" variant="ghost" onClick={clearSelection} className="gap-1"><X className="w-4 h-4" />נקה</Button>
           </div>
         </div>
@@ -188,8 +227,30 @@ export default function UserManagement() {
         open={!!editTarget}
         onOpenChange={(open) => { if (!open) setEditTarget(null); }}
         onSaved={handleSaved}
+        onDeleted={() => { clearSelection(); loadUsers(); }}
         currentUserId={currentUser?.id}
       />
+
+      <AlertDialog open={confirmBulkDelete} onOpenChange={setConfirmBulkDelete}>
+        <AlertDialogContent dir="rtl" className="text-right">
+          <AlertDialogHeader>
+            <AlertDialogTitle>למחוק {selectedDeletable.length} משתמשים?</AlertDialogTitle>
+            <AlertDialogDescription>
+              הפעולה תמחק לצמיתות את כל המשתמשים שנבחרו (למעט המשתמש הנוכחי). לא ניתן לבטל.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel disabled={bulkDeleting}>ביטול</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={(e) => { e.preventDefault(); runBulkDelete(); }}
+              disabled={bulkDeleting}
+            >
+              {bulkDeleting ? 'מוחק...' : 'מחק'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <BulkEditSheet
         users={selectedUsers}
