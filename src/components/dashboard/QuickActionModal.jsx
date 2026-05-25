@@ -58,6 +58,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
   const [saving, setSaving] = useState(false);
   const [students, setStudents] = useState([]);
   const [loadingStudents, setLoadingStudents] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const needsStudentPicker = ['discipline', 'note', 'communication', 'community'].includes(action);
   const today = new Date().toISOString().split('T')[0];
@@ -196,12 +197,22 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
                   <p className="text-sm text-muted-foreground">לא נמצאו תלמידים המשויכים לכיתה שלך</p>
                 </div>
               ) : (
-                <Select onValueChange={v => set('student_id', v)}>
-                  <SelectTrigger><SelectValue placeholder="בחר תלמיד" /></SelectTrigger>
-                  <SelectContent>
-                    {sortByLastName(students).map(s => <SelectItem key={s.id} value={s.id}>{getStudentDisplayName(s.full_name)}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <div className="space-y-2">
+                  <Input
+                    placeholder="חיפוש תלמיד..."
+                    value={searchQuery}
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className="text-sm"
+                  />
+                  <Select onValueChange={v => { set('student_id', v); setSearchQuery(''); }}>
+                    <SelectTrigger><SelectValue placeholder="בחר תלמיד" /></SelectTrigger>
+                    <SelectContent>
+                      {sortByLastName(students)
+                        .filter(s => !searchQuery || s.full_name.toLowerCase().includes(searchQuery.toLowerCase()))
+                        .map(s => <SelectItem key={s.id} value={s.id}>{getStudentDisplayName(s.full_name)}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
               )}
             </div>
           )}
