@@ -80,9 +80,13 @@ export default function UrgentFlagsSection({ classId, user, canManage, maxItems 
           </div>
         </div>
         {canManage && (
-          <Button size="sm" onClick={handleAdd} className="h-8 gap-1 font-medium">
-            <Plus className="w-4 h-4" /> דגש חדש
-          </Button>
+          <button
+            onClick={handleAdd}
+            className="w-8 h-8 rounded-lg bg-primary/10 hover:bg-primary/15 text-primary transition-colors flex items-center justify-center shadow-sm"
+            title="דגש חדש"
+          >
+            <Plus className="w-4 h-4" strokeWidth={2.5} />
+          </button>
         )}
       </div>
 
