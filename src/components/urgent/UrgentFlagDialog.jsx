@@ -12,22 +12,26 @@ import { CATEGORIES, PRIORITIES, STATUSES } from './urgentFlagUtils';
 
 // Custom date field — shows placeholder when empty, clear button when filled
 function DateField({ value, onChange, icon: Icon, placeholder }) {
-  const inputRef = useRef(null);
-
   const formatted = value
     ? new Date(value).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' })
     : null;
 
   return (
-    <div
-      className="flex items-center h-10 w-full px-3 rounded-lg border border-input bg-background cursor-pointer hover:border-primary/50 transition-colors"
-      onClick={() => inputRef.current?.showPicker?.()}
-    >
+    <div className="relative flex items-center h-10 w-full px-3 rounded-lg border border-input bg-background hover:border-primary/50 transition-colors">
+      {/* invisible native date input covering the entire field */}
+      <input
+        type="date"
+        value={value || ''}
+        onChange={e => onChange(e.target.value)}
+        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer z-10"
+        style={{ colorScheme: 'light' }}
+      />
+
       {/* icon right */}
-      <Icon className="w-3.5 h-3.5 text-muted-foreground shrink-0 ml-2" />
+      <Icon className="w-3.5 h-3.5 text-muted-foreground shrink-0 ml-2 relative z-0" />
 
       {/* display text — centered, with flex-1 to push X to the left */}
-      <span className={`flex-1 text-sm text-center select-none ${formatted ? 'text-foreground' : 'text-muted-foreground/70'}`}>
+      <span className={`flex-1 text-sm text-center select-none relative z-0 ${formatted ? 'text-foreground' : 'text-muted-foreground/70'}`}>
         {formatted || placeholder}
       </span>
 
@@ -35,22 +39,12 @@ function DateField({ value, onChange, icon: Icon, placeholder }) {
       {value && (
         <button
           type="button"
-          onClick={e => { e.stopPropagation(); onChange(''); }}
-          className="flex items-center shrink-0 text-muted-foreground hover:text-foreground ml-2"
+          onClick={e => { e.preventDefault(); e.stopPropagation(); onChange(''); }}
+          className="flex items-center shrink-0 text-muted-foreground hover:text-foreground ml-2 relative z-20"
         >
           <X className="w-3.5 h-3.5" />
         </button>
       )}
-
-      {/* invisible native date input */}
-      <input
-        ref={inputRef}
-        type="date"
-        value={value || ''}
-        onChange={e => onChange(e.target.value)}
-        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-        style={{ colorScheme: 'light' }}
-      />
     </div>
   );
 }
