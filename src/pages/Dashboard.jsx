@@ -5,7 +5,6 @@ import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { CLASS_ID } from '@/lib/demoData';
 import StatCard from '@/components/ui/StatCard';
-import TodayHighlights from '@/components/dashboard/TodayHighlights';
 import UrgentFlagsSection from '@/components/urgent/UrgentFlagsSection';
 import DailySmartCard from '@/components/dashboard/DailySmartCard';
 import WatchStudentsSection from '@/components/dashboard/WatchStudentsSection';
@@ -264,46 +263,7 @@ export default function Dashboard({ user, role }) {
         </section>
       )}
 
-      {/* Today Highlights — what really matters today */}
-      {(() => {
-        const highlights = [];
-        if (absentToday + lateToday > 0) highlights.push({
-          id: 'absent', icon: AlertTriangle, label: `${absentToday + lateToday} נעדרים/מאחרים היום`,
-          hint: `${absentToday} נעדר · ${lateToday} מאחר`, value: absentToday + lateToday,
-          tone: absentToday + lateToday > 2 ? 'urgent' : 'warn', to: '/class-attendance'
-        });
-        if (todayAttendance.length === 0 && (isActiveHomeroom || isActiveAdmin) && students.length > 0) highlights.push({
-          id: 'no-att', icon: Clock, label: 'נוכחות היום טרם סומנה', hint: 'התחילו לסמן נוכחות לכיתה',
-          tone: 'info', to: '/class-attendance'
-        });
-        if (openDiscipline > 0) highlights.push({
-          id: 'disc', icon: Shield, label: 'אירועי משמעת פתוחים', hint: 'דורש טיפול ומעקב',
-          value: openDiscipline, tone: 'urgent', to: '/discipline'
-        });
-        if (urgentTasks.length > 0) highlights.push({
-          id: 'tasks', icon: CheckSquare, label: 'משימות דחופות',
-          hint: urgentTasks[0]?.title, value: urgentTasks.length, tone: 'warn', to: '/tasks'
-        });
-        const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
-        const tomorrowIso = tomorrow.toISOString().split('T')[0];
-        const imminentExam = nextExams.find(e => e.date === today || e.date === tomorrowIso);
-        if (imminentExam) highlights.push({
-          id: 'exam-now', icon: BookOpen,
-          label: imminentExam.date === today ? 'מבחן היום' : 'מבחן מחר',
-          hint: `${imminentExam.title}${imminentExam.subject ? ' · ' + imminentExam.subject : ''}`,
-          tone: 'info', to: '/exams'
-        });
-        if (attendanceAlertStudents.length > 0) highlights.push({
-          id: 'att-alerts', icon: Users, label: 'תלמידים עם בעיית נוכחות',
-          hint: 'חצו סף היעדרויות/איחורים', value: attendanceAlertStudents.length,
-          tone: 'warn', to: '/class-attendance'
-        });
-        if (announcements.length > 0) highlights.push({
-          id: 'ann', icon: Megaphone, label: 'הודעה אחרונה לכיתה',
-          hint: announcements[0]?.title, tone: 'info', to: '/announcements'
-        });
-        return <TodayHighlights items={highlights} />;
-      })()}
+
 
       {/* Urgent Flags — dynamic items needing immediate attention (staff only) */}
       {(isActiveHomeroom || isActiveCoordinator || isActiveAdmin) && classId && (
