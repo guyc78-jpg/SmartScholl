@@ -352,8 +352,18 @@ ${suspicionNote}
 
     if (action === 'list_users') {
       if (!requireAdmin(user)) return Response.json({ error: 'Forbidden' }, { status: 403 });
-      const users = await base44.asServiceRole.entities.User.list('-updated_date', 200);
-      return Response.json({ users });
+      // Paginate to handle more than 200 users
+      let allUsers = [];
+      let skip = 0;
+      const pageSize = 200;
+      while (true) {
+        const page = await base44.asServiceRole.entities.User.list('-updated_date', pageSize, skip);
+        if (!page || page.length === 0) break;
+        allUsers = allUsers.concat(page);
+        if (page.length < pageSize) break;
+        skip += pageSize;
+      }
+      return Response.json({ users: allUsers });
     }
 
     if (action === 'delete_user') {

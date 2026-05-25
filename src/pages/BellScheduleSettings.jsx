@@ -173,7 +173,7 @@ function findActiveIndex(periods) {
   return periods.findIndex(p => p.start_time && p.end_time && hhmm >= p.start_time && hhmm < p.end_time);
 }
 
-function DayPanel({ periods, onChange, onSave, onReset, saving, isCurrentDay, onRequestRemove }) {
+function DayPanel({ periods, onChange, onSave, onReset, onDuplicate, saving, isCurrentDay, onRequestRemove }) {
   const [tick, setTick] = useState(0);
   useEffect(() => {
     if (!isCurrentDay) return;
@@ -193,12 +193,15 @@ function DayPanel({ periods, onChange, onSave, onReset, saving, isCurrentDay, on
         activeIndex={activeIndex}
         onRequestRemove={onRequestRemove}
       />
-      <div className="grid grid-cols-2 gap-2 pt-3 border-t border-border/60">
-        <Button onClick={onSave} disabled={saving} className="h-9 text-[12px] font-semibold gap-1.5">
+      <div className="grid grid-cols-3 gap-2 pt-3 border-t border-border/60">
+        <Button onClick={onSave} disabled={saving} className="h-9 text-[12px] font-semibold gap-1.5 col-span-2">
           <Save className="w-4 h-4" /> שמור שינויים
         </Button>
         <Button variant="outline" onClick={onReset} className="h-9 text-[12px] font-medium gap-1.5">
           <RotateCcw className="w-3.5 h-3.5" /> ברירת מחדל
+        </Button>
+        <Button variant="outline" onClick={onDuplicate} className="h-9 text-[12px] font-medium gap-1.5 col-span-3 text-muted-foreground">
+          <Copy className="w-3.5 h-3.5" /> העתק לוח לשאר הימים
         </Button>
       </div>
     </div>
@@ -320,6 +323,7 @@ export default function BellScheduleSettings({ user, role }) {
                 onChange={setSunThu}
                 onSave={() => handleSave('sun_thu')}
                 onReset={() => reset('sun_thu')}
+                onDuplicate={() => requestDuplicate('sun_thu')}
                 onRequestRemove={(i) => requestRemove('sun_thu', i)}
                 saving={saving}
                 isCurrentDay={isCurrentDay('sun_thu')}
@@ -331,6 +335,7 @@ export default function BellScheduleSettings({ user, role }) {
                 onChange={setFri}
                 onSave={() => handleSave('fri')}
                 onReset={() => reset('fri')}
+                onDuplicate={() => requestDuplicate('fri')}
                 onRequestRemove={(i) => requestRemove('fri', i)}
                 saving={saving}
                 isCurrentDay={isCurrentDay('fri')}
