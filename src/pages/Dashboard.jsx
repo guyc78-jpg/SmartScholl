@@ -197,7 +197,16 @@ export default function Dashboard({ user, role }) {
             <span>{hebrewDate()}</span>
           </p>
         </div>
-        <NotificationsDropdown notifications={notifications} onRead={handleNotificationRead} />
+        <div className="flex items-center gap-2">
+          {isAdmin && (
+            <Link to="/users" title="ניהול מערכת">
+              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
+                <Settings className="w-4 h-4" />
+              </Button>
+            </Link>
+          )}
+          <NotificationsDropdown notifications={notifications} onRead={handleNotificationRead} />
+        </div>
       </div>
 
       {/* Now / Next — only useful for homeroom teachers (have a class) */}
@@ -244,62 +253,7 @@ export default function Dashboard({ user, role }) {
         />
       )}
 
-      {isAdmin && (
-        <section>
-          <h2 className="text-sm font-bold text-foreground mb-2.5 flex items-center gap-2">
-            <Settings className="w-4 h-4 text-primary" />
-            ניהול מערכת
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
-            {[
-              { to: '/users', label: 'הרשאות', icon: UserCheck },
-              { to: '/classrooms', label: 'כיתות', icon: Users },
-              { to: '/approvals', label: 'אישורי הרשמה', icon: CheckSquare },
-              { to: '/reports', label: 'דוחות', icon: TrendingUp },
-            ].map(item => (
-              <Link
-                key={item.to}
-                to={item.to}
-                className="flex items-center gap-3 px-3 py-3 rounded-xl bg-card border border-border hover:border-primary/40 hover:bg-primary/[0.04] transition-colors"
-              >
-                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <item.icon className="w-4 h-4 text-primary" strokeWidth={2.2} />
-                </div>
-                <span className="text-sm font-semibold text-foreground/85 truncate">{item.label}</span>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
 
-      {/* Admin: 4 main management actions */}
-      {isActiveAdmin && (
-        <section>
-          <h2 className="text-sm font-bold text-foreground mb-2.5 flex items-center gap-2">
-            <Settings className="w-4 h-4 text-primary" />
-            ניהול מערכת
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
-            {[
-              { to: '/users', label: 'הרשאות', icon: UserCheck },
-              { to: '/classrooms', label: 'כיתות', icon: Users },
-              { to: '/approvals', label: 'אישורי הרשמה', icon: CheckSquare },
-              { to: '/reports', label: 'דוחות', icon: TrendingUp },
-            ].map(item => (
-              <Link
-                key={item.to}
-                to={item.to}
-                className="flex items-center gap-3 px-3 py-3 rounded-xl bg-card border border-border hover:border-primary/40 hover:bg-primary/[0.04] transition-colors"
-              >
-                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <item.icon className="w-4 h-4 text-primary" strokeWidth={2.2} />
-                </div>
-                <span className="text-sm font-semibold text-foreground/85 truncate">{item.label}</span>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* Stat Cards — show only non-zero KPIs to avoid empty look */}
       {(() => {
