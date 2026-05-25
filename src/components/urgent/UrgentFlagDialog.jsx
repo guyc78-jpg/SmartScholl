@@ -173,7 +173,7 @@ export default function UrgentFlagDialog({ open, onOpenChange, classId, flag, us
                 value={form.due_date}
                 onChange={v => setField('due_date', v)}
                 icon={Calendar}
-                placeholder="בחר תאריך"
+                placeholder=""
               />
             </div>
             <div className={fieldCls}>
@@ -182,7 +182,7 @@ export default function UrgentFlagDialog({ open, onOpenChange, classId, flag, us
                 value={form.reminder_date}
                 onChange={v => setField('reminder_date', v)}
                 icon={Bell}
-                placeholder="בחר תאריך"
+                placeholder=""
               />
             </div>
           </div>
