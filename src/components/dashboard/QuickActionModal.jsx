@@ -180,11 +180,16 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md" dir="rtl" onInteractOutside={e => e.preventDefault()}>
-        <DialogHeader>
+      <DialogContent
+        className="sm:max-w-md w-[calc(100%-2rem)] max-h-[80dvh] flex flex-col"
+        dir="rtl"
+        onInteractOutside={e => e.preventDefault()}
+        style={{ position: 'fixed', top: '10%', transform: 'translateX(-50%)', left: '50%', right: 'auto', bottom: 'auto' }}
+      >
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle>{titles[action]}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
+        <div className="space-y-4 overflow-y-auto flex-1 pb-2">
 
           {/* Student picker — with clear empty-state message */}
           {needsStudentPicker && (
@@ -240,7 +245,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
             </div>
             <div className="space-y-1">
               <Label>תיאור האירוע</Label>
-              <Textarea placeholder="תיאור..." onChange={e => set('description', e.target.value)} rows={3} />
+              <Textarea placeholder="תיאור..." onChange={e => set('description', e.target.value)} rows={3} className="resize-none max-h-28" />
             </div>
           </>}
 
@@ -292,7 +297,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
             </div>
             <div className="space-y-1">
               <Label>תוכן</Label>
-              <Textarea placeholder="תוכן ההודעה..." onChange={e => set('content', e.target.value)} rows={4} />
+              <Textarea placeholder="תוכן ההודעה..." onChange={e => set('content', e.target.value)} rows={3} className="resize-none max-h-28" />
             </div>
           </>}
 
@@ -321,7 +326,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
             )}
             <div className="space-y-1">
               <Label>{action === 'note' ? 'הערה' : 'סיכום'}</Label>
-              <Textarea placeholder="כתוב כאן..." onChange={e => set(action === 'note' ? 'content' : 'summary', e.target.value)} rows={4} />
+              <Textarea placeholder="כתוב כאן..." onChange={e => set(action === 'note' ? 'content' : 'summary', e.target.value)} rows={3} className="resize-none max-h-28" />
             </div>
           </>}
 
@@ -360,7 +365,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
             </div>
           )}
 
-          <div className="flex gap-2 pt-2">
+          <div className="flex gap-2 pt-2 flex-shrink-0">
             <Button onClick={handleSave} disabled={saving || (needsStudentPicker && students.length === 0)} className="flex-1">
               {saving ? 'שומר...' : 'שמור'}
             </Button>
