@@ -30,7 +30,9 @@ export default function BulkEditSheet({ users, open, onOpenChange, onSaved, curr
   const save = async () => {
     setSaving(true);
     let updatedSelf = null;
-    for (const u of users) {
+    let failed = 0;
+    for (let i = 0; i < users.length; i++) {
+      const u = users[i];
       const currentApproved = getAvailableRoles(u);
       const currentPrimary = u.role || currentApproved[0] || 'student';
       const nextPrimary = form.primaryRole !== NO_CHANGE ? form.primaryRole : currentPrimary;
@@ -41,7 +43,6 @@ export default function BulkEditSheet({ users, open, onOpenChange, onSaved, curr
       } else if (form.extraMode === 'add') {
         nextApproved = Array.from(new Set([nextPrimary, ...currentApproved.filter(r => r !== currentPrimary), ...form.extraRoles]));
       } else {
-        // no_change: keep current extras but ensure primary included
         nextApproved = Array.from(new Set([nextPrimary, ...currentApproved.filter(r => r !== currentPrimary)]));
       }
 
@@ -55,10 +56,17 @@ export default function BulkEditSheet({ users, open, onOpenChange, onSaved, curr
         profile_homeroom_class: form.className || u.profile_homeroom_class || u.profile_class || '',
         profile_grade_managed: form.grade !== NO_CHANGE ? form.grade : (u.profile_grade_managed || ''),
       };
-      const res = await base44.functions.invoke('handleApprovalRequest', payload);
-      if (u.id === currentUserId) updatedSelf = res.data.user;
+      try {
+        const res = await base44.functions.invoke('handleApprovalRequest', payload);
+        if (u.id === currentUserId) updatedSelf = res.data.user;
+      } catch (err) {
+        failed += 1;
+      }
+      // small delay between calls to avoid rate limits
+      if (i < users.length - 1) await new Promise(r => setTimeout(r, 250));
     }
-    toast.success(`עודכנו ${users.length} משתמשים`);
+    if (failed) toast.error(`עודכנו ${users.length - failed}, נכשלו ${failed}`);
+    else toast.success(`עודכנו ${users.length} משתמשים`);
     setSaving(false);
     onSaved?.(updatedSelf);
     onOpenChange(false);
