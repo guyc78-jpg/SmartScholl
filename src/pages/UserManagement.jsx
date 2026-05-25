@@ -4,9 +4,8 @@ import PageHeader from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import EmptyState from '@/components/ui/EmptyState';
-import { ShieldCheck, Users, X, Trash2, MoreHorizontal, CheckSquare } from 'lucide-react';
+import { ShieldCheck, Users, X, Trash2, CheckSquare } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/AuthContext';
 import { getAvailableRoles, getUserDisplayName } from '@/lib/roleUtils';
@@ -159,12 +158,9 @@ export default function UserManagement() {
         classOptions={classOptions}
       />
 
-      {/* Bulk action bar — compact RTL */}
-      <div
-        className="bg-card border rounded-xl px-3 py-2 flex items-center gap-2"
-        dir="rtl"
-      >
-        {/* Right: selection count */}
+      {/* Bulk action bar — clean RTL */}
+      <div className="bg-card border rounded-xl px-3 py-2 flex items-center gap-2" dir="rtl">
+        {/* Right: count */}
         <span className="text-sm font-medium text-foreground/80 whitespace-nowrap">
           {selectedIds.size > 0
             ? `${selectedIds.size} נבחרו`
@@ -191,37 +187,33 @@ export default function UserManagement() {
           )}
         </div>
 
-        {/* Left: more actions */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              size="icon"
-              variant="ghost"
-              className="h-8 w-8"
-              disabled={selectedIds.size === 0}
-              aria-label="פעולות נוספות"
-            >
-              <MoreHorizontal className="w-4 h-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" dir="rtl" className="w-44">
-            <DropdownMenuItem onClick={toggleSelectAll}>
-              {allSelected ? 'בטל בחירה כוללת' : `בחר את כל ${filteredUsers.length} המוצגים`}
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={clearSelection}>
-              נקה בחירה
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => setConfirmBulkDelete(true)}
-              disabled={selectedDeletable.length === 0}
-              className="text-destructive focus:text-destructive focus:bg-destructive/10"
-            >
-              <Trash2 className="w-4 h-4 ml-2" />
-              מחק נבחרים ({selectedDeletable.length})
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {/* Left: delete + clear */}
+        <div className="flex items-center gap-1">
+          {selectedIds.size > 0 && (
+            <>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={() => setConfirmBulkDelete(true)}
+                disabled={selectedDeletable.length === 0}
+                aria-label="מחק נבחרים"
+                title="מחק נבחרים"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 px-2 gap-1"
+                onClick={clearSelection}
+              >
+                <X className="w-4 h-4" />
+                בטל בחירה
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Table */}
@@ -279,9 +271,9 @@ export default function UserManagement() {
       <AlertDialog open={confirmBulkDelete} onOpenChange={setConfirmBulkDelete}>
         <AlertDialogContent dir="rtl" className="text-right">
           <AlertDialogHeader>
-            <AlertDialogTitle>למחוק {selectedDeletable.length} משתמשים?</AlertDialogTitle>
+            <AlertDialogTitle>מחיקת משתמשים</AlertDialogTitle>
             <AlertDialogDescription>
-              הפעולה תמחק לצמיתות את כל המשתמשים שנבחרו (למעט המשתמש הנוכחי). לא ניתן לבטל.
+              עומדים להימחק {selectedDeletable.length} משתמשים לצמיתות מהמערכת. לא ניתן לשחזר את הפעולה. המשתמש הנוכחי לא ייכלל במחיקה.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2">

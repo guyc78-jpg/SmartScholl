@@ -9,13 +9,15 @@ const ROLE_OPTIONS = SYSTEM_ROLE_PRIORITY.filter(r => r !== 'parent');
 export default function UserFiltersBar({ search, onSearchChange, roleFilter, onRoleChange, gradeFilter, onGradeChange, classFilter, onClassChange, classOptions }) {
   return (
     <div className="bg-card border rounded-2xl p-3 grid gap-2 md:grid-cols-[1fr_auto_auto_auto]" dir="rtl">
-      <div className="relative">
+      <div className="relative" dir="rtl">
         <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
         <Input
+          type="search"
+          dir="rtl"
           placeholder="חיפוש לפי שם או מייל..."
           value={search}
           onChange={e => onSearchChange(e.target.value)}
-          className="pr-9 pl-3 h-9"
+          className="pr-9 pl-3 h-9 text-right placeholder:text-right"
         />
       </div>
       <Select value={roleFilter} onValueChange={onRoleChange}>
