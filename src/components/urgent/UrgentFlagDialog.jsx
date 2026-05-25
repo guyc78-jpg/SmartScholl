@@ -21,11 +21,12 @@ const empty = {
   is_pinned: false,
 };
 
-const fieldWrap = 'space-y-2';
-const labelCls = 'block text-sm font-semibold text-foreground/85';
-const inputCls = 'h-11 rounded-xl border border-input bg-background px-3 text-sm shadow-none focus-visible:ring-2 focus-visible:ring-primary/25';
-const selectTriggerCls = 'h-11 rounded-xl border border-input bg-background px-3 text-sm shadow-none focus:ring-2 focus:ring-primary/25';
-const dateInputCls = 'h-11 rounded-xl border border-input bg-background px-3 py-2 text-sm shadow-none focus-visible:ring-2 focus-visible:ring-primary/25 [color-scheme:light] dark:[color-scheme:dark]';
+// Shared field styles — every input/select uses exactly these
+const fieldCls = 'space-y-1.5';
+const labelCls = 'block text-sm font-semibold text-foreground/80';
+const controlBase = 'h-10 w-full rounded-lg border border-input bg-background text-sm shadow-none';
+const inputCls = `${controlBase} px-3 focus-visible:ring-2 focus-visible:ring-primary/25 focus-visible:outline-none`;
+const selectCls = `${controlBase} px-3 focus:ring-2 focus:ring-primary/25`;
 
 export default function UrgentFlagDialog({ open, onOpenChange, classId, flag, user, onSaved }) {
   const [form, setForm] = useState(empty);
@@ -63,18 +64,25 @@ export default function UrgentFlagDialog({ open, onOpenChange, classId, flag, us
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent dir="rtl" className="w-[calc(100vw-2rem)] max-w-xl rounded-2xl p-0 overflow-hidden bg-card">
-        <DialogHeader className="px-5 sm:px-6 pt-5 pb-4 border-b border-border/70 text-right">
-          <DialogTitle className="text-lg font-bold text-foreground">
+      <DialogContent
+        dir="rtl"
+        className="w-[calc(100vw-1.5rem)] max-w-[28rem] rounded-2xl p-0 overflow-hidden bg-card"
+      >
+        {/* Header */}
+        <DialogHeader className="px-5 pt-5 pb-4 border-b border-border/60 text-right">
+          <DialogTitle className="text-base font-bold text-foreground">
             {flag ? 'עריכת דגש' : 'דגש חדש לטיפול מיידי'}
           </DialogTitle>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-xs text-muted-foreground mt-0.5">
             הוסיפו פריט חשוב למעקב וטיפול של הצוות.
           </p>
         </DialogHeader>
 
-        <div className="px-5 sm:px-6 py-5 space-y-5 max-h-[72vh] overflow-y-auto">
-          <div className={fieldWrap}>
+        {/* Form body */}
+        <div className="px-5 py-4 space-y-4 max-h-[68vh] overflow-y-auto">
+
+          {/* כותרת */}
+          <div className={fieldCls}>
             <Label className={labelCls}>כותרת *</Label>
             <Input
               value={form.title}
@@ -84,11 +92,12 @@ export default function UrgentFlagDialog({ open, onOpenChange, classId, flag, us
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className={fieldWrap}>
+          {/* קטגוריה + עדיפות */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className={fieldCls}>
               <Label className={labelCls}>קטגוריה</Label>
               <Select value={form.category} onValueChange={v => setField('category', v)}>
-                <SelectTrigger className={selectTriggerCls}>
+                <SelectTrigger className={selectCls}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -96,11 +105,10 @@ export default function UrgentFlagDialog({ open, onOpenChange, classId, flag, us
                 </SelectContent>
               </Select>
             </div>
-
-            <div className={fieldWrap}>
+            <div className={fieldCls}>
               <Label className={labelCls}>עדיפות</Label>
               <Select value={form.priority} onValueChange={v => setField('priority', v)}>
-                <SelectTrigger className={selectTriggerCls}>
+                <SelectTrigger className={selectCls}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -110,39 +118,42 @@ export default function UrgentFlagDialog({ open, onOpenChange, classId, flag, us
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className={fieldWrap}>
+          {/* תאריך יעד + תזכורת */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className={fieldCls}>
               <Label className={labelCls}>תאריך יעד</Label>
-              <div className="relative h-11">
-                <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none z-10" />
-                <Input
+              <div className="relative">
+                <Calendar className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+                <input
                   type="date"
                   value={form.due_date || ''}
                   onChange={e => setField('due_date', e.target.value)}
-                  className={`${dateInputCls} pr-10`}
+                  style={{ colorScheme: 'light' }}
+                  className="h-10 w-full rounded-lg border border-input bg-background pr-8 pl-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/25 [&::-webkit-calendar-picker-indicator]:opacity-60 [&::-webkit-calendar-picker-indicator]:cursor-pointer dark:[color-scheme:dark]"
                 />
               </div>
             </div>
-
-            <div className={fieldWrap}>
+            <div className={fieldCls}>
               <Label className={labelCls}>תזכורת</Label>
-              <div className="relative h-11">
-                <Bell className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none z-10" />
-                <Input
+              <div className="relative">
+                <Bell className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+                <input
                   type="date"
                   value={form.reminder_date || ''}
                   onChange={e => setField('reminder_date', e.target.value)}
-                  className={`${dateInputCls} pr-10`}
+                  style={{ colorScheme: 'light' }}
+                  className="h-10 w-full rounded-lg border border-input bg-background pr-8 pl-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/25 [&::-webkit-calendar-picker-indicator]:opacity-60 [&::-webkit-calendar-picker-indicator]:cursor-pointer dark:[color-scheme:dark]"
                 />
               </div>
             </div>
           </div>
 
+          {/* סטטוס — בעריכה בלבד */}
           {flag && (
-            <div className={fieldWrap}>
+            <div className={fieldCls}>
               <Label className={labelCls}>סטטוס</Label>
               <Select value={form.status} onValueChange={v => setField('status', v)}>
-                <SelectTrigger className={selectTriggerCls}>
+                <SelectTrigger className={selectCls}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -152,40 +163,43 @@ export default function UrgentFlagDialog({ open, onOpenChange, classId, flag, us
             </div>
           )}
 
-          <div className={fieldWrap}>
+          {/* הערה */}
+          <div className={fieldCls}>
             <Label className={labelCls}>הערה חופשית</Label>
             <Textarea
               value={form.note || ''}
               onChange={e => setField('note', e.target.value)}
               placeholder="פרטים נוספים, צעדים לטיפול, מי מעורב..."
-              rows={4}
-              className="min-h-28 rounded-xl border-border bg-background px-3 py-3 text-sm shadow-none resize-none focus-visible:ring-2 focus-visible:ring-primary/25"
+              rows={3}
+              className="rounded-lg border border-input bg-background px-3 py-2.5 text-sm shadow-none resize-none focus-visible:ring-2 focus-visible:ring-primary/25 focus-visible:outline-none min-h-24"
             />
           </div>
 
-          <label className="flex items-center gap-3 rounded-xl border border-border bg-muted/35 px-4 py-3 text-sm font-medium text-foreground cursor-pointer select-none">
+          {/* Checkbox */}
+          <label className="flex items-center gap-2.5 rounded-lg border border-border bg-muted/30 px-3 py-2.5 cursor-pointer select-none">
             <input
               type="checkbox"
               checked={!!form.is_pinned}
               onChange={e => setField('is_pinned', e.target.checked)}
-              className="w-4 h-4 shrink-0 accent-primary"
+              className="w-4 h-4 shrink-0 accent-primary mt-px"
             />
-            <span className="leading-none">הצמד לראש הרשימה</span>
+            <span className="text-sm font-medium text-foreground leading-none">הצמד לראש הרשימה</span>
           </label>
         </div>
 
-        <DialogFooter className="px-5 sm:px-6 py-4 border-t border-border/70 bg-muted/25 gap-2 sm:justify-start">
+        {/* Footer */}
+        <DialogFooter className="px-5 py-4 border-t border-border/60 bg-muted/20 flex flex-row-reverse gap-2 sm:justify-start">
           <Button
             onClick={handleSave}
             disabled={saving}
-            className="w-full sm:w-auto h-10 rounded-xl px-5 font-semibold"
+            className="flex-1 sm:flex-none h-9 rounded-lg px-5 text-sm font-semibold"
           >
             {saving ? 'שומר...' : (flag ? 'שמור שינויים' : 'הוסף דגש')}
           </Button>
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
-            className="w-full sm:w-auto h-10 rounded-xl px-5"
+            className="flex-1 sm:flex-none h-9 rounded-lg px-4 text-sm"
           >
             ביטול
           </Button>
