@@ -8,28 +8,30 @@ const options = [
 
 export default function ThemePreferenceCard({ preference, onChange }) {
   return (
-    <div className="space-y-2">
-      <h3 className="text-sm font-semibold text-foreground">מצב תצוגה</h3>
-      <div className="flex items-center gap-2" dir="rtl">
-        {options.map(({ value, label, icon: Icon }) => {
-          const isActive = preference === value;
-          return (
-            <button
-              key={value}
-              type="button"
-              onClick={() => onChange(value)}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg transition-colors ${
-                isActive
-                  ? 'bg-primary/15 border border-primary/30 text-primary font-medium'
-                  : 'border border-border bg-card text-foreground/70 hover:bg-muted'
-              }`}
-              title={label}
-            >
-              <Icon className="w-4 h-4" />
-              <span className="text-sm">{label}</span>
-            </button>
-          );
-        })}
+    <div className="space-y-3">
+      <div className="flex items-center gap-3" dir="rtl">
+        <h3 className="text-sm font-semibold text-foreground whitespace-nowrap">מצב תצוגה</h3>
+        <div className="flex gap-2">
+          {options.map(({ value, label, icon: Icon }) => {
+            const isActive = preference === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => onChange(value)}
+                className={`w-20 h-10 flex flex-col items-center justify-center rounded-lg border transition-all ${
+                  isActive
+                    ? 'bg-primary/12 border-primary/40 text-primary'
+                    : 'bg-card border-border text-foreground/60 hover:bg-muted hover:border-border/80'
+                }`}
+                title={label}
+              >
+                <Icon className="w-4 h-4 mb-0.5" />
+                <span className="text-[11px] font-medium leading-tight">{label}</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
