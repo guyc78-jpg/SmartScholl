@@ -6,6 +6,7 @@ import { base44 } from '@/api/base44Client';
 import { CLASS_ID } from '@/lib/demoData';
 import StatCard from '@/components/ui/StatCard';
 import TodayHighlights from '@/components/dashboard/TodayHighlights';
+import UrgentFlagsSection from '@/components/urgent/UrgentFlagsSection';
 import DailySmartCard from '@/components/dashboard/DailySmartCard';
 import WatchStudentsSection from '@/components/dashboard/WatchStudentsSection';
 import SmartAlerts from '@/components/dashboard/SmartAlerts';
@@ -303,6 +304,15 @@ export default function Dashboard({ user, role }) {
         });
         return <TodayHighlights items={highlights} />;
       })()}
+
+      {/* Urgent Flags — dynamic items needing immediate attention (staff only) */}
+      {(isActiveHomeroom || isActiveCoordinator || isActiveAdmin) && classId && (
+        <UrgentFlagsSection
+          classId={classId}
+          user={user}
+          canManage={isActiveHomeroom || isActiveCoordinator || isActiveAdmin}
+        />
+      )}
 
       {/* Admin: 4 main management actions */}
       {isActiveAdmin && (

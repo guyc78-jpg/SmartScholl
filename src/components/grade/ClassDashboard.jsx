@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, AlertTriangle, Clock, MessageSquare, CheckSquare, FileText, Star } from 'lucide-react';
+import { Users, AlertTriangle, Clock, MessageSquare, CheckSquare, FileText, Star, Flag } from 'lucide-react';
 import StatusBadge from '@/components/ui/StatusBadge';
 import WatchStudentsList from '@/components/grade/WatchStudentsList';
 import AttendanceSummary from '@/components/grade/AttendanceSummary';
@@ -9,9 +9,12 @@ import DisciplineList from '@/components/grade/DisciplineList';
 import CommunicationsList from '@/components/grade/CommunicationsList';
 import TasksList from '@/components/grade/TasksList';
 import NotesList from '@/components/grade/NotesList';
+import UrgentFlagsList from '@/components/urgent/UrgentFlagsList';
+import { isStaff } from '@/lib/permissions';
 
 const TABS = [
   { id: 'overview', label: 'סקירה', icon: Users },
+  { id: 'urgent', label: 'לטיפול מיידי', icon: Flag },
   { id: 'attendance', label: 'נוכחות', icon: Clock },
   { id: 'discipline', label: 'אירועים', icon: AlertTriangle },
   { id: 'communications', label: 'שיחות', icon: MessageSquare },
@@ -107,6 +110,13 @@ export default function ClassDashboard({ classInfo, user, role }) {
           students={data.students}
           attByStudent={attByStudent}
           classId={classInfo.id}
+        />
+      )}
+      {tab === 'urgent' && (
+        <UrgentFlagsList
+          classId={classInfo.id}
+          user={user}
+          canManage={isStaff(role)}
         />
       )}
       {tab === 'attendance' && (
