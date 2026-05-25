@@ -206,7 +206,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
                   />
                   <Select onValueChange={v => { set('student_id', v); setSearchQuery(''); }}>
                     <SelectTrigger><SelectValue placeholder="בחר תלמיד" /></SelectTrigger>
-                    <SelectContent>
+                    <SelectContent onWheel={e => e.stopPropagation()} onTouchMove={e => e.stopPropagation()}>
                       {sortByLastName(students)
                         .filter(s => !searchQuery || s.full_name.toLowerCase().includes(searchQuery.toLowerCase()))
                         .map(s => <SelectItem key={s.id} value={s.id}>{getStudentDisplayName(s.full_name)}</SelectItem>)}
