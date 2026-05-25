@@ -20,7 +20,7 @@ export default function GradeMonitor({ user, role }) {
   useEffect(() => {
     async function loadClasses() {
       setLoading(true);
-      const allClasses = await base44.entities.ClassRoom.list();
+      const allClasses = await base44.entities.ClassRoom.list('grade', 500);
       let filtered = allClasses;
 
       if (role === 'coordinator' && managedGrade) {
@@ -32,6 +32,17 @@ export default function GradeMonitor({ user, role }) {
         // Fallback: show all if no match (for demo)
         if (filtered.length === 0) filtered = allClasses;
       }
+
+      const gradeOrder = ['ז', 'ח', 'ט', 'י', 'יא', 'יב'];
+      const extractNum = (name = '') => {
+        const match = String(name).match(/(\d+)\s*$/);
+        return match ? parseInt(match[1], 10) : 9999;
+      };
+      filtered = [...filtered].sort((a, b) => {
+        const gradeDiff = gradeOrder.indexOf(a.grade) - gradeOrder.indexOf(b.grade);
+        if (gradeDiff !== 0) return gradeDiff;
+        return extractNum(a.name) - extractNum(b.name);
+      });
 
       setClasses(filtered);
       if (filtered.length === 1) setSelectedClass(filtered[0]);

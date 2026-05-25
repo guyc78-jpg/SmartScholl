@@ -12,8 +12,17 @@ export default function GradeClassSelect({ grade, classNameValue, classId, onGra
   }, []);
 
   const gradeClasses = useMemo(() => {
-    if (!grade || grade === 'all') return classes;
-    return classes.filter(item => item.grade === grade);
+    const filtered = (!grade || grade === 'all') ? classes : classes.filter(item => item.grade === grade);
+    const gradeOrder = ['ז', 'ח', 'ט', 'י', 'יא', 'יב'];
+    const extractNum = (name = '') => {
+      const match = String(name).match(/(\d+)\s*$/);
+      return match ? parseInt(match[1], 10) : 9999;
+    };
+    return [...filtered].sort((a, b) => {
+      const gradeDiff = gradeOrder.indexOf(a.grade) - gradeOrder.indexOf(b.grade);
+      if (gradeDiff !== 0) return gradeDiff;
+      return extractNum(a.name) - extractNum(b.name);
+    });
   }, [classes, grade]);
 
   const handleGradeChange = (value) => {

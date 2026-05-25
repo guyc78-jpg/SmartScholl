@@ -17,8 +17,18 @@ export default function Classrooms() {
 
   async function loadClasses() {
     setLoading(true);
-    const data = await base44.entities.ClassRoom.list('grade');
-    setClasses(data.filter(item => item.is_active !== false));
+    const data = await base44.entities.ClassRoom.list('grade', 500);
+    const gradeOrder = ['ז', 'ח', 'ט', 'י', 'יא', 'יב'];
+    const extractNum = (name = '') => {
+      const match = String(name).match(/(\d+)\s*$/);
+      return match ? parseInt(match[1], 10) : 9999;
+    };
+    const sorted = data.filter(item => item.is_active !== false).sort((a, b) => {
+      const gradeDiff = gradeOrder.indexOf(a.grade) - gradeOrder.indexOf(b.grade);
+      if (gradeDiff !== 0) return gradeDiff;
+      return extractNum(a.name) - extractNum(b.name);
+    });
+    setClasses(sorted);
     setLoading(false);
   }
 
