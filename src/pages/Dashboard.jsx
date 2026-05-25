@@ -203,6 +203,15 @@ export default function Dashboard({ user, role }) {
       {/* Now / Next — only useful for homeroom teachers (have a class) */}
       {(isActiveHomeroom || isActiveAdmin) && <NowNextCard classId={classId} />}
 
+      {/* Urgent Flags — dynamic items needing immediate attention (staff only) */}
+      {(isActiveHomeroom || isActiveCoordinator || isActiveAdmin) && classId && (
+        <UrgentFlagsSection
+          classId={classId}
+          user={user}
+          canManage={isActiveHomeroom || isActiveCoordinator || isActiveAdmin}
+        />
+      )}
+
       {/* Daily Smart Card — unified intelligence on what matters today */}
       {(isActiveHomeroom || isActiveAdmin || isActiveCoordinator) && (
         <DailySmartCard
@@ -261,17 +270,6 @@ export default function Dashboard({ user, role }) {
             ))}
           </div>
         </section>
-      )}
-
-
-
-      {/* Urgent Flags — dynamic items needing immediate attention (staff only) */}
-      {(isActiveHomeroom || isActiveCoordinator || isActiveAdmin) && classId && (
-        <UrgentFlagsSection
-          classId={classId}
-          user={user}
-          canManage={isActiveHomeroom || isActiveCoordinator || isActiveAdmin}
-        />
       )}
 
       {/* Admin: 4 main management actions */}
