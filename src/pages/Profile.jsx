@@ -187,7 +187,14 @@ export default function Profile({ user, role, onRoleChange, themePreference, onT
           )}
 
           {onThemePreferenceChange && (
-            <ThemePreferenceCard preference={themePreference || 'system'} onChange={onThemePreferenceChange} />
+            <Card>
+              <CardHeader>
+                <CardTitle>הגדרות תצוגה</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ThemePreferenceCard preference={themePreference || 'system'} onChange={onThemePreferenceChange} />
+              </CardContent>
+            </Card>
           )}
 
           {hasMultipleRoles && onRoleChange && (
