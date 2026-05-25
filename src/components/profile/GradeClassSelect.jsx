@@ -11,16 +11,20 @@ export default function GradeClassSelect({ grade, classNameValue, classId, onGra
     base44.entities.ClassRoom.list('grade').then(data => setClasses(data.filter(item => item.is_active !== false)));
   }, []);
 
-  const gradeClasses = useMemo(() => classes.filter(item => item.grade === grade), [classes, grade]);
+  const gradeClasses = useMemo(() => grade && grade !== 'all' ? classes.filter(item => item.grade === grade) : classes, [classes, grade]);
 
   const handleGradeChange = (value) => {
-    onGradeChange(value);
+    const newGrade = value === 'all' ? '' : value;
+    onGradeChange(newGrade);
     onClassChange('');
     onClassIdChange?.('');
   };
 
   const handleClassChange = (selectedId) => {
     const selected = classes.find(item => item.id === selectedId);
+    if (selected?.grade && selected.grade !== grade) {
+      onGradeChange(selected.grade);
+    }
     onClassIdChange?.(selectedId);
     onClassChange(selected?.name || '');
   };
@@ -31,22 +35,23 @@ export default function GradeClassSelect({ grade, classNameValue, classId, onGra
     <>
       <div className="space-y-2">
         <Label>שכבה משויכת</Label>
-        <Select value={grade || ''} onValueChange={handleGradeChange} disabled={disabled || classes.length === 0}>
+        <Select value={grade || 'all'} onValueChange={handleGradeChange} disabled={disabled || classes.length === 0}>
           <SelectTrigger className={disabled ? 'bg-muted' : ''}>
-            <SelectValue placeholder="בחר/י שכבה" />
+            <SelectValue placeholder="כל השכבות" />
           </SelectTrigger>
           <SelectContent dir="rtl">
+            <SelectItem value="all">כל השכבות</SelectItem>
             {GRADES.map(item => <SelectItem key={item} value={item}>{formatGrade(item)}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
 
-      {showClass && grade && (
+      {showClass && (
         <div className="space-y-2">
           <Label>כיתה משויכת</Label>
           <Select value={selectedClassId} onValueChange={handleClassChange} disabled={disabled || gradeClasses.length === 0}>
             <SelectTrigger className={disabled ? 'bg-muted' : ''}>
-              <SelectValue placeholder={gradeClasses.length ? 'בחר/י כיתה' : 'אין כיתות מוגדרות לשכבה'} />
+              <SelectValue placeholder={gradeClasses.length ? 'בחר/י כיתה' : 'אין כיתות מוגדרות'} />
             </SelectTrigger>
             <SelectContent dir="rtl">
               {gradeClasses.map(item => (

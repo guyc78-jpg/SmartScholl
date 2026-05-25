@@ -64,7 +64,7 @@ export default function ClassChangeRequestCard({ user, displayName }) {
             grade={request.grade}
             classNameValue={request.className}
             classId={request.classId}
-            onGradeChange={(value) => setRequest(prev => ({ ...prev, grade: value, className: '', classId: '' }))}
+            onGradeChange={(value) => setRequest(prev => ({ ...prev, grade: value }))}
             onClassChange={(value) => setRequest(prev => ({ ...prev, className: value }))}
             onClassIdChange={(value) => setRequest(prev => ({ ...prev, classId: value }))}
           />

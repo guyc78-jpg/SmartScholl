@@ -74,7 +74,7 @@ export default function UserPermissionEditor({ targetUser, currentUser, onSaved 
             grade={form.profile_grade_managed}
             classNameValue={form.profile_homeroom_class}
             classId={form.profile_class_id}
-            onGradeChange={(value) => setForm(prev => ({ ...prev, profile_grade_managed: value, profile_homeroom_class: '', profile_class_id: '' }))}
+            onGradeChange={(value) => setForm(prev => ({ ...prev, profile_grade_managed: value }))}
             onClassChange={(value) => setForm(prev => ({ ...prev, profile_homeroom_class: value }))}
             onClassIdChange={(value) => setForm(prev => ({ ...prev, profile_class_id: value }))}
             showClass
