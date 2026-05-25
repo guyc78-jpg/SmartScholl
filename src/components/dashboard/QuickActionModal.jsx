@@ -180,7 +180,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md" dir="rtl">
+      <DialogContent className="sm:max-w-md" dir="rtl" onInteractOutside={e => e.preventDefault()}>
         <DialogHeader>
           <DialogTitle>{titles[action]}</DialogTitle>
         </DialogHeader>
