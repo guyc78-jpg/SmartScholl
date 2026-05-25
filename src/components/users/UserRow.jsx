@@ -30,18 +30,18 @@ export default function UserRow({ user, selected, onSelectToggle, onEdit }) {
       </div>
 
       {/* Desktop columns */}
-      <div className="hidden md:block text-xs text-muted-foreground truncate force-ltr">{user.email}</div>
-      <div className="hidden md:block text-sm">
+      <div className="hidden md:block text-xs text-muted-foreground truncate force-ltr text-right">{user.email}</div>
+      <div className="hidden md:flex justify-start">
         <span className="px-2 py-0.5 rounded-md bg-primary/10 text-primary text-xs font-medium">
           {ROLE_LABELS[user.role] || '—'}
         </span>
       </div>
-      <div className="hidden md:block text-sm text-muted-foreground">{grade ? formatGrade(grade) : '—'}</div>
-      <div className="hidden md:block text-sm text-muted-foreground">{klass || '—'}</div>
-      <div className="hidden md:flex flex-wrap gap-1">
+      <div className="hidden md:block text-sm text-muted-foreground text-right">{grade ? formatGrade(grade) : '—'}</div>
+      <div className="hidden md:block text-sm text-muted-foreground text-right">{klass || '—'}</div>
+      <div className="hidden md:flex flex-wrap gap-1 justify-start">
         {extra.length === 0 && <span className="text-xs text-muted-foreground">—</span>}
         {extra.map(r => (
-          <span key={r} className="text-[11px] px-1.5 py-0.5 rounded bg-muted text-foreground/70">
+          <span key={r} className="text-[11px] px-1.5 py-0.5 rounded bg-muted text-foreground/70 whitespace-nowrap">
             {ROLE_LABELS[r]}
           </span>
         ))}

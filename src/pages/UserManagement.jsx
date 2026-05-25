@@ -4,8 +4,9 @@ import PageHeader from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import EmptyState from '@/components/ui/EmptyState';
-import { ShieldCheck, Users, X, Trash2 } from 'lucide-react';
+import { ShieldCheck, Users, X, Trash2, MoreHorizontal, CheckSquare } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/AuthContext';
 import { getAvailableRoles, getUserDisplayName } from '@/lib/roleUtils';
@@ -158,32 +159,69 @@ export default function UserManagement() {
         classOptions={classOptions}
       />
 
-      {/* Bulk action bar */}
-      <div className="bg-primary/10 border border-primary/30 rounded-xl px-3 py-2 flex items-center gap-3 flex-wrap">
-        <span className="text-sm font-medium text-primary">
-          {selectedIds.size > 0 ? `${selectedIds.size} נבחרו` : `${filteredUsers.length} משתמשים מוצגים`}
+      {/* Bulk action bar — compact RTL */}
+      <div
+        className="bg-card border rounded-xl px-3 py-2 flex items-center gap-2"
+        dir="rtl"
+      >
+        {/* Right: selection count */}
+        <span className="text-sm font-medium text-foreground/80 whitespace-nowrap">
+          {selectedIds.size > 0
+            ? `${selectedIds.size} נבחרו`
+            : `${filteredUsers.length} מוצגים`}
         </span>
-        <div className="flex gap-2 mr-auto flex-wrap">
-          <Button size="sm" variant="outline" onClick={toggleSelectAll} disabled={filteredUsers.length === 0}>
-            {allSelected ? 'בטל בחירה' : `בחר הכל (${filteredUsers.length})`}
-          </Button>
-          {selectedIds.size > 0 && (
-            <>
-              <Button size="sm" onClick={() => setBulkOpen(true)}>עדכון מרובה</Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive gap-1"
-                onClick={() => setConfirmBulkDelete(true)}
-                disabled={selectedDeletable.length === 0}
-              >
-                <Trash2 className="w-4 h-4" />
-                מחק ({selectedDeletable.length})
-              </Button>
-              <Button size="sm" variant="ghost" onClick={clearSelection} className="gap-1"><X className="w-4 h-4" />נקה</Button>
-            </>
+
+        {/* Center: primary action */}
+        <div className="flex-1 flex justify-center">
+          {selectedIds.size > 0 ? (
+            <Button size="sm" onClick={() => setBulkOpen(true)} className="h-8">
+              עדכון מרובה
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={toggleSelectAll}
+              disabled={filteredUsers.length === 0}
+              className="h-8 gap-1"
+            >
+              <CheckSquare className="w-4 h-4" />
+              בחר הכל
+            </Button>
           )}
         </div>
+
+        {/* Left: more actions */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8"
+              disabled={selectedIds.size === 0}
+              aria-label="פעולות נוספות"
+            >
+              <MoreHorizontal className="w-4 h-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" dir="rtl" className="w-44">
+            <DropdownMenuItem onClick={toggleSelectAll}>
+              {allSelected ? 'בטל בחירה כוללת' : `בחר את כל ${filteredUsers.length} המוצגים`}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={clearSelection}>
+              נקה בחירה
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => setConfirmBulkDelete(true)}
+              disabled={selectedDeletable.length === 0}
+              className="text-destructive focus:text-destructive focus:bg-destructive/10"
+            >
+              <Trash2 className="w-4 h-4 ml-2" />
+              מחק נבחרים ({selectedDeletable.length})
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Table */}
