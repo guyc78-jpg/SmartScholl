@@ -35,6 +35,24 @@ function studentMatchesClass(student, classId, className) {
   return false;
 }
 
+// Extract last name from full name and format display
+function getStudentDisplayName(fullName = '') {
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length < 2) return fullName;
+  const lastName = parts[parts.length - 1];
+  const firstName = parts.slice(0, -1).join(' ');
+  return `${lastName}, ${firstName}`;
+}
+
+// Sort students by last name (A-Z)
+function sortByLastName(students) {
+  return [...students].sort((a, b) => {
+    const lastNameA = (a.full_name || '').trim().split(/\s+/).pop();
+    const lastNameB = (b.full_name || '').trim().split(/\s+/).pop();
+    return lastNameA.localeCompare(lastNameB, 'he');
+  });
+}
+
 export default function QuickActionModal({ action, classId: classIdProp, user, role, onClose, onSuccess }) {
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
@@ -181,7 +199,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
                 <Select onValueChange={v => set('student_id', v)}>
                   <SelectTrigger><SelectValue placeholder="בחר תלמיד" /></SelectTrigger>
                   <SelectContent>
-                    {students.map(s => <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>)}
+                    {sortByLastName(students).map(s => <SelectItem key={s.id} value={s.id}>{getStudentDisplayName(s.full_name)}</SelectItem>)}
                   </SelectContent>
                 </Select>
               )}
