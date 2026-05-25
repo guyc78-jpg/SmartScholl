@@ -170,10 +170,15 @@ export default function ApprovalManagement({ role }) {
 
   async function loadData() {
     setLoading(true);
-    const res = await base44.functions.invoke('handleApprovalRequest', { action: 'get_pending' });
-    setPending(res.data.pending || []);
-    setLogs(res.data.logs || []);
-    setLoading(false);
+    try {
+      const res = await base44.functions.invoke('handleApprovalRequest', { action: 'get_pending' });
+      setPending(res.data.pending || []);
+      setLogs(res.data.logs || []);
+    } catch (e) {
+      toast.error('שגיאה בטעינת הנתונים');
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => { loadData(); }, []);
