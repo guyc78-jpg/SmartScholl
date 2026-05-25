@@ -73,19 +73,37 @@ export default function DailySmartCard({ classId, students, todayAttendance, exa
       });
     }
 
-    // 2. מבחנים השבוע
+    // 2. מבחנים ואירועים השבוע — הפרדה לפי סוג
+    const EXAM_TYPES = ['מבחן', 'מתכונת', 'בגרות'];
     const sevenDaysLater = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
-    const upcomingExams = exams.filter(e => e.date >= today && e.date <= sevenDaysLater).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 3);
+    const upcomingAll = exams.filter(e => e.date >= today && e.date <= sevenDaysLater).sort((a, b) => a.date.localeCompare(b.date));
+    const upcomingExams = upcomingAll.filter(e => EXAM_TYPES.includes(e.type));
+    const upcomingActivities = upcomingAll.filter(e => !EXAM_TYPES.includes(e.type));
+
     if (upcomingExams.length) {
       insights.push({
         id: 'exams',
         priority: 'high',
         type: 'מבחנים',
-        title: `${upcomingExams.length} מבחנים השבוע`,
+        title: `${upcomingExams.length} ${upcomingExams.length === 1 ? 'מבחן' : 'מבחנים'} השבוע`,
         icon: BookOpen,
         meta: upcomingExams[0].title,
         names: upcomingExams.map(e => e.title),
         date: upcomingExams[0].date,
+        link: '/exams',
+      });
+    }
+
+    if (upcomingActivities.length) {
+      insights.push({
+        id: 'activities',
+        priority: 'medium',
+        type: 'אירועים',
+        title: `${upcomingActivities.length} ${upcomingActivities.length === 1 ? 'אירוע' : 'פעילויות'} השבוע`,
+        icon: Calendar,
+        meta: upcomingActivities[0].title,
+        names: upcomingActivities.map(e => e.title),
+        date: upcomingActivities[0].date,
         link: '/exams',
       });
     }
