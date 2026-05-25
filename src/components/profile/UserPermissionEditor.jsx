@@ -60,7 +60,7 @@ export default function UserPermissionEditor({ targetUser, currentUser, onSaved 
         <CardDescription>{targetUser.email}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 items-end">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 items-end">
           <div className="space-y-2">
             <Label>תפקיד ראשי</Label>
             <Select value={form.primaryRole} onValueChange={(value) => setForm(prev => ({ ...prev, primaryRole: value, approvedRoles: prev.approvedRoles.includes(value) ? prev.approvedRoles : [...prev.approvedRoles, value] }))}>
@@ -79,9 +79,6 @@ export default function UserPermissionEditor({ targetUser, currentUser, onSaved 
             onClassIdChange={(value) => setForm(prev => ({ ...prev, profile_class_id: value }))}
             showClass
           />
-          <Button onClick={save} disabled={saving}>
-            {saving ? 'שומר...' : 'שמור הרשאות'}
-          </Button>
         </div>
 
         <div className="space-y-2" dir="rtl">
@@ -106,6 +103,12 @@ export default function UserPermissionEditor({ targetUser, currentUser, onSaved 
               );
             })}
           </div>
+        </div>
+
+        <div className="pt-2 flex justify-end">
+          <Button onClick={save} disabled={saving} className="w-full sm:w-auto h-10 px-8 rounded-xl font-medium">
+            {saving ? 'שומר...' : 'שמור הרשאות'}
+          </Button>
         </div>
       </CardContent>
     </Card>
