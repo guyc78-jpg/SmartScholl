@@ -159,25 +159,32 @@ export default function UserManagement() {
       />
 
       {/* Bulk action bar */}
-      {selectedIds.size > 0 && (
-        <div className="bg-primary/10 border border-primary/30 rounded-xl px-3 py-2 flex items-center gap-3 flex-wrap">
-          <span className="text-sm font-medium text-primary">{selectedIds.size} נבחרו</span>
-          <div className="flex gap-2 mr-auto">
-            <Button size="sm" onClick={() => setBulkOpen(true)}>עדכון מרובה</Button>
-            <Button
-              size="sm"
-              variant="outline"
-              className="text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive gap-1"
-              onClick={() => setConfirmBulkDelete(true)}
-              disabled={selectedDeletable.length === 0}
-            >
-              <Trash2 className="w-4 h-4" />
-              מחק ({selectedDeletable.length})
-            </Button>
-            <Button size="sm" variant="ghost" onClick={clearSelection} className="gap-1"><X className="w-4 h-4" />נקה</Button>
-          </div>
+      <div className="bg-primary/10 border border-primary/30 rounded-xl px-3 py-2 flex items-center gap-3 flex-wrap">
+        <span className="text-sm font-medium text-primary">
+          {selectedIds.size > 0 ? `${selectedIds.size} נבחרו` : `${filteredUsers.length} משתמשים מוצגים`}
+        </span>
+        <div className="flex gap-2 mr-auto flex-wrap">
+          <Button size="sm" variant="outline" onClick={toggleSelectAll} disabled={filteredUsers.length === 0}>
+            {allSelected ? 'בטל בחירה' : `בחר הכל (${filteredUsers.length})`}
+          </Button>
+          {selectedIds.size > 0 && (
+            <>
+              <Button size="sm" onClick={() => setBulkOpen(true)}>עדכון מרובה</Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive gap-1"
+                onClick={() => setConfirmBulkDelete(true)}
+                disabled={selectedDeletable.length === 0}
+              >
+                <Trash2 className="w-4 h-4" />
+                מחק ({selectedDeletable.length})
+              </Button>
+              <Button size="sm" variant="ghost" onClick={clearSelection} className="gap-1"><X className="w-4 h-4" />נקה</Button>
+            </>
+          )}
         </div>
-      )}
+      </div>
 
       {/* Table */}
       <div className="bg-card border rounded-2xl overflow-hidden">
