@@ -192,8 +192,8 @@
 
   /* Radix Select trigger icon should sit on the left side in RTL */
   [dir="rtl"] [data-radix-select-trigger] > svg:last-child {
-    margin-right: auto;
-    margin-left: 0;
+    margin-left: auto;
+    margin-right: 0;
   }
 
   /* Select item checkmark indicator moves to the left in RTL */
