@@ -8,7 +8,7 @@ const ROLE_OPTIONS = SYSTEM_ROLE_PRIORITY.filter(r => r !== 'parent');
 
 export default function UserFiltersBar({ search, onSearchChange, roleFilter, onRoleChange, gradeFilter, onGradeChange, classFilter, onClassChange, classOptions }) {
   return (
-    <div className="bg-card border rounded-2xl p-3 grid gap-2 md:grid-cols-[1fr_auto_auto_auto]" dir="rtl">
+    <div className="bg-card border rounded-2xl p-3 grid gap-2 md:grid-cols-[auto_auto_auto_1fr]" dir="rtl">
       <div className="relative" dir="rtl">
         <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
         <Input
