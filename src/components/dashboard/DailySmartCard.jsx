@@ -73,44 +73,43 @@ export default function DailySmartCard({ classId, students, todayAttendance, exa
       });
     }
 
-    // 2. מבחנים ואירועים השבוע — הפרדה לפי סוג
+    // 2. מבחנים ואירועים היום בלבד — הפרדה לפי סוג
     const EXAM_TYPES = ['מבחן', 'מתכונת', 'בגרות'];
-    const sevenDaysLater = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
-    const upcomingAll = exams.filter(e => e.date >= today && e.date <= sevenDaysLater).sort((a, b) => a.date.localeCompare(b.date));
-    const upcomingExams = upcomingAll.filter(e => EXAM_TYPES.includes(e.type));
-    const upcomingActivities = upcomingAll.filter(e => !EXAM_TYPES.includes(e.type));
+    const todayAll = exams.filter(e => e.date === today).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+    const todayExams = todayAll.filter(e => EXAM_TYPES.includes(e.type));
+    const todayActivities = todayAll.filter(e => !EXAM_TYPES.includes(e.type));
 
-    if (upcomingExams.length) {
+    if (todayExams.length) {
       insights.push({
         id: 'exams',
         priority: 'high',
         type: 'מבחנים',
-        title: `${upcomingExams.length} ${upcomingExams.length === 1 ? 'מבחן' : 'מבחנים'} השבוע`,
+        title: `${todayExams.length} ${todayExams.length === 1 ? 'מבחן' : 'מבחנים'} היום`,
         icon: BookOpen,
-        meta: upcomingExams[0].title,
-        names: upcomingExams.map(e => e.title),
-        date: upcomingExams[0].date,
+        meta: todayExams[0].title,
+        names: todayExams.map(e => e.title),
+        date: todayExams[0].date,
         link: '/exams',
       });
     }
 
-    if (upcomingActivities.length) {
+    if (todayActivities.length) {
       insights.push({
         id: 'activities',
         priority: 'medium',
         type: 'אירועים',
-        title: `${upcomingActivities.length} ${upcomingActivities.length === 1 ? 'אירוע' : 'פעילויות'} השבוע`,
+        title: `${todayActivities.length} ${todayActivities.length === 1 ? 'אירוע' : 'פעילויות'} היום`,
         icon: Calendar,
-        meta: upcomingActivities[0].title,
-        names: upcomingActivities.map(e => e.title),
-        date: upcomingActivities[0].date,
+        meta: todayActivities[0].title,
+        names: todayActivities.map(e => e.title),
+        date: todayActivities[0].date,
         link: '/exams',
       });
     }
 
-    // 3. משימות דחופות
+    // 3. משימות דחופות — רק של היום
     const urgentTasks = tasks
-      .filter(t => t.status !== 'בוצע' && (t.priority === 'דחופה' || t.priority === 'גבוהה'))
+      .filter(t => t.status !== 'בוצע' && t.due_date === today && (t.priority === 'דחופה' || t.priority === 'גבוהה'))
       .sort((a, b) => (a.due_date || '').localeCompare(b.due_date || ''))
       .slice(0, 3);
     if (urgentTasks.length) {
@@ -180,7 +179,7 @@ export default function DailySmartCard({ classId, students, todayAttendance, exa
     setLoading(false);
   }
 
-  if (loading || insights.length === 0) return null;
+  if (loading) return null;
 
   return (
     <section className="rounded-2xl border border-border bg-card p-4 lg:p-5" dir="rtl">
@@ -195,6 +194,12 @@ export default function DailySmartCard({ classId, students, todayAttendance, exa
           </p>
         </div>
       </div>
+
+      {insights.length === 0 && (
+        <div className="flex items-center justify-center py-6 text-sm text-muted-foreground">
+          אין משהו חשוב היום 🎉
+        </div>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
         {insights.map(insight => {
