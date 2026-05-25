@@ -76,7 +76,8 @@ export default function Dashboard({ user, role }) {
       classId ? base44.entities.Announcement.filter({ class_id: classId }) : Promise.resolve([]),
     ]);
     const scopeRole = hasApprovedRole(user, 'homeroom_teacher') ? 'homeroom_teacher' : hasApprovedRole(user, 'coordinator') ? 'coordinator' : role;
-    const scopedStudents = isAdmin && !hasClassRole && !hasCoordinatorRole ? sts : sts.filter(student => isStudentInApprovedScope(student, user, scopeRole));
+    // If no classId configured yet, show all fetched students (no scope filtering possible)
+    const scopedStudents = (!classId) ? sts : (isAdmin && !hasClassRole && !hasCoordinatorRole ? sts : sts.filter(student => isStudentInApprovedScope(student, user, scopeRole)));
     const scopedIds = new Set(scopedStudents.map(student => student.id));
     setStudents(scopedStudents);
     setTodayAttendance(att.filter(record => scopedIds.has(record.student_id)));
