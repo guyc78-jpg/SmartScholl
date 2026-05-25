@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { Calendar, Bell } from 'lucide-react';
 import { CATEGORIES, PRIORITIES, STATUSES } from './urgentFlagUtils';
 
 const empty = {
@@ -22,8 +23,9 @@ const empty = {
 
 const fieldWrap = 'space-y-2';
 const labelCls = 'block text-sm font-semibold text-foreground/85';
-const inputCls = 'h-11 rounded-xl border-border bg-background px-3 text-sm shadow-none focus-visible:ring-2 focus-visible:ring-primary/25';
-const selectTriggerCls = 'h-11 rounded-xl border-border bg-background px-3 text-sm shadow-none focus:ring-2 focus:ring-primary/25';
+const inputCls = 'h-11 rounded-xl border border-input bg-background px-3 text-sm shadow-none focus-visible:ring-2 focus-visible:ring-primary/25';
+const selectTriggerCls = 'h-11 rounded-xl border border-input bg-background px-3 text-sm shadow-none focus:ring-2 focus:ring-primary/25';
+const dateInputCls = 'h-11 rounded-xl border border-input bg-background px-3 py-2 text-sm shadow-none focus-visible:ring-2 focus-visible:ring-primary/25 [color-scheme:light] dark:[color-scheme:dark]';
 
 export default function UrgentFlagDialog({ open, onOpenChange, classId, flag, user, onSaved }) {
   const [form, setForm] = useState(empty);
@@ -111,22 +113,28 @@ export default function UrgentFlagDialog({ open, onOpenChange, classId, flag, us
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className={fieldWrap}>
               <Label className={labelCls}>תאריך יעד</Label>
-              <Input
-                type="date"
-                value={form.due_date || ''}
-                onChange={e => setField('due_date', e.target.value)}
-                className={`${inputCls} [color-scheme:light] dark:[color-scheme:dark]`}
-              />
+              <div className="relative h-11">
+                <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none z-10" />
+                <Input
+                  type="date"
+                  value={form.due_date || ''}
+                  onChange={e => setField('due_date', e.target.value)}
+                  className={`${dateInputCls} pr-10`}
+                />
+              </div>
             </div>
 
             <div className={fieldWrap}>
               <Label className={labelCls}>תזכורת</Label>
-              <Input
-                type="date"
-                value={form.reminder_date || ''}
-                onChange={e => setField('reminder_date', e.target.value)}
-                className={`${inputCls} [color-scheme:light] dark:[color-scheme:dark]`}
-              />
+              <div className="relative h-11">
+                <Bell className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none z-10" />
+                <Input
+                  type="date"
+                  value={form.reminder_date || ''}
+                  onChange={e => setField('reminder_date', e.target.value)}
+                  className={`${dateInputCls} pr-10`}
+                />
+              </div>
             </div>
           </div>
 
