@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -7,8 +7,55 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Calendar, Bell } from 'lucide-react';
+import { Calendar, Bell, X } from 'lucide-react';
 import { CATEGORIES, PRIORITIES, STATUSES } from './urgentFlagUtils';
+
+// Custom date field — shows placeholder when empty, clear button when filled
+function DateField({ value, onChange, icon: Icon, placeholder }) {
+  const inputRef = useRef(null);
+
+  const formatted = value
+    ? new Date(value).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    : null;
+
+  return (
+    <div
+      className="relative flex items-center h-10 w-full rounded-lg border border-input bg-background cursor-pointer hover:border-primary/50 transition-colors"
+      onClick={() => inputRef.current?.showPicker?.()}
+    >
+      {/* icon right */}
+      <span className="flex items-center pr-2.5 shrink-0">
+        <Icon className="w-3.5 h-3.5 text-muted-foreground" />
+      </span>
+
+      {/* display text */}
+      <span className={`flex-1 text-sm select-none ${formatted ? 'text-foreground' : 'text-muted-foreground/70'}`}>
+        {formatted || placeholder}
+      </span>
+
+      {/* clear button */}
+      {value && (
+        <button
+          type="button"
+          onClick={e => { e.stopPropagation(); onChange(''); }}
+          className="flex items-center pl-2.5 shrink-0 text-muted-foreground hover:text-foreground"
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+      )}
+
+      {/* invisible native date input */}
+      <input
+        ref={inputRef}
+        type="date"
+        value={value || ''}
+        onChange={e => onChange(e.target.value)}
+        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+        style={{ colorScheme: 'light' }}
+      />
+    </div>
+  );
+}
 
 const empty = {
   title: '',
@@ -122,29 +169,21 @@ export default function UrgentFlagDialog({ open, onOpenChange, classId, flag, us
           <div className="grid grid-cols-2 gap-3">
             <div className={fieldCls}>
               <Label className={labelCls}>תאריך יעד</Label>
-              <div className="relative">
-                <Calendar className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
-                <input
-                  type="date"
-                  value={form.due_date || ''}
-                  onChange={e => setField('due_date', e.target.value)}
-                  style={{ colorScheme: 'light' }}
-                  className="h-10 w-full rounded-lg border border-input bg-background pr-8 pl-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/25 [&::-webkit-calendar-picker-indicator]:opacity-60 [&::-webkit-calendar-picker-indicator]:cursor-pointer dark:[color-scheme:dark]"
-                />
-              </div>
+              <DateField
+                value={form.due_date}
+                onChange={v => setField('due_date', v)}
+                icon={Calendar}
+                placeholder="בחר תאריך"
+              />
             </div>
             <div className={fieldCls}>
               <Label className={labelCls}>תזכורת</Label>
-              <div className="relative">
-                <Bell className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
-                <input
-                  type="date"
-                  value={form.reminder_date || ''}
-                  onChange={e => setField('reminder_date', e.target.value)}
-                  style={{ colorScheme: 'light' }}
-                  className="h-10 w-full rounded-lg border border-input bg-background pr-8 pl-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/25 [&::-webkit-calendar-picker-indicator]:opacity-60 [&::-webkit-calendar-picker-indicator]:cursor-pointer dark:[color-scheme:dark]"
-                />
-              </div>
+              <DateField
+                value={form.reminder_date}
+                onChange={v => setField('reminder_date', v)}
+                icon={Bell}
+                placeholder="בחר תאריך"
+              />
             </div>
           </div>
 
