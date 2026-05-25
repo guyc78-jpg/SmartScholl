@@ -86,13 +86,6 @@ export default function Dashboard({ user, role }) {
     setExams(exs);
     setAnnouncements(ann);
     setLoading(false);
-    return;
-    setTodayAttendance(att);
-    setExams(exs);
-    setTasks(tks);
-    setDiscipline(dis);
-    setAnnouncements(ann);
-    setLoading(false);
   }
 
   const presentToday = todayAttendance.filter(a => ['נוכח', 'נוכח/ת'].includes(a.status)).length;
@@ -405,7 +398,6 @@ export default function Dashboard({ user, role }) {
       {quickAction && (
         <QuickActionModal
           action={quickAction}
-          students={students}
           classId={classId}
           onClose={() => setQuickAction(null)}
           user={user}
