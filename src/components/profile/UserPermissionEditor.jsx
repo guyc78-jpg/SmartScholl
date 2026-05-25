@@ -14,36 +14,45 @@ const roles = SYSTEM_ROLE_PRIORITY.filter(value => value !== 'parent').map(value
 
 export default function UserPermissionEditor({ targetUser, currentUser, onSaved }) {
   const currentRoles = getAvailableRoles(targetUser);
+  const primaryInitial = targetUser.role || currentRoles[0] || 'student';
+  // Extra roles = everything in approved roles EXCEPT the primary role (no duplicates by design)
+  const extraInitial = currentRoles.filter(item => item !== primaryInitial);
   const [form, setForm] = useState({
-    primaryRole: targetUser.role || currentRoles[0] || 'student',
-    approvedRoles: currentRoles,
+    primaryRole: primaryInitial,
+    extraRoles: extraInitial,
     profile_class_id: targetUser.profile_class_id || '',
     profile_homeroom_class: targetUser.profile_homeroom_class || targetUser.profile_class || '',
     profile_grade_managed: targetUser.profile_grade_managed || extractGradeFromClass(targetUser.profile_homeroom_class || targetUser.profile_class || ''),
   });
   const [saving, setSaving] = useState(false);
 
-  const toggleRole = (role) => {
+  const toggleExtraRole = (role) => {
     setForm(prev => {
-      const exists = prev.approvedRoles.includes(role);
-      const approvedRoles = exists ? prev.approvedRoles.filter(item => item !== role) : [...prev.approvedRoles, role];
-      const safeRoles = approvedRoles.length ? approvedRoles : ['student'];
-      return {
-        ...prev,
-        approvedRoles: safeRoles,
-        primaryRole: safeRoles.includes(prev.primaryRole) ? prev.primaryRole : safeRoles[0],
-      };
+      if (role === prev.primaryRole) return prev; // blocked — primary cannot also be extra
+      const exists = prev.extraRoles.includes(role);
+      const extraRoles = exists ? prev.extraRoles.filter(item => item !== role) : [...prev.extraRoles, role];
+      return { ...prev, extraRoles };
     });
+  };
+
+  const setPrimaryRole = (value) => {
+    setForm(prev => ({
+      ...prev,
+      primaryRole: value,
+      extraRoles: prev.extraRoles.filter(item => item !== value), // ensure no duplicate with primary
+    }));
   };
 
   const save = async () => {
     setSaving(true);
+    // Union of primary + extra, deduplicated
+    const approvedRoles = Array.from(new Set([form.primaryRole, ...form.extraRoles]));
     const res = await base44.functions.invoke('handleApprovalRequest', {
       action: 'admin_update_user',
       target_user_id: targetUser.id,
       target_email: targetUser.email,
       target_role: form.primaryRole,
-      approved_roles: form.approvedRoles,
+      approved_roles: approvedRoles,
       profile_class_id: form.profile_class_id,
       profile_homeroom_class: form.profile_homeroom_class,
       profile_grade_managed: form.profile_grade_managed,
@@ -63,7 +72,7 @@ export default function UserPermissionEditor({ targetUser, currentUser, onSaved 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3 items-end">
           <div className="space-y-2">
             <Label>תפקיד ראשי</Label>
-            <Select value={form.primaryRole} onValueChange={(value) => setForm(prev => ({ ...prev, primaryRole: value, approvedRoles: prev.approvedRoles.includes(value) ? prev.approvedRoles : [...prev.approvedRoles, value] }))}>
+            <Select value={form.primaryRole} onValueChange={setPrimaryRole}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent dir="rtl">
                 {roles.map(item => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
@@ -83,14 +92,15 @@ export default function UserPermissionEditor({ targetUser, currentUser, onSaved 
 
         <div className="space-y-2" dir="rtl">
           <Label>תפקידים נוספים / מאושרים</Label>
+          <p className="text-xs text-muted-foreground">התפקיד הראשי כבר נכלל בהרשאות ואינו מופיע כאן.</p>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {roles.map(item => {
-              const selected = form.approvedRoles.includes(item.value);
+            {roles.filter(item => item.value !== form.primaryRole).map(item => {
+              const selected = form.extraRoles.includes(item.value);
               return (
                 <button
                   type="button"
                   key={item.value}
-                  onClick={() => toggleRole(item.value)}
+                  onClick={() => toggleExtraRole(item.value)}
                   className={cn(
                     'h-10 px-3 rounded-xl border text-sm font-medium leading-none flex items-center justify-center text-center transition-colors',
                     selected
