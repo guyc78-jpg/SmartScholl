@@ -6,7 +6,10 @@ import { logActivity } from '@/lib/activityLogger';
 
 export default function WorkModeSelector({ user, activeRole, onRoleChange }) {
   const [saving, setSaving] = useState(false);
-  const roles = getAvailableRoles(user);
+  const allRoles = getAvailableRoles(user);
+  const STAFF_ROLES = ['admin', 'homeroom_teacher', 'coordinator'];
+  const isStudentOnly = allRoles.includes('student') && !allRoles.some(r => STAFF_ROLES.includes(r));
+  const roles = isStudentOnly ? allRoles.filter(r => r === 'student') : allRoles;
 
   if (roles.length <= 1) return null;
 
