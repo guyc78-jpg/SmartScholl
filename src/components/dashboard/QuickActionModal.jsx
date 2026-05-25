@@ -41,7 +41,7 @@ function getStudentDisplayName(fullName = '') {
   if (parts.length < 2) return fullName;
   const lastName = parts[parts.length - 1];
   const firstName = parts.slice(0, -1).join(' ');
-  return `${lastName}, ${firstName}`;
+  return `${lastName} ${firstName}`;
 }
 
 // Sort students by last name (A-Z)
