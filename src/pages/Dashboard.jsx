@@ -169,13 +169,6 @@ export default function Dashboard({ user, role }) {
       description: 'תלמידים שסומנו כדורשים מעקב',
       to: '/students'
     }] : []),
-    ...(canSeeCoordinatorAlerts && nextExams.length > 0 ? [{
-      id: 'exams',
-      signature: `exams-${nextExams.length}`,
-      title: `${nextExams.length} מבחנים קרובים`,
-      description: 'מבחנים מתוכננים להמשך',
-      to: '/exams'
-    }] : []),
   ];
 
   const notifications = allNotifications.filter(item => !isRead(item.id, item.signature));
@@ -290,9 +283,14 @@ export default function Dashboard({ user, role }) {
           id: 'tasks', icon: CheckSquare, label: 'משימות דחופות',
           hint: urgentTasks[0]?.title, value: urgentTasks.length, tone: 'warn', to: '/tasks'
         });
-        if (nextExams.length > 0) highlights.push({
-          id: 'exams', icon: BookOpen, label: 'מבחנים קרובים',
-          hint: nextExams[0]?.title, value: nextExams.length, tone: 'info', to: '/exams'
+        const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowIso = tomorrow.toISOString().split('T')[0];
+        const imminentExam = nextExams.find(e => e.date === today || e.date === tomorrowIso);
+        if (imminentExam) highlights.push({
+          id: 'exam-now', icon: BookOpen,
+          label: imminentExam.date === today ? 'מבחן היום' : 'מבחן מחר',
+          hint: `${imminentExam.title}${imminentExam.subject ? ' · ' + imminentExam.subject : ''}`,
+          tone: 'info', to: '/exams'
         });
         if (attendanceAlertStudents.length > 0) highlights.push({
           id: 'att-alerts', icon: Users, label: 'תלמידים עם בעיית נוכחות',
@@ -340,7 +338,6 @@ export default function Dashboard({ user, role }) {
         const kpis = [
           students.length > 0 && { icon: Users, title: 'תלמידים', value: students.length, subtitle: 'בכיתה', color: 'blue' },
           presentToday > 0 && { icon: UserCheck, title: 'נוכחים היום', value: presentToday, subtitle: `מתוך ${todayAttendance.length}`, color: 'green' },
-          nextExams.length > 0 && { icon: BookOpen, title: 'מבחנים קרובים', value: nextExams.length, subtitle: 'השבוע הקרוב', color: 'purple' },
           openTasks > 0 && { icon: CheckSquare, title: 'משימות פתוחות', value: openTasks, subtitle: 'לטיפול', color: openTasks > 3 ? 'amber' : 'slate' },
         ].filter(Boolean);
         if (kpis.length === 0) return null;
