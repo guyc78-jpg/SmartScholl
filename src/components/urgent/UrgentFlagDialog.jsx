@@ -20,16 +20,14 @@ function DateField({ value, onChange, icon: Icon, placeholder }) {
 
   return (
     <div
-      className="relative flex items-center h-10 w-full rounded-lg border border-input bg-background cursor-pointer hover:border-primary/50 transition-colors"
+      className="flex items-center h-10 w-full px-3 rounded-lg border border-input bg-background cursor-pointer hover:border-primary/50 transition-colors"
       onClick={() => inputRef.current?.showPicker?.()}
     >
       {/* icon right */}
-      <span className="flex items-center pr-2.5 shrink-0">
-        <Icon className="w-3.5 h-3.5 text-muted-foreground" />
-      </span>
+      <Icon className="w-3.5 h-3.5 text-muted-foreground shrink-0 ml-2" />
 
-      {/* display text */}
-      <span className={`flex-1 text-sm select-none ${formatted ? 'text-foreground' : 'text-muted-foreground/70'}`}>
+      {/* display text — centered, with flex-1 to push X to the left */}
+      <span className={`flex-1 text-sm text-center select-none ${formatted ? 'text-foreground' : 'text-muted-foreground/70'}`}>
         {formatted || placeholder}
       </span>
 
@@ -38,7 +36,7 @@ function DateField({ value, onChange, icon: Icon, placeholder }) {
         <button
           type="button"
           onClick={e => { e.stopPropagation(); onChange(''); }}
-          className="flex items-center pl-2.5 shrink-0 text-muted-foreground hover:text-foreground"
+          className="flex items-center shrink-0 text-muted-foreground hover:text-foreground ml-2"
         >
           <X className="w-3.5 h-3.5" />
         </button>
