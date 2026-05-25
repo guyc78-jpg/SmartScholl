@@ -72,6 +72,13 @@ export default function QuickActionModal({ action, students, classId, user, role
           title: form.title, description: form.description || '',
           due_date: form.due_date || today, priority: form.priority || 'בינונית', status: 'לביצוע', category: 'כללי'
         });
+      } else if (action === 'community') {
+        const student = students.find(s => s.id === form.student_id);
+        if (!student) { toast.error('יש לבחור תלמיד'); setSaving(false); return; }
+        await base44.entities.Student.update(student.id, {
+          community_service_done: Number(form.done) || student.community_service_done || 0,
+          community_service_place: form.place || student.community_service_place || '',
+        });
       }
       await logActivity({
         user,

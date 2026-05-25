@@ -65,13 +65,15 @@ export default function Dashboard({ user, role }) {
 
   async function loadData() {
     setLoading(true);
+    // If no classId, fetch all students and filter by scope
+    const studentQuery = classId ? { class_id: classId } : {};
     const [sts, att, exs, tks, dis, ann] = await Promise.all([
-      base44.entities.Student.filter({ class_id: classId }),
-      base44.entities.AttendanceRecord.filter({ class_id: classId, date: today }),
-      base44.entities.Exam.filter({ class_id: classId }),
-      base44.entities.Task.filter({ class_id: classId }),
-      base44.entities.DisciplineEvent.filter({ class_id: classId }),
-      base44.entities.Announcement.filter({ class_id: classId }),
+      base44.entities.Student.filter(studentQuery),
+      classId ? base44.entities.AttendanceRecord.filter({ class_id: classId, date: today }) : Promise.resolve([]),
+      classId ? base44.entities.Exam.filter({ class_id: classId }) : Promise.resolve([]),
+      classId ? base44.entities.Task.filter({ class_id: classId }) : Promise.resolve([]),
+      classId ? base44.entities.DisciplineEvent.filter({ class_id: classId }) : Promise.resolve([]),
+      classId ? base44.entities.Announcement.filter({ class_id: classId }) : Promise.resolve([]),
     ]);
     const scopeRole = hasApprovedRole(user, 'homeroom_teacher') ? 'homeroom_teacher' : hasApprovedRole(user, 'coordinator') ? 'coordinator' : role;
     const scopedStudents = isAdmin && !hasClassRole && !hasCoordinatorRole ? sts : sts.filter(student => isStudentInApprovedScope(student, user, scopeRole));
