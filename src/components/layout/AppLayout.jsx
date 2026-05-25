@@ -1,37 +1,78 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import {
   LayoutDashboard, Users, Calendar, CalendarCheck, BookOpen,
   Megaphone, BarChart2,
   Menu, X, Sun, Moon, BookMarked,
-  UserCheck, UserRound, ShieldCheck, Settings, LogOut, Bell, School
+  UserCheck, UserRound, ShieldCheck, Settings, LogOut, Bell, School,
+  ChevronDown, Heart, MessageSquare, ClipboardList, AlertTriangle, GraduationCap
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getAvailableRoles, getUserContextLabel, getUserDisplayName } from '@/lib/roleUtils';
 import { getDashboardLabel } from '@/lib/dashboardLabels';
 
+// ── Accordion nav groups ──────────────────────────────────────────────────────
 const sidebarGroups = [
   {
-    title: 'עבודה שוטפת',
+    key: 'daily',
+    title: 'ניהול יומי',
+    icon: LayoutDashboard,
     items: [
-      { path: '/', icon: LayoutDashboard, label: 'הכיתה שלי', dynamicLabel: true, roles: ['admin', 'homeroom_teacher', 'coordinator'] },
+      { path: '/', icon: LayoutDashboard, label: 'דשבורד', dynamicLabel: true, roles: ['admin', 'homeroom_teacher', 'coordinator'] },
       { path: '/student-home', icon: LayoutDashboard, label: 'היום שלי', roles: ['student'] },
-      { path: '/students', icon: Users, label: 'תלמידים', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
       { path: '/class-attendance', icon: CalendarCheck, label: 'מעקב נוכחות', roles: ['homeroom_teacher', 'admin', 'coordinator'] },
-      { path: '/schedule', icon: Calendar, label: 'מערכת שעות', roles: ['homeroom_teacher', 'coordinator', 'student'] },
-      { path: '/exams', icon: BookOpen, label: 'מבחנים', roles: ['admin', 'homeroom_teacher', 'coordinator', 'student'] },
-      { path: '/treatment-center', icon: ShieldCheck, label: 'מרכז טיפול', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
-      { path: '/reports', icon: BarChart2, label: 'דוחות', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
-      { path: '/announcements', icon: Megaphone, label: 'הודעות', roles: ['admin', 'homeroom_teacher', 'coordinator', 'student', 'parent'] },
-      { path: '/profile', icon: UserRound, label: 'פרופיל', roles: ['admin', 'homeroom_teacher', 'coordinator', 'student', 'parent'] },
+      { path: '/schedule', icon: Calendar, label: 'מערכת שעות', roles: ['homeroom_teacher', 'coordinator', 'student', 'admin'] },
+      { path: '/tasks', icon: ClipboardList, label: 'משימות', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
     ],
   },
   {
-    title: 'ניהול מערכת',
+    key: 'pedagogy',
+    title: 'פדגוגיה',
+    icon: BookOpen,
     items: [
-      { path: '/approvals', icon: UserCheck, label: 'אישורים', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
+      { path: '/exams', icon: BookOpen, label: 'מבחנים ואירועים', roles: ['admin', 'homeroom_teacher', 'coordinator', 'student'] },
+      { path: '/performance', icon: GraduationCap, label: 'הערכות', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
+      { path: '/treatment-center', icon: ShieldCheck, label: 'מרכז טיפול', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
+    ],
+  },
+  {
+    key: 'students',
+    title: 'תלמידים',
+    icon: Users,
+    items: [
+      { path: '/students', icon: Users, label: 'רשימת תלמידים', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
+      { path: '/discipline', icon: AlertTriangle, label: 'משמעת', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
+      { path: '/community', icon: Heart, label: 'מעורבות חברתית', roles: ['admin', 'homeroom_teacher', 'coordinator', 'student'] },
+    ],
+  },
+  {
+    key: 'communication',
+    title: 'תקשורת',
+    icon: MessageSquare,
+    items: [
+      { path: '/announcements', icon: Megaphone, label: 'הודעות', roles: ['admin', 'homeroom_teacher', 'coordinator', 'student'] },
+      { path: '/communications', icon: MessageSquare, label: 'יומן תקשורת', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
+    ],
+  },
+  {
+    key: 'reports',
+    title: 'דוחות וניתוח',
+    icon: BarChart2,
+    items: [
+      { path: '/reports', icon: BarChart2, label: 'דוחות', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
+      { path: '/grade-monitor', icon: GraduationCap, label: 'מעקב שכבה', roles: ['admin', 'coordinator', 'homeroom_teacher'] },
+    ],
+  },
+  {
+    key: 'admin',
+    title: 'ניהול מערכת',
+    icon: Settings,
+    adminOnly: true,
+    items: [
+      { path: '/approvals', icon: UserCheck, label: 'אישורי הרשמה', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
       { path: '/approved-staff', icon: UserCheck, label: 'צוות מאושר', roles: ['admin'] },
       { path: '/users', icon: ShieldCheck, label: 'הרשאות משתמשים', roles: ['admin'] },
       { path: '/classrooms', icon: School, label: 'ניהול כיתות', roles: ['admin'] },
@@ -43,7 +84,7 @@ const sidebarGroups = [
 const teacherBottomNav = [
   { path: '/', icon: LayoutDashboard, label: 'דשבורד', dynamicLabel: true, roles: ['admin', 'homeroom_teacher', 'coordinator'] },
   { path: '/students', icon: Users, label: 'תלמידים', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
-  { path: '/class-attendance', icon: Users, label: 'נוכחות', roles: ['homeroom_teacher'] },
+  { path: '/class-attendance', icon: CalendarCheck, label: 'נוכחות', roles: ['homeroom_teacher', 'admin'] },
   { path: '/schedule', icon: Calendar, label: 'מערכת', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
   { path: '/exams', icon: BookOpen, label: 'לוח חכם', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
 ];
@@ -54,6 +95,91 @@ const studentBottomNav = [
   { path: '/exams', icon: BookOpen, label: 'לוח חכם', roles: ['student'] },
 ];
 
+// ── AccordionGroup ────────────────────────────────────────────────────────────
+function AccordionGroup({ group, role, pendingCount, location, onNavigate }) {
+  const [open, setOpen] = useState(false);
+  const hasActive = group.items.some(item => location.pathname === item.path);
+
+  // Auto-open if a child is active
+  useEffect(() => {
+    if (hasActive) setOpen(true);
+  }, [hasActive]);
+
+  const GroupIcon = group.icon;
+
+  return (
+    <div className="space-y-0.5">
+      {/* Group header */}
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        className={cn(
+          'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors duration-150 text-right',
+          hasActive
+            ? 'bg-sidebar-accent/70 text-sidebar-foreground font-semibold'
+            : 'text-sidebar-foreground/65 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+        )}
+      >
+        <ChevronDown
+          className={cn(
+            'w-3.5 h-3.5 flex-shrink-0 transition-transform duration-200 ms-auto',
+            open ? 'rotate-180' : 'rotate-0'
+          )}
+        />
+        <span className="text-[12px] font-semibold flex-1 text-right">{group.title}</span>
+        <GroupIcon className={cn('w-4 h-4 flex-shrink-0', hasActive && 'text-sidebar-primary')} />
+      </button>
+
+      {/* Children */}
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="content"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.18, ease: 'easeInOut' }}
+            className="overflow-hidden"
+          >
+            <div className="pe-0 ps-3 space-y-0.5 pb-1 border-e-2 border-sidebar-border me-1">
+              {group.items.map(item => {
+                const isActive = location.pathname === item.path;
+                const itemLabel = item.dynamicLabel ? getDashboardLabel(role) : item.label;
+                const badge = item.path === '/approvals' && pendingCount > 0 ? pendingCount : null;
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={onNavigate}
+                    className={cn(
+                      'relative flex items-center gap-2 px-2.5 py-1.5 rounded-lg transition-colors duration-150',
+                      isActive
+                        ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold'
+                        : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                    )}
+                  >
+                    {isActive && (
+                      <span className="absolute right-0 top-1.5 bottom-1.5 w-[3px] bg-sidebar-primary rounded-l-full" />
+                    )}
+                    <item.icon className={cn('w-3.5 h-3.5 flex-shrink-0', isActive && 'text-sidebar-primary')} />
+                    <span className="text-[12.5px] flex-1 text-right">{itemLabel}</span>
+                    {badge && (
+                      <span className="min-w-4 h-4 px-1 bg-destructive rounded-full text-destructive-foreground text-[10px] font-bold flex items-center justify-center flex-shrink-0">
+                        {badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+// ── AppLayout ─────────────────────────────────────────────────────────────────
 export default function AppLayout({ children, user, role, darkMode, toggleDark, onRoleChange }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
@@ -62,16 +188,18 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
   const approvedRoles = getAvailableRoles(user);
   const isStaffRole = approvedRoles.some(item => ['admin', 'homeroom_teacher', 'coordinator'].includes(item));
   const canAccess = (item) => item.roles.some(itemRole => approvedRoles.includes(itemRole));
+
   const navGroups = sidebarGroups
     .filter(group => !group.adminOnly || approvedRoles.includes('admin'))
     .map(group => ({ ...group, items: group.items.filter(canAccess) }))
     .filter(group => group.items.length > 0);
+
   const bottomNavItems = (isStaffRole ? teacherBottomNav : studentBottomNav).filter(canAccess);
   const displayName = getUserDisplayName(user);
   const contextLabel = getUserContextLabel(user, role);
 
   useEffect(() => {
-    if (!approvedRoles.some(role => ['admin', 'homeroom_teacher', 'coordinator'].includes(role))) {
+    if (!approvedRoles.some(r => ['admin', 'homeroom_teacher', 'coordinator'].includes(r))) {
       setPendingCount(0);
       return;
     }
@@ -95,49 +223,35 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
         </div>
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-4">
-        {navGroups.map((group) => (
-          <div key={group.title} className="space-y-1">
-            {group.adminOnly && (
-              <p className="px-2 pb-1 text-[10px] font-bold text-sidebar-foreground/40 uppercase tracking-wider">{group.title}</p>
-            )}
-            <div className="space-y-0.5">
-              {group.items.map((item) => {
-                const isActive = location.pathname === item.path;
-                const itemLabel = item.dynamicLabel ? getDashboardLabel(role) : item.label;
-                const badge = item.path === '/approvals' && pendingCount > 0 ? pendingCount : null;
-                return (
-                  <Link
-                    key={item.path}
-                    to={item.path}
-                    onClick={() => setSidebarOpen(false)}
-                    className={cn(
-                      'relative flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors duration-150',
-                      isActive
-                        ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold'
-                        : 'text-sidebar-foreground/75 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
-                    )}
-                  >
-                    {isActive && (
-                      <span className="absolute right-0 top-1.5 bottom-1.5 w-[3px] bg-sidebar-primary rounded-l-full" />
-                    )}
-                    <item.icon className={cn('w-4 h-4 flex-shrink-0', isActive && 'text-sidebar-primary')} />
-                    <span className="text-[13px] flex-1 text-right">{itemLabel}</span>
-                    {badge && (
-                      <span className="min-w-4 h-4 px-1 bg-destructive rounded-full text-destructive-foreground text-[10px] font-bold flex items-center justify-center flex-shrink-0">
-                        {badge}
-                      </span>
-                    )}
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
+      {/* Accordion Nav */}
+      <nav className="flex-1 overflow-y-auto py-3 px-2.5 space-y-0.5">
+        {navGroups.map(group => (
+          <AccordionGroup
+            key={group.key}
+            group={group}
+            role={role}
+            pendingCount={pendingCount}
+            location={location}
+            onNavigate={() => setSidebarOpen(false)}
+          />
         ))}
       </nav>
 
+      {/* Bottom actions */}
       <div className="px-3 py-3 border-t border-sidebar-border space-y-0.5">
+        <Link
+          to="/profile"
+          onClick={() => setSidebarOpen(false)}
+          className={cn(
+            'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors',
+            location.pathname === '/profile'
+              ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold'
+              : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
+          )}
+        >
+          <UserRound className="w-4 h-4 flex-shrink-0" />
+          <span className="text-[13px] flex-1 text-right">פרופיל</span>
+        </Link>
         <button
           onClick={toggleDark}
           className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground transition-colors"
@@ -159,46 +273,46 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
   return (
     <div className="flex h-screen bg-background overflow-hidden" dir="rtl">
       {/* Desktop Sidebar */}
-       <aside className={cn(
-         'hidden lg:flex w-56 flex-col flex-shrink-0 border-s',
-         darkMode
-           ? 'bg-slate-700 border-slate-600/40'
-           : 'bg-sidebar border-sidebar-border'
-       )}>
-         <SidebarContent />
-       </aside>
+      <aside className={cn(
+        'hidden lg:flex w-60 flex-col flex-shrink-0 border-s',
+        darkMode
+          ? 'bg-slate-700 border-slate-600/40'
+          : 'bg-sidebar border-sidebar-border'
+      )}>
+        <SidebarContent />
+      </aside>
 
       {/* Mobile Sidebar Overlay */}
-       {sidebarOpen && (
-         <>
-           <div
-             className={cn(
-               'fixed inset-0 z-40 lg:hidden',
-               darkMode ? 'bg-black/60' : 'bg-black/50'
-             )}
-             onClick={() => setSidebarOpen(false)}
-           />
-           <aside className={cn(
-             'fixed right-0 top-0 h-full w-72 z-50 lg:hidden border-s',
-             darkMode
-               ? 'bg-slate-700 border-slate-600/40 shadow-[0_0_40px_rgba(0,0,0,0.5)]'
-               : 'bg-sidebar border-sidebar-border shadow-2xl'
-           )}>
-             <button
-               type="button"
-               onClick={() => setSidebarOpen(false)}
-               aria-label="סגור תפריט"
-               className="absolute top-2 end-2 w-11 h-11 flex items-center justify-center text-sidebar-foreground/70 hover:text-sidebar-foreground rounded-lg hover:bg-sidebar-accent active:bg-sidebar-accent/80 touch-manipulation z-10">
-               <X className="w-5 h-5" />
-             </button>
-             <SidebarContent />
-           </aside>
-         </>
-       )}
+      {sidebarOpen && (
+        <>
+          <div
+            className={cn(
+              'fixed inset-0 z-40 lg:hidden',
+              darkMode ? 'bg-black/60' : 'bg-black/50'
+            )}
+            onClick={() => setSidebarOpen(false)}
+          />
+          <aside className={cn(
+            'fixed right-0 top-0 h-full w-72 z-50 lg:hidden border-s',
+            darkMode
+              ? 'bg-slate-700 border-slate-600/40 shadow-[0_0_40px_rgba(0,0,0,0.5)]'
+              : 'bg-sidebar border-sidebar-border shadow-2xl'
+          )}>
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(false)}
+              aria-label="סגור תפריט"
+              className="absolute top-2 end-2 w-11 h-11 flex items-center justify-center text-sidebar-foreground/70 hover:text-sidebar-foreground rounded-lg hover:bg-sidebar-accent active:bg-sidebar-accent/80 touch-manipulation z-10">
+              <X className="w-5 h-5" />
+            </button>
+            <SidebarContent />
+          </aside>
+        </>
+      )}
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Mobile Header — compact */}
+        {/* Mobile Header */}
         <header className="lg:hidden relative z-30 flex items-center justify-between px-2 h-14 bg-card border-b border-border flex-shrink-0">
           <button
             type="button"
@@ -225,7 +339,8 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden text-right will-change-scroll" dir="rtl" style={{ paddingBottom: 'calc(76px + env(safe-area-inset-bottom))', WebkitOverflowScrolling: 'touch' }}>
+        <main className="flex-1 overflow-y-auto overflow-x-hidden text-right will-change-scroll" dir="rtl"
+          style={{ paddingBottom: 'calc(76px + env(safe-area-inset-bottom))', WebkitOverflowScrolling: 'touch' }}>
           {children}
         </main>
 
