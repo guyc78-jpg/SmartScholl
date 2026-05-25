@@ -12,8 +12,9 @@ import SmartAlerts from '@/components/dashboard/SmartAlerts';
 import {
   Users, Clock, AlertTriangle, BookOpen, CheckSquare,
   Shield, Heart, UserCheck, Calendar, MessageSquare,
-  Megaphone, Star, ChevronLeft, TrendingUp, Settings
+  Megaphone, Star, ChevronLeft, TrendingUp, Settings, CalendarDays
 } from 'lucide-react';
+import { TYPE_STYLES } from '@/components/exams/eventConstants';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import StatusBadge from '@/components/ui/StatusBadge';
@@ -98,10 +99,12 @@ export default function Dashboard({ user, role }) {
   const openDiscipline = discipline.filter(d => d.status === 'פתוח').length;
   const pendingTasks = tasks.filter(t => t.status !== 'בוצע').length;
 
-  const nextExams = exams
+  const MONTH_SHORT = ['ינו', 'פבר', 'מרץ', 'אפר', 'מאי', 'יונ', 'יול', 'אוג', 'ספט', 'אוק', 'נוב', 'דצמ'];
+
+  const upcomingEvents = exams
     .filter(e => e.date >= today)
     .sort((a, b) => a.date.localeCompare(b.date))
-    .slice(0, 3);
+    .slice(0, 5);
 
   const urgentTasks = tasks
     .filter(t => t.status !== 'בוצע' && ((t.priority === 'גבוהה' || t.priority === 'דחופה') || t.category === 'הורים'))
@@ -305,30 +308,46 @@ export default function Dashboard({ user, role }) {
       })()}
 
       {/* Lists — show only when there is content */}
-      {(nextExams.length > 0 || urgentTasks.length > 0 || announcements.length > 0) && (
+      {(upcomingEvents.length > 0 || urgentTasks.length > 0 || announcements.length > 0) && (
         <div className="grid lg:grid-cols-2 gap-4">
-          {nextExams.length > 0 && (
+          {upcomingEvents.length > 0 && (
             <Card>
               <CardHeader className="pb-3 flex flex-row items-center justify-between">
-                <CardTitle className="text-base font-semibold">מבחנים קרובים</CardTitle>
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <CalendarDays className="w-4 h-4 text-primary" />
+                  אירועים קרובים
+                </CardTitle>
                 <Link to="/exams" className="text-xs text-primary flex items-center gap-1 hover:underline">
                   הכל <ChevronLeft className="w-3 h-3" />
                 </Link>
               </CardHeader>
               <CardContent className="space-y-2">
-                {nextExams.map(exam => (
-                  <div key={exam.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-muted/50">
-                    <div className="w-10 h-10 bg-primary/10 rounded-xl flex flex-col items-center justify-center text-primary">
-                      <span className="text-[10px] font-bold">{new Date(exam.date).getDate()}</span>
-                      <span className="text-[8px]">{['ינו', 'פבר', 'מרץ', 'אפר', 'מאי', 'יונ', 'יול', 'אוג', 'ספט', 'אוק', 'נוב', 'דצמ'][new Date(exam.date).getMonth()]}</span>
+                {upcomingEvents.map(event => {
+                  const d = new Date(event.date);
+                  const typeStyle = TYPE_STYLES[event.type] || TYPE_STYLES['אחר'];
+                  return (
+                    <div key={event.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-muted/50">
+                      {/* Date badge */}
+                      <div className="w-10 h-10 bg-primary/10 rounded-xl flex flex-col items-center justify-center text-primary flex-shrink-0">
+                        <span className="text-[11px] font-bold leading-none">{d.getDate()}</span>
+                        <span className="text-[9px] leading-none mt-0.5">{MONTH_SHORT[d.getMonth()]}</span>
+                      </div>
+                      {/* Title + subtitle */}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{event.title}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {[event.subject, event.teacher].filter(Boolean).join(' · ')}
+                        </p>
+                      </div>
+                      {/* Type chip */}
+                      {event.type && (
+                        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border whitespace-nowrap flex-shrink-0 ${typeStyle}`}>
+                          {event.type}
+                        </span>
+                      )}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{exam.title}</p>
-                      <p className="text-xs text-muted-foreground">{exam.subject} · {exam.teacher}</p>
-                    </div>
-                    <StatusBadge status={exam.type} />
-                  </div>
-                ))}
+                  );
+                })}
               </CardContent>
             </Card>
           )}
