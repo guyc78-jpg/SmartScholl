@@ -175,7 +175,11 @@ export default function ApprovalManagement({ role }) {
       setPending(res.data.pending || []);
       setLogs(res.data.logs || []);
     } catch (e) {
-      toast.error('שגיאה בטעינת הנתונים');
+      console.error('Load pending error:', e);
+      const errorMsg = e?.response?.status === 403 
+        ? 'אין לך הרשאה לגשת לעמוד זה. זה דורש הרשאות מנהלים או מחנך/ת כיתה.'
+        : 'שגיאה בטעינת הנתונים';
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
