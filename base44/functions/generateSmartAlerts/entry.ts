@@ -18,8 +18,11 @@ Deno.serve(async (req) => {
     const alerts = [];
     const students = await base44.asServiceRole.entities.Student.list();
     
-    // Get current date for week calculation
-    const today = new Date();
+    // Get current date in Israel timezone
+    const nowIsrael = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jerusalem' }));
+    const todayStr = nowIsrael.toISOString().split('T')[0];
+    const today = new Date(todayStr); // midnight Israel date as Date object
+
     const weekStart = new Date(today);
     weekStart.setDate(today.getDate() - today.getDay() + 1); // Monday
     const weekEnd = new Date(weekStart);
@@ -88,7 +91,7 @@ Deno.serve(async (req) => {
       const upcomingExams = exams.filter(exam => {
         const examDate = new Date(exam.date);
         const daysUntil = (examDate - today) / (1000 * 60 * 60 * 24);
-        return daysUntil > 0 && daysUntil <= 2;
+        return daysUntil >= 0 && daysUntil <= 2;
       });
 
       if (upcomingExams.length > 0) {
@@ -109,7 +112,7 @@ Deno.serve(async (req) => {
       const threeDaysExams = exams.filter(exam => {
         const examDate = new Date(exam.date);
         const daysUntil = (examDate - today) / (1000 * 60 * 60 * 24);
-        return daysUntil > 0 && daysUntil <= 3;
+        return daysUntil >= 0 && daysUntil <= 3;
       });
 
       if (threeDaysExams.length >= 3) {
@@ -133,7 +136,7 @@ Deno.serve(async (req) => {
 
       const pendingTasks = tasks.filter(task => {
         const dueDate = new Date(task.due_date);
-        return dueDate <= today;
+        return dueDate <= today; // overdue or due today (Israel time)
       });
 
       if (pendingTasks.length > 0) {
