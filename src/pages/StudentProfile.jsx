@@ -237,8 +237,8 @@ export default function StudentProfile({ role }) {
 
           {/* Community Service */}
            <Card dir="rtl">
-             <CardHeader className="pb-2">
-               <div className="flex flex-row-reverse items-center justify-between">
+             <CardHeader className="pb-2 flex justify-end">
+               <div className="flex flex-row-reverse items-center gap-2">
                  <CardTitle className="text-sm font-semibold flex flex-row-reverse items-center gap-2"><Heart className="w-4 h-4 text-pink-500"/>מעורבות חברתית</CardTitle>
                  <StatusBadge status={student.community_service_status} />
                </div>

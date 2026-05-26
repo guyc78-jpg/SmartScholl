@@ -56,7 +56,7 @@ export default function GrowthReport({ studentId, studentName }) {
   return (
     <div className="space-y-4">
       <Card className="border-primary/30 bg-primary/[0.02]" dir="rtl">
-        <CardHeader>
+        <CardHeader className="flex justify-end">
           <CardTitle className="flex flex-row-reverse items-center gap-2">
             <BarChart3 className="w-5 h-5 text-primary" />
             דוח צמיחה אישי
