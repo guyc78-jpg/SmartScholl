@@ -220,15 +220,12 @@ export default function StudentProfile({ role }) {
         {/* Overview */}
          <TabsContent value="overview" className="space-y-4">
           {/* Parents */}
-          <div className="flex w-full justify-end" dir="rtl">
-            <div className="w-full sm:max-w-md">
-              <ParentDetailsCard
-                student={student}
-                canEdit={canEditParents}
-                onStudentUpdate={(updatedParents) => setStudent(prev => ({ ...prev, ...updatedParents }))}
-              />
-            </div>
-          </div>
+          <ParentDetailsCard
+            student={student}
+            canEdit={canEditParents}
+            onStudentUpdate={(updatedParents) => setStudent(prev => ({ ...prev, ...updatedParents }))}
+            className="max-w-md ml-auto"
+          />
 
           {canAccessSensitiveFamilyInfo && (
             <FamilySensitiveInfoCard

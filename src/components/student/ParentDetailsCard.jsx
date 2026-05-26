@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Phone, MessageCircle, Users, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function ParentDetailsCard({ student, canEdit, onStudentUpdate }) {
+export default function ParentDetailsCard({ student, canEdit, onStudentUpdate, className }) {
   const [parentForm, setParentForm] = useState({
     parent1_name: '',
     parent1_phone: '',
@@ -65,7 +65,7 @@ export default function ParentDetailsCard({ student, canEdit, onStudentUpdate })
   ];
 
   return (
-    <Card className="max-w-full overflow-hidden" dir="rtl" style={{ direction: 'rtl', textAlign: 'right' }}>
+    <Card className={`max-w-full overflow-hidden ${className || ''}`} dir="rtl" style={{ direction: 'rtl', textAlign: 'right' }}>
       <CardHeader className="pb-3" style={{ direction: 'rtl', textAlign: 'right' }}>
         <CardTitle className="text-base font-semibold flex items-center justify-end gap-2">
           <Users className="w-4 h-4 text-primary" />
