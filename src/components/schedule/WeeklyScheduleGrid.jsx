@@ -1,5 +1,6 @@
 import { Plus, MapPin, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 // Weekly schedule grid — Sun → Thu only (no Friday), periods 1..N as rows.
 // Slim, professional, mobile-friendly. Highlights today + current period.
@@ -159,11 +160,18 @@ function Cell({ slot, isToday, isNow, canEdit, onClick }) {
           </div>
         </div>
       ) : (
-        <div className="px-1 py-2 min-h-[58px] sm:min-h-[68px] flex items-center justify-center">
+        <div className="px-1 py-2 min-h-[58px] sm:min-h-[68px] flex flex-col items-center justify-center gap-1">
           {canEdit ? (
-            <div className="w-7 h-7 rounded-full border-2 border-dashed border-muted-foreground/30 hover:border-primary hover:bg-primary/10 hover:text-primary flex items-center justify-center text-muted-foreground/50 transition-all">
-              <Plus className="w-4 h-4" strokeWidth={2.5} />
-            </div>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="w-7 h-7 rounded-full border-2 border-dashed border-muted-foreground/30 hover:border-primary hover:bg-primary/10 hover:text-primary flex items-center justify-center text-muted-foreground/50 transition-all cursor-pointer">
+                    <Plus className="w-4 h-4" strokeWidth={2.5} />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>הוסף שיעור</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           ) : (
             <span className="text-[10px] text-muted-foreground/30">—</span>
           )}
