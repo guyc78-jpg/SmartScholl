@@ -104,15 +104,15 @@ function NowBlock({ current, currentSlot, remainingMins, hasNext }) {
   const isHomeroom = current.kind === 'homeroom';
 
   const accent = isLesson
-    ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
+    ? 'bg-emerald-50 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300'
     : isBreak
-      ? 'bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
-      : 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400';
+      ? 'bg-amber-50 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300'
+      : 'bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300';
 
   const remainColor = isBreak
-    ? 'text-amber-600 dark:text-amber-400'
-    : isLesson ? 'text-emerald-600 dark:text-emerald-400'
-    : 'text-blue-600 dark:text-blue-400';
+    ? 'text-amber-600 dark:text-amber-300'
+    : isLesson ? 'text-emerald-600 dark:text-emerald-300'
+    : 'text-blue-600 dark:text-blue-300';
 
   const Icon = isBreak ? Coffee : isLesson ? BookOpen : Clock;
   const header = isLesson ? 'השיעור עכשיו' : isBreak ? 'הפסקה עכשיו' : isHomeroom ? 'מחנך עכשיו' : 'עכשיו';
