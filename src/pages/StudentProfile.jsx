@@ -239,17 +239,17 @@ export default function StudentProfile({ role }) {
            <Card>
              <div className="p-4 space-y-3" dir="rtl">
                {/* Header row */}
-               <div className="flex items-center justify-between">
-                 <StatusBadge status={student.community_service_status} />
-                 <div className="flex items-center gap-2">
+               <div className="flex flex-row-reverse items-center justify-between">
+                 <div className="flex flex-row-reverse items-center gap-2">
                    <Heart className="w-4 h-4 text-pink-500 flex-shrink-0" />
                    <span className="text-sm font-semibold">מעורבות חברתית</span>
                  </div>
+                 <StatusBadge status={student.community_service_status} />
                </div>
                {/* Hours row */}
-               <div className="flex items-center justify-between text-sm">
-                 <span className="font-bold">{student.community_service_done || 0} / {student.community_service_goal || 60} שעות</span>
+               <div className="flex flex-row-reverse items-center justify-between text-sm">
                  <span className="text-muted-foreground">התקדמות</span>
+                 <span className="font-bold">{student.community_service_done || 0} / {student.community_service_goal || 60} שעות</span>
                </div>
                {/* Progress bar */}
                <div className="h-3 bg-muted rounded-full overflow-hidden">
