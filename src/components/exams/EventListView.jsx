@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { Card } from '@/components/ui/card';
-import { Clock, CalendarDays } from 'lucide-react';
+import { Clock, CalendarDays, Sun } from 'lucide-react';
 import EventTypeBadge from './EventTypeBadge';
 
 const DAY_NAMES = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
@@ -86,7 +86,15 @@ export default function EventListView({ events, onEventClick, todayIso }) {
                         <EventTypeBadge type={event.type} />
                       </div>
                       <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2 flex-wrap">
-                        {event.time && <span className="inline-flex items-center gap-1"><Clock className="w-3 h-3" />{event.time}</span>}
+                        {event.time ? (
+                          <span className="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 font-medium">
+                            <Clock className="w-3 h-3" />{event.time}
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 font-medium">
+                            <Sun className="w-3 h-3" />יום שלם
+                          </span>
+                        )}
                         {event.subject && <span>· {event.subject}</span>}
                         {event.class_or_grade && <span>· {event.class_or_grade}</span>}
                         {event.audience_group_label && <span>· {event.audience_group_label}</span>}
