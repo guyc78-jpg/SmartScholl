@@ -9,7 +9,7 @@ import { Card } from '@/components/ui/card';
 import StatusBadge from '@/components/ui/StatusBadge';
 import EmptyState from '@/components/ui/EmptyState';
 import PageHeader from '@/components/ui/PageHeader';
-import { Search, Plus, Upload, Users, ChevronLeft, Phone, Trash2, AlertTriangle, RefreshCw } from 'lucide-react';
+import { Search, Plus, Upload, Users, ChevronLeft, Phone, Trash2, AlertTriangle, RefreshCw, MoreVertical } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -18,6 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/lib/AuthContext';
@@ -160,22 +161,29 @@ export default function Students({ role }) {
               <Upload className="w-4 h-4" />
               <span className="hidden sm:inline">ייבוא מאקסל</span>
             </Button>
-            {canDeleteAllStudents && (
-              <Button
-                variant="destructive"
-                size="sm"
-                className="gap-2"
-                onClick={() => setShowDeleteConfirm(true)}
-                disabled={students.length === 0 || deleting}
-              >
-                <Trash2 className="w-4 h-4" />
-                <span className="hidden sm:inline">מחיקת הכל</span>
-              </Button>
-            )}
             <Button size="sm" className="gap-2" onClick={() => setShowAdd(true)}>
               <Plus className="w-4 h-4" />
               תלמיד חדש
             </Button>
+            {canDeleteAllStudents && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <MoreVertical className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem
+                    onClick={() => setShowDeleteConfirm(true)}
+                    disabled={students.length === 0 || deleting}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="w-4 h-4 ml-2" />
+                    מחיקת הכל
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </>
         }
       />
