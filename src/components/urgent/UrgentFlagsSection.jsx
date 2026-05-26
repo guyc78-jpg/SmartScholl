@@ -94,9 +94,7 @@ export default function UrgentFlagsSection({ classId, user, canManage, maxItems 
         <div className="flex justify-center py-6">
           <div className="w-6 h-6 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
         </div>
-      ) : relevant.length === 0 ? (
-        <p className="text-sm text-muted-foreground">אין דגשים דחופים כרגע</p>
-      ) : (
+      ) : relevant.length === 0 ? null : (
         <>
           <div className="space-y-2">
             {visible.map(flag => (
