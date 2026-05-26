@@ -145,26 +145,36 @@ export default function Exams({ role, user }) {
         actions={
           <>
             {canEdit && <Button size="lg" onClick={() => { setEditingEvent(null); setShowForm(true); }} className="font-bold shadow-sm"><Plus className="w-4 h-4" />הוסף אירוע</Button>}
-            {canTrack && <Button variant={showTracking ? 'default' : 'outline'} size="sm" onClick={() => setShowTracking(v => !v)}><Users className="w-4 h-4" />מעקב כיתתי</Button>}
-            {canImport && (
+            {(canTrack || canImport) && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" aria-label="תפריט ניהול"><Settings className="w-4 h-4" />ניהול<MoreVertical className="w-3.5 h-3.5 opacity-60" /></Button>
+                  <Button variant="outline" size="icon" aria-label="תפריט אפשרויות"><MoreVertical className="w-4 h-4" /></Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-52">
-                  <DropdownMenuLabel>פעולות ניהול</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => setShowImport(true)}>
-                    <FileUp className="w-4 h-4" /> ייבוא לוח מקובץ
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={clearAllEvents}
-                    disabled={events.length === 0}
-                    className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                  >
-                    <Trash2 className="w-4 h-4" /> נקה את כל האירועים
-                  </DropdownMenuItem>
+                  {canTrack && (
+                    <>
+                      <DropdownMenuItem onClick={() => setShowTracking(v => !v)} className={showTracking ? 'bg-primary/10' : ''}>
+                        <Users className="w-4 h-4" /> {showTracking ? 'סגור מעקב' : 'מעקב כיתתי'}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  {canImport && (
+                    <>
+                      <DropdownMenuLabel>ניהול</DropdownMenuLabel>
+                      <DropdownMenuItem onClick={() => setShowImport(true)}>
+                        <FileUp className="w-4 h-4" /> ייבוא לוח מקובץ
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onClick={clearAllEvents}
+                        disabled={events.length === 0}
+                        className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                      >
+                        <Trash2 className="w-4 h-4" /> נקה את כל האירועים
+                      </DropdownMenuItem>
+                    </>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
