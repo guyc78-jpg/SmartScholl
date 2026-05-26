@@ -256,7 +256,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
             )}
 
             {action === 'discipline' && <>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1">
                   <Label>חומרה</Label>
                   <Select onValueChange={v => set('severity', v)}>
@@ -287,7 +287,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
                 <Label>כותרת</Label>
                 <Input placeholder="שם המבחן" onChange={e => set('title', e.target.value)} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1">
                   <Label>מקצוע</Label>
                   <Input placeholder="מקצוע" onChange={e => set('subject', e.target.value)} />
@@ -302,7 +302,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
                   </Select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1">
                   <Label>תאריך</Label>
                   <Input type="date" onChange={e => set('date', e.target.value)} />
@@ -336,7 +336,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
 
             {(action === 'note' || action === 'communication') && <>
               {action === 'communication' && (
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1">
                     <Label>סוג</Label>
                     <Select onValueChange={v => set('type', v)}>
@@ -368,7 +368,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
                 <Label>כותרת</Label>
                 <Input placeholder="שם המשימה" onChange={e => set('title', e.target.value)} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1">
                   <Label>תאריך יעד</Label>
                   <Input type="date" onChange={e => set('due_date', e.target.value)} />
@@ -386,7 +386,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
             </>}
 
             {action === 'community' && (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1">
                   <Label>שעות שבוצעו</Label>
                   <Input type="number" placeholder="0" onChange={e => set('done', e.target.value)} />
