@@ -252,13 +252,25 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
           <UserRound className="w-4 h-4 flex-shrink-0" />
           <span className="text-[13px] flex-1 text-right">פרופיל</span>
         </Link>
-        <button
-          onClick={toggleDark}
-          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground transition-colors"
-        >
-          {darkMode ? <Sun className="w-4 h-4 flex-shrink-0" /> : <Moon className="w-4 h-4 flex-shrink-0" />}
-          <span className="text-[13px] flex-1 text-right">{darkMode ? 'מצב בהיר' : 'מצב כהה'}</span>
-        </button>
+        <div className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground transition-colors">
+           {darkMode ? <Sun className="w-4 h-4 flex-shrink-0" /> : <Moon className="w-4 h-4 flex-shrink-0" />}
+           <span className="text-[13px] flex-1 text-right">{darkMode ? 'מצב בהיר' : 'מצב כהה'}</span>
+           <button
+             onClick={toggleDark}
+             className={cn(
+               'relative w-10 h-6 rounded-full transition-colors border-0 flex-shrink-0',
+               darkMode ? 'bg-primary/70' : 'bg-muted/60'
+             )}
+             aria-label="החלף מצב כהה"
+           >
+             <span
+               className={cn(
+                 'absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-transform',
+                 darkMode ? 'right-0.5' : 'right-4.5'
+               )}
+             />
+           </button>
+         </div>
         <button
           onClick={() => base44.auth.logout('/')}
           className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground transition-colors"
