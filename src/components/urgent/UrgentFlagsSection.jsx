@@ -95,7 +95,7 @@ export default function UrgentFlagsSection({ classId, user, canManage, maxItems 
           <div className="w-6 h-6 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
         </div>
       ) : relevant.length === 0 ? (
-        <p className="text-sm text-muted-foreground">אין דגשים פתוחים</p>
+        <p className="text-sm text-muted-foreground">אין דגשים דחופים כרגע</p>
       ) : (
         <>
           <div className="space-y-2">
