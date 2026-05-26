@@ -95,11 +95,7 @@ export default function UrgentFlagsSection({ classId, user, canManage, maxItems 
           <div className="w-6 h-6 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
         </div>
       ) : relevant.length === 0 ? (
-        <div className="text-center py-6 px-4">
-          <p className="text-sm text-muted-foreground">
-            {canManage ? 'הוסיפו דגש דינמי לטיפול מיידי בכיתה — טיול, התנהגות, איחורים ועוד.' : 'אין דגשים דחופים לטיפול.'}
-          </p>
-        </div>
+        <p className="text-sm text-muted-foreground">אין דגשים פתוחים</p>
       ) : (
         <>
           <div className="space-y-2">
