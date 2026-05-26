@@ -138,13 +138,13 @@ export default function StudentProfile({ role }) {
   return (
     <div className="w-full max-w-full overflow-x-hidden p-3 sm:p-4 lg:p-6" dir="rtl">
       {/* Back */}
-      <Link to="/students" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4 w-fit">
+      <Link to="/students" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-3 w-fit">
         <ChevronRight className="w-4 h-4" />
         חזרה לרשימה
       </Link>
 
       {/* Student Header */}
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-5">
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-4">
         <Card className="max-w-full overflow-hidden p-4 sm:p-5 text-right">
           <div className="flex flex-col sm:flex-row sm:items-start gap-4">
             <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-xl flex-shrink-0 ${student.gender === 'נקבה' ? 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'}`}>
@@ -159,7 +159,7 @@ export default function StudentProfile({ role }) {
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">כיתה {student.class_name || 'י׳1'}</p>
                 </div>
-                <Button variant="outline" size="sm" className="gap-1.5 flex-shrink-0" onClick={() => setShowEdit(true)}>
+                <Button variant="ghost" size="sm" className="gap-1.5 flex-shrink-0 text-muted-foreground hover:text-primary hover:bg-transparent" onClick={() => setShowEdit(true)}>
                   <Edit className="w-4 h-4" />עריכה
                 </Button>
               </div>
@@ -206,14 +206,14 @@ export default function StudentProfile({ role }) {
       </motion.div>
 
       {/* Tabs */}
-      <Tabs value={tab} onValueChange={setTab}>
-        <div className="mb-4 w-full max-w-full overflow-hidden" dir="rtl">
-          <TabsList className="grid w-full grid-cols-5 gap-1 p-1 h-auto">
-            <TabsTrigger value="overview" className="min-w-0 px-1.5 py-2 text-xs sm:text-sm whitespace-nowrap">סקירה</TabsTrigger>
-            <TabsTrigger value="attendance" className="min-w-0 px-1.5 py-2 text-xs sm:text-sm whitespace-nowrap">נוכחות</TabsTrigger>
-            <TabsTrigger value="discipline" className="min-w-0 px-1.5 py-2 text-xs sm:text-sm whitespace-nowrap">משמעת</TabsTrigger>
-            <TabsTrigger value="contacts" className="min-w-0 px-1.5 py-2 text-xs sm:text-sm whitespace-nowrap">קשרים</TabsTrigger>
-            <TabsTrigger value="notes" className="min-w-0 px-1.5 py-2 text-xs sm:text-sm whitespace-nowrap">הערות</TabsTrigger>
+      <Tabs value={tab} onValueChange={setTab} className="mb-4">
+        <div className="w-full max-w-full overflow-hidden" dir="rtl">
+          <TabsList className="grid w-full grid-cols-5 gap-1 p-1 h-auto bg-muted/30">
+            <TabsTrigger value="overview" className="min-w-0 px-1.5 py-2 text-xs sm:text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-sm">סקירה</TabsTrigger>
+            <TabsTrigger value="attendance" className="min-w-0 px-1.5 py-2 text-xs sm:text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-sm">נוכחות</TabsTrigger>
+            <TabsTrigger value="discipline" className="min-w-0 px-1.5 py-2 text-xs sm:text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-sm">משמעת</TabsTrigger>
+            <TabsTrigger value="contacts" className="min-w-0 px-1.5 py-2 text-xs sm:text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-sm">קשרים</TabsTrigger>
+            <TabsTrigger value="notes" className="min-w-0 px-1.5 py-2 text-xs sm:text-sm whitespace-nowrap data-[state=active]:bg-background data-[state=active]:shadow-sm">הערות</TabsTrigger>
           </TabsList>
         </div>
 
@@ -237,9 +237,9 @@ export default function StudentProfile({ role }) {
 
           {/* Community Service */}
             <Card>
-              <div className="p-4 space-y-3 text-right" dir="rtl">
+              <div className="p-4 space-y-2.5 text-right" dir="rtl">
                 {/* Header row */}
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between pb-2">
                   <div className="flex items-center gap-2">
                     <Heart className="w-4 h-4 text-pink-500 flex-shrink-0" />
                     <span className="text-sm font-semibold">מעורבות חברתית</span>
@@ -247,20 +247,20 @@ export default function StudentProfile({ role }) {
                   <StatusBadge status={student.community_service_status} />
                 </div>
                 {/* Hours row */}
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center justify-between text-sm py-1.5 border-b border-border/50">
+                  <span className="font-bold tabular-nums">{student.community_service_done || 0} / {student.community_service_goal || 60} שעות</span>
                   <span className="text-muted-foreground">התקדמות</span>
-                  <span className="font-bold">{student.community_service_done || 0} / {student.community_service_goal || 60} שעות</span>
                 </div>
                 {/* Progress bar — RTL fills from right */}
-                <div className="h-3 bg-muted rounded-full overflow-hidden" style={{ direction: 'ltr' }}>
+                <div className="h-2.5 bg-muted rounded-full overflow-hidden" style={{ direction: 'ltr' }}>
                   <div className={`h-full rounded-full transition-all ${communityPct >= 100 ? 'bg-emerald-500' : communityPct >= 50 ? 'bg-blue-500' : 'bg-red-400'}`}
                     style={{ width: `${Math.min(communityPct, 100)}%` }} />
                 </div>
                 {/* Details */}
                 {(student.community_service_place || student.community_service_contact) && (
-                  <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground text-right">
-                    {student.community_service_place && <div><span className="font-medium text-foreground">מקום: </span>{student.community_service_place}</div>}
-                    {student.community_service_contact && <div><span className="font-medium text-foreground">איש קשר: </span>{student.community_service_contact}</div>}
+                  <div className="space-y-1.5 text-xs text-muted-foreground pt-1.5">
+                    {student.community_service_place && <div className="flex justify-between items-center"><span className="font-medium text-foreground">מקום</span><span>{student.community_service_place}</span></div>}
+                    {student.community_service_contact && <div className="flex justify-between items-center"><span className="font-medium text-foreground">איש קשר</span><span>{student.community_service_contact}</span></div>}
                   </div>
                 )}
               </div>
@@ -467,6 +467,7 @@ export default function StudentProfile({ role }) {
       </Tabs>
 
       {showEdit && <AddStudentModal classId={CLASS_ID} editData={student} onClose={() => setShowEdit(false)} onSuccess={() => { setShowEdit(false); loadAll(); }} />}
-    </div>
-  );
-}
+      <div className="h-24 sm:h-16" />
+      </div>
+      );
+      }
