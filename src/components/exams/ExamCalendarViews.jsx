@@ -78,10 +78,27 @@ export function WeekView({ events, offset, onOffsetChange, onEventClick, todayIs
            const dayIso = iso(day);
            const dayEvents = byDate[dayIso] || [];
            const isToday = dayIso === todayIso;
+           const isEmpty = dayEvents.length === 0 && !isToday;
            return (
-             <div key={dayIso} className={`bg-card p-2 transition-all ${isToday ? `min-h-[150px] ring-1 ring-inset ring-primary/30 bg-primary/3` : dayEvents.length === 0 ? 'min-h-[80px]' : 'min-h-[150px]'}`}>
-               <div className={`flex justify-between items-center mb-2 text-sm ${isToday ? 'text-foreground/90' : ''}`}><span className="text-muted-foreground/80">{DAYS[index]}</span><b className={isToday ? 'text-primary font-bold' : ''}>{day.getDate()}/{day.getMonth() + 1}</b></div>
-               <div className="space-y-1">{dayEvents.length ? dayEvents.map(event => <MiniEvent key={event.id} event={event} onClick={onEventClick} />) : <p className="text-xs text-muted-foreground/60 text-center py-6">—</p>}</div>
+             <div
+               key={dayIso}
+               className={`bg-card transition-all ${
+                 isToday
+                   ? 'p-2 min-h-[150px] ring-1 ring-inset ring-primary/30 bg-primary/[0.03]'
+                   : isEmpty
+                     ? 'px-2 py-1.5 border-b border-border/40 md:border-b-0 md:border-r md:border-border/40'
+                     : 'p-2 min-h-[150px]'
+               }`}
+             >
+               <div className={`flex justify-between items-center text-sm ${isEmpty ? '' : 'mb-2'}`}>
+                 <span className="text-muted-foreground/60 text-xs">{DAYS[index]}</span>
+                 <b className={`text-xs ${isToday ? 'text-primary font-bold' : 'text-muted-foreground/70'}`}>{day.getDate()}/{day.getMonth() + 1}</b>
+               </div>
+               {!isEmpty && (
+                 <div className="space-y-1">
+                   {dayEvents.map(event => <MiniEvent key={event.id} event={event} onClick={onEventClick} />)}
+                 </div>
+               )}
              </div>
            );
          })}

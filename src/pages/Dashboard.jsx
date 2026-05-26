@@ -264,15 +264,26 @@ export default function Dashboard({ user, role }) {
 
       {/* Quick Actions — compact 4-col grid */}
       {(isActiveHomeroom || isActiveCoordinator || isActiveAdmin) && (() => {
+        // Compute badges for relevant actions
+        const unmarkedToday = students.length > 0 && todayAttendance.length < students.length
+          ? students.length - todayAttendance.length : 0;
+        const pendingParentTasks = tasks.filter(t => t.category === 'הורים' && t.status !== 'בוצע').length;
+        const pendingDiscipline = discipline.filter(d => d.status === 'פתוח').length;
+        const pendingTasksCount = tasks.filter(t => t.status !== 'בוצע').length;
+        const communityBehindCount = students.filter(s => {
+          const pct = s.community_service_goal > 0 ? (s.community_service_done / s.community_service_goal) * 100 : 0;
+          return pct < 50 && s.status === 'פעיל';
+        }).length;
+
         const quickActions = [
-          { icon: Clock, label: 'נוכחות', action: 'attendance', roles: ['admin', 'homeroom_teacher'] },
-          { icon: Shield, label: 'משמעת', action: 'discipline', roles: ['admin', 'homeroom_teacher'] },
-          { icon: BookOpen, label: 'מבחן', action: 'exam', roles: ['admin', 'coordinator', 'homeroom_teacher'] },
-          { icon: Megaphone, label: 'הודעה', action: 'announcement', roles: ['admin', 'coordinator', 'homeroom_teacher'] },
-          { icon: Star, label: 'הערה', action: 'note', roles: ['admin', 'homeroom_teacher'] },
-          { icon: MessageSquare, label: 'הורים', action: 'communication', roles: ['admin', 'homeroom_teacher'] },
-          { icon: CheckSquare, label: 'משימה', action: 'task', roles: ['admin', 'coordinator', 'homeroom_teacher'] },
-          { icon: Heart, label: 'מעורבות', action: 'community', roles: ['admin', 'homeroom_teacher'] },
+          { icon: Clock, label: 'נוכחות', action: 'attendance', roles: ['admin', 'homeroom_teacher'], badge: unmarkedToday },
+          { icon: Shield, label: 'משמעת', action: 'discipline', roles: ['admin', 'homeroom_teacher'], badge: pendingDiscipline },
+          { icon: BookOpen, label: 'מבחן', action: 'exam', roles: ['admin', 'coordinator', 'homeroom_teacher'], badge: 0 },
+          { icon: Megaphone, label: 'הודעה', action: 'announcement', roles: ['admin', 'coordinator', 'homeroom_teacher'], badge: 0 },
+          { icon: Star, label: 'הערה', action: 'note', roles: ['admin', 'homeroom_teacher'], badge: 0 },
+          { icon: MessageSquare, label: 'הורים', action: 'communication', roles: ['admin', 'homeroom_teacher'], badge: pendingParentTasks },
+          { icon: CheckSquare, label: 'משימה', action: 'task', roles: ['admin', 'coordinator', 'homeroom_teacher'], badge: pendingTasksCount },
+          { icon: Heart, label: 'מעורבות', action: 'community', roles: ['admin', 'homeroom_teacher'], badge: communityBehindCount },
         ].filter(btn => btn.roles.some(itemRole => approvedRoles.includes(itemRole)));
         if (!quickActions.length) return null;
         return (
@@ -283,8 +294,13 @@ export default function Dashboard({ user, role }) {
                 <button
                   key={btn.action}
                   onClick={() => setQuickAction(btn.action)}
-                  className="group flex flex-col items-center justify-center gap-1.5 py-3 px-1.5 rounded-xl bg-card border border-border hover:border-primary/40 hover:bg-primary/[0.04] transition-colors"
+                  className="group relative flex flex-col items-center justify-center gap-1.5 py-3 px-1.5 rounded-xl bg-card border border-border hover:border-primary/40 hover:bg-primary/[0.04] transition-colors"
                 >
+                  {btn.badge > 0 && (
+                    <span className="absolute top-1.5 left-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-destructive text-white text-[10px] font-bold flex items-center justify-center leading-none">
+                      {btn.badge > 99 ? '99+' : btn.badge}
+                    </span>
+                  )}
                   <div className="w-9 h-9 rounded-lg bg-primary/10 group-hover:bg-primary/15 flex items-center justify-center transition-colors">
                     <btn.icon className="w-4 h-4 text-primary" strokeWidth={2.2} />
                   </div>
