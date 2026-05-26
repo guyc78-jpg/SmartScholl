@@ -85,10 +85,13 @@ export default function ParentDetailsCard({ student, canEdit, onStudentUpdate })
               <button
                 type="button"
                 onClick={() => toggleExpanded(index)}
-                className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-muted/30 transition-colors"
-                style={{ direction: 'rtl', textAlign: 'right' }}
+                className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-muted/30 transition-colors"
+                style={{ direction: 'rtl', textAlign: 'right', width: '100%' }}
               >
-                <div className="flex items-center gap-2 flex-1 justify-end">
+                <ChevronDown
+                  className={`w-4 h-4 text-muted-foreground transition-transform duration-200 flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
+                />
+                <div className="flex items-center gap-2 flex-1" style={{ direction: 'rtl', textAlign: 'right', justifyContent: 'flex-end' }}>
                   {(name || phone) ? (
                     <span className="text-xs text-muted-foreground truncate max-w-[120px]">{phone || ''}</span>
                   ) : (
@@ -96,10 +99,6 @@ export default function ParentDetailsCard({ student, canEdit, onStudentUpdate })
                   )}
                   <span className="text-sm font-semibold text-foreground">{name || parent.label}</span>
                 </div>
-                <ChevronDown
-                  className={`w-4 h-4 text-muted-foreground transition-transform duration-200 flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
-                  style={{ marginLeft: 'auto', order: -1 }}
-                />
               </button>
 
               {/* Expandable content */}
