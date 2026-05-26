@@ -122,8 +122,9 @@ function AccordionGroup({ group, role, pendingCount, location, onNavigate }) {
       >
         <ChevronDown
           className={cn(
-            'w-3.5 h-3.5 flex-shrink-0 transition-transform duration-200 ms-auto',
-            open ? 'rotate-180' : 'rotate-0'
+            'w-3.5 h-3.5 flex-shrink-0 ms-auto',
+            'transition-transform duration-300 ease-in-out',
+            open ? '-rotate-180' : 'rotate-0'
           )}
         />
         <span className="text-[12px] font-semibold flex-1 text-right">{group.title}</span>
@@ -138,7 +139,7 @@ function AccordionGroup({ group, role, pendingCount, location, onNavigate }) {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.18, ease: 'easeInOut' }}
+            transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
             className="overflow-hidden"
           >
             <div className="pe-0 ps-3 space-y-0.5 pb-1 border-e-2 border-sidebar-border me-1">
