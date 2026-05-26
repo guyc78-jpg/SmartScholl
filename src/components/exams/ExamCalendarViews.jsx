@@ -73,7 +73,7 @@ export function WeekView({ events, offset, onOffsetChange, onEventClick, todayIs
    return (
      <Card className="overflow-hidden">
        <CalendarHeader title={`${days[0].getDate()}/${days[0].getMonth() + 1} – ${days[6].getDate()}/${days[6].getMonth() + 1}`} prev="שבוע קודם" next="שבוע הבא" offset={offset} onOffsetChange={onOffsetChange} />
-       <div className="grid grid-cols-1 md:grid-cols-7 gap-px bg-border">
+       <div className="flex flex-col md:grid md:grid-cols-7 gap-px bg-border">
          {days.map((day, index) => {
            const dayIso = iso(day);
            const dayEvents = byDate[dayIso] || [];
@@ -86,11 +86,11 @@ export function WeekView({ events, offset, onOffsetChange, onEventClick, todayIs
                  isToday
                    ? 'p-2 min-h-[150px] ring-1 ring-inset ring-primary/30 bg-primary/[0.03]'
                    : isEmpty
-                     ? 'px-2 py-1.5 border-b border-border/40 md:border-b-0 md:border-r md:border-border/40'
+                     ? 'px-2 flex items-center h-10 md:h-10'
                      : 'p-2 min-h-[150px]'
                }`}
              >
-               <div className={`flex justify-between items-center text-sm ${isEmpty ? '' : 'mb-2'}`}>
+               <div className={`flex justify-between items-center w-full ${isEmpty ? 'opacity-40' : 'mb-2'}`}>
                  <span className="text-muted-foreground/60 text-xs">{DAYS[index]}</span>
                  <b className={`text-xs ${isToday ? 'text-primary font-bold' : 'text-muted-foreground/70'}`}>{day.getDate()}/{day.getMonth() + 1}</b>
                </div>
