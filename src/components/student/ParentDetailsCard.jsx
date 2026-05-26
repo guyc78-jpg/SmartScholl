@@ -16,6 +16,7 @@ export default function ParentDetailsCard({ student, canEdit, onStudentUpdate, c
     parent2_phone: ''
   });
   const [expanded, setExpanded] = useState([false, false]);
+  const [cardOpen, setCardOpen] = useState(false);
 
   useEffect(() => {
     if (!student) return;
@@ -66,14 +67,32 @@ export default function ParentDetailsCard({ student, canEdit, onStudentUpdate, c
 
   return (
     <Card className={`w-full overflow-hidden ${className || ''}`} dir="rtl">
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold flex items-center gap-2">
-          <Users className="w-4 h-4 text-primary" />
-          <span>פרטי הורים</span>
-        </CardTitle>
-        <p className="text-xs text-muted-foreground">פרטי קשר משפחתיים לשימוש צוות מורשה בלבד.</p>
-      </CardHeader>
-      <CardContent className="space-y-3">
+      <button
+        type="button"
+        onClick={() => setCardOpen(v => !v)}
+        aria-expanded={cardOpen}
+        aria-label={cardOpen ? 'כווץ פרטי הורים' : 'הרחב פרטי הורים'}
+        dir="rtl"
+        className="w-full flex items-center justify-between gap-2 px-4 sm:px-5 py-3 hover:bg-muted/30 transition-colors"
+      >
+        <div className="flex items-center gap-2 min-w-0">
+          <Users className="w-4 h-4 text-primary flex-shrink-0" />
+          <span className="text-base font-semibold text-foreground">פרטי הורים</span>
+        </div>
+        <ChevronDown className={`w-4 h-4 text-muted-foreground transition-transform duration-200 flex-shrink-0 ${cardOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      <AnimatePresence initial={false}>
+        {cardOpen && (
+        <motion.div
+          key="parents-content"
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: 'auto', opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={{ duration: 0.22, ease: 'easeInOut' }}
+          className="overflow-hidden"
+        >
+      <CardContent className="space-y-3 pt-3 border-t border-border/50">
         {parents.map((parent, index) => {
           const isOpen = expanded[index];
           const phone = parent.phone;
@@ -156,6 +175,9 @@ export default function ParentDetailsCard({ student, canEdit, onStudentUpdate, c
           שמור פרטי הורים
         </Button>
       </CardContent>
+        </motion.div>
+        )}
+      </AnimatePresence>
     </Card>
   );
 }

@@ -230,6 +230,15 @@ export default function StudentProfile({ role }) {
         </Card>
       </motion.div>
 
+      {/* Parent Details — collapsed by default, above tabs */}
+      <div className="mb-4">
+        <ParentDetailsCard
+          student={student}
+          canEdit={canEditParents}
+          onStudentUpdate={(updatedParents) => setStudent(prev => ({ ...prev, ...updatedParents }))}
+        />
+      </div>
+
       {/* Tabs */}
       <Tabs value={tab} onValueChange={setTab} className="mb-4">
         <div className="w-full max-w-full overflow-hidden" dir="rtl">
@@ -244,13 +253,6 @@ export default function StudentProfile({ role }) {
 
         {/* Overview */}
          <TabsContent value="overview" className="space-y-4">
-          {/* Parents */}
-          <ParentDetailsCard
-            student={student}
-            canEdit={canEditParents}
-            onStudentUpdate={(updatedParents) => setStudent(prev => ({ ...prev, ...updatedParents }))}
-          />
-
           {canAccessSensitiveFamilyInfo && (
             <FamilySensitiveInfoCard
               student={student}
