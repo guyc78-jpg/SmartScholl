@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Phone, MessageCircle, Users, PhoneCall, MessageCircle as WhatsApp } from 'lucide-react';
+import { Phone, MessageCircle, Users, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function ParentDetailsCard({ student, canEdit, onStudentUpdate }) {
@@ -14,6 +15,7 @@ export default function ParentDetailsCard({ student, canEdit, onStudentUpdate })
     parent2_name: '',
     parent2_phone: ''
   });
+  const [expanded, setExpanded] = useState([false, false]);
 
   useEffect(() => {
     if (!student) return;
@@ -53,11 +55,14 @@ export default function ParentDetailsCard({ student, canEdit, onStudentUpdate })
     toast.success('פרטי ההורים נשמרו בהצלחה');
   }
 
+  const toggleExpanded = (index) => {
+    setExpanded(prev => prev.map((v, i) => i === index ? !v : v));
+  };
+
   const parents = [
-    { label: 'הורה 1', name: parentForm.parent1_name, phone: parentForm.parent1_phone },
-    { label: 'הורה 2', name: parentForm.parent2_name, phone: parentForm.parent2_phone }
+    { label: 'הורה 1', nameKey: 'parent1_name', phoneKey: 'parent1_phone', name: parentForm.parent1_name, phone: parentForm.parent1_phone },
+    { label: 'הורה 2', nameKey: 'parent2_name', phoneKey: 'parent2_phone', name: parentForm.parent2_name, phone: parentForm.parent2_phone }
   ];
-  const hasParentDetails = parents.some(parent => parent.name || parent.phone);
 
   return (
     <Card dir="rtl" className="max-w-full overflow-hidden">
@@ -68,62 +73,90 @@ export default function ParentDetailsCard({ student, canEdit, onStudentUpdate })
         </CardTitle>
         <p className="text-xs text-muted-foreground text-right">פרטי קשר משפחתיים לשימוש צוות מורשה בלבד.</p>
       </CardHeader>
-      <CardContent className="space-y-5">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-full">
-          {parents.map((parent, index) => (
-           <div key={parent.label} className="min-w-0 rounded-2xl border bg-muted/20 p-3 space-y-3" dir="rtl">
-             <p className="text-sm font-semibold text-foreground text-right">{parent.label}</p>
+      <CardContent className="space-y-3">
+        {parents.map((parent, index) => {
+          const isOpen = expanded[index];
+          const phone = parent.phone;
+          const name = parent.name;
 
-             <div className="space-y-3 w-full">
-             <div className="space-y-1">
-                <Label className="block text-right">שם</Label>
-                <Input
-                  dir="rtl"
-                  value={index === 0 ? parentForm.parent1_name : parentForm.parent2_name}
-                  onChange={e => setParentField(index === 0 ? 'parent1_name' : 'parent2_name', e.target.value)}
-                  placeholder="שם מלא"
+          return (
+            <div key={parent.label} className="rounded-xl border bg-muted/20 overflow-hidden" dir="rtl">
+              {/* Collapsible header */}
+              <button
+                type="button"
+                onClick={() => toggleExpanded(index)}
+                className="w-full flex items-center justify-between px-3 py-2.5 text-right hover:bg-muted/30 transition-colors"
+              >
+                <ChevronDown
+                  className={`w-4 h-4 text-muted-foreground transition-transform duration-200 flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
                 />
-             </div>
-
-             <div className="space-y-1">
-                <Label className="block text-right">טלפון</Label>
-                <div className="flex flex-row-reverse items-center gap-2">
-                  <Input
-                    dir="ltr"
-                    type="tel"
-                    value={index === 0 ? parentForm.parent1_phone : parentForm.parent2_phone}
-                    onChange={e => setParentField(index === 0 ? 'parent1_phone' : 'parent2_phone', e.target.value)}
-                    placeholder="0547683142"
-                    className="flex-1"
-                  />
-                  {(index === 0 ? parentForm.parent1_phone : parentForm.parent2_phone) && (
-                    <div className="flex gap-1 flex-row-reverse">
-                      <a href={`tel:${normalizePhone(index === 0 ? parentForm.parent1_phone : parentForm.parent2_phone)}`} className="flex-shrink-0">
-                        <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-primary/10" title="שיחה">
-                          <Phone className="w-4 h-4 text-primary" />
-                        </Button>
-                      </a>
-                      <a href={`https://wa.me/${whatsappPhone(index === 0 ? parentForm.parent1_phone : parentForm.parent2_phone)}`} target="_blank" rel="noreferrer" className="flex-shrink-0">
-                        <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-primary/10" title="וואטסאפ">
-                          <MessageCircle className="w-4 h-4 text-primary" />
-                        </Button>
-                      </a>
-                    </div>
+                <div className="flex items-center gap-2 flex-1 justify-end">
+                  {(name || phone) ? (
+                    <span className="text-xs text-muted-foreground truncate max-w-[120px]">{phone || ''}</span>
+                  ) : (
+                    <span className="text-xs text-muted-foreground">לא הוזן</span>
                   )}
+                  <span className="text-sm font-semibold text-foreground">{name || parent.label}</span>
                 </div>
-             </div>
-             </div>
-           </div>
-          ))}
-        </div>
+              </button>
 
-        {!hasParentDetails && (
-          <div className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground text-center" dir="rtl">
-            לא הוזנו פרטי הורים עדיין
-          </div>
-        )}
+              {/* Expandable content */}
+              <AnimatePresence initial={false}>
+                {isOpen && (
+                  <motion.div
+                    key="content"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.22, ease: 'easeInOut' }}
+                    className="overflow-hidden"
+                  >
+                    <div className="px-3 pb-3 space-y-3 border-t border-border/50 pt-3">
+                      <div className="space-y-1">
+                        <Label className="block text-right">שם</Label>
+                        <Input
+                          dir="rtl"
+                          value={parentForm[parent.nameKey]}
+                          onChange={e => setParentField(parent.nameKey, e.target.value)}
+                          placeholder="שם מלא"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="block text-right">טלפון</Label>
+                        <div className="flex flex-row-reverse items-center gap-2">
+                          <Input
+                            dir="ltr"
+                            type="tel"
+                            value={parentForm[parent.phoneKey]}
+                            onChange={e => setParentField(parent.phoneKey, e.target.value)}
+                            placeholder="0547683142"
+                            className="flex-1"
+                          />
+                          {phone && (
+                            <div className="flex gap-1 flex-row-reverse">
+                              <a href={`tel:${normalizePhone(phone)}`} className="flex-shrink-0">
+                                <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-primary/10" title="שיחה">
+                                  <Phone className="w-4 h-4 text-primary" />
+                                </Button>
+                              </a>
+                              <a href={`https://wa.me/${whatsappPhone(phone)}`} target="_blank" rel="noreferrer" className="flex-shrink-0">
+                                <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-primary/10" title="וואטסאפ">
+                                  <MessageCircle className="w-4 h-4 text-primary" />
+                                </Button>
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          );
+        })}
 
-        <Button onClick={handleSaveParents} className="w-full sm:w-auto">
+        <Button onClick={handleSaveParents} className="w-full sm:w-auto mt-1">
           שמור פרטי הורים
         </Button>
       </CardContent>
