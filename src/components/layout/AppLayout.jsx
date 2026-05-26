@@ -336,6 +336,7 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
           >
             {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
           </button>
+          <div className="w-11 h-11" />
         </header>
 
         {/* Page Content */}
