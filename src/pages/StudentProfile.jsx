@@ -224,7 +224,6 @@ export default function StudentProfile({ role }) {
             student={student}
             canEdit={canEditParents}
             onStudentUpdate={(updatedParents) => setStudent(prev => ({ ...prev, ...updatedParents }))}
-            className="max-w-md ml-auto"
           />
 
           {canAccessSensitiveFamilyInfo && (

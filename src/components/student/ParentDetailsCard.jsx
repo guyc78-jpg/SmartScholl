@@ -65,40 +65,46 @@ export default function ParentDetailsCard({ student, canEdit, onStudentUpdate, c
   ];
 
   return (
-    <Card className={`max-w-full overflow-hidden ${className || ''}`} dir="rtl" style={{ direction: 'rtl', textAlign: 'right' }}>
-      <CardHeader className="pb-3" style={{ direction: 'rtl', textAlign: 'right' }}>
-        <CardTitle className="text-base font-semibold flex items-center justify-end gap-2">
+    <Card className={`w-full overflow-hidden ${className || ''}`} dir="rtl">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base font-semibold flex items-center gap-2">
           <Users className="w-4 h-4 text-primary" />
-          פרטי הורים
+          <span>פרטי הורים</span>
         </CardTitle>
         <p className="text-xs text-muted-foreground">פרטי קשר משפחתיים לשימוש צוות מורשה בלבד.</p>
       </CardHeader>
-      <CardContent className="space-y-3" style={{ direction: 'rtl' }}>
+      <CardContent className="space-y-3">
         {parents.map((parent, index) => {
           const isOpen = expanded[index];
           const phone = parent.phone;
           const name = parent.name;
 
           return (
-            <div key={parent.label} className="rounded-xl border bg-muted/20 overflow-hidden" dir="rtl" style={{ direction: 'rtl' }}>
-              {/* Collapsible header */}
+            <div key={parent.label} className="rounded-xl border bg-muted/20 overflow-hidden" dir="rtl">
+              {/* Collapsible header: שם+טלפון בימין, חץ בשמאל */}
               <button
                 type="button"
                 onClick={() => toggleExpanded(index)}
-                className="w-full flex items-center justify-between px-3 py-2.5 hover:bg-muted/30 transition-colors"
-                style={{ direction: 'rtl', textAlign: 'right', width: '100%' }}
+                dir="rtl"
+                className="w-full flex items-center justify-between gap-2 ps-3 pe-3 py-2.5 hover:bg-muted/30 transition-colors"
               >
-                <ChevronDown
-                  className={`w-4 h-4 text-muted-foreground transition-transform duration-200 flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
-                />
-                <div className="flex items-center gap-2 flex-1" style={{ direction: 'rtl', textAlign: 'right', justifyContent: 'flex-end' }}>
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <span className="text-sm font-semibold text-foreground truncate">
+                    {name || parent.label}
+                  </span>
                   {(name || phone) ? (
-                    <span className="text-xs text-muted-foreground truncate max-w-[120px]">{phone || ''}</span>
+                    phone && (
+                      <span className="text-xs text-muted-foreground truncate force-ltr">
+                        {phone}
+                      </span>
+                    )
                   ) : (
                     <span className="text-xs text-muted-foreground">לא הוזן</span>
                   )}
-                  <span className="text-sm font-semibold text-foreground">{name || parent.label}</span>
                 </div>
+                <ChevronDown
+                  className={`w-4 h-4 text-muted-foreground transition-transform duration-200 flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
+                />
               </button>
 
               {/* Expandable content */}
@@ -112,20 +118,19 @@ export default function ParentDetailsCard({ student, canEdit, onStudentUpdate, c
                     transition={{ duration: 0.22, ease: 'easeInOut' }}
                     className="overflow-hidden"
                   >
-                    <div className="px-3 pb-3 space-y-3 border-t border-border/50 pt-3" style={{ direction: 'rtl', textAlign: 'right' }}>
+                    <div dir="rtl" className="ps-3 pe-3 pb-3 space-y-3 border-t border-border/50 pt-3">
                       <div className="space-y-1">
-                        <Label style={{ direction: 'rtl', textAlign: 'right', display: 'block' }}>שם</Label>
+                        <Label>שם</Label>
                         <Input
                           dir="rtl"
-                          style={{ direction: 'rtl', textAlign: 'right' }}
                           value={parentForm[parent.nameKey]}
                           onChange={e => setParentField(parent.nameKey, e.target.value)}
                           placeholder="שם מלא"
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label style={{ direction: 'rtl', textAlign: 'right', display: 'block' }}>טלפון</Label>
-                        <div className="flex items-center gap-2" style={{ direction: 'rtl' }}>
+                        <Label>טלפון</Label>
+                        <div className="flex items-center gap-2" dir="rtl">
                           <Input
                             dir="ltr"
                             type="tel"
@@ -133,16 +138,15 @@ export default function ParentDetailsCard({ student, canEdit, onStudentUpdate, c
                             onChange={e => setParentField(parent.phoneKey, e.target.value)}
                             placeholder="0547683142"
                             className="flex-1"
-                            style={{ direction: 'ltr', textAlign: 'left' }}
                           />
                           {phone && (
-                            <div className="flex gap-1" style={{ direction: 'rtl' }}>
-                              <a href={`tel:${normalizePhone(phone)}`} className="flex-shrink-0">
+                            <div className="flex gap-1 flex-shrink-0">
+                              <a href={`tel:${normalizePhone(phone)}`}>
                                 <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-primary/10" title="שיחה">
                                   <Phone className="w-4 h-4 text-primary" />
                                 </Button>
                               </a>
-                              <a href={`https://wa.me/${whatsappPhone(phone)}`} target="_blank" rel="noreferrer" className="flex-shrink-0">
+                              <a href={`https://wa.me/${whatsappPhone(phone)}`} target="_blank" rel="noreferrer">
                                 <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-primary/10" title="וואטסאפ">
                                   <MessageCircle className="w-4 h-4 text-primary" />
                                 </Button>
