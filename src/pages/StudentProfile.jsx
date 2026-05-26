@@ -236,35 +236,35 @@ export default function StudentProfile({ role }) {
           <GrowthReport studentId={id} studentName={student.full_name} />
 
           {/* Community Service */}
-           <Card>
-             <div className="p-4 space-y-3" dir="rtl">
-               {/* Header row */}
-               <div className="flex flex-row-reverse items-center justify-between">
-                 <div className="flex flex-row-reverse items-center gap-2">
-                   <Heart className="w-4 h-4 text-pink-500 flex-shrink-0" />
-                   <span className="text-sm font-semibold">מעורבות חברתית</span>
-                 </div>
-                 <StatusBadge status={student.community_service_status} />
-               </div>
-               {/* Hours row */}
-               <div className="flex flex-row-reverse items-center justify-between text-sm">
-                 <span className="text-muted-foreground">התקדמות</span>
-                 <span className="font-bold">{student.community_service_done || 0} / {student.community_service_goal || 60} שעות</span>
-               </div>
-               {/* Progress bar */}
-               <div className="h-3 bg-muted rounded-full overflow-hidden">
-                 <div className={`h-full rounded-full transition-all ${communityPct >= 100 ? 'bg-emerald-500' : communityPct >= 50 ? 'bg-blue-500' : 'bg-red-400'}`}
-                   style={{ width: `${Math.min(communityPct, 100)}%` }} />
-               </div>
-               {/* Details */}
-               {(student.community_service_place || student.community_service_contact) && (
-                 <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
-                   {student.community_service_place && <div><span className="font-medium text-foreground">מקום: </span>{student.community_service_place}</div>}
-                   {student.community_service_contact && <div><span className="font-medium text-foreground">איש קשר: </span>{student.community_service_contact}</div>}
-                 </div>
-               )}
-             </div>
-           </Card>
+            <Card>
+              <div className="p-4 space-y-3 text-right" dir="rtl">
+                {/* Header row */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Heart className="w-4 h-4 text-pink-500 flex-shrink-0" />
+                    <span className="text-sm font-semibold">מעורבות חברתית</span>
+                  </div>
+                  <StatusBadge status={student.community_service_status} />
+                </div>
+                {/* Hours row */}
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">התקדמות</span>
+                  <span className="font-bold">{student.community_service_done || 0} / {student.community_service_goal || 60} שעות</span>
+                </div>
+                {/* Progress bar — RTL fills from right */}
+                <div className="h-3 bg-muted rounded-full overflow-hidden" style={{ direction: 'ltr' }}>
+                  <div className={`h-full rounded-full transition-all ${communityPct >= 100 ? 'bg-emerald-500' : communityPct >= 50 ? 'bg-blue-500' : 'bg-red-400'}`}
+                    style={{ width: `${Math.min(communityPct, 100)}%` }} />
+                </div>
+                {/* Details */}
+                {(student.community_service_place || student.community_service_contact) && (
+                  <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground text-right">
+                    {student.community_service_place && <div><span className="font-medium text-foreground">מקום: </span>{student.community_service_place}</div>}
+                    {student.community_service_contact && <div><span className="font-medium text-foreground">איש קשר: </span>{student.community_service_contact}</div>}
+                  </div>
+                )}
+              </div>
+            </Card>
 
           {/* Latest review */}
           {reviews[0] && (
