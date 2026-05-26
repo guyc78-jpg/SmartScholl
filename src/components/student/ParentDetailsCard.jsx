@@ -62,61 +62,63 @@ export default function ParentDetailsCard({ student, canEdit, onStudentUpdate })
   return (
     <Card dir="rtl" className="max-w-full overflow-hidden">
       <CardHeader className="pb-3">
-        <CardTitle className="text-base font-semibold flex items-center gap-2">
+        <CardTitle className="text-base font-semibold flex items-center justify-end gap-2">
           <Users className="w-4 h-4 text-primary" />
           פרטי הורים
         </CardTitle>
-        <p className="text-xs text-muted-foreground">פרטי קשר משפחתיים לשימוש צוות מורשה בלבד.</p>
+        <p className="text-xs text-muted-foreground text-right">פרטי קשר משפחתיים לשימוש צוות מורשה בלבד.</p>
       </CardHeader>
       <CardContent className="space-y-5">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-full">
           {parents.map((parent, index) => (
-            <div key={parent.label} className="min-w-0 rounded-2xl border bg-muted/20 p-3 space-y-3">
-              <p className="text-sm font-semibold text-foreground">{parent.label}</p>
+           <div key={parent.label} className="min-w-0 rounded-2xl border bg-muted/20 p-3 space-y-3" dir="rtl">
+             <p className="text-sm font-semibold text-foreground text-right">{parent.label}</p>
 
-              <div className="space-y-3 w-full">
-              <div className="space-y-1">
-                 <Label className="block">שם</Label>
-                 <Input
-                   value={index === 0 ? parentForm.parent1_name : parentForm.parent2_name}
-                   onChange={e => setParentField(index === 0 ? 'parent1_name' : 'parent2_name', e.target.value)}
-                   placeholder="שם מלא"
-                 />
-              </div>
+             <div className="space-y-3 w-full">
+             <div className="space-y-1">
+                <Label className="block text-right">שם</Label>
+                <Input
+                  dir="rtl"
+                  value={index === 0 ? parentForm.parent1_name : parentForm.parent2_name}
+                  onChange={e => setParentField(index === 0 ? 'parent1_name' : 'parent2_name', e.target.value)}
+                  placeholder="שם מלא"
+                />
+             </div>
 
-              <div className="space-y-1">
-                 <Label className="block">טלפון</Label>
-                 <div className="flex items-center gap-2">
-                   <Input
-                     type="tel"
-                     value={index === 0 ? parentForm.parent1_phone : parentForm.parent2_phone}
-                     onChange={e => setParentField(index === 0 ? 'parent1_phone' : 'parent2_phone', e.target.value)}
-                     placeholder="0547683142"
-                     className="flex-1"
-                   />
-                   {(index === 0 ? parentForm.parent1_phone : parentForm.parent2_phone) && (
-                     <div className="flex gap-1">
-                       <a href={`tel:${normalizePhone(index === 0 ? parentForm.parent1_phone : parentForm.parent2_phone)}`} className="flex-shrink-0">
-                         <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-primary/10" title="שיחה">
-                           <Phone className="w-4 h-4 text-primary" />
-                         </Button>
-                       </a>
-                       <a href={`https://wa.me/${whatsappPhone(index === 0 ? parentForm.parent1_phone : parentForm.parent2_phone)}`} target="_blank" rel="noreferrer" className="flex-shrink-0">
-                         <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-primary/10" title="וואטסאפ">
-                           <MessageCircle className="w-4 h-4 text-primary" />
-                         </Button>
-                       </a>
-                     </div>
-                   )}
-                 </div>
-              </div>
-              </div>
-            </div>
+             <div className="space-y-1">
+                <Label className="block text-right">טלפון</Label>
+                <div className="flex flex-row-reverse items-center gap-2">
+                  <Input
+                    dir="ltr"
+                    type="tel"
+                    value={index === 0 ? parentForm.parent1_phone : parentForm.parent2_phone}
+                    onChange={e => setParentField(index === 0 ? 'parent1_phone' : 'parent2_phone', e.target.value)}
+                    placeholder="0547683142"
+                    className="flex-1"
+                  />
+                  {(index === 0 ? parentForm.parent1_phone : parentForm.parent2_phone) && (
+                    <div className="flex gap-1 flex-row-reverse">
+                      <a href={`tel:${normalizePhone(index === 0 ? parentForm.parent1_phone : parentForm.parent2_phone)}`} className="flex-shrink-0">
+                        <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-primary/10" title="שיחה">
+                          <Phone className="w-4 h-4 text-primary" />
+                        </Button>
+                      </a>
+                      <a href={`https://wa.me/${whatsappPhone(index === 0 ? parentForm.parent1_phone : parentForm.parent2_phone)}`} target="_blank" rel="noreferrer" className="flex-shrink-0">
+                        <Button variant="ghost" size="icon" className="h-9 w-9 hover:bg-primary/10" title="וואטסאפ">
+                          <MessageCircle className="w-4 h-4 text-primary" />
+                        </Button>
+                      </a>
+                    </div>
+                  )}
+                </div>
+             </div>
+             </div>
+           </div>
           ))}
         </div>
 
         {!hasParentDetails && (
-          <div className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground text-center">
+          <div className="rounded-xl border border-dashed p-4 text-sm text-muted-foreground text-center" dir="rtl">
             לא הוזנו פרטי הורים עדיין
           </div>
         )}

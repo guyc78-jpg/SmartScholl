@@ -55,13 +55,13 @@ export default function GrowthReport({ studentId, studentName }) {
 
   return (
     <div className="space-y-4">
-      <Card className="border-primary/30 bg-primary/[0.02]">
+      <Card className="border-primary/30 bg-primary/[0.02]" dir="rtl">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center justify-end gap-2">
             <BarChart3 className="w-5 h-5 text-primary" />
             דוח צמיחה אישי
           </CardTitle>
-          <CardDescription>
+          <CardDescription dir="rtl" className="text-right">
             התקדמות אישית לאורך זמן - ללא השוואה לאחרים
           </CardDescription>
         </CardHeader>
@@ -69,14 +69,14 @@ export default function GrowthReport({ studentId, studentName }) {
 
       <div className="grid gap-3">
         {data?.indicators?.map((indicator, idx) => (
-          <Card key={idx} className="border-border/80">
-            <CardContent className="py-4">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <h3 className="font-semibold text-foreground mb-1">{indicator.category}</h3>
-                  <p className="text-sm text-muted-foreground">{indicator.details}</p>
-                </div>
-                <div className="flex flex-col items-end gap-1">
+         <Card key={idx} className="border-border/80" dir="rtl">
+           <CardContent className="py-4">
+             <div className="flex flex-row-reverse items-start justify-between gap-4">
+               <div className="flex-1 text-right">
+                 <h3 className="font-semibold text-foreground mb-1">{indicator.category}</h3>
+                 <p className="text-sm text-muted-foreground">{indicator.details}</p>
+               </div>
+               <div className="flex flex-col items-start gap-1">
                   {/* Main metric */}
                   {indicator.score !== undefined && (
                     <div className="text-right">
@@ -94,52 +94,52 @@ export default function GrowthReport({ studentId, studentName }) {
 
                   {/* Trend indicator */}
                   {indicator.trend === 'up' && (
-                    <div className="flex items-center gap-1 text-green-600 text-xs font-semibold">
+                    <div className="flex flex-row-reverse items-center gap-1 text-green-600 text-xs font-semibold">
                       <TrendingUp className="w-3 h-3" />
                       {indicator.change}
                     </div>
                   )}
                   {indicator.trend === 'down' && (
-                    <div className="flex items-center gap-1 text-amber-600 text-xs font-semibold">
+                    <div className="flex flex-row-reverse items-center gap-1 text-amber-600 text-xs font-semibold">
                       <TrendingDown className="w-3 h-3" />
                       {indicator.change}
                     </div>
                   )}
                   {indicator.trend === 'stable' && (
-                    <div className="flex items-center gap-1 text-slate-500 text-xs font-semibold">
+                    <div className="flex flex-row-reverse items-center gap-1 text-slate-500 text-xs font-semibold">
                       <Minus className="w-3 h-3" />
                       יציב
                     </div>
                   )}
-                </div>
-              </div>
+               </div>
+             </div>
 
-              {/* Progress bar for percentage metrics */}
-              {indicator.rate !== undefined && (
-                <div className="mt-3 w-full h-2 bg-muted rounded-full overflow-hidden">
-                  <div
-                    className={cn(
-                      'h-full transition-all duration-500',
-                      indicator.rate >= 80 ? 'bg-green-500' :
-                      indicator.rate >= 60 ? 'bg-blue-500' :
-                      indicator.rate >= 40 ? 'bg-amber-500' :
-                      'bg-destructive'
-                    )}
-                    style={{ width: `${indicator.rate}%` }}
-                  />
-                </div>
-              )}
-            </CardContent>
-          </Card>
+             {/* Progress bar for percentage metrics */}
+             {indicator.rate !== undefined && (
+               <div className="mt-3 w-full h-2 bg-muted rounded-full overflow-hidden">
+                 <div
+                   className={cn(
+                     'h-full transition-all duration-500',
+                     indicator.rate >= 80 ? 'bg-green-500' :
+                     indicator.rate >= 60 ? 'bg-blue-500' :
+                     indicator.rate >= 40 ? 'bg-amber-500' :
+                     'bg-destructive'
+                   )}
+                   style={{ width: `${indicator.rate}%` }}
+                 />
+               </div>
+             )}
+           </CardContent>
+         </Card>
         ))}
       </div>
 
       {(!data?.indicators || data.indicators.length === 0) && (
-        <Card className="bg-muted/30">
-          <CardContent className="py-8 text-center">
-            <p className="text-sm text-muted-foreground">אין נתוני צמיחה עדיין</p>
-          </CardContent>
-        </Card>
+       <Card className="bg-muted/30" dir="rtl">
+         <CardContent className="py-8 text-center">
+           <p className="text-sm text-muted-foreground">אין נתוני צמיחה עדיין</p>
+         </CardContent>
+       </Card>
       )}
     </div>
   );

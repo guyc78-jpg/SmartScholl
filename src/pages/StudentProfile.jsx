@@ -236,28 +236,28 @@ export default function StudentProfile({ role }) {
           <GrowthReport studentId={id} studentName={student.full_name} />
 
           {/* Community Service */}
-          <Card>
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2"><Heart className="w-4 h-4 text-pink-500"/>מעורבות חברתית</CardTitle>
-                <StatusBadge status={student.community_service_status} />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between text-sm mb-2">
-                <span className="text-muted-foreground">התקדמות</span>
-                <span className="font-bold">{student.community_service_done || 0} / {student.community_service_goal || 60} שעות</span>
-              </div>
-              <div className="h-3 bg-muted rounded-full overflow-hidden mb-3">
-                <div className={`h-full rounded-full transition-all ${communityPct >= 100 ? 'bg-emerald-500' : communityPct >= 50 ? 'bg-blue-500' : 'bg-red-400'}`}
-                  style={{ width: `${Math.min(communityPct, 100)}%` }} />
-              </div>
-              <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
-                {student.community_service_place && <div><span className="font-medium text-foreground">מקום: </span>{student.community_service_place}</div>}
-                {student.community_service_contact && <div><span className="font-medium text-foreground">איש קשר: </span>{student.community_service_contact}</div>}
-              </div>
-            </CardContent>
-          </Card>
+           <Card dir="rtl">
+             <CardHeader className="pb-2">
+               <div className="flex flex-row-reverse items-center justify-between">
+                 <CardTitle className="text-sm font-semibold flex items-center justify-end gap-2"><Heart className="w-4 h-4 text-pink-500"/>מעורבות חברתית</CardTitle>
+                 <StatusBadge status={student.community_service_status} />
+               </div>
+             </CardHeader>
+             <CardContent>
+               <div className="flex flex-row-reverse items-center justify-between text-sm mb-2">
+                 <span className="text-muted-foreground">התקדמות</span>
+                 <span className="font-bold">{student.community_service_done || 0} / {student.community_service_goal || 60} שעות</span>
+               </div>
+               <div className="h-3 bg-muted rounded-full overflow-hidden mb-3">
+                 <div className={`h-full rounded-full transition-all ${communityPct >= 100 ? 'bg-emerald-500' : communityPct >= 50 ? 'bg-blue-500' : 'bg-red-400'}`}
+                   style={{ width: `${Math.min(communityPct, 100)}%` }} />
+               </div>
+               <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground text-right">
+                 {student.community_service_place && <div><span className="font-medium text-foreground">מקום: </span>{student.community_service_place}</div>}
+                 {student.community_service_contact && <div><span className="font-medium text-foreground">איש קשר: </span>{student.community_service_contact}</div>}
+               </div>
+             </CardContent>
+           </Card>
 
           {/* Latest review */}
           {reviews[0] && (
