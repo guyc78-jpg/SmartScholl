@@ -250,15 +250,15 @@ export default function Students({ role }) {
                         <p className="text-xs text-muted-foreground">{student.class_name || 'כיתה י׳1'} · {student.grade || 'י'}</p>
                         <div className="flex gap-3 mt-1.5 flex-wrap flex-row-reverse justify-end">
                           {student.phone && (
-                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <Phone className="w-3 h-3" />{student.phone}
-                            </span>
-                          )}
-                          {student.parent1_phone && !student.phone && (
-                            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <Phone className="w-3 h-3" />{student.parent1_phone}
-                            </span>
-                          )}
+                             <a href={`tel:${student.phone}`} className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors">
+                               <Phone className="w-3 h-3 text-primary" />{student.phone}
+                             </a>
+                           )}
+                           {student.parent1_phone && !student.phone && (
+                             <a href={`tel:${student.parent1_phone}`} className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors">
+                               <Phone className="w-3 h-3 text-primary" />{student.parent1_phone}
+                             </a>
+                           )}
                         </div>
                         {/* Community progress */}
                         <div className="mt-3">
