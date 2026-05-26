@@ -239,7 +239,7 @@ export default function StudentProfile({ role }) {
            <Card dir="rtl">
              <CardHeader className="pb-2">
                <div className="flex flex-row-reverse items-center justify-between">
-                 <CardTitle className="text-sm font-semibold flex items-center justify-end gap-2"><Heart className="w-4 h-4 text-pink-500"/>מעורבות חברתית</CardTitle>
+                 <CardTitle className="text-sm font-semibold flex flex-row-reverse items-center gap-2"><Heart className="w-4 h-4 text-pink-500"/>מעורבות חברתית</CardTitle>
                  <StatusBadge status={student.community_service_status} />
                </div>
              </CardHeader>
