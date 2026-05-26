@@ -204,7 +204,22 @@ export default function ClassAttendance({ role }) {
 
           {/* Students */}
           {loading ? (
-            <div className="flex justify-center py-12"><div className="w-7 h-7 border-4 border-primary/20 border-t-primary rounded-full animate-spin"/></div>
+            <div className="space-y-2">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="rounded-xl border bg-card p-3 animate-pulse">
+                  <div className="flex items-center gap-3 flex-row-reverse">
+                    <div className="w-9 h-9 rounded-full bg-muted flex-shrink-0" />
+                    <div className="flex-1 space-y-1.5 text-right">
+                      <div className="h-3.5 bg-muted rounded w-32 me-auto" />
+                      <div className="h-2.5 bg-muted/60 rounded w-20 me-auto" />
+                    </div>
+                    <div className="flex gap-1.5">
+                      {[1,2,3,4].map(j => <div key={j} className="w-14 h-8 bg-muted rounded-lg" />)}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : (
             <div className="space-y-2">
               {students.map((student, i) => {
