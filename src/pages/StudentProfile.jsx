@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import StatusBadge from '@/components/ui/StatusBadge';
-import { ChevronRight, Phone, Mail, Edit, Plus, Calendar, Shield, Heart, Star, MessageSquare, BarChart2, CheckSquare, Eye, EyeOff } from 'lucide-react';
+import { ChevronRight, ChevronDown, Phone, Mail, Edit, Plus, Calendar, Shield, Heart, Star, MessageSquare, BarChart2, CheckSquare, Eye, EyeOff } from 'lucide-react';
 import AddStudentModal from '@/components/students/AddStudentModal';
 import ParentContactLog from '@/components/student/ParentContactLog';
 import GrowthReport from '@/components/student/GrowthReport';
@@ -42,6 +42,7 @@ export default function StudentProfile({ role }) {
   const [showEdit, setShowEdit] = useState(false);
   const [tab, setTab] = useState('overview');
   const [showStudentId, setShowStudentId] = useState(false);
+  const [headerExpanded, setHeaderExpanded] = useState(false);
   const today = new Date().toISOString().split('T')[0];
   const [conversationForm, setConversationForm] = useState({
     date: today,
@@ -145,63 +146,87 @@ export default function StudentProfile({ role }) {
 
       {/* Student Header */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="mb-4">
-        <Card className="max-w-full overflow-hidden p-4 sm:p-5 text-right">
-          <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+        <Card className="max-w-full overflow-hidden text-right" dir="rtl">
+          {/* Collapsed summary row */}
+          <div className="flex items-center gap-3 p-4 sm:p-5" dir="rtl">
             <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-xl flex-shrink-0 ${student.gender === 'נקבה' ? 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'}`}>
               {student.full_name.charAt(0)}
             </div>
-            <div className="flex-1 min-w-0 space-y-3">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h1 className="text-xl sm:text-2xl font-bold text-foreground truncate">{student.full_name}</h1>
-                    <StatusBadge status={student.status} />
-                  </div>
-                  <p className="text-sm text-muted-foreground mt-1">כיתה {student.class_name || 'י׳1'}</p>
-                </div>
-                <Button variant="ghost" size="sm" className="gap-1.5 flex-shrink-0 text-muted-foreground hover:text-primary hover:bg-transparent" onClick={() => setShowEdit(true)}>
-                  <Edit className="w-4 h-4" />עריכה
-                </Button>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-xl sm:text-2xl font-bold text-foreground truncate">{student.full_name}</h1>
+                <StatusBadge status={student.status} />
               </div>
-
-              <div className="flex flex-col gap-1.5 text-sm w-full">
-                {student.phone && (
-                  <a
-                    href={`tel:${student.phone}`}
-                    className="flex w-full items-center gap-2 rounded-lg bg-muted/40 dark:bg-muted/20 hover:bg-muted/60 dark:hover:bg-muted/30 px-3 h-9 text-foreground/80 hover:text-primary transition-colors"
-                  >
-                    <Phone className="w-3.5 h-3.5 flex-shrink-0 text-muted-foreground" />
-                    <span className="truncate">{student.phone}</span>
-                  </a>
-                )}
-                {student.email && (
-                  <a
-                    href={`mailto:${student.email}`}
-                    className="flex w-full items-center gap-2 rounded-lg bg-muted/40 dark:bg-muted/20 hover:bg-muted/60 dark:hover:bg-muted/30 px-3 h-9 text-foreground/80 hover:text-primary transition-colors"
-                  >
-                    <Mail className="w-3.5 h-3.5 flex-shrink-0 text-muted-foreground" />
-                    <span className="truncate force-ltr text-right">{student.email}</span>
-                  </a>
-                )}
-                {canViewStudentId && (
-                  <div className="flex w-full items-center gap-2 rounded-lg bg-muted/40 dark:bg-muted/20 px-3 h-9 text-foreground/80">
-                    <Shield className="w-3.5 h-3.5 flex-shrink-0 text-muted-foreground" />
-                    <span className="truncate flex-1">ת.ז: {showStudentId ? (student.student_number || '—') : maskedStudentNumber}</span>
-                    {student.student_number && (
-                      <button
-                        type="button"
-                        onClick={() => setShowStudentId(prev => !prev)}
-                        className="text-muted-foreground hover:text-primary flex-shrink-0"
-                        aria-label="הצג או הסתר תעודת זהות"
-                      >
-                        {showStudentId ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
+              <p className="text-sm text-muted-foreground mt-1">כיתה {student.class_name || 'י׳1'}</p>
+            </div>
+            <div className="flex items-center gap-1 flex-shrink-0">
+              <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-primary hover:bg-transparent" onClick={() => setShowEdit(true)}>
+                <Edit className="w-4 h-4" />עריכה
+              </Button>
+              <button
+                type="button"
+                onClick={() => setHeaderExpanded(v => !v)}
+                aria-label={headerExpanded ? 'כווץ פרטי תלמיד' : 'הרחב פרטי תלמיד'}
+                aria-expanded={headerExpanded}
+                className="w-9 h-9 flex items-center justify-center rounded-lg text-muted-foreground hover:text-primary hover:bg-muted/50 transition-colors"
+              >
+                <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${headerExpanded ? 'rotate-180' : ''}`} />
+              </button>
             </div>
           </div>
+
+          {/* Expanded details */}
+          <AnimatePresence initial={false}>
+            {headerExpanded && (
+              <motion.div
+                key="details"
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.22, ease: 'easeInOut' }}
+                className="overflow-hidden"
+              >
+                <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-1 border-t border-border/50" dir="rtl">
+                  <div className="flex flex-col gap-1.5 text-sm w-full pt-3">
+                    {student.phone && (
+                      <a
+                        href={`tel:${student.phone}`}
+                        className="flex w-full items-center gap-2 rounded-lg bg-muted/40 dark:bg-muted/20 hover:bg-muted/60 dark:hover:bg-muted/30 px-3 h-9 text-foreground/80 hover:text-primary transition-colors"
+                      >
+                        <Phone className="w-3.5 h-3.5 flex-shrink-0 text-muted-foreground" />
+                        <span className="truncate">{student.phone}</span>
+                      </a>
+                    )}
+                    {student.email && (
+                      <a
+                        href={`mailto:${student.email}`}
+                        className="flex w-full items-center gap-2 rounded-lg bg-muted/40 dark:bg-muted/20 hover:bg-muted/60 dark:hover:bg-muted/30 px-3 h-9 text-foreground/80 hover:text-primary transition-colors"
+                      >
+                        <Mail className="w-3.5 h-3.5 flex-shrink-0 text-muted-foreground" />
+                        <span className="truncate force-ltr text-right">{student.email}</span>
+                      </a>
+                    )}
+                    {canViewStudentId && (
+                      <div className="flex w-full items-center gap-2 rounded-lg bg-muted/40 dark:bg-muted/20 px-3 h-9 text-foreground/80">
+                        <Shield className="w-3.5 h-3.5 flex-shrink-0 text-muted-foreground" />
+                        <span className="truncate flex-1">ת.ז: {showStudentId ? (student.student_number || '—') : maskedStudentNumber}</span>
+                        {student.student_number && (
+                          <button
+                            type="button"
+                            onClick={() => setShowStudentId(prev => !prev)}
+                            className="text-muted-foreground hover:text-primary flex-shrink-0"
+                            aria-label="הצג או הסתר תעודת זהות"
+                          >
+                            {showStudentId ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </Card>
       </motion.div>
 
