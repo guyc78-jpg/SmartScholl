@@ -55,16 +55,14 @@ export default function GrowthReport({ studentId, studentName }) {
 
   return (
     <div className="space-y-4">
-      <Card className="border-primary/30 bg-primary/[0.02]" dir="rtl">
-        <CardHeader className="items-end">
-          <CardTitle className="flex flex-row-reverse items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-primary" />
-            דוח צמיחה אישי
-          </CardTitle>
-          <CardDescription className="text-right w-full">
-            התקדמות אישית לאורך זמן - ללא השוואה לאחרים
-          </CardDescription>
-        </CardHeader>
+      <Card className="border-primary/30 bg-primary/[0.02]">
+        <div className="p-6 space-y-1.5" dir="rtl">
+          <div className="flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-primary flex-shrink-0" />
+            <span className="font-semibold leading-none">דוח צמיחה אישי</span>
+          </div>
+          <p className="text-sm text-muted-foreground">התקדמות אישית לאורך זמן - ללא השוואה לאחרים</p>
+        </div>
       </Card>
 
       <div className="grid gap-3">
