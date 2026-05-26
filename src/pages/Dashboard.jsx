@@ -12,7 +12,7 @@ import SmartAlerts from '@/components/dashboard/SmartAlerts';
 import {
   Users, Clock, AlertTriangle, BookOpen, CheckSquare,
   Shield, Heart, UserCheck, Calendar, MessageSquare,
-  Megaphone, Star, ChevronLeft, TrendingUp, Settings, CalendarDays
+  Megaphone, Star, ChevronLeft, TrendingUp, CalendarDays
 } from 'lucide-react';
 import { TYPE_STYLES } from '@/components/exams/eventConstants';
 import { Button } from '@/components/ui/button';
@@ -196,16 +196,7 @@ export default function Dashboard({ user, role }) {
             <span>{hebrewDate()}</span>
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          {isAdmin && (
-            <Link to="/users" title="ניהול מערכת">
-              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary">
-                <Settings className="w-4 h-4" />
-              </Button>
-            </Link>
-          )}
-          <NotificationsDropdown notifications={notifications} onRead={handleNotificationRead} />
-        </div>
+        <NotificationsDropdown notifications={notifications} onRead={handleNotificationRead} />
       </div>
 
       {/* Now / Next — only useful for homeroom teachers (have a class) */}
