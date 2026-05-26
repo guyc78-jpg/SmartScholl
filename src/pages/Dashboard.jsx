@@ -188,15 +188,17 @@ export default function Dashboard({ user, role }) {
     <div className="p-4 lg:p-6 space-y-6" dir="rtl">
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h1 className="text-xl lg:text-2xl font-bold text-foreground leading-tight">שלום, {getUserFirstName(user)} 👋</h1>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <h1 className="text-xl lg:text-2xl font-bold text-foreground leading-tight">שלום, {getUserFirstName(user)} 👋</h1>
+            <NotificationsDropdown notifications={notifications} onRead={handleNotificationRead} />
+          </div>
           <p className="text-sm font-medium text-foreground/70 mt-0.5">{dashboardTitle}</p>
           <p className="text-xs text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-1.5">
             <SchoolNameBanner inline />
             <span>{hebrewDate()}</span>
           </p>
         </div>
-        <NotificationsDropdown notifications={notifications} onRead={handleNotificationRead} />
       </div>
 
       {/* Now / Next — only useful for homeroom teachers (have a class) */}
