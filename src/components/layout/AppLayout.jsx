@@ -259,14 +259,14 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
              onClick={toggleDark}
              className={cn(
                'relative w-10 h-6 rounded-full transition-colors border-0 flex-shrink-0',
-               darkMode ? 'bg-primary/70' : 'bg-muted/60'
+               darkMode ? 'bg-primary' : 'bg-muted'
              )}
              aria-label="החלף מצב כהה"
            >
              <span
                className={cn(
-                 'absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-transform',
-                 darkMode ? 'right-0.5' : 'right-4.5'
+                 'absolute top-0.5 w-5 h-5 rounded-full shadow-md transition-transform',
+                 darkMode ? 'bg-slate-900 right-0.5' : 'bg-white right-4.5'
                )}
              />
            </button>
