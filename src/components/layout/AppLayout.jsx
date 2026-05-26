@@ -116,7 +116,7 @@ function AccordionGroup({ group, role, pendingCount, location, onNavigate }) {
         className={cn(
           'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors duration-150 text-right',
           hasActive
-            ? 'bg-sidebar-accent/70 text-sidebar-foreground font-semibold'
+            ? 'bg-accent text-accent-foreground font-semibold'
             : 'text-sidebar-foreground/65 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
         )}
       >
@@ -154,7 +154,7 @@ function AccordionGroup({ group, role, pendingCount, location, onNavigate }) {
                     className={cn(
                       'relative flex items-center gap-2 px-2.5 py-1.5 rounded-lg transition-colors duration-150',
                       isActive
-                        ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold'
+                        ? 'bg-accent text-accent-foreground font-semibold'
                         : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
                     )}
                   >
@@ -245,7 +245,7 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
           className={cn(
             'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors',
             location.pathname === '/profile'
-              ? 'bg-sidebar-accent text-sidebar-accent-foreground font-semibold'
+              ? 'bg-accent text-accent-foreground font-semibold'
               : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
           )}
         >
