@@ -100,11 +100,6 @@ function AccordionGroup({ group, role, pendingCount, location, onNavigate }) {
   const [open, setOpen] = useState(false);
   const hasActive = group.items.some(item => location.pathname === item.path);
 
-  // Auto-open if a child is active
-  useEffect(() => {
-    if (hasActive) setOpen(true);
-  }, [hasActive]);
-
   const GroupIcon = group.icon;
 
   return (
