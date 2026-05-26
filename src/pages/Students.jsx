@@ -245,7 +245,7 @@ export default function Students({ role }) {
                       <div className="min-w-0 text-right">
                         <div className="flex items-center gap-2 mb-1 flex-row-reverse justify-end">
                           <h3 className="font-semibold text-foreground text-sm leading-tight">{formatStudentName(student.full_name)}</h3>
-                          <StatusBadge status={student.status} />
+                          {student.status && student.status !== 'פעיל' && <StatusBadge status={student.status} />}
                         </div>
                         <p className="text-xs text-muted-foreground">{student.class_name || 'כיתה י׳1'} · {student.grade || 'י'}</p>
                         <div className="flex gap-3 mt-1.5 flex-wrap flex-row-reverse justify-end">
