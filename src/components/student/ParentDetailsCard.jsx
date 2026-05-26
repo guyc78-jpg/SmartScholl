@@ -88,20 +88,9 @@ export default function ParentDetailsCard({ student, canEdit, onStudentUpdate, c
                 dir="rtl"
                 className="w-full flex items-center justify-between gap-2 ps-3 pe-3 py-2.5 hover:bg-muted/30 transition-colors"
               >
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <span className="text-sm font-semibold text-foreground truncate">
-                    {name || parent.label}
-                  </span>
-                  {(name || phone) ? (
-                    phone && (
-                      <span className="text-xs text-muted-foreground truncate force-ltr">
-                        {phone}
-                      </span>
-                    )
-                  ) : (
-                    <span className="text-xs text-muted-foreground">לא הוזן</span>
-                  )}
-                </div>
+                <span className="text-sm font-semibold text-foreground truncate">
+                  {name || parent.label}
+                </span>
                 <ChevronDown
                   className={`w-4 h-4 text-muted-foreground transition-transform duration-200 flex-shrink-0 ${isOpen ? 'rotate-180' : ''}`}
                 />
