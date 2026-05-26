@@ -48,22 +48,8 @@ export default function NowNextCard({ classId, className }) {
 
   const { current, next, remainingMins, currentSlot, nextSlot } = state;
 
-  // Outside school day
-  if (!current && !next) {
-    return (
-      <Card className={className}>
-        <CardContent className="p-4 flex items-center gap-3 text-right" dir="rtl">
-          <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
-            <Clock className="w-5 h-5 text-muted-foreground" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold">אין שיעורים כרגע</p>
-            <p className="text-xs text-muted-foreground">יום לימודים הסתיים או טרם החל</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
+  // Outside school day — hide the card entirely
+  if (!current && !next) return null;
 
   return (
     <Card className={className}>
