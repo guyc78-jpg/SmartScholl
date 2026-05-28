@@ -353,12 +353,13 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
         </main>
 
         {/* Mobile Bottom Nav */}
-        <nav className="lg:hidden fixed bottom-0 inset-x-0 grid bg-card border-t border-border z-30" dir="rtl"
+         <nav className="lg:hidden fixed bottom-0 inset-x-0 grid bg-card border-t border-border z-30" dir="rtl"
           style={{
             gridTemplateColumns: `repeat(${bottomNavItems.length}, minmax(0, 1fr))`,
             paddingBottom: 'env(safe-area-inset-bottom)',
             paddingTop: '8px',
-            paddingInline: '2px',
+            paddingLeft: '12px',
+            paddingRight: '12px',
             minHeight: 'calc(72px + env(safe-area-inset-bottom))',
           }}>
           {bottomNavItems.map((item) => {
@@ -369,7 +370,7 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  'flex flex-col items-center justify-center gap-1 py-1.5 px-0.5 transition-colors min-w-0 text-center',
+                  'flex flex-col items-center justify-center gap-1 py-1.5 transition-colors min-w-0 text-center',
                   isActive ? 'text-primary' : 'text-muted-foreground'
                 )}
                 style={{ transform: 'translateY(-8px)' }}
