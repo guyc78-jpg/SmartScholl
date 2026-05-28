@@ -251,27 +251,27 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
         <div className={cn(
           'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors',
           darkMode 
-            ? 'text-sidebar-foreground/80 hover:bg-sidebar-accent/40' 
-            : 'text-sidebar-foreground/90 hover:bg-sidebar-accent/50 border border-sidebar-border/60 shadow-sm'
+            ? 'text-sidebar-foreground/90 hover:bg-sidebar-accent/40' 
+            : 'text-sidebar-foreground hover:bg-sidebar-accent/60'
         )}>
            {darkMode ? <Sun className="w-4 h-4 flex-shrink-0" /> : <Moon className="w-4 h-4 flex-shrink-0" />}
-           <span className="text-[13px] flex-1 text-right">{darkMode ? 'מצב בהיר' : 'מצב כהה'}</span>
+           <span className="text-[13px] flex-1 text-right font-medium">{darkMode ? 'מצב בהיר' : 'מצב כהה'}</span>
            <button
              onClick={toggleDark}
              className={cn(
-               'relative w-10 h-6 rounded-full transition-colors border flex-shrink-0',
+               'relative w-11 h-6 rounded-full transition-colors flex-shrink-0',
                darkMode 
-                 ? 'bg-primary border-primary/60' 
-                 : 'bg-muted border-muted/80 shadow-sm'
+                 ? 'bg-primary border border-primary/60 shadow-[inset_0_1px_2px_rgba(0,0,0,0.2)]' 
+                 : 'bg-slate-300 border border-slate-400/80 shadow-[inset_0_1px_3px_rgba(0,0,0,0.15)]'
              )}
              aria-label="החלף מצב כהה"
            >
              <span
                className={cn(
-                 'absolute top-0.5 w-5 h-5 rounded-full shadow-lg transition-transform',
+                 'absolute top-0.5 w-5 h-5 rounded-full transition-transform',
                  darkMode 
-                   ? 'bg-slate-100 right-0.5' 
-                   : 'bg-white border border-border/40 right-4.5'
+                   ? 'bg-slate-100 right-0.5 shadow-md' 
+                   : 'bg-white border border-slate-300 right-[18px] shadow-[0_1px_3px_rgba(0,0,0,0.25)]'
                )}
              />
            </button>
