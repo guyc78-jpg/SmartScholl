@@ -290,23 +290,38 @@ export default function Dashboard({ user, role }) {
           <section>
             <h2 className="text-sm font-bold text-foreground mb-2.5">פעולות מהירות</h2>
             <div className="grid grid-cols-4 gap-2">
-              {quickActions.map(btn => (
+              {quickActions.map(btn => {
+                const commonClassName = "group relative flex flex-col items-center justify-center gap-1.5 py-3 px-1.5 rounded-xl bg-card border border-border hover:border-primary/40 hover:bg-primary/[0.04] transition-colors";
+                const commonContent = (
+                  <>
+                    {btn.badge > 0 && (
+                      <span className="absolute top-1.5 left-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-destructive text-white text-[10px] font-bold flex items-center justify-center leading-none">
+                        {btn.badge > 99 ? '99+' : btn.badge}
+                      </span>
+                    )}
+                    <div className="w-9 h-9 rounded-lg bg-primary/10 group-hover:bg-primary/15 flex items-center justify-center transition-colors">
+                      <btn.icon className="w-4 h-4 text-primary" strokeWidth={2.2} />
+                    </div>
+                    <span className="text-[11px] font-semibold text-foreground/80 leading-tight">{btn.label}</span>
+                  </>
+                );
+                if (btn.action === 'attendance') {
+                  return (
+                    <Link key={btn.action} to="/class-attendance" className={commonClassName}>
+                      {commonContent}
+                    </Link>
+                  );
+                }
+                return (
                 <button
                   key={btn.action}
                   onClick={() => setQuickAction(btn.action)}
-                  className="group relative flex flex-col items-center justify-center gap-1.5 py-3 px-1.5 rounded-xl bg-card border border-border hover:border-primary/40 hover:bg-primary/[0.04] transition-colors"
+                  className={commonClassName}
                 >
-                  {btn.badge > 0 && (
-                    <span className="absolute top-1.5 left-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-destructive text-white text-[10px] font-bold flex items-center justify-center leading-none">
-                      {btn.badge > 99 ? '99+' : btn.badge}
-                    </span>
-                  )}
-                  <div className="w-9 h-9 rounded-lg bg-primary/10 group-hover:bg-primary/15 flex items-center justify-center transition-colors">
-                    <btn.icon className="w-4 h-4 text-primary" strokeWidth={2.2} />
-                  </div>
-                  <span className="text-[11px] font-semibold text-foreground/80 leading-tight">{btn.label}</span>
+                  {commonContent}
                 </button>
-              ))}
+                );
+              })}
             </div>
           </section>
         );
