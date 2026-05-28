@@ -12,6 +12,7 @@ import { logActivity } from '@/lib/activityLogger';
 import { getUserApprovedClassId, getUserApprovedGrade } from '@/lib/schoolStructure';
 import { getAvailableRoles, hasApprovedRole } from '@/lib/roleUtils';
 import { CLASS_ID } from '@/lib/demoData';
+import QuickAttendanceForm from '@/components/dashboard/QuickAttendanceForm';
 
 const titles = {
   attendance: 'סימון נוכחות',
@@ -222,6 +223,12 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
 
         {/* Scrollable content */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', WebkitOverflowScrolling: 'touch' }}>
+          {action === 'attendance' ? (
+            <QuickAttendanceForm
+              classId={resolvedClassId}
+              onSaved={onSuccess}
+            />
+          ) : (
           <div className="space-y-4">
 
             {/* Student picker */}
@@ -407,6 +414,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
             </div>
 
           </div>
+          )}
         </div>
       </div>
     </div>

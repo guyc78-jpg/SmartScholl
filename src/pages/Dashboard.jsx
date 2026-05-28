@@ -305,13 +305,6 @@ export default function Dashboard({ user, role }) {
                     <span className="text-[11px] font-semibold text-foreground/80 leading-tight">{btn.label}</span>
                   </>
                 );
-                if (btn.action === 'attendance') {
-                  return (
-                    <Link key={btn.action} to="/class-attendance" className={commonClassName}>
-                      {commonContent}
-                    </Link>
-                  );
-                }
                 return (
                 <button
                   key={btn.action}
