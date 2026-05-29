@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { getLastName, getFirstNames } from '@/lib/studentName';
@@ -17,7 +18,6 @@ export default function AddStudentModal({ classId, editData, onClose, onSuccess 
       community_service_goal: 60, community_service_done: 0,
       community_service_status: 'לא התחיל', status: 'פעיל'
     };
-    // Smart split: prefer explicit fields if exist, otherwise derive from full_name
     return {
       ...base,
       last_name: base.last_name ?? getLastName(base.full_name || ''),
@@ -51,7 +51,6 @@ export default function AddStudentModal({ classId, editData, onClose, onSuccess 
         class_name: classRoom?.name || form.class_name || '',
         grade: classRoom?.grade || form.grade || '',
       };
-      // Canonical full_name keeps "first last" form so existing display utils render "last first"
       const payload = {
         ...form,
         first_name: firstName,
@@ -74,86 +73,180 @@ export default function AddStudentModal({ classId, editData, onClose, onSuccess 
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto" dir="rtl">
-        <DialogHeader>
-          <DialogTitle>{editData ? 'עריכת פרטי תלמיד' : 'הוספת תלמיד חדש'}</DialogTitle>
+      <DialogContent
+        className="sm:max-w-lg max-h-[92vh] p-0 gap-0 flex flex-col overflow-hidden"
+        dir="rtl"
+      >
+        <DialogHeader className="px-5 pt-5 pb-3 border-b border-border shrink-0">
+          <DialogTitle className="text-right">
+            {editData ? 'עריכת פרטי תלמיד' : 'הוספת תלמיד חדש'}
+          </DialogTitle>
         </DialogHeader>
-        <div className="space-y-5">
-          <div>
-            <h3 className="text-sm font-semibold text-muted-foreground mb-3">פרטים אישיים</h3>
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label>שם משפחה *</Label>
-                  <Input value={form.last_name || ''} onChange={e => set('last_name', e.target.value)} placeholder="לדוגמה: כהן" />
-                </div>
-                <div className="space-y-1">
-                  <Label>שם פרטי *</Label>
-                  <Input value={form.first_name || ''} onChange={e => set('first_name', e.target.value)} placeholder="לדוגמה: דניאל" />
-                </div>
-                <div className="space-y-1">
-                  <Label>מין</Label>
-                  <Select value={form.gender} onValueChange={v => set('gender', v)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="זכר">זכר</SelectItem>
-                      <SelectItem value="נקבה">נקבה</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1">
-                  <Label>מספר תלמיד</Label>
-                  <Input value={form.student_number} onChange={e => set('student_number', e.target.value)} placeholder="מספר ת.ז / מזהה" />
-                </div>
-                <div className="space-y-1">
-                  <Label>טלפון</Label>
-                  <Input value={form.phone} onChange={e => set('phone', e.target.value)} placeholder="050-0000000" />
-                </div>
-                <div className="space-y-1">
-                  <Label>מייל</Label>
-                  <Input value={form.email} onChange={e => set('email', e.target.value)} placeholder="name@school.il" />
-                </div>
-              </div>
+
+        {/* Scrollable body only if accordions expand */}
+        <div className="flex-1 overflow-y-auto px-5 py-3 space-y-3">
+          {/* Basic fields — compact, no scroll */}
+          <div className="grid grid-cols-2 gap-2.5">
+            <div className="space-y-1">
+              <Label className="text-xs">שם משפחה *</Label>
+              <Input
+                className="h-9"
+                value={form.last_name || ''}
+                onChange={e => set('last_name', e.target.value)}
+                placeholder="כהן"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">שם פרטי *</Label>
+              <Input
+                className="h-9"
+                value={form.first_name || ''}
+                onChange={e => set('first_name', e.target.value)}
+                placeholder="דניאל"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs">מין</Label>
+              <Select value={form.gender} onValueChange={v => set('gender', v)}>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="זכר">זכר</SelectItem>
+                  <SelectItem value="נקבה">נקבה</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">מספר תלמיד</Label>
+              <Input
+                className="h-9"
+                value={form.student_number}
+                onChange={e => set('student_number', e.target.value)}
+                placeholder="ת.ז / מזהה"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs">טלפון</Label>
+              <Input
+                className="h-9"
+                value={form.phone}
+                onChange={e => set('phone', e.target.value)}
+                placeholder="050-0000000"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">מייל</Label>
+              <Input
+                className="h-9"
+                value={form.email}
+                onChange={e => set('email', e.target.value)}
+                placeholder="name@school.il"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs">סטטוס</Label>
+              <Select value={form.status} onValueChange={v => set('status', v)}>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {['פעיל', 'דורש מעקב', 'מועבר', 'סיים'].map(s => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">יעד מעורבות (שע׳)</Label>
+              <Input
+                type="number"
+                className="h-9"
+                value={form.community_service_goal}
+                onChange={e => set('community_service_goal', Number(e.target.value))}
+              />
             </div>
           </div>
-          <div>
-            <h3 className="text-sm font-semibold text-muted-foreground mb-3">הורה 1</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1 col-span-2"><Label>שם</Label><Input value={form.parent1_name} onChange={e => set('parent1_name', e.target.value)} /></div>
-              <div className="space-y-1"><Label>טלפון</Label><Input value={form.parent1_phone} onChange={e => set('parent1_phone', e.target.value)} /></div>
-              <div className="space-y-1"><Label>מייל</Label><Input value={form.parent1_email} onChange={e => set('parent1_email', e.target.value)} /></div>
-            </div>
-          </div>
-          <div>
-            <h3 className="text-sm font-semibold text-muted-foreground mb-3">הורה 2</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1 col-span-2"><Label>שם</Label><Input value={form.parent2_name} onChange={e => set('parent2_name', e.target.value)} /></div>
-              <div className="space-y-1"><Label>טלפון</Label><Input value={form.parent2_phone} onChange={e => set('parent2_phone', e.target.value)} /></div>
-              <div className="space-y-1"><Label>מייל</Label><Input value={form.parent2_email} onChange={e => set('parent2_email', e.target.value)} /></div>
-            </div>
-          </div>
-          <div>
-            <h3 className="text-sm font-semibold text-muted-foreground mb-3">סטטוס</h3>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label>סטטוס תלמיד</Label>
-                <Select value={form.status} onValueChange={v => set('status', v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {['פעיל', 'דורש מעקב', 'מועבר', 'סיים'].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1">
-                <Label>יעד מעורבות (שע׳)</Label>
-                <Input type="number" value={form.community_service_goal} onChange={e => set('community_service_goal', Number(e.target.value))} />
-              </div>
-            </div>
-          </div>
-          <div className="flex gap-2 pt-2">
-            <Button onClick={handleSave} disabled={saving} className="flex-1">{saving ? 'שומר...' : 'שמור'}</Button>
-            <Button variant="outline" onClick={onClose} className="flex-1">ביטול</Button>
-          </div>
+
+          {/* Parents — collapsed by default */}
+          <Accordion type="multiple" className="border border-border rounded-lg divide-y divide-border">
+            <AccordionItem value="parent1" className="border-b-0 px-3">
+              <AccordionTrigger className="py-2.5 text-sm font-medium text-right hover:no-underline">
+                פרטי הורה 1
+              </AccordionTrigger>
+              <AccordionContent className="pb-3">
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div className="space-y-1 col-span-2">
+                    <Label className="text-xs">שם</Label>
+                    <Input
+                      className="h-9"
+                      value={form.parent1_name}
+                      onChange={e => set('parent1_name', e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">טלפון</Label>
+                    <Input
+                      className="h-9"
+                      value={form.parent1_phone}
+                      onChange={e => set('parent1_phone', e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">מייל</Label>
+                    <Input
+                      className="h-9"
+                      value={form.parent1_email}
+                      onChange={e => set('parent1_email', e.target.value)}
+                    />
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+
+            <AccordionItem value="parent2" className="border-b-0 px-3">
+              <AccordionTrigger className="py-2.5 text-sm font-medium text-right hover:no-underline">
+                פרטי הורה 2
+              </AccordionTrigger>
+              <AccordionContent className="pb-3">
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div className="space-y-1 col-span-2">
+                    <Label className="text-xs">שם</Label>
+                    <Input
+                      className="h-9"
+                      value={form.parent2_name}
+                      onChange={e => set('parent2_name', e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">טלפון</Label>
+                    <Input
+                      className="h-9"
+                      value={form.parent2_phone}
+                      onChange={e => set('parent2_phone', e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs">מייל</Label>
+                    <Input
+                      className="h-9"
+                      value={form.parent2_email}
+                      onChange={e => set('parent2_email', e.target.value)}
+                    />
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
+        </div>
+
+        {/* Sticky footer */}
+        <div className="border-t border-border bg-card px-5 py-3 flex gap-2 shrink-0">
+          <Button onClick={handleSave} disabled={saving} className="flex-1 h-10">
+            {saving ? 'שומר...' : 'שמור'}
+          </Button>
+          <Button variant="outline" onClick={onClose} className="flex-1 h-10">
+            ביטול
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
