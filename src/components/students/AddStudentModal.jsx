@@ -145,7 +145,7 @@ export default function AddStudentModal({ classId, editData, onClose, onSuccess 
               />
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-1 col-span-2">
               <Label className="text-xs">סטטוס</Label>
               <Select value={form.status} onValueChange={v => set('status', v)}>
                 <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
@@ -155,15 +155,6 @@ export default function AddStudentModal({ classId, editData, onClose, onSuccess 
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div className="space-y-1">
-              <Label className="text-xs">יעד מעורבות (שע׳)</Label>
-              <Input
-                type="number"
-                className="h-9"
-                value={form.community_service_goal}
-                onChange={e => set('community_service_goal', Number(e.target.value))}
-              />
             </div>
           </div>
 

@@ -275,8 +275,28 @@ export default function StudentProfile({ role }) {
                   <StatusBadge status={student.community_service_status} />
                 </div>
                 {/* Hours row */}
-                <div className="flex items-center justify-between text-sm py-1.5 border-b border-border/50">
-                  <span className="font-bold tabular-nums">{student.community_service_done || 0} / {student.community_service_goal || 60} שעות</span>
+                <div className="flex items-center justify-between text-sm py-1.5 border-b border-border/50 gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold tabular-nums">{student.community_service_done || 0} / {student.community_service_goal || 60} שעות</span>
+                    {canEditParents && (
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const input = window.prompt('יעד שעות מעורבות חברתית', String(student.community_service_goal || 60));
+                          if (input === null) return;
+                          const goal = Number(input);
+                          if (!Number.isFinite(goal) || goal < 0) { toast.error('יש להזין מספר חיובי'); return; }
+                          await base44.entities.Student.update(student.id, { community_service_goal: goal });
+                          setStudent(prev => ({ ...prev, community_service_goal: goal }));
+                          toast.success('היעד עודכן');
+                        }}
+                        className="text-muted-foreground hover:text-primary"
+                        aria-label="עריכת יעד שעות"
+                      >
+                        <Edit className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
                   <span className="text-muted-foreground">התקדמות</span>
                 </div>
                 {/* Progress bar — RTL fills from right */}
