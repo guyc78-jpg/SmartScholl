@@ -84,11 +84,11 @@ export default function AddStudentModal({ classId, editData, onClose, onSuccess 
         </DialogHeader>
 
         {/* Scrollable body only if accordions expand */}
-        <div className="flex-1 overflow-y-auto px-5 py-3 space-y-3">
-          {/* Basic fields — compact, no scroll */}
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-2.5">
+          {/* Row 1: Last name + First name */}
           <div className="grid grid-cols-2 gap-2.5">
             <div className="space-y-1">
-              <Label className="text-xs">שם משפחה *</Label>
+              <Label className="text-xs font-medium">שם משפחה *</Label>
               <Input
                 className="h-9"
                 value={form.last_name || ''}
@@ -97,7 +97,7 @@ export default function AddStudentModal({ classId, editData, onClose, onSuccess 
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">שם פרטי *</Label>
+              <Label className="text-xs font-medium">שם פרטי *</Label>
               <Input
                 className="h-9"
                 value={form.first_name || ''}
@@ -105,9 +105,12 @@ export default function AddStudentModal({ classId, editData, onClose, onSuccess 
                 placeholder="דניאל"
               />
             </div>
+          </div>
 
+          {/* Row 2: Gender + Student Number */}
+          <div className="grid grid-cols-2 gap-2.5">
             <div className="space-y-1">
-              <Label className="text-xs">מין</Label>
+              <Label className="text-xs font-medium">מין</Label>
               <Select value={form.gender} onValueChange={v => set('gender', v)}>
                 <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -117,7 +120,7 @@ export default function AddStudentModal({ classId, editData, onClose, onSuccess 
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">מספר תלמיד</Label>
+              <Label className="text-xs font-medium">מספר תלמיד</Label>
               <Input
                 className="h-9"
                 value={form.student_number}
@@ -125,9 +128,12 @@ export default function AddStudentModal({ classId, editData, onClose, onSuccess 
                 placeholder="ת.ז / מזהה"
               />
             </div>
+          </div>
 
+          {/* Row 3: Phone + Status */}
+          <div className="grid grid-cols-2 gap-2.5">
             <div className="space-y-1">
-              <Label className="text-xs">טלפון</Label>
+              <Label className="text-xs font-medium">טלפון</Label>
               <Input
                 className="h-9"
                 value={form.phone}
@@ -136,17 +142,7 @@ export default function AddStudentModal({ classId, editData, onClose, onSuccess 
               />
             </div>
             <div className="space-y-1">
-              <Label className="text-xs">מייל</Label>
-              <Input
-                className="h-9"
-                value={form.email}
-                onChange={e => set('email', e.target.value)}
-                placeholder="name@school.il"
-              />
-            </div>
-
-            <div className="space-y-1 col-span-2">
-              <Label className="text-xs">סטטוס</Label>
+              <Label className="text-xs font-medium">סטטוס</Label>
               <Select value={form.status} onValueChange={v => set('status', v)}>
                 <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -156,6 +152,18 @@ export default function AddStudentModal({ classId, editData, onClose, onSuccess 
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          {/* Row 4: Email (full width, LTR) */}
+          <div className="space-y-1">
+            <Label className="text-xs font-medium text-right block">מייל</Label>
+            <Input
+              className="h-9 ltr:text-left rtl:text-left force-ltr"
+              dir="ltr"
+              value={form.email}
+              onChange={e => set('email', e.target.value)}
+              placeholder="name@school.il"
+            />
           </div>
 
           {/* Parents — collapsed by default */}
