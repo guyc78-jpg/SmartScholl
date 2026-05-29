@@ -22,7 +22,6 @@ import WorthCheckingPanel from '@/components/attendance/WorthCheckingPanel';
 import ExceptionRow from '@/components/attendance/ExceptionRow';
 import { isStudentInApprovedScope, getUserApprovedClass, getUserApprovedClassId } from '@/lib/schoolStructure';
 import { useAuth } from '@/lib/AuthContext';
-import { formatAttendanceStatus } from '@/lib/genderUtils';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 
 const STATUSES = ['נוכח/ת', 'מאחר/ת', 'נעדר/ת', 'שוחרר/ה'];
@@ -470,9 +469,10 @@ export default function ClassAttendance({ role }) {
                                 <button key={st}
                                   onClick={() => handleQuickStatus(student, st)}
                                   disabled={isPastDay(date)}
-                                  className={`text-[11px] px-2 py-1.5 rounded-lg border font-medium transition-all whitespace-nowrap disabled:opacity-50
+                                  aria-label={st}
+                                  className={`text-[11px] h-8 w-[58px] px-0 rounded-lg border font-medium transition-all whitespace-nowrap text-center disabled:opacity-50
                                     ${current?.status === st ? statusBtnStyle[st].active : statusBtnStyle[st].idle}`}>
-                                  {formatAttendanceStatus(st, student)}
+                                  {st}
                                 </button>
                               ))}
                             </div>
