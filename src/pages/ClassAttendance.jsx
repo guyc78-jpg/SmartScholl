@@ -45,26 +45,45 @@ export default function ClassAttendance({ role }) {
   const [tab, setTab] = useState('daily');
 
   useEffect(() => { loadAll(); }, []);
-  useEffect(() => { if (tab === 'daily') loadDay(); }, [date, tab]);
+  useEffect(() => { if (tab === 'daily' && students.length > 0) loadDay(); }, [date, tab, students.length]);
 
   async function loadAll() {
     setLoading(true);
-    const [sts, recs] = await Promise.all([
-      base44.entities.Student.filter({ class_id: classId }),
-      base44.entities.AttendanceRecord.filter({ class_id: classId }),
-    ]);
-    const scopedStudents = sts.filter(s => isStudentInApprovedScope(s, user, role) && (s.status === 'פעיל' || s.status === 'דורש מעקב'));
+    // Load all students then filter by approved scope (homeroom/coordinator/admin).
+    // Do NOT pre-filter by class_id alone — profile_class_id may not match the entity field.
+    const allStudents = await base44.entities.Student.list();
+    const scopedStudents = allStudents.filter(s =>
+      isStudentInApprovedScope(s, user, role) && (s.status === 'פעיל' || s.status === 'דורש מעקב')
+    );
     const scopedIds = new Set(scopedStudents.map(s => s.id));
+
+    // Fetch attendance records for those students (by class_ids actually present in scope)
+    const classIds = [...new Set(scopedStudents.map(s => s.class_id).filter(Boolean))];
+    const recsArrays = await Promise.all(
+      classIds.map(cid => base44.entities.AttendanceRecord.filter({ class_id: cid }))
+    );
+    const recs = recsArrays.flat();
+
     setStudents(scopedStudents);
-    // Only use records with the new statuses
     setAllRecords(recs.filter(r => STATUSES.includes(r.status) && scopedIds.has(r.student_id)));
     setLoading(false);
   }
 
   async function loadDay() {
-    const att = await base44.entities.AttendanceRecord.filter({ class_id: classId, date });
+    // Use scoped students' class_ids — not the potentially-stale `classId` variable
+    const classIds = [...new Set(students.map(s => s.class_id).filter(Boolean))];
+    if (classIds.length === 0) {
+      setAttendanceMap({});
+      setExistingIds({});
+      return;
+    }
+    const attArrays = await Promise.all(
+      classIds.map(cid => base44.entities.AttendanceRecord.filter({ class_id: cid, date }))
+    );
+    const att = attArrays.flat();
+    const scopedIds = new Set(students.map(s => s.id));
     const map = {}, ids = {};
-    att.filter(r => STATUSES.includes(r.status)).forEach(a => {
+    att.filter(r => STATUSES.includes(r.status) && scopedIds.has(r.student_id)).forEach(a => {
       map[a.student_id] = { status: a.status, note: a.note || '' };
       ids[a.student_id] = a.id;
     });
@@ -106,7 +125,7 @@ export default function ClassAttendance({ role }) {
       const data = {
         student_id: student.id,
         student_name: student.full_name,
-        class_id: classId,
+        class_id: student.class_id || classId,
         date,
         status: a.status,
         note: a.note || '',
@@ -220,6 +239,26 @@ export default function ClassAttendance({ role }) {
                 </div>
               ))}
             </div>
+          ) : students.length === 0 ? (
+            <Card className="border-dashed">
+              <CardContent className="p-8 text-center" dir="rtl">
+                <Users className="w-10 h-10 text-muted-foreground/60 mx-auto mb-3" />
+                <h3 className="font-semibold text-base mb-2">לא נמצאו תלמידים בכיתה זו</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  ייתכן שאין שיוך כיתה לפרופיל שלך, או שעדיין לא יובאו תלמידים למערכת.
+                </p>
+                <div className="flex flex-wrap gap-2 justify-end">
+                  <Button variant="outline" size="sm" onClick={() => window.location.href = '/profile'}>
+                    בדיקת שיוך כיתה
+                  </Button>
+                  {role === 'admin' && (
+                    <Button variant="outline" size="sm" onClick={() => window.location.href = '/students'}>
+                      ייבוא תלמידים
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           ) : (
             <div className="space-y-2">
               {students.map((student, i) => {
