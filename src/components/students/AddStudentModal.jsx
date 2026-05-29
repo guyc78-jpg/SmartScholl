@@ -174,8 +174,8 @@ export default function AddStudentModal({ classId, editData, onClose, onSuccess 
               </AccordionTrigger>
               <AccordionContent className="pb-3">
                 <div className="grid grid-cols-2 gap-2.5">
-                  <div className="space-y-1 col-span-2">
-                    <Label className="text-xs">שם</Label>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-medium">שם</Label>
                     <Input
                       className="h-9"
                       value={form.parent1_name}
@@ -183,19 +183,11 @@ export default function AddStudentModal({ classId, editData, onClose, onSuccess 
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs">טלפון</Label>
+                    <Label className="text-xs font-medium">טלפון</Label>
                     <Input
                       className="h-9"
                       value={form.parent1_phone}
                       onChange={e => set('parent1_phone', e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">מייל</Label>
-                    <Input
-                      className="h-9"
-                      value={form.parent1_email}
-                      onChange={e => set('parent1_email', e.target.value)}
                     />
                   </div>
                 </div>
@@ -208,8 +200,8 @@ export default function AddStudentModal({ classId, editData, onClose, onSuccess 
               </AccordionTrigger>
               <AccordionContent className="pb-3">
                 <div className="grid grid-cols-2 gap-2.5">
-                  <div className="space-y-1 col-span-2">
-                    <Label className="text-xs">שם</Label>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-medium">שם</Label>
                     <Input
                       className="h-9"
                       value={form.parent2_name}
@@ -217,19 +209,11 @@ export default function AddStudentModal({ classId, editData, onClose, onSuccess 
                     />
                   </div>
                   <div className="space-y-1">
-                    <Label className="text-xs">טלפון</Label>
+                    <Label className="text-xs font-medium">טלפון</Label>
                     <Input
                       className="h-9"
                       value={form.parent2_phone}
                       onChange={e => set('parent2_phone', e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">מייל</Label>
-                    <Input
-                      className="h-9"
-                      value={form.parent2_email}
-                      onChange={e => set('parent2_email', e.target.value)}
                     />
                   </div>
                 </div>
