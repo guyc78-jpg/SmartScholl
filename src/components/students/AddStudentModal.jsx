@@ -120,7 +120,7 @@ export default function AddStudentModal({ classId, editData, onClose, onSuccess 
               </Select>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs font-medium">מספר תלמיד</Label>
+              <Label className="text-xs font-medium">תעודת זהות</Label>
               <Input
                 className="h-9"
                 value={form.student_number}
