@@ -49,7 +49,7 @@ export default function StudentQuickPicker({ open, onClose, students, title, onS
                   ${s.gender === 'נקבה' ? 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'}`}>
                   {s.full_name?.charAt(0)}
                 </div>
-                <span className="flex-1 text-sm font-medium text-right">{s.full_name}</span>
+                <span className="flex-1 text-sm font-medium text-right">{s.full_name.split(' ').length > 1 ? `${s.full_name.split(' ').pop()} ${s.full_name.split(' ').slice(0, -1).join(' ')}` : s.full_name}</span>
               </button>
             ))
           )}

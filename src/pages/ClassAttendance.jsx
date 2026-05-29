@@ -26,6 +26,13 @@ import { formatAttendanceStatus } from '@/lib/genderUtils';
 const STATUSES = ['נוכח/ת', 'מאחר/ת', 'נעדר/ת', 'שוחרר/ה'];
 const PRESENT = 'נוכח/ת';
 
+function formatNameWithLastFirst(fullName) {
+  const parts = fullName.trim().split(' ');
+  if (parts.length === 1) return fullName;
+  const lastName = parts.pop();
+  return `${lastName} ${parts.join(' ')}`;
+}
+
 export const THRESHOLDS = { absences: 5, lates: 8 };
 
 const statusBtnStyle = {
@@ -385,7 +392,7 @@ export default function ClassAttendance({ role }) {
                               {student.full_name.charAt(0)}
                             </div>
                             <div className="flex-1 min-w-0 text-right">
-                              <p className="font-medium text-sm truncate">{student.full_name}</p>
+                              <p className="font-medium text-sm truncate">{formatNameWithLastFirst(student.full_name)}</p>
                               {current?.note && (
                                 <p className="text-[11px] text-muted-foreground truncate">{current.note}</p>
                               )}

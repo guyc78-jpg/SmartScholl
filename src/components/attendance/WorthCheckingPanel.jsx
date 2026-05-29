@@ -21,7 +21,7 @@ export default function WorthCheckingPanel({ students, onSelectStudent }) {
                 {s.full_name?.charAt(0)}
               </div>
               <div className="flex-1 min-w-0 text-right">
-                <p className="text-sm font-medium truncate">{s.full_name}</p>
+                <p className="text-sm font-medium truncate">{s.full_name.split(' ').length > 1 ? `${s.full_name.split(' ').pop()} ${s.full_name.split(' ').slice(0, -1).join(' ')}` : s.full_name}</p>
                 <p className="text-[11px] text-amber-700 dark:text-amber-400">{s.flagReason}</p>
               </div>
               <ChevronLeft className="w-4 h-4 text-muted-foreground flex-shrink-0" />
