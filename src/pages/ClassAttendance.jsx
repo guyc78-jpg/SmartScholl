@@ -22,16 +22,10 @@ import WorthCheckingPanel from '@/components/attendance/WorthCheckingPanel';
 import { isStudentInApprovedScope, getUserApprovedClass, getUserApprovedClassId } from '@/lib/schoolStructure';
 import { useAuth } from '@/lib/AuthContext';
 import { formatAttendanceStatus } from '@/lib/genderUtils';
+import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 
 const STATUSES = ['נוכח/ת', 'מאחר/ת', 'נעדר/ת', 'שוחרר/ה'];
 const PRESENT = 'נוכח/ת';
-
-function formatNameWithLastFirst(fullName) {
-  const parts = fullName.trim().split(' ');
-  if (parts.length === 1) return fullName;
-  const lastName = parts.pop();
-  return `${lastName} ${parts.join(' ')}`;
-}
 
 export const THRESHOLDS = { absences: 5, lates: 8 };
 
@@ -84,13 +78,7 @@ export default function ClassAttendance({ role }) {
     const recsArrays = await Promise.all(classIds.map(cid => base44.entities.AttendanceRecord.filter({ class_id: cid })));
     const recs = recsArrays.flat();
 
-    const getLastName = (name) => name.split(' ').pop();
-    setStudents(scopedStudents.sort((a, b) => {
-      const lastA = getLastName(a.full_name);
-      const lastB = getLastName(b.full_name);
-      if (lastA !== lastB) return lastA.localeCompare(lastB, 'he');
-      return a.full_name.localeCompare(b.full_name, 'he');
-    }));
+    setStudents(scopedStudents.sort(compareStudentsByLastName));
     setAllRecords(recs.filter(r => STATUSES.includes(r.status) && scopedIds.has(r.student_id)));
     setLoading(false);
   }
@@ -392,7 +380,7 @@ export default function ClassAttendance({ role }) {
                               {student.full_name.charAt(0)}
                             </div>
                             <div className="flex-1 min-w-0 text-right">
-                              <p className="font-medium text-sm truncate">{formatNameWithLastFirst(student.full_name)}</p>
+                              <p className="font-medium text-sm truncate">{formatStudentName(student.full_name)}</p>
                               {current?.note && (
                                 <p className="text-[11px] text-muted-foreground truncate">{current.note}</p>
                               )}

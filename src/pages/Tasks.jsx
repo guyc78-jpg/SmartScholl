@@ -15,6 +15,7 @@ import PageHeader from '@/components/ui/PageHeader';
 import EmptyState from '@/components/ui/EmptyState';
 import { toast } from 'sonner';
 import { CheckSquare, Plus, Edit, Trash2, Check } from 'lucide-react';
+import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 
 export default function Tasks({ role = 'homeroom_teacher', user }) {
   const [tasks, setTasks] = useState([]);
@@ -102,7 +103,7 @@ export default function Tasks({ role = 'homeroom_teacher', user }) {
                       <StatusBadge status={task.priority} />
                       {isOverdue(task) && <span className="text-[10px] bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded-full font-medium">באיחור!</span>}
                     </div>
-                    {task.student_name && <p className="text-xs text-muted-foreground mt-0.5">👤 {task.student_name}</p>}
+                    {task.student_name && <p className="text-xs text-muted-foreground mt-0.5">👤 {formatStudentName(task.student_name)}</p>}
                     {task.description && <p className="text-xs text-muted-foreground mt-0.5">{task.description}</p>}
                     <div className="flex gap-3 mt-1.5 text-xs text-muted-foreground">
                       <span>📅 יעד: {formatDate(task.due_date)}</span>
@@ -132,7 +133,7 @@ export default function Tasks({ role = 'homeroom_teacher', user }) {
                   <SelectTrigger><SelectValue placeholder="בחר תלמיד"/></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">כיתה – כללי</SelectItem>
-                    {students.map(s => <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>)}
+                    {[...students].sort(compareStudentsByLastName).map(s => <SelectItem key={s.id} value={s.id}>{formatStudentName(s.full_name)}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>

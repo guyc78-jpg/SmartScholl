@@ -10,6 +10,7 @@ import StatusBadge from '@/components/ui/StatusBadge';
 import PageHeader from '@/components/ui/PageHeader';
 import { toast } from 'sonner';
 import { Save, CheckCircle2 } from 'lucide-react';
+import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 
 const STATUSES = ['נוכח', 'נעדר', 'מאחר', 'מוצדק', 'שוחרר'];
 const STATUS_SHORT = { 'נוכח': 'נוכח', 'נעדר': 'נעדר', 'מאחר': 'מאחר', 'מוצדק': 'מוצדק', 'שוחרר': 'שוחרר' };
@@ -38,7 +39,7 @@ export default function Attendance() {
       base44.entities.Student.filter({ class_id: CLASS_ID }),
       base44.entities.AttendanceRecord.filter({ class_id: CLASS_ID, date })
     ]);
-    setStudents(sts.filter(s => s.status === 'פעיל' || s.status === 'דורש מעקב'));
+    setStudents(sts.filter(s => s.status === 'פעיל' || s.status === 'דורש מעקב').sort(compareStudentsByLastName));
     const map = {};
     const ids = {};
     att.forEach(a => { map[a.student_id] = { status: a.status, note: a.note || '' }; ids[a.student_id] = a.id; });
@@ -148,7 +149,7 @@ export default function Attendance() {
                       {student.full_name.charAt(0)}
                     </div>
                     <div className="min-w-0 text-right">
-                      <p className="font-medium text-sm truncate">{student.full_name}</p>
+                      <p className="font-medium text-sm truncate">{formatStudentName(student.full_name)}</p>
                       {student.status === 'דורש מעקב' && <StatusBadge status="דורש מעקב" className="mt-0.5 scale-90 origin-right" />}
                     </div>
                     {/* Status buttons */}

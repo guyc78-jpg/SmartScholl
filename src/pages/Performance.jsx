@@ -14,6 +14,7 @@ import PageHeader from '@/components/ui/PageHeader';
 import EmptyState from '@/components/ui/EmptyState';
 import { toast } from 'sonner';
 import { BarChart2, Plus, Edit, Trash2 } from 'lucide-react';
+import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 
 const CATEGORIES = [
   { key: 'learning_habits', label: 'הרגלי למידה' },
@@ -106,7 +107,7 @@ export default function Performance({ role = 'homeroom_teacher' }) {
                 <Card className="p-4">
                   <div className="flex justify-between items-start mb-3">
                     <div>
-                      <p className="font-semibold text-sm">{r.student_name}</p>
+                      <p className="font-semibold text-sm">{formatStudentName(r.student_name)}</p>
                       <p className="text-xs text-muted-foreground">{r.period} · {formatDate(r.date)}</p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -149,7 +150,7 @@ export default function Performance({ role = 'homeroom_teacher' }) {
                   <Label>תלמיד *</Label>
                   <Select value={form.student_id} onValueChange={v => set('student_id', v)}>
                     <SelectTrigger><SelectValue placeholder="בחר"/></SelectTrigger>
-                    <SelectContent>{students.map(s => <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>)}</SelectContent>
+                    <SelectContent>{[...students].sort(compareStudentsByLastName).map(s => <SelectItem key={s.id} value={s.id}>{formatStudentName(s.full_name)}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1">

@@ -19,6 +19,7 @@ import FamilySensitiveInfoCard from '@/components/student/FamilySensitiveInfoCar
 import { CLASS_ID } from '@/lib/demoData';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/AuthContext';
+import { formatStudentName } from '@/lib/studentName';
 
 const RatingDots = ({ value }) => (
   <div className="flex flex-row-reverse gap-1">
@@ -154,7 +155,7 @@ export default function StudentProfile({ role }) {
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-xl sm:text-2xl font-bold text-foreground truncate">{student.full_name}</h1>
+                <h1 className="text-xl sm:text-2xl font-bold text-foreground truncate">{formatStudentName(student.full_name)}</h1>
                 <StatusBadge status={student.status} />
               </div>
               <p className="text-sm text-muted-foreground mt-1">כיתה {student.class_name || 'י׳1'}</p>

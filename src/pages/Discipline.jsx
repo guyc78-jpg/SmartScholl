@@ -15,6 +15,7 @@ import PageHeader from '@/components/ui/PageHeader';
 import EmptyState from '@/components/ui/EmptyState';
 import { toast } from 'sonner';
 import { Shield, Plus, Edit, Trash2, Filter } from 'lucide-react';
+import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 
 export default function Discipline({ role = 'homeroom_teacher' }) {
   const [events, setEvents] = useState([]);
@@ -94,7 +95,7 @@ export default function Discipline({ role = 'homeroom_teacher' }) {
                       <div className="w-7 h-7 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold text-xs">
                         {ev.student_name?.charAt(0)}
                       </div>
-                      <span className="font-semibold text-sm">{ev.student_name}</span>
+                      <span className="font-semibold text-sm">{formatStudentName(ev.student_name)}</span>
                       <StatusBadge status={ev.severity} />
                       <StatusBadge status={ev.status} />
                     </div>
@@ -137,7 +138,7 @@ export default function Discipline({ role = 'homeroom_teacher' }) {
                 <Label>תלמיד *</Label>
                 <Select value={form.student_id} onValueChange={v => set('student_id', v)}>
                   <SelectTrigger><SelectValue placeholder="בחר תלמיד"/></SelectTrigger>
-                  <SelectContent>{students.map(s => <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>)}</SelectContent>
+                  <SelectContent>{[...students].sort(compareStudentsByLastName).map(s => <SelectItem key={s.id} value={s.id}>{formatStudentName(s.full_name)}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="grid grid-cols-2 gap-3">

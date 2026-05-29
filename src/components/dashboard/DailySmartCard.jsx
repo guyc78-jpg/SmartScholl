@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { AlertTriangle, TrendingUp, Users, CheckSquare, Megaphone, ChevronLeft, BookOpen, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatStudentName } from '@/lib/studentName';
 
 /**
  * "מה חשוב היום" — clean, scannable card.
@@ -54,8 +55,8 @@ export default function DailySmartCard({ classId, students, todayAttendance, exa
     const today = new Date().toISOString().split('T')[0];
 
     // 1. נוכחות היום — נעדרים ומאחרים
-    const absentNames = todayAttendance.filter(a => ['נעדר', 'נעדר/ת'].includes(a.status)).map(a => a.student_name).slice(0, 3);
-    const lateNames = todayAttendance.filter(a => ['מאחר', 'מאחר/ת'].includes(a.status)).map(a => a.student_name).slice(0, 3);
+    const absentNames = todayAttendance.filter(a => ['נעדר', 'נעדר/ת'].includes(a.status)).map(a => formatStudentName(a.student_name)).slice(0, 3);
+    const lateNames = todayAttendance.filter(a => ['מאחר', 'מאחר/ת'].includes(a.status)).map(a => formatStudentName(a.student_name)).slice(0, 3);
     if (absentNames.length || lateNames.length) {
       insights.push({
         id: 'presence',
@@ -135,8 +136,8 @@ export default function DailySmartCard({ classId, students, todayAttendance, exa
         type: 'משמעת',
         title: `${openDiscipline.length} אירועי משמעת פתוחים`,
         icon: AlertTriangle,
-        meta: openDiscipline[0].student_name,
-        names: openDiscipline.map(d => d.student_name),
+        meta: formatStudentName(openDiscipline[0].student_name),
+        names: openDiscipline.map(d => formatStudentName(d.student_name)),
         date: openDiscipline[0].date,
         link: '/discipline',
       });
@@ -151,8 +152,8 @@ export default function DailySmartCard({ classId, students, todayAttendance, exa
         type: 'מעקב',
         title: `${watchList.length} תלמידים דורשים מעקב`,
         icon: Users,
-        meta: watchList[0].full_name,
-        names: watchList.map(s => s.full_name),
+        meta: formatStudentName(watchList[0].full_name),
+        names: watchList.map(s => formatStudentName(s.full_name)),
         link: '/students',
       });
     }

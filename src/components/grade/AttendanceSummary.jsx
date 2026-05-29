@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Clock, UserX, AlertTriangle } from 'lucide-react';
+import { formatStudentName } from '@/lib/studentName';
 
 export default function AttendanceSummary({ students, attendance, attByStudent }) {
   const today = new Date().toISOString().split('T')[0];
@@ -48,7 +49,7 @@ export default function AttendanceSummary({ students, attendance, attByStudent }
                     {s.full_name.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">{s.full_name}</p>
+                    <p className="text-sm font-medium">{formatStudentName(s.full_name)}</p>
                   </div>
                   <div className="flex gap-2 text-xs">
                     {s.abs > 0 && (
@@ -88,7 +89,7 @@ export default function AttendanceSummary({ students, attendance, attByStudent }
                 const att = attByStudent[s.id] || {};
                 return (
                   <tr key={s.id} className="border-b last:border-0 hover:bg-muted/30">
-                    <td className="py-2 font-medium">{s.full_name}</td>
+                    <td className="py-2 font-medium">{formatStudentName(s.full_name)}</td>
                     <td className="py-2 text-center">
                       <span className={att.absences > 0 ? 'text-red-600 font-medium' : 'text-muted-foreground'}>
                         {att.absences || 0}

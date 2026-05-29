@@ -13,6 +13,7 @@ import PageHeader from '@/components/ui/PageHeader';
 import EmptyState from '@/components/ui/EmptyState';
 import { toast } from 'sonner';
 import { MessageSquare, Plus, Edit, Trash2, Phone, Mail, Video } from 'lucide-react';
+import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 
 const typeIcons = { 'שיחה טלפונית': Phone, 'פגישה': MessageSquare, 'מייל': Mail, 'הודעה': MessageSquare, 'שיחת זום': Video };
 
@@ -80,7 +81,7 @@ export default function Communications({ role = 'homeroom_teacher' }) {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <span className="font-semibold text-sm">{c.student_name}</span>
+                        <span className="font-semibold text-sm">{formatStudentName(c.student_name)}</span>
                         <span className="text-xs bg-muted px-2 py-0.5 rounded-full">{c.type}</span>
                         <span className="text-xs bg-muted px-2 py-0.5 rounded-full">{c.with_whom}</span>
                         <span className="text-xs text-muted-foreground mr-auto">{formatDate(c.date)}</span>
@@ -115,7 +116,7 @@ export default function Communications({ role = 'homeroom_teacher' }) {
                 <Label>תלמיד *</Label>
                 <Select value={form.student_id} onValueChange={v => set('student_id', v)}>
                   <SelectTrigger><SelectValue placeholder="בחר תלמיד"/></SelectTrigger>
-                  <SelectContent>{students.map(s => <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>)}</SelectContent>
+                  <SelectContent>{[...students].sort(compareStudentsByLastName).map(s => <SelectItem key={s.id} value={s.id}>{formatStudentName(s.full_name)}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="grid grid-cols-2 gap-3">

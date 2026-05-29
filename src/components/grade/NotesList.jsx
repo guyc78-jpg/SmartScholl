@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Star, Plus } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 
 const CATEGORIES = ['כללי', 'אישי', 'אקדמי', 'חברתי', 'רגשי'];
 const CAT_COLORS = {
@@ -62,7 +63,7 @@ export default function NotesList({ notes, onRefresh, user, role, classId, stude
                 <Label>תלמיד *</Label>
                 <Select value={form.student_id} onValueChange={v => setForm(p => ({ ...p, student_id: v }))}>
                   <SelectTrigger><SelectValue placeholder="בחר תלמיד" /></SelectTrigger>
-                  <SelectContent>{students.map(s => <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>)}</SelectContent>
+                  <SelectContent>{[...students].sort(compareStudentsByLastName).map(s => <SelectItem key={s.id} value={s.id}>{formatStudentName(s.full_name)}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-1">
@@ -102,7 +103,7 @@ export default function NotesList({ notes, onRefresh, user, role, classId, stude
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <p className="text-sm font-medium">{n.student_name}</p>
+                  <p className="text-sm font-medium">{formatStudentName(n.student_name)}</p>
                   <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${CAT_COLORS[n.category] || CAT_COLORS['כללי']}`}>
                     {n.category}
                   </span>

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { AlertTriangle, Clock, UserX, ChevronLeft } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import StatusBadge from '@/components/ui/StatusBadge';
+import { formatStudentName } from '@/lib/studentName';
 
 export default function WatchStudentsList({ students, attByStudent }) {
   const watchStudents = students.filter(s => s.status === 'דורש מעקב');
@@ -38,7 +39,7 @@ export default function WatchStudentsList({ students, attByStudent }) {
                     {s.full_name.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">{s.full_name}</p>
+                    <p className="text-sm font-medium">{formatStudentName(s.full_name)}</p>
                     <div className="flex flex-wrap gap-1 mt-0.5">
                       {flags.map((f, i) => (
                         <span key={i} className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${f.color}`}>{f.label}</span>
@@ -69,7 +70,7 @@ export default function WatchStudentsList({ students, attByStudent }) {
                   {s.full_name.charAt(0)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{s.full_name}</p>
+                  <p className="text-sm font-medium truncate">{formatStudentName(s.full_name)}</p>
                 </div>
                 <StatusBadge status={s.status} />
               </Link>

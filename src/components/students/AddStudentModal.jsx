@@ -63,7 +63,7 @@ export default function AddStudentModal({ classId, editData, onClose, onSuccess 
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1 col-span-2">
                   <Label>שם מלא *</Label>
-                  <Input value={form.full_name} onChange={e => set('full_name', e.target.value)} placeholder="שם פרטי ושם משפחה" />
+                  <Input value={form.full_name} onChange={e => set('full_name', e.target.value)} placeholder="שם פרטי ושם משפחה (יוצג כ״משפחה פרטי״)" />
                 </div>
                 <div className="space-y-1">
                   <Label>מין</Label>

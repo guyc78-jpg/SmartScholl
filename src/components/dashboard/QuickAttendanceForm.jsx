@@ -8,6 +8,7 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from '@/components/ui/alert-dialog';
+import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 
 const PRESENT = 'נוכח/ת';
 const LATE = 'מאחר/ת';
@@ -20,19 +21,8 @@ const EXCEPTION_OPTIONS = [
   { key: RELEASED, label: 'שוחרר/ה', icon: LogOut, color: 'bg-blue-600 text-white border-blue-600 hover:bg-blue-600' },
 ];
 
-function sortByLastName(students) {
-  return [...students].sort((a, b) => {
-    const lastA = (a.full_name || '').trim().split(/\s+/).pop();
-    const lastB = (b.full_name || '').trim().split(/\s+/).pop();
-    return lastA.localeCompare(lastB, 'he');
-  });
-}
-
-function displayName(fullName = '') {
-  const parts = fullName.trim().split(/\s+/);
-  if (parts.length < 2) return fullName;
-  return `${parts[parts.length - 1]} ${parts.slice(0, -1).join(' ')}`;
-}
+const sortByLastName = (students) => [...students].sort(compareStudentsByLastName);
+const displayName = formatStudentName;
 
 export default function QuickAttendanceForm({ classId, onSaved }) {
   const today = new Date().toISOString().split('T')[0];

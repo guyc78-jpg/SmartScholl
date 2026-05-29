@@ -11,6 +11,7 @@ import { AlertTriangle, Plus, Filter, Search, Clock, CheckCircle2, AlertCircle, 
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import StatusBadge from '@/components/ui/StatusBadge';
+import { formatStudentName } from '@/lib/studentName';
 
 const EVENT_TYPES = {
   discipline: { label: 'משמעת', color: 'text-red-600' },
@@ -217,7 +218,7 @@ export default function TreatmentCenter() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2 mb-1">
                       <div>
-                        <p className="font-semibold text-sm text-foreground">{treatmentCase.student_name}</p>
+                        <p className="font-semibold text-sm text-foreground">{formatStudentName(treatmentCase.student_name)}</p>
                         <p className="text-xs text-muted-foreground">{treatmentCase.title}</p>
                       </div>
                       <div className="flex-shrink-0 flex items-center gap-1.5">
@@ -260,7 +261,7 @@ export default function TreatmentCenter() {
         <Dialog open={showDialog} onOpenChange={setShowDialog}>
           <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" dir="rtl">
             <DialogHeader>
-              <DialogTitle>{editingCase.student_name} - {editingCase.title}</DialogTitle>
+              <DialogTitle>{formatStudentName(editingCase.student_name)} - {editingCase.title}</DialogTitle>
               <DialogDescription>{EVENT_TYPES[editingCase.event_type].label}</DialogDescription>
             </DialogHeader>
 

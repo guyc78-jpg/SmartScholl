@@ -31,6 +31,7 @@ import {
 } from '@/lib/schoolStructure';
 import AddStudentModal from '@/components/students/AddStudentModal';
 import ImportStudentsModal from '@/components/students/ImportStudentsModal';
+import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 
 const PAGE_SIZE = 40;
 const LOAD_TIMEOUT_MS = 15000;
@@ -110,24 +111,13 @@ export default function Students({ role }) {
     const matchSearch = s.full_name.includes(search) || (s.student_number || '').includes(search);
     const matchStatus = statusFilter === 'הכל' || s.status === statusFilter;
     return matchSearch && matchStatus;
-  }).sort((a, b) => {
-    const lastNameA = a.full_name.split(' ').pop() || '';
-    const lastNameB = b.full_name.split(' ').pop() || '';
-    return lastNameA.localeCompare(lastNameB, 'he');
-  }), [students, search, statusFilter]);
+  }).sort(compareStudentsByLastName), [students, search, statusFilter]);
 
   const visible = filtered.slice(0, visibleCount);
   const hasMore = filtered.length > visibleCount;
 
   const communityPct = (s) => s.community_service_goal > 0
     ? Math.round((s.community_service_done / s.community_service_goal) * 100) : 0;
-
-  const formatStudentName = (fullName) => {
-    const parts = fullName.trim().split(' ');
-    if (parts.length < 2) return fullName;
-    const lastName = parts.pop();
-    return `${lastName} ${parts.join(' ')}`;
-  };
 
   async function deleteAllStudents() {
     setDeleting(true);

@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { MessageSquare, Plus, User } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 
 const TYPES = ['שיחה טלפונית', 'פגישה', 'מייל', 'הודעה', 'שיחת זום'];
 const WITH_WHOM = ['הורה 1', 'הורה 2', 'תלמיד', 'מורה', 'יועצת', 'אחר'];
@@ -60,7 +61,7 @@ export default function CommunicationsList({ comms, onRefresh, user, role, class
               <Select value={form.student_id} onValueChange={v => setForm(p => ({ ...p, student_id: v }))}>
                 <SelectTrigger><SelectValue placeholder="בחר תלמיד" /></SelectTrigger>
                 <SelectContent>
-                  {students.map(s => <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>)}
+                  {[...students].sort(compareStudentsByLastName).map(s => <SelectItem key={s.id} value={s.id}>{formatStudentName(s.full_name)}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -113,7 +114,7 @@ export default function CommunicationsList({ comms, onRefresh, user, role, class
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <p className="text-sm font-medium">{c.student_name}</p>
+                  <p className="text-sm font-medium">{formatStudentName(c.student_name)}</p>
                   <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">{c.type}</span>
                   <span className="text-xs text-muted-foreground">{c.with_whom}</span>
                 </div>

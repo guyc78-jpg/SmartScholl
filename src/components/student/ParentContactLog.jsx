@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Phone, MessageCircle, Plus, Trash2, AlertCircle, CheckCircle2, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { formatStudentName } from '@/lib/studentName';
 
 const CONTACT_TYPES = ['טלפון', 'פנים אל פנים', 'הודעה כתובה', 'WhatsApp', 'דוא״ל'];
 const PARENT_OPTIONS = ['הורה 1', 'הורה 2', 'שני הורים'];
@@ -99,7 +100,7 @@ export default function ParentContactLog({ studentId, classId, studentName, pare
 
   function generateWhatsAppMessage() {
     const dateStr = new Date(formData.date).toLocaleDateString('he-IL');
-    const msg = `שלום, קצר הודעה בנוגע ל${studentName}: ${formData.subject}. ${formData.summary.substring(0, 100)}...`;
+    const msg = `שלום, קצר הודעה בנוגע ל${formatStudentName(studentName)}: ${formData.subject}. ${formData.summary.substring(0, 100)}...`;
     const encoded = encodeURIComponent(msg);
     const phone = formData.parent_phone?.replace(/\D/g, '');
     if (!phone) {

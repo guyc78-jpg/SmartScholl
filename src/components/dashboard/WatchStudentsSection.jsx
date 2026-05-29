@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, Users, ChevronLeft, Zap, TrendingDown, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatStudentName } from '@/lib/studentName';
 
 const THRESHOLDS = {
   absences: 5,
@@ -91,7 +92,7 @@ export default function WatchStudentsSection({
 
             {/* Content */}
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground">{student.full_name}</p>
+              <p className="text-sm font-medium text-foreground">{formatStudentName(student.full_name)}</p>
               <div className="flex flex-wrap gap-1 mt-1">
                 {student.absences >= THRESHOLDS.absences && (
                   <span className="inline-flex items-center gap-1 text-[11px] text-amber-700 dark:text-amber-300 bg-amber-100/50 dark:bg-amber-900/40 px-1.5 py-0.5 rounded">

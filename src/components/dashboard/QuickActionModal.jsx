@@ -13,6 +13,7 @@ import { getUserApprovedClassId, getUserApprovedGrade } from '@/lib/schoolStruct
 import { getAvailableRoles, hasApprovedRole } from '@/lib/roleUtils';
 import { CLASS_ID } from '@/lib/demoData';
 import QuickAttendanceForm from '@/components/dashboard/QuickAttendanceForm';
+import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 
 const titles = {
   attendance: 'סימון נוכחות',
@@ -35,21 +36,8 @@ function studentMatchesClass(student, classId, className) {
   return false;
 }
 
-function getStudentDisplayName(fullName = '') {
-  const parts = fullName.trim().split(/\s+/);
-  if (parts.length < 2) return fullName;
-  const lastName = parts[parts.length - 1];
-  const firstName = parts.slice(0, -1).join(' ');
-  return `${lastName} ${firstName}`;
-}
-
-function sortByLastName(students) {
-  return [...students].sort((a, b) => {
-    const lastNameA = (a.full_name || '').trim().split(/\s+/).pop();
-    const lastNameB = (b.full_name || '').trim().split(/\s+/).pop();
-    return lastNameA.localeCompare(lastNameB, 'he');
-  });
-}
+const getStudentDisplayName = formatStudentName;
+const sortByLastName = (students) => [...students].sort(compareStudentsByLastName);
 
 export default function QuickActionModal({ action, classId: classIdProp, user, role, onClose, onSuccess }) {
   const [form, setForm] = useState({});

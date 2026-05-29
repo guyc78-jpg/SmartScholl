@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle, AlertCircle, Zap, TrendingUp, CheckCircle2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { formatStudentName } from '@/lib/studentName';
 
 const alertConfig = {
   high_absences: { icon: TrendingUp, color: 'text-red-600', bg: 'bg-red-50 dark:bg-red-900/20', label: 'היעדרויות גבוהות' },
@@ -131,7 +132,7 @@ export default function SmartAlerts({ userRole }) {
                   <Icon className={cn('w-5 h-5 flex-shrink-0 mt-0.5', config.color)} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="font-semibold text-sm">{alert.student_name}</span>
+                      <span className="font-semibold text-sm">{formatStudentName(alert.student_name)}</span>
                       <Badge className={severityBadges[alert.severity]} variant="outline">
                         {alert.severity === 'critical' ? 'קריטי' : alert.severity === 'high' ? 'גבוה' : alert.severity === 'medium' ? 'בינוני' : 'נמוך'}
                       </Badge>

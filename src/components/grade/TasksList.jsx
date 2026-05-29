@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { CheckSquare, Plus, Check } from 'lucide-react';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { toast } from 'sonner';
+import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 
 const PRIORITIES = ['נמוכה', 'בינונית', 'גבוהה', 'דחופה'];
 const CATEGORIES = ['נוכחות', 'משמעת', 'תפקוד', 'הורים', 'כללי'];
@@ -72,7 +73,7 @@ export default function TasksList({ tasks, onRefresh, user, role, classId, stude
                   <SelectTrigger><SelectValue placeholder="כיתתי" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value={null}>כיתתי</SelectItem>
-                    {students.map(s => <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>)}
+                    {[...students].sort(compareStudentsByLastName).map(s => <SelectItem key={s.id} value={s.id}>{formatStudentName(s.full_name)}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -134,7 +135,7 @@ export default function TasksList({ tasks, onRefresh, user, role, classId, stude
                         <p className="text-sm font-medium">{t.title}</p>
                         <StatusBadge status={t.priority} />
                       </div>
-                      {t.student_name && <p className="text-xs text-muted-foreground">{t.student_name}</p>}
+                      {t.student_name && <p className="text-xs text-muted-foreground">{formatStudentName(t.student_name)}</p>}
                       {t.description && <p className="text-xs text-muted-foreground mt-0.5 whitespace-pre-line line-clamp-2">{t.description}</p>}
                       <p className="text-xs text-muted-foreground mt-0.5">יעד: {t.due_date}</p>
                     </div>

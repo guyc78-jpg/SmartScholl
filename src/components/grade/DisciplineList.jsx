@@ -1,6 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { AlertTriangle } from 'lucide-react';
+import { formatStudentName } from '@/lib/studentName';
 
 export default function DisciplineList({ events }) {
   const sorted = [...events].sort((a, b) => b.date?.localeCompare(a.date));
@@ -20,7 +21,7 @@ export default function DisciplineList({ events }) {
             <div className="flex items-start gap-3">
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <p className="text-sm font-medium">{ev.student_name}</p>
+                  <p className="text-sm font-medium">{formatStudentName(ev.student_name)}</p>
                   <StatusBadge status={ev.severity} />
                   <StatusBadge status={ev.status} />
                 </div>

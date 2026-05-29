@@ -12,6 +12,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { FileBarChart, Download } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 import { isStudentInApprovedScope } from '@/lib/schoolStructure';
+import { formatStudentName, compareStudentsByLastName, getLastName } from '@/lib/studentName';
 
 export default function Reports({ role }) {
   const { user } = useAuth();
@@ -67,11 +68,11 @@ export default function Reports({ role }) {
   const attChartData = Object.entries(attStats).map(([name, value]) => ({ name, value }));
   const COLORS = ['#10B981', '#EF4444', '#F59E0B', '#3B82F6', '#8B5CF6'];
 
-  // Attendance per student (top absentees)
+  // Attendance per student (top absentees) — chart short labels use last name
   const studentAttStats = students.map(s => {
     const sAtt = filteredAtt.filter(a => a.student_id === s.id);
     return {
-      name: s.full_name.split(' ')[0],
+      name: getLastName(s.full_name),
       נוכח: countStatuses(sAtt, ['נוכח', 'נוכח/ת']),
       נעדר: countStatuses(sAtt, ['נעדר', 'נעדר/ת']),
       מאחר: countStatuses(sAtt, ['מאחר', 'מאחר/ת']),
@@ -79,14 +80,14 @@ export default function Reports({ role }) {
   }).sort((a,b) => b.נעדר - a.נעדר);
 
   const communityData = students.map(s => ({
-    name: s.full_name.split(' ')[0],
+    name: getLastName(s.full_name),
     שבוצע: s.community_service_done || 0,
     יעד: s.community_service_goal || 60,
   })).slice(0, 8);
 
   const exportCSV = () => {
     const rows = [['תלמיד', 'תאריך', 'סטטוס', 'הערה']];
-    filteredAtt.forEach(a => rows.push([a.student_name, a.date, a.status, a.note || '']));
+    filteredAtt.forEach(a => rows.push([formatStudentName(a.student_name), a.date, a.status, a.note || '']));
     const csv = rows.map(r => r.join(',')).join('\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -108,7 +109,7 @@ export default function Reports({ role }) {
               <SelectTrigger><SelectValue/></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">כל הכיתה</SelectItem>
-                {students.map(s => <SelectItem key={s.id} value={s.id}>{s.full_name}</SelectItem>)}
+                {[...students].sort(compareStudentsByLastName).map(s => <SelectItem key={s.id} value={s.id}>{formatStudentName(s.full_name)}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -196,7 +197,7 @@ export default function Reports({ role }) {
                 <div className="space-y-2">
                   {filteredDis.map(d => (
                     <div key={d.id} className="flex items-center justify-between py-2 border-b last:border-0 text-sm">
-                      <span className="font-medium">{d.student_name}</span>
+                      <span className="font-medium">{formatStudentName(d.student_name)}</span>
                       <span className="text-muted-foreground text-xs">{d.date}</span>
                       <StatusBadge status={d.severity} />
                       <StatusBadge status={d.status} />
