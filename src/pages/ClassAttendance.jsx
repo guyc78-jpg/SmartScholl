@@ -52,9 +52,13 @@ export default function ClassAttendance({ role }) {
     // Load all students then filter by approved scope (homeroom/coordinator/admin).
     // Do NOT pre-filter by class_id alone — profile_class_id may not match the entity field.
     const allStudents = await base44.entities.Student.list();
-    const scopedStudents = allStudents.filter(s =>
-      isStudentInApprovedScope(s, user, role) && (s.status === 'פעיל' || s.status === 'דורש מעקב')
-    );
+    const activeStudents = allStudents.filter(s => s.status === 'פעיל' || s.status === 'דורש מעקב');
+    let scopedStudents = activeStudents.filter(s => isStudentInApprovedScope(s, user, role));
+
+    // Fallback: if scope returned nothing but user is admin → show all active students
+    if (scopedStudents.length === 0 && role === 'admin') {
+      scopedStudents = activeStudents;
+    }
     const scopedIds = new Set(scopedStudents.map(s => s.id));
 
     // Fetch attendance records for those students (by class_ids actually present in scope)
@@ -244,18 +248,23 @@ export default function ClassAttendance({ role }) {
               <CardContent className="p-8 text-center" dir="rtl">
                 <Users className="w-10 h-10 text-muted-foreground/60 mx-auto mb-3" />
                 <h3 className="font-semibold text-base mb-2">לא נמצאו תלמידים בכיתה זו</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  ייתכן שאין שיוך כיתה לפרופיל שלך, או שעדיין לא יובאו תלמידים למערכת.
-                </p>
+                <div className="text-sm text-muted-foreground space-y-1.5 mb-4 max-w-md mx-auto">
+                  {!getUserApprovedClass(user) && role !== 'admin' ? (
+                    <p>⚠️ <strong>אין שיוך כיתה לפרופיל שלך.</strong> יש להגדיר את הכיתה שאת/ה מחנכ/ת בעמוד הפרופיל.</p>
+                  ) : (
+                    <>
+                      <p>הכיתה המשויכת: <strong>{getUserApprovedClass(user) || '—'}</strong></p>
+                      <p>ייתכן שעדיין לא יובאו תלמידים לכיתה זו, או שהם לא משויכים לכיתה הנכונה.</p>
+                    </>
+                  )}
+                </div>
                 <div className="flex flex-wrap gap-2 justify-end">
                   <Button variant="outline" size="sm" onClick={() => window.location.href = '/profile'}>
                     בדיקת שיוך כיתה
                   </Button>
-                  {role === 'admin' && (
-                    <Button variant="outline" size="sm" onClick={() => window.location.href = '/students'}>
-                      ייבוא תלמידים
-                    </Button>
-                  )}
+                  <Button variant="outline" size="sm" onClick={() => window.location.href = '/students'}>
+                    {role === 'admin' ? 'ייבוא תלמידים' : 'רשימת תלמידים'}
+                  </Button>
                 </div>
               </CardContent>
             </Card>
