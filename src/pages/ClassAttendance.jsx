@@ -11,7 +11,7 @@ import PageHeader from '@/components/ui/PageHeader';
 import { toast } from 'sonner';
 import {
   CheckCircle2, AlertTriangle, Users, Clock, UserX, LogOut,
-  Search, Save, ListFilter, X
+  Search, Save, ListFilter, X, Pencil
 } from 'lucide-react';
 import AttendanceAlerts from '@/components/attendance/AttendanceAlerts';
 import AttendancePatterns from '@/components/attendance/AttendancePatterns';
@@ -19,6 +19,7 @@ import AttendanceSummaryChips from '@/components/attendance/AttendanceSummaryChi
 import StudentQuickPicker from '@/components/attendance/StudentQuickPicker';
 import ExceptionDetailDialog from '@/components/attendance/ExceptionDetailDialog';
 import WorthCheckingPanel from '@/components/attendance/WorthCheckingPanel';
+import ExceptionRow from '@/components/attendance/ExceptionRow';
 import { isStudentInApprovedScope, getUserApprovedClass, getUserApprovedClassId } from '@/lib/schoolStructure';
 import { useAuth } from '@/lib/AuthContext';
 import { formatAttendanceStatus } from '@/lib/genderUtils';
@@ -53,6 +54,7 @@ export default function ClassAttendance({ role }) {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const [confirmedAt, setConfirmedAt] = useState(null);
   const [allRecords, setAllRecords] = useState([]);
   const [view, setView] = useState('exceptions'); // exceptions | all
   const [search, setSearch] = useState('');
@@ -98,6 +100,15 @@ export default function ClassAttendance({ role }) {
     setExistingIds(ids);
     // If any record exists for today → it was confirmed
     setConfirmed(att.length > 0);
+    if (att.length > 0) {
+      const latest = att.reduce((acc, r) => {
+        const t = r.updated_date || r.created_date;
+        return (!acc || (t && t > acc)) ? t : acc;
+      }, null);
+      setConfirmedAt(latest || null);
+    } else {
+      setConfirmedAt(null);
+    }
   }
 
   // ── Save helpers — auto-save on every change ──────────────────────────────
@@ -147,11 +158,44 @@ export default function ClassAttendance({ role }) {
     try {
       await Promise.all(updates.map(s => persistOne(s, PRESENT, '')));
       setConfirmed(true);
+      setConfirmedAt(new Date().toISOString());
       toast.success('נוכחות אושרה — כל התלמידים סומנו כנוכחים');
     } catch (e) {
       console.error(e); toast.error('שמירה חלקית — נסה שוב');
     }
     setSaving(false);
+  }
+
+  // Return a flagged student back to present (clears note)
+  async function handleMarkPresent(student) {
+    await setStatus(student, PRESENT, '');
+  }
+
+  // Open the detail dialog for editing an existing exception
+  function handleEditException(student, status) {
+    setDetailStudent(student);
+    setDetailStatus(status);
+  }
+
+  // Create a task in "treatment" — uses the Task entity
+  async function handleAddToTreatment(student, status, note) {
+    try {
+      const reasonLabel = status === 'מאחר/ת' ? 'איחור' : status === 'נעדר/ת' ? 'היעדרות' : 'שחרור';
+      await base44.entities.Task.create({
+        class_id: student.class_id || classId,
+        student_id: student.id,
+        student_name: student.full_name,
+        title: `מעקב ${reasonLabel} — ${student.full_name}`,
+        description: note || '',
+        due_date: new Date().toISOString().split('T')[0],
+        priority: 'גבוהה',
+        status: 'לביצוע',
+        category: 'כללי',
+      });
+      toast.success(`${formatStudentName(student.full_name)} נוסף/ה לטיפול`);
+    } catch (e) {
+      console.error(e); toast.error('הוספה לטיפול נכשלה');
+    }
   }
 
   // ── Stats ─────────────────────────────────────────────────────────────────
@@ -192,10 +236,11 @@ export default function ClassAttendance({ role }) {
   }, [students, allRecords]);
 
   // ── Filtered student list ─────────────────────────────────────────────────
+  const EXCEPTION_STATUSES = ['מאחר/ת', 'נעדר/ת', 'שוחרר/ה'];
   const filteredStudents = useMemo(() => {
     let list = students;
     if (view === 'exceptions') {
-      list = list.filter(s => attendanceMap[s.id]?.status && attendanceMap[s.id].status !== PRESENT);
+      list = list.filter(s => EXCEPTION_STATUSES.includes(attendanceMap[s.id]?.status));
     }
     if (search.trim()) {
       const term = search.trim().toLowerCase();
@@ -203,6 +248,11 @@ export default function ClassAttendance({ role }) {
     }
     return list;
   }, [students, attendanceMap, view, search]);
+
+  const exceptionCount = useMemo(
+    () => students.filter(s => EXCEPTION_STATUSES.includes(attendanceMap[s.id]?.status)).length,
+    [students, attendanceMap]
+  );
 
   // ── Picker handlers ───────────────────────────────────────────────────────
   function openPicker(status) { setPickerStatus(status); }
@@ -245,7 +295,11 @@ export default function ClassAttendance({ role }) {
   }
 
   return (
-    <div className="p-4 lg:p-6 space-y-4 text-right" dir="rtl">
+    <div
+      className="p-4 lg:p-6 space-y-4 text-right"
+      style={{ paddingTop: 'max(1rem, env(safe-area-inset-top))' }}
+      dir="rtl"
+    >
       <PageHeader
         title="מעקב נוכחות כיתתי"
         subtitle={`סימון יומי · כיתה ${getUserApprovedClass(user) || ''}`}
@@ -321,18 +375,24 @@ export default function ClassAttendance({ role }) {
               <div className="flex items-center gap-2 flex-wrap" dir="rtl">
                 <div className="inline-flex rounded-lg border bg-card p-1">
                   <button onClick={() => setView('exceptions')}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors inline-flex items-center gap-1 ${
                       view === 'exceptions' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
                     }`}>
-                    <ListFilter className="w-3.5 h-3.5 inline ms-1" />
+                    <ListFilter className="w-3.5 h-3.5" />
                     חריגים בלבד
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${view === 'exceptions' ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                      {exceptionCount}
+                    </span>
                   </button>
                   <button onClick={() => setView('all')}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
+                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors inline-flex items-center gap-1 ${
                       view === 'all' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
                     }`}>
-                    <Users className="w-3.5 h-3.5 inline ms-1" />
+                    <Users className="w-3.5 h-3.5" />
                     כל התלמידים
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${view === 'all' ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                      {students.length}
+                    </span>
                   </button>
                 </div>
                 <div className="relative flex-1 min-w-[180px] max-w-xs">
@@ -367,6 +427,21 @@ export default function ClassAttendance({ role }) {
                 <div className="space-y-2">
                   {filteredStudents.map((student, i) => {
                     const current = attendanceMap[student.id];
+                    if (view === 'exceptions' && current?.status) {
+                      return (
+                        <ExceptionRow
+                          key={student.id}
+                          index={i}
+                          student={student}
+                          status={current.status}
+                          note={current.note}
+                          disabled={isPastDay(date)}
+                          onMarkPresent={handleMarkPresent}
+                          onEdit={handleEditException}
+                          onAddToTreatment={handleAddToTreatment}
+                        />
+                      );
+                    }
                     const stats = statsPerStudent.find(s => s.id === student.id);
                     const isAlert = stats && (stats.absences >= THRESHOLDS.absences || stats.lates >= THRESHOLDS.lates);
                     return (
@@ -390,7 +465,7 @@ export default function ClassAttendance({ role }) {
                                 </p>
                               )}
                             </div>
-                            <div className="flex gap-1 flex-shrink-0">
+                            <div className="flex gap-1 flex-shrink-0 flex-wrap justify-end">
                               {STATUSES.map(st => (
                                 <button key={st}
                                   onClick={() => handleQuickStatus(student, st)}
@@ -410,10 +485,26 @@ export default function ClassAttendance({ role }) {
               )}
 
               {/* Footer status */}
-              <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2" dir="rtl">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2 flex-wrap" dir="rtl">
                 <Save className="w-3.5 h-3.5" />
                 <span>שמירה אוטומטית פעילה</span>
-                {confirmed && <span className="text-emerald-600 dark:text-emerald-400 font-medium">· נוכחות אושרה ✓</span>}
+                {confirmed && (
+                  <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-medium bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded-md">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    נוכחות אושרה
+                    {confirmedAt && (
+                      <span className="text-emerald-600/80 dark:text-emerald-300/80 font-normal">
+                        בשעה {new Date(confirmedAt).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    )}
+                  </span>
+                )}
+                {confirmed && !isPastDay(date) && (
+                  <span className="text-muted-foreground inline-flex items-center gap-1">
+                    <Pencil className="w-3 h-3" />
+                    ניתן לערוך עד סוף היום
+                  </span>
+                )}
               </div>
             </>
           )}
