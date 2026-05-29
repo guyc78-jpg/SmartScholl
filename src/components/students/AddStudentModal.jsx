@@ -6,14 +6,23 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
+import { getLastName, getFirstNames } from '@/lib/studentName';
 
 export default function AddStudentModal({ classId, editData, onClose, onSuccess }) {
-  const [form, setForm] = useState(editData || {
-    full_name: '', grade: 'י', gender: 'זכר', student_number: '',
-    phone: '', email: '', parent1_name: '', parent1_phone: '', parent1_email: '',
-    parent2_name: '', parent2_phone: '', parent2_email: '',
-    community_service_goal: 60, community_service_done: 0,
-    community_service_status: 'לא התחיל', status: 'פעיל'
+  const [form, setForm] = useState(() => {
+    const base = editData || {
+      full_name: '', grade: 'י', gender: 'זכר', student_number: '',
+      phone: '', email: '', parent1_name: '', parent1_phone: '', parent1_email: '',
+      parent2_name: '', parent2_phone: '', parent2_email: '',
+      community_service_goal: 60, community_service_done: 0,
+      community_service_status: 'לא התחיל', status: 'פעיל'
+    };
+    // Smart split: prefer explicit fields if exist, otherwise derive from full_name
+    return {
+      ...base,
+      last_name: base.last_name ?? getLastName(base.full_name || ''),
+      first_name: base.first_name ?? getFirstNames(base.full_name || ''),
+    };
   });
   const [saving, setSaving] = useState(false);
   const [classRoom, setClassRoom] = useState(null);
@@ -29,7 +38,12 @@ export default function AddStudentModal({ classId, editData, onClose, onSuccess 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
   async function handleSave() {
-    if (!form.full_name) { toast.error('שם מלא הוא שדה חובה'); return; }
+    const firstName = (form.first_name || '').trim();
+    const lastName = (form.last_name || '').trim();
+    if (!firstName || !lastName) {
+      toast.error('שם פרטי ושם משפחה הם שדות חובה');
+      return;
+    }
     setSaving(true);
     try {
       const classData = {
@@ -37,10 +51,18 @@ export default function AddStudentModal({ classId, editData, onClose, onSuccess 
         class_name: classRoom?.name || form.class_name || '',
         grade: classRoom?.grade || form.grade || '',
       };
+      // Canonical full_name keeps "first last" form so existing display utils render "last first"
+      const payload = {
+        ...form,
+        first_name: firstName,
+        last_name: lastName,
+        full_name: `${firstName} ${lastName}`,
+        ...classData,
+      };
       if (editData?.id) {
-        await base44.entities.Student.update(editData.id, { ...form, ...classData });
+        await base44.entities.Student.update(editData.id, payload);
       } else {
-        await base44.entities.Student.create({ ...form, ...classData });
+        await base44.entities.Student.create(payload);
       }
       toast.success(editData ? 'פרטי תלמיד עודכנו' : 'תלמיד נוסף בהצלחה!');
       onSuccess();
@@ -61,9 +83,13 @@ export default function AddStudentModal({ classId, editData, onClose, onSuccess 
             <h3 className="text-sm font-semibold text-muted-foreground mb-3">פרטים אישיים</h3>
             <div className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1 col-span-2">
-                  <Label>שם מלא *</Label>
-                  <Input value={form.full_name} onChange={e => set('full_name', e.target.value)} placeholder="שם פרטי ושם משפחה (יוצג כ״משפחה פרטי״)" />
+                <div className="space-y-1">
+                  <Label>שם משפחה *</Label>
+                  <Input value={form.last_name || ''} onChange={e => set('last_name', e.target.value)} placeholder="לדוגמה: כהן" />
+                </div>
+                <div className="space-y-1">
+                  <Label>שם פרטי *</Label>
+                  <Input value={form.first_name || ''} onChange={e => set('first_name', e.target.value)} placeholder="לדוגמה: דניאל" />
                 </div>
                 <div className="space-y-1">
                   <Label>מין</Label>
