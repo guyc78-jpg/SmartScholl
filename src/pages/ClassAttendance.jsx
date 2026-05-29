@@ -77,7 +77,13 @@ export default function ClassAttendance({ role }) {
     const recsArrays = await Promise.all(classIds.map(cid => base44.entities.AttendanceRecord.filter({ class_id: cid })));
     const recs = recsArrays.flat();
 
-    setStudents(scopedStudents.sort((a, b) => a.full_name.localeCompare(b.full_name, 'he')));
+    const getLastName = (name) => name.split(' ').pop();
+    setStudents(scopedStudents.sort((a, b) => {
+      const lastA = getLastName(a.full_name);
+      const lastB = getLastName(b.full_name);
+      if (lastA !== lastB) return lastA.localeCompare(lastB, 'he');
+      return a.full_name.localeCompare(b.full_name, 'he');
+    }));
     setAllRecords(recs.filter(r => STATUSES.includes(r.status) && scopedIds.has(r.student_id)));
     setLoading(false);
   }
