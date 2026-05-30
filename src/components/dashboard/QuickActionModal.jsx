@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { X } from 'lucide-react';
+import { X, Check } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { logActivity } from '@/lib/activityLogger';
@@ -89,6 +89,10 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
     }
 
     setStudents(fetched);
+    // Auto-select when only one student exists
+    if (fetched.length === 1) {
+      setForm(p => ({ ...p, student_id: fetched[0].id }));
+    }
     setLoadingStudents(false);
   }
 
@@ -230,25 +234,31 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    <Input
-                      placeholder="חיפוש תלמיד..."
-                      value={searchQuery}
-                      onChange={e => setSearchQuery(e.target.value)}
-                      className="text-sm"
-                    />
+                    {students.length > 5 && (
+                      <Input
+                        placeholder="חיפוש תלמיד..."
+                        value={searchQuery}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        className="text-sm"
+                      />
+                    )}
                     <div className="max-h-48 overflow-y-auto rounded-lg border border-border divide-y divide-border" style={{ WebkitOverflowScrolling: 'touch' }}>
                       {sortByLastName(students)
                         .filter(s => !searchQuery || s.full_name.toLowerCase().includes(searchQuery.toLowerCase()))
-                        .map(s => (
-                          <button
-                            key={s.id}
-                            type="button"
-                            onClick={() => set('student_id', s.id)}
-                            className={`w-full text-right px-3 py-2 text-sm transition-colors ${form.student_id === s.id ? 'bg-primary text-primary-foreground font-medium' : 'hover:bg-muted'}`}
-                          >
-                            {getStudentDisplayName(s.full_name)}
-                          </button>
-                        ))}
+                        .map(s => {
+                          const selected = form.student_id === s.id;
+                          return (
+                            <button
+                              key={s.id}
+                              type="button"
+                              onClick={() => set('student_id', s.id)}
+                              className={`w-full flex items-center justify-between gap-2 text-right px-3 py-2.5 text-sm transition-colors ${selected ? 'bg-primary text-primary-foreground font-medium' : 'hover:bg-muted'}`}
+                            >
+                              <span>{getStudentDisplayName(s.full_name)}</span>
+                              {selected && <Check size={16} className="flex-shrink-0" />}
+                            </button>
+                          );
+                        })}
                     </div>
                   </div>
                 )}
