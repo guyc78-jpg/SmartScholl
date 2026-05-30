@@ -169,10 +169,10 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
       dir="rtl"
       style={{ position: 'fixed', inset: 0, zIndex: 9999 }}
     >
-      {/* Backdrop */}
+      {/* Backdrop — close on click of the backdrop itself only (not bubbled events) */}
       <div
         style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)' }}
-        onPointerDown={onClose}
+        onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       />
 
       {/* Sheet panel — fixed height, never grows with keyboard */}
@@ -183,15 +183,14 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
           bottom: 0,
           right: 0,
           left: 0,
-          height: '72vh',
-          maxHeight: '560px',
+          height: '85vh',
+          maxHeight: '640px',
           background: 'hsl(var(--card))',
           borderRadius: '1rem 1rem 0 0',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
         }}
-        onPointerDown={e => e.stopPropagation()}
       >
         {/* Handle bar */}
         <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 4px' }}>
@@ -237,14 +236,20 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
                       onChange={e => setSearchQuery(e.target.value)}
                       className="text-sm"
                     />
-                    <Select onValueChange={v => { set('student_id', v); setSearchQuery(''); }}>
-                      <SelectTrigger><SelectValue placeholder="בחר תלמיד" /></SelectTrigger>
-                      <SelectContent>
-                        {sortByLastName(students)
-                          .filter(s => !searchQuery || s.full_name.toLowerCase().includes(searchQuery.toLowerCase()))
-                          .map(s => <SelectItem key={s.id} value={s.id}>{getStudentDisplayName(s.full_name)}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    <div className="max-h-48 overflow-y-auto rounded-lg border border-border divide-y divide-border" style={{ WebkitOverflowScrolling: 'touch' }}>
+                      {sortByLastName(students)
+                        .filter(s => !searchQuery || s.full_name.toLowerCase().includes(searchQuery.toLowerCase()))
+                        .map(s => (
+                          <button
+                            key={s.id}
+                            type="button"
+                            onClick={() => set('student_id', s.id)}
+                            className={`w-full text-right px-3 py-2 text-sm transition-colors ${form.student_id === s.id ? 'bg-primary text-primary-foreground font-medium' : 'hover:bg-muted'}`}
+                          >
+                            {getStudentDisplayName(s.full_name)}
+                          </button>
+                        ))}
+                    </div>
                   </div>
                 )}
               </div>
