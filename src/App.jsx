@@ -72,9 +72,11 @@ const AuthenticatedApp = () => {
     else if (authError.type === 'auth_required') { navigateToLogin(); return null; }
   }
 
-  // Onboarding gate — admin always bypasses
+  // Onboarding gate — admin (by any approved role) always bypasses
   const onboardingStatus = user?.onboarding_status;
-  if (user && user.role !== 'admin' && !user.onboardingCompleted) {
+  const userIsAdmin = user ? getAvailableRoles(user).includes('admin') : false;
+  const onboardingDone = user?.onboardingCompleted || onboardingStatus === 'approved';
+  if (user && !userIsAdmin && !onboardingDone) {
     if (!onboardingStatus || onboardingStatus === 'pending') {
       return <Onboarding user={user} onComplete={async (updatedUser) => {
         if (updatedUser) updateCurrentUser(updatedUser);

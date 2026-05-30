@@ -1,5 +1,16 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
+// Group an array of records by a key field into a Map of key -> records[]
+function groupBy(records, keyField) {
+  const map = new Map();
+  for (const r of records) {
+    const k = r[keyField];
+    if (!map.has(k)) map.set(k, []);
+    map.get(k).push(r);
+  }
+  return map;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -15,61 +26,65 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const alerts = [];
-    const students = await base44.asServiceRole.entities.Student.list();
-    
-    // Get current date in Israel timezone
+    // Date context (Israel timezone)
     const nowIsrael = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jerusalem' }));
     const todayStr = nowIsrael.toISOString().split('T')[0];
-    const today = new Date(todayStr); // midnight Israel date as Date object
+    const today = new Date(todayStr);
 
     const weekStart = new Date(today);
     weekStart.setDate(today.getDate() - today.getDay() + 1); // Monday
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekStart.getDate() + 6); // Sunday
+    const weekStartStr = weekStart.toISOString().split('T')[0];
+    const weekEndStr = weekEnd.toISOString().split('T')[0];
+
+    // ⚡ Load everything in parallel — a fixed, small number of queries
+    // instead of 6 queries per student (which caused 429 rate limits).
+    const [students, attendance, exams, tasks, incidents] = await Promise.all([
+      base44.asServiceRole.entities.Student.list(),
+      base44.asServiceRole.entities.AttendanceRecord.list(),
+      base44.asServiceRole.entities.Exam.list(),
+      base44.asServiceRole.entities.Task.filter({ status: 'לביצוע' }),
+      base44.asServiceRole.entities.DisciplineEvent.filter({ status: 'פתוח' }),
+    ]);
+
+    // Index for O(1) lookups per student / class
+    const attByStudent = groupBy(attendance, 'student_id');
+    const examsByClass = groupBy(exams, 'class_id');
+    const tasksByStudent = groupBy(tasks, 'student_id');
+    const incidentsByStudent = groupBy(incidents, 'student_id');
+
+    const alerts = [];
 
     for (const student of students) {
-      // Check 1: High absences (3+ in a week)
-      const absences = await base44.asServiceRole.entities.AttendanceRecord.filter({
-        student_id: student.id,
-        status: { $in: ['נעדר', 'מאחר'] },
-        date: {
-          $gte: weekStart.toISOString().split('T')[0],
-          $lte: weekEnd.toISOString().split('T')[0]
-        }
-      });
+      const sAtt = attByStudent.get(student.id) || [];
 
-      const absentCount = absences.filter(a => a.status === 'נעדר').length;
-      if (absentCount >= 3) {
+      // Check 1: High absences this week (3+)
+      const weekAbsences = sAtt.filter(a =>
+        (a.status === 'נעדר' || a.status === 'נעדר/ת') &&
+        a.date >= weekStartStr && a.date <= weekEndStr
+      );
+      if (weekAbsences.length >= 3) {
         alerts.push({
           student_id: student.id,
           student_name: student.full_name,
           class_id: student.class_id,
           alert_type: 'high_absences',
           severity: 'high',
-          message: `${student.full_name} היה נעדר ${absentCount} פעמים בשבוע הזה`,
-          details: { absences: absentCount, period: 'weekly' },
+          message: `${student.full_name} היה נעדר ${weekAbsences.length} פעמים בשבוע הזה`,
+          details: { absences: weekAbsences.length, period: 'weekly' },
           is_active: true
         });
       }
 
-      // Check 2: Consecutive lates (2+)
-      const lates = await base44.asServiceRole.entities.AttendanceRecord.filter({
-        student_id: student.id,
-        status: 'מאחר'
-      });
-
+      // Check 2: Consecutive lates (2+ within 2 days)
+      const lates = sAtt
+        .filter(a => a.status === 'מאחר' || a.status === 'מאחר/ת')
+        .sort((a, b) => (a.date || '').localeCompare(b.date || ''));
       if (lates.length >= 2) {
-        const recentLates = lates.slice(-2);
-        const datesConsecutive = recentLates.every((late, idx) => {
-          if (idx === 0) return true;
-          const prevDate = new Date(recentLates[idx - 1].date);
-          const currDate = new Date(late.date);
-          const dayDiff = (currDate - prevDate) / (1000 * 60 * 60 * 24);
-          return dayDiff <= 2; // Within 2 days
-        });
-
-        if (datesConsecutive) {
+        const recent = lates.slice(-2);
+        const dayDiff = (new Date(recent[1].date) - new Date(recent[0].date)) / (1000 * 60 * 60 * 24);
+        if (dayDiff <= 2) {
           alerts.push({
             student_id: student.id,
             student_name: student.full_name,
@@ -83,17 +98,14 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Check 3: Upcoming exam (within 2 days)
-      const exams = await base44.asServiceRole.entities.Exam.filter({
-        class_id: student.class_id
-      });
+      // Exams for this class
+      const classExams = examsByClass.get(student.class_id) || [];
 
-      const upcomingExams = exams.filter(exam => {
-        const examDate = new Date(exam.date);
-        const daysUntil = (examDate - today) / (1000 * 60 * 60 * 24);
+      // Check 3: Upcoming exam (within 2 days)
+      const upcomingExams = classExams.filter(exam => {
+        const daysUntil = (new Date(exam.date) - today) / (1000 * 60 * 60 * 24);
         return daysUntil >= 0 && daysUntil <= 2;
       });
-
       if (upcomingExams.length > 0) {
         const exam = upcomingExams[0];
         alerts.push({
@@ -108,13 +120,11 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Check 4: Exam overload (3+ exams in 3 days)
-      const threeDaysExams = exams.filter(exam => {
-        const examDate = new Date(exam.date);
-        const daysUntil = (examDate - today) / (1000 * 60 * 60 * 24);
+      // Check 4: Exam overload (3+ in 3 days)
+      const threeDaysExams = classExams.filter(exam => {
+        const daysUntil = (new Date(exam.date) - today) / (1000 * 60 * 60 * 24);
         return daysUntil >= 0 && daysUntil <= 3;
       });
-
       if (threeDaysExams.length >= 3) {
         alerts.push({
           student_id: student.id,
@@ -128,17 +138,10 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Check 5: Pending task (due today or overdue)
-      const tasks = await base44.asServiceRole.entities.Task.filter({
-        student_id: student.id,
-        status: 'לביצוע'
-      });
-
-      const pendingTasks = tasks.filter(task => {
-        const dueDate = new Date(task.due_date);
-        return dueDate <= today; // overdue or due today (Israel time)
-      });
-
+      // Check 5: Pending tasks (due today or overdue)
+      const pendingTasks = (tasksByStudent.get(student.id) || []).filter(task =>
+        new Date(task.due_date) <= today
+      );
       if (pendingTasks.length > 0) {
         alerts.push({
           student_id: student.id,
@@ -152,21 +155,17 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Check 6: Open incident (open discipline event)
-      const incidents = await base44.asServiceRole.entities.DisciplineEvent.filter({
-        student_id: student.id,
-        status: 'פתוח'
-      });
-
-      if (incidents.length > 0) {
+      // Check 6: Open incidents
+      const openIncidents = incidentsByStudent.get(student.id) || [];
+      if (openIncidents.length > 0) {
         alerts.push({
           student_id: student.id,
           student_name: student.full_name,
           class_id: student.class_id,
           alert_type: 'open_incident',
           severity: 'high',
-          message: `${student.full_name} יש ${incidents.length} אירוע חריג פתוח`,
-          details: { incident_count: incidents.length },
+          message: `${student.full_name} יש ${openIncidents.length} אירוע חריג פתוח`,
+          details: { incident_count: openIncidents.length },
           is_active: true
         });
       }

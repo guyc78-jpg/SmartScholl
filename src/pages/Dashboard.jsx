@@ -113,6 +113,7 @@ export default function Dashboard({ user, role }) {
   const [allAttRecords, setAllAttRecords] = useState([]);
   const [performanceReviews, setPerformanceReviews] = useState([]);
   useEffect(() => {
+    if (!classId) return; // avoid fetching every record in the DB when no class is set
     Promise.all([
       base44.entities.AttendanceRecord.filter({ class_id: classId }),
       base44.entities.PerformanceReview.filter({ class_id: classId })
@@ -120,7 +121,7 @@ export default function Dashboard({ user, role }) {
       setAllAttRecords(att);
       setPerformanceReviews(perf);
     });
-  }, []);
+  }, [classId]);
   const attendanceAlertStudents = students.filter(s => {
     const absences = allAttRecords.filter(r => r.student_id === s.id && ['נעדר/ת'].includes(r.status)).length;
     const lates    = allAttRecords.filter(r => r.student_id === s.id && ['מאחר/ת'].includes(r.status)).length;
