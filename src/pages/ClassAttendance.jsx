@@ -191,7 +191,7 @@ export default function ClassAttendance({ role }) {
         status: 'לביצוע',
         category: 'כללי',
       });
-      toast.success(`${formatStudentName(student.full_name)} נוסף/ה לטיפול`);
+      toast.success(`${formatStudentName(student)} נוסף/ה לטיפול`);
     } catch (e) {
       console.error(e); toast.error('הוספה לטיפול נכשלה');
     }
@@ -450,7 +450,7 @@ export default function ClassAttendance({ role }) {
                         <Card className={isAlert ? 'border-red-200 dark:border-red-800/60' : ''}>
                           <div className="p-2.5 flex items-center gap-1.5" dir="rtl">
                             <div className="flex-1 min-w-0 text-right">
-                              <p className="font-medium text-sm leading-tight"><span className="text-xs text-muted-foreground me-1">{i + 1}.</span>{formatStudentName(student.full_name)}</p>
+                              <p className="font-medium text-sm leading-tight"><span className="text-xs text-muted-foreground me-1">{i + 1}.</span>{formatStudentName(student)}</p>
                               {current?.note && (
                                 <p className="text-[11px] text-muted-foreground">{current.note}</p>
                               )}

@@ -6,6 +6,14 @@
       "type": "string",
       "description": "\u05e9\u05dd \u05de\u05dc\u05d0"
     },
+    "first_name": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05e4\u05e8\u05d8\u05d9 (\u05e9\u05d3\u05d4 \u05e0\u05e4\u05e8\u05d3)"
+    },
+    "last_name": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05de\u05e9\u05e4\u05d7\u05d4 (\u05e9\u05d3\u05d4 \u05e0\u05e4\u05e8\u05d3, \u05d9\u05db\u05d5\u05dc \u05dc\u05db\u05dc\u05d5\u05dc \u05db\u05de\u05d4 \u05de\u05d9\u05dc\u05d9\u05dd)"
+    },
     "class_id": {
       "type": "string",
       "description": "\u05de\u05d6\u05d4\u05d4 \u05db\u05d9\u05ea\u05d4"

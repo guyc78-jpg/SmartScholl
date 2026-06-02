@@ -70,6 +70,8 @@ export function parseStudentsWorksheetRows(rows, { classId, classRoom } = {}) {
 
     return {
       full_name: fullName,
+      first_name: firstName,
+      last_name: lastName,
       student_number: cleanValue(row[indexes.id]),
       phone: cleanValue(row[indexes.phone]),
       email: cleanValue(row[indexes.email]),

@@ -1,24 +1,44 @@
 // Centralized utility for displaying student names consistently across the app.
 // Display format: "שם משפחה שם פרטי" (last name first).
 // Sort: by last name, then by the remaining first/middle names.
+//
+// Each function accepts EITHER a student object (preferred — uses the separate
+// last_name / first_name fields, so compound last names like "מור יוסף" stay
+// intact) OR a plain full-name string (legacy fallback that splits on spaces).
 
-export function formatStudentName(fullName) {
-  if (!fullName || typeof fullName !== 'string') return fullName || '';
-  const parts = fullName.trim().split(/\s+/);
+function fieldsFrom(input) {
+  if (input && typeof input === 'object') {
+    const last = (input.last_name || '').trim();
+    const first = (input.first_name || '').trim();
+    if (last || first) return { last, first, fullName: (input.full_name || `${first} ${last}`).trim() };
+    return { last: '', first: '', fullName: (input.full_name || input.student_name || '').trim() };
+  }
+  return { last: '', first: '', fullName: (input || '').toString().trim() };
+}
+
+export function formatStudentName(input) {
+  const { last, first, fullName } = fieldsFrom(input);
+  if (last || first) return `${last} ${first}`.trim();
+  if (!fullName) return '';
+  const parts = fullName.split(/\s+/);
   if (parts.length < 2) return fullName;
   const lastName = parts.pop();
   return `${lastName} ${parts.join(' ')}`;
 }
 
-export function getLastName(fullName) {
-  if (!fullName || typeof fullName !== 'string') return '';
-  const parts = fullName.trim().split(/\s+/);
+export function getLastName(input) {
+  const { last, fullName } = fieldsFrom(input);
+  if (last) return last;
+  if (!fullName) return '';
+  const parts = fullName.split(/\s+/);
   return parts[parts.length - 1] || '';
 }
 
-export function getFirstNames(fullName) {
-  if (!fullName || typeof fullName !== 'string') return '';
-  const parts = fullName.trim().split(/\s+/);
+export function getFirstNames(input) {
+  const { first, fullName } = fieldsFrom(input);
+  if (first) return first;
+  if (!fullName) return '';
+  const parts = fullName.split(/\s+/);
   if (parts.length < 2) return fullName;
   parts.pop();
   return parts.join(' ');
@@ -26,11 +46,9 @@ export function getFirstNames(fullName) {
 
 // Comparator for Array.sort — sorts students by last name, then first names.
 export function compareStudentsByLastName(a, b) {
-  const nameA = (a?.full_name || a?.student_name || '').trim();
-  const nameB = (b?.full_name || b?.student_name || '').trim();
-  const lastA = getLastName(nameA);
-  const lastB = getLastName(nameB);
+  const lastA = getLastName(a);
+  const lastB = getLastName(b);
   const cmp = lastA.localeCompare(lastB, 'he');
   if (cmp !== 0) return cmp;
-  return nameA.localeCompare(nameB, 'he');
+  return getFirstNames(a).localeCompare(getFirstNames(b), 'he');
 }

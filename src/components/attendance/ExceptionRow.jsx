@@ -50,7 +50,7 @@ export default function ExceptionRow({ student, status, note, disabled, onMarkPr
 
           {/* Name + details */}
           <div className="flex-1 min-w-0 text-right">
-            <p className="font-medium text-sm truncate">{formatStudentName(student.full_name)}</p>
+            <p className="font-medium text-sm truncate">{formatStudentName(student)}</p>
             <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
               <span className={`inline-flex items-center gap-1 text-[11px] font-medium px-1.5 py-0.5 rounded-md ${meta.bg} ${meta.color}`}>
                 <Icon className="w-3 h-3" />
