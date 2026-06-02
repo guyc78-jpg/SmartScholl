@@ -6,7 +6,7 @@ import { formatStudentName } from '@/lib/studentName';
 const STATUS_META = {
   'מאחר/ת':  { icon: Clock,  color: 'text-amber-600 dark:text-amber-400',  bg: 'bg-amber-50 dark:bg-amber-900/20',  ring: 'ring-amber-200 dark:ring-amber-800/50',  label: 'איחור' },
   'נעדר/ת':  { icon: UserX,  color: 'text-red-600 dark:text-red-400',      bg: 'bg-red-50 dark:bg-red-900/20',       ring: 'ring-red-200 dark:ring-red-800/50',       label: 'היעדרות' },
-  'שוחרר/ה': { icon: LogOut, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/20', ring: 'ring-purple-200 dark:ring-purple-800/50', label: 'שחרור' },
+  'שוחרר/ת': { icon: LogOut, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/20', ring: 'ring-purple-200 dark:ring-purple-800/50', label: 'שחרור' },
 };
 
 // Parse note for display details based on status
@@ -18,7 +18,7 @@ function parseExceptionDetails(status, note = '') {
   if (status === 'נעדר/ת') {
     return note || 'ללא סיבה';
   }
-  if (status === 'שוחרר/ה') {
+  if (status === 'שוחרר/ת') {
     const m = note.match(/שעה\s*(\d{1,2}:\d{2})/);
     if (m) {
       const extra = note.replace(/^שחרור בשעה\s*\d{1,2}:\d{2}\s*·?\s*/, '').trim();

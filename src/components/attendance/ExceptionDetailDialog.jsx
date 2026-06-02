@@ -34,7 +34,7 @@ export default function ExceptionDetailDialog({ open, onClose, student, status, 
     } else if (status === 'נעדר/ת') {
       data.reason = reason;
       data.note = note ? `${reason} · ${note}` : reason;
-    } else if (status === 'שוחרר/ה') {
+    } else if (status === 'שוחרר/ת') {
       data.releaseTime = releaseTime;
       data.note = note ? `שחרור בשעה ${releaseTime} · ${note}` : `שחרור בשעה ${releaseTime}`;
     }
@@ -48,7 +48,7 @@ export default function ExceptionDetailDialog({ open, onClose, student, status, 
           <DialogTitle className="text-right">
             {status === 'מאחר/ת' && `סימון איחור: ${student.full_name}`}
             {status === 'נעדר/ת' && `סימון היעדרות: ${student.full_name}`}
-            {status === 'שוחרר/ה' && `סימון שחרור: ${student.full_name}`}
+            {status === 'שוחרר/ת' && `סימון שחרור: ${student.full_name}`}
           </DialogTitle>
         </DialogHeader>
 
@@ -95,7 +95,7 @@ export default function ExceptionDetailDialog({ open, onClose, student, status, 
             </div>
           )}
 
-          {status === 'שוחרר/ה' && (
+          {status === 'שוחרר/ת' && (
             <div className="space-y-2">
               <Label htmlFor="releaseTime" className="text-right block">שעת שחרור</Label>
               <Input id="releaseTime" type="time" value={releaseTime}

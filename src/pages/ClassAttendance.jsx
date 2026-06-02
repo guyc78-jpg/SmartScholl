@@ -41,7 +41,7 @@ const statusBtnStyle = {
   'נוכח/ת':   { active: 'bg-emerald-500 text-white border-emerald-500', idle: 'border-border text-muted-foreground hover:bg-emerald-50 hover:border-emerald-300 dark:hover:bg-emerald-900/20' },
   'מאחר/ת':   { active: 'bg-amber-500 text-white border-amber-500',     idle: 'border-border text-muted-foreground hover:bg-amber-50 hover:border-amber-300 dark:hover:bg-amber-900/20' },
   'נעדר/ת':   { active: 'bg-red-500 text-white border-red-500',          idle: 'border-border text-muted-foreground hover:bg-red-50 hover:border-red-300 dark:hover:bg-red-900/20' },
-  'שוחרר/ה':  { active: 'bg-purple-500 text-white border-purple-500',    idle: 'border-border text-muted-foreground hover:bg-purple-50 hover:border-purple-300 dark:hover:bg-purple-900/20' },
+  'שוחרר/ת':  { active: 'bg-purple-500 text-white border-purple-500',    idle: 'border-border text-muted-foreground hover:bg-purple-50 hover:border-purple-300 dark:hover:bg-purple-900/20' },
 };
 
 function isPastDay(dateStr) {
@@ -212,7 +212,7 @@ export default function ClassAttendance({ role }) {
       present:  vals.filter(a => a.status === 'נוכח/ת').length,
       late:     vals.filter(a => a.status === 'מאחר/ת').length,
       absent:   vals.filter(a => a.status === 'נעדר/ת').length,
-      released: vals.filter(a => a.status === 'שוחרר/ה').length,
+      released: vals.filter(a => a.status === 'שוחרר/ת').length,
       marked:   vals.filter(a => a.status).length,
     };
   }, [attendanceMap]);
@@ -223,7 +223,7 @@ export default function ClassAttendance({ role }) {
       ...s,
       absences: recs.filter(r => r.status === 'נעדר/ת').length,
       lates:    recs.filter(r => r.status === 'מאחר/ת').length,
-      released: recs.filter(r => r.status === 'שוחרר/ה').length,
+      released: recs.filter(r => r.status === 'שוחרר/ת').length,
       total:    recs.length,
     };
   }), [students, allRecords]);
@@ -243,7 +243,7 @@ export default function ClassAttendance({ role }) {
   }, [students, allRecords]);
 
   // ── Filtered student list ─────────────────────────────────────────────────
-  const EXCEPTION_STATUSES = ['מאחר/ת', 'נעדר/ת', 'שוחרר/ה'];
+  const EXCEPTION_STATUSES = ['מאחר/ת', 'נעדר/ת', 'שוחרר/ת'];
   const filteredStudents = useMemo(() => {
     let list = students;
     if (view === 'exceptions') {
@@ -266,7 +266,7 @@ export default function ClassAttendance({ role }) {
   function handlePickerSelect(student) {
     const status = pickerStatus;
     setPickerStatus(null);
-    if (status === 'נעדר/ת' || status === 'מאחר/ת' || status === 'שוחרר/ה') {
+    if (status === 'נעדר/ת' || status === 'מאחר/ת' || status === 'שוחרר/ת') {
       setDetailStudent(student); setDetailStatus(status);
     }
   }
