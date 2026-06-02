@@ -2,14 +2,15 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const ROLE_LABELS = {
   admin: 'מנהל/ת מערכת',
+  division_manager: 'מנהל/ת חטיבה',
   homeroom_teacher: 'מורה / מחנך/ת',
   coordinator: 'רכז/ת שכבה',
   student: 'תלמיד/ה',
   parent: 'הורה',
 };
 
-const VALID_ROLES = ['admin', 'homeroom_teacher', 'coordinator', 'student', 'parent'];
-const SYSTEM_ROLE_PRIORITY = ['admin', 'coordinator', 'homeroom_teacher', 'student', 'parent'];
+const VALID_ROLES = ['admin', 'division_manager', 'homeroom_teacher', 'coordinator', 'student', 'parent'];
+const SYSTEM_ROLE_PRIORITY = ['admin', 'division_manager', 'coordinator', 'homeroom_teacher', 'student', 'parent'];
 
 function parseRoles(value) {
   if (Array.isArray(value)) return value;
@@ -448,7 +449,7 @@ ${suspicionNote}
     if (action === 'admin_update_user') {
       if (!requireAdmin(user)) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
-      const { target_user_id, target_role, approved_roles, profile_class_id, profile_homeroom_class, profile_grade_managed } = body;
+      const { target_user_id, target_role, approved_roles, profile_class_id, profile_homeroom_class, profile_grade_managed, profile_division } = body;
       const approvedRoles = normalizeRoles(approved_roles, [target_role]);
       if (!approvedRoles.length || !approvedRoles.every(role => VALID_ROLES.includes(role)) || !approvedRoles.includes(target_role)) {
         return Response.json({ error: 'Invalid role' }, { status: 400 });
@@ -466,6 +467,7 @@ ${suspicionNote}
         profile_homeroom_class: profile_homeroom_class || '',
         profile_class: approvedRoles.includes('student') ? profile_homeroom_class || '' : target.profile_class || '',
         profile_grade_managed: profile_grade_managed || '',
+        profile_division: approvedRoles.includes('division_manager') ? (profile_division || target.profile_division || '') : '',
         onboarding_status: 'approved',
       });
 

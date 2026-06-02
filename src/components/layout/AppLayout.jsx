@@ -8,7 +8,7 @@ import {
   Megaphone, BarChart2,
   Menu, X, Sun, Moon, BookMarked,
   UserCheck, UserRound, ShieldCheck, Settings, LogOut, Bell, School,
-  ChevronDown, Heart, MessageSquare, ClipboardList, AlertTriangle, GraduationCap
+  ChevronDown, Heart, MessageSquare, ClipboardList, AlertTriangle, GraduationCap, Building2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getAvailableRoles, getUserContextLabel, getUserDisplayName } from '@/lib/roleUtils';
@@ -16,6 +16,15 @@ import { getDashboardLabel } from '@/lib/dashboardLabels';
 
 // ── Accordion nav groups ──────────────────────────────────────────────────────
 const sidebarGroups = [
+  {
+    key: 'division',
+    title: 'ניהול חטיבה',
+    icon: Building2,
+    items: [
+      { path: '/division', icon: Building2, label: 'ניהול חטיבה', roles: ['division_manager', 'admin'] },
+      { path: '/division-exams', icon: BookOpen, label: 'לוח מבחנים חכם', roles: ['division_manager', 'admin'] },
+    ],
+  },
   {
     key: 'daily',
     title: 'ניהול יומי',
@@ -93,6 +102,12 @@ const studentBottomNav = [
   { path: '/student-home', icon: LayoutDashboard, label: 'היום שלי', dynamicLabel: true, roles: ['student'] },
   { path: '/schedule', icon: Calendar, label: 'מערכת', roles: ['student'] },
   { path: '/exams', icon: BookOpen, label: 'לוח חכם', roles: ['student'] },
+];
+
+const divisionBottomNav = [
+  { path: '/division', icon: Building2, label: 'חטיבה', roles: ['division_manager', 'admin'] },
+  { path: '/division-exams', icon: BookOpen, label: 'לוח חכם', roles: ['division_manager', 'admin'] },
+  { path: '/reports', icon: BarChart2, label: 'דוחות', roles: ['division_manager', 'admin'] },
 ];
 
 // ── AccordionGroup ────────────────────────────────────────────────────────────
@@ -183,6 +198,7 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
 
   const approvedRoles = getAvailableRoles(user);
   const isStaffRole = approvedRoles.some(item => ['admin', 'homeroom_teacher', 'coordinator'].includes(item));
+  const isPureDivisionManager = approvedRoles.includes('division_manager') && !isStaffRole;
   const canAccess = (item) => item.roles.some(itemRole => approvedRoles.includes(itemRole));
 
   const navGroups = sidebarGroups
@@ -190,7 +206,8 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
     .map(group => ({ ...group, items: group.items.filter(canAccess) }))
     .filter(group => group.items.length > 0);
 
-  const bottomNavItems = (isStaffRole ? teacherBottomNav : studentBottomNav).filter(canAccess);
+  const bottomNavSource = isPureDivisionManager ? divisionBottomNav : (isStaffRole ? teacherBottomNav : studentBottomNav);
+  const bottomNavItems = bottomNavSource.filter(canAccess);
   const displayName = getUserDisplayName(user);
   const contextLabel = getUserContextLabel(user, role);
 

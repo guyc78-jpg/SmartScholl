@@ -1,5 +1,6 @@
 export const ROLE_LABELS = {
   admin: 'מנהל/ת מערכת',
+  division_manager: 'מנהל/ת חטיבה',
   homeroom_teacher: 'מחנך/ת כיתה',
   coordinator: 'רכז/ת שכבה',
   student: 'תלמיד/ה',
@@ -10,6 +11,7 @@ export const ROLE_LABELS = {
 export const ROLE_LABELS_BY_GENDER = {
   male: {
     admin: 'מנהל מערכת',
+    division_manager: 'מנהל חטיבה',
     homeroom_teacher: 'מחנך כיתה',
     coordinator: 'רכז שכבה',
     student: 'תלמיד',
@@ -17,6 +19,7 @@ export const ROLE_LABELS_BY_GENDER = {
   },
   female: {
     admin: 'מנהלת מערכת',
+    division_manager: 'מנהלת חטיבה',
     homeroom_teacher: 'מחנכת כיתה',
     coordinator: 'רכזת שכבה',
     student: 'תלמידה',
@@ -28,6 +31,7 @@ export const ROLE_LABELS_BY_GENDER = {
 export const ROLE_SHORT_BY_GENDER = {
   male: {
     admin: 'מנהל',
+    division_manager: 'מנהל חטיבה',
     homeroom_teacher: 'מחנך',
     coordinator: 'רכז',
     student: 'תלמיד',
@@ -35,6 +39,7 @@ export const ROLE_SHORT_BY_GENDER = {
   },
   female: {
     admin: 'מנהלת',
+    division_manager: 'מנהלת חטיבה',
     homeroom_teacher: 'מחנכת',
     coordinator: 'רכזת',
     student: 'תלמידה',
@@ -68,6 +73,7 @@ export function getRoleShort(role, user) {
   // ברירת מחדל ניטרלית (זהה ל־ROLE_LABELS אבל מקוצרת)
   const fallback = {
     admin: 'מנהל/ת',
+    division_manager: 'מנהל/ת חטיבה',
     homeroom_teacher: 'מחנך/ת',
     coordinator: 'רכז/ת',
     student: 'תלמיד/ה',
@@ -76,8 +82,8 @@ export function getRoleShort(role, user) {
   return fallback[role] || 'משתמש';
 }
 
-export const VALID_ROLES = ['admin', 'homeroom_teacher', 'coordinator', 'student', 'parent'];
-export const SYSTEM_ROLE_PRIORITY = ['admin', 'coordinator', 'homeroom_teacher', 'student', 'parent'];
+export const VALID_ROLES = ['admin', 'division_manager', 'homeroom_teacher', 'coordinator', 'student', 'parent'];
+export const SYSTEM_ROLE_PRIORITY = ['admin', 'division_manager', 'coordinator', 'homeroom_teacher', 'student', 'parent'];
 
 export function parseRoles(value) {
   if (Array.isArray(value)) return value;

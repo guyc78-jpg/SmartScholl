@@ -1,6 +1,29 @@
 export const GRADES = ['ז', 'ח', 'ט', 'י', 'יא', 'יב'];
 export const CLASS_NUMBERS = Array.from({ length: 10 }, (_, index) => String(index + 1));
 
+// חטיבות: עליונה (י׳-י״ב) וביניים (ז׳-ט׳)
+export const DIVISIONS = {
+  upper: { label: 'חטיבה עליונה', grades: ['י', 'יא', 'יב'] },
+  middle: { label: 'חטיבת ביניים', grades: ['ז', 'ח', 'ט'] },
+};
+
+export function getDivisionGrades(division) {
+  return DIVISIONS[division]?.grades || [];
+}
+
+export function getDivisionLabel(division) {
+  return DIVISIONS[division]?.label || '';
+}
+
+// השכבות שמנהל/ת החטיבה מורשה/ת להן, לפי profile_division
+export function getUserDivisionGrades(user) {
+  return getDivisionGrades(user?.profile_division);
+}
+
+export function isGradeInUserDivision(user, grade) {
+  return getUserDivisionGrades(user).includes(normalizeGrade(grade));
+}
+
 export function formatGrade(grade) {
   const clean = normalizeGrade(grade);
   if (clean === 'יא') return 'י״א';

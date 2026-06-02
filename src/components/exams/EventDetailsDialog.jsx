@@ -16,7 +16,7 @@ const STATUS_OPTIONS = [
 
 const SCOPE_LABEL = { school: 'כל בית הספר', grade: 'שכבה', class: 'כיתה', subject: 'מקצוע', track: 'מגמה', group: 'קבוצה' };
 
-export default function EventDetailsDialog({ event, open, onClose, canEdit, isStudent, completion, onStudentUpdate, onEdit, onDelete }) {
+export default function EventDetailsDialog({ event, open, onClose, canEdit, isStudent, completion, onStudentUpdate, onEdit, onDelete, extraContent }) {
   const [status, setStatus] = useState('not_started');
   const [note, setNote] = useState('');
 
@@ -47,6 +47,7 @@ export default function EventDetailsDialog({ event, open, onClose, canEdit, isSt
 
           {event.material && <Info title="חומר / הכנה" text={event.material} />}
           {event.notes && <Info title="הערות" text={event.notes} />}
+          {extraContent}
 
           {isStudent && (
             <div className="border-t pt-4 space-y-3">

@@ -37,6 +37,8 @@ import BellScheduleSettings from './pages/BellScheduleSettings';
 import TreatmentCenter from './pages/TreatmentCenter';
 import Classrooms from './pages/Classrooms';
 import ApprovedStaff from './pages/ApprovedStaff';
+import DivisionManagement from './pages/DivisionManagement';
+import DivisionExams from './pages/DivisionExams';
 import { isStaff, isStudent, defaultRoute } from './lib/permissions';
 import { getAvailableRoles, getInitialWorkRole, getSystemRole } from './lib/roleUtils';
 
@@ -97,8 +99,10 @@ const AuthenticatedApp = () => {
   const approvedRoles = getAvailableRoles(user);
   const systemRole = getSystemRole(user);
   const role = workRole || systemRole;
-  const staff = approvedRoles.some(isStaff);
-  const studentRole = approvedRoles.includes('student') && !staff;
+  const isDivisionManager = approvedRoles.includes('division_manager');
+  // "staff" כאן = צוות חינוכי מלא (מורה/רכז/admin). מנהל חטיבה מטופל בנפרד.
+  const staff = approvedRoles.some(r => ['admin', 'homeroom_teacher', 'coordinator'].includes(r));
+  const studentRole = approvedRoles.includes('student') && !staff && !isDivisionManager;
 
   const renderRoutes = () => (
     <Routes>
@@ -134,6 +138,21 @@ const AuthenticatedApp = () => {
             <Route path="/grade-monitor" element={<GradeMonitor user={user} role={role} />} />
           </>
         )}
+      </>}
+
+      {/* Division manager routes */}
+      {isDivisionManager && <>
+        <Route path="/division" element={<DivisionManagement user={user} role={role} />} />
+        <Route path="/division-exams" element={<DivisionExams user={user} role={role} />} />
+        <Route path="/exams" element={<DivisionExams user={user} role={role} />} />
+        <Route path="/profile" element={<Profile user={user} role={role} onRoleChange={setWorkRole} themePreference={themePreference} onThemePreferenceChange={setThemePreference} />} />
+        {!staff && <Route path="/" element={<Navigate to="/division" replace />} />}
+      </>}
+
+      {/* Admin also gets access to the division screens */}
+      {approvedRoles.includes('admin') && !isDivisionManager && <>
+        <Route path="/division" element={<DivisionManagement user={user} role={role} />} />
+        <Route path="/division-exams" element={<DivisionExams user={user} role={role} />} />
       </>}
 
       {/* Student routes */}

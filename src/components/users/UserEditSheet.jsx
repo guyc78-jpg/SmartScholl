@@ -30,6 +30,7 @@ export default function UserEditSheet({ targetUser, open, onOpenChange, onSaved,
       profile_class_id: targetUser.profile_class_id || '',
       profile_homeroom_class: targetUser.profile_homeroom_class || targetUser.profile_class || '',
       profile_grade_managed: targetUser.profile_grade_managed || extractGradeFromClass(targetUser.profile_homeroom_class || targetUser.profile_class || ''),
+      profile_division: targetUser.profile_division || '',
     });
   }, [targetUser]);
 
