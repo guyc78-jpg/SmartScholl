@@ -39,6 +39,13 @@ function studentMatchesClass(student, classId, className) {
 const getStudentDisplayName = formatStudentName;
 const sortByLastName = (students) => [...students].sort(compareStudentsByLastName);
 
+function isCommunityException(student) {
+  const goal = Number(student.community_service_goal ?? 60);
+  const done = Number(student.community_service_done ?? 0);
+  const status = student.community_service_status;
+  return done <= 0 || done < goal || (!!status && status !== 'הושלם') || student.status === 'דורש מעקב';
+}
+
 export default function QuickActionModal({ action, classId: classIdProp, user, role, onClose, onSuccess }) {
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
@@ -95,7 +102,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
       fetched = await base44.entities.Student.list();
     }
 
-    setStudents(fetched);
+    setStudents(action === 'community' ? fetched.filter(isCommunityException) : fetched);
     setLoadingStudents(false);
   }
 
@@ -305,7 +312,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
                   <p className="text-sm text-muted-foreground">טוען תלמידים...</p>
                 ) : students.length === 0 ? (
                   <div className="rounded-lg border border-dashed border-border p-3 text-center">
-                    <p className="text-sm text-muted-foreground">לא נמצאו תלמידים המשויכים לכיתה שלך</p>
+                    <p className="text-sm text-muted-foreground">{action === 'community' ? 'אין תלמידים חריגים במעורבות חברתית' : 'לא נמצאו תלמידים המשויכים לכיתה שלך'}</p>
                   </div>
                 ) : (
                   <div className="space-y-2">

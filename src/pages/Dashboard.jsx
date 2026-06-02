@@ -102,6 +102,8 @@ export default function Dashboard({ user, role }) {
   const presentToday = todayAttendance.filter(a => ['נוכח', 'נוכח/ת'].includes(a.status)).length;
   const absentToday  = todayAttendance.filter(a => ['נעדר', 'נעדר/ת'].includes(a.status)).length;
   const lateToday    = todayAttendance.filter(a => ['מאחר', 'מאחר/ת'].includes(a.status)).length;
+  const releasedToday = todayAttendance.filter(a => ['שוחרר', 'שוחרר/ת'].includes(a.status)).length;
+  const attendanceExceptionsToday = absentToday + lateToday + releasedToday;
   const openTasks = tasks.filter(t => t.status !== 'בוצע').length;
   const openDiscipline = discipline.filter(d => d.status === 'פתוח').length;
   const pendingTasks = tasks.filter(t => t.status !== 'בוצע').length;
@@ -129,10 +131,14 @@ export default function Dashboard({ user, role }) {
     return absences >= THRESHOLDS.absences || lates >= THRESHOLDS.lates;
   });
 
-  const communityBehind = students.filter(s => {
-    const pct = s.community_service_goal > 0 ? (s.community_service_done / s.community_service_goal) * 100 : 0;
-    return pct < 50 && s.status === 'פעיל';
-  });
+  const isCommunityException = (student) => {
+    const goal = Number(student.community_service_goal ?? 60);
+    const done = Number(student.community_service_done ?? 0);
+    const status = student.community_service_status;
+    return done <= 0 || done < goal || (!!status && status !== 'הושלם') || student.status === 'דורש מעקב';
+  };
+
+  const communityBehind = students.filter(isCommunityException);
 
   const canSeeClassAlerts = hasClassRole;
   const canSeeCoordinatorAlerts = isAdmin || hasCoordinatorRole;
@@ -253,7 +259,7 @@ export default function Dashboard({ user, role }) {
       {(() => {
         const kpis = [
           students.length > 0 && { icon: Users, title: 'תלמידים', value: students.length, subtitle: 'בכיתה', color: 'blue' },
-          students.length > 0 && { icon: UserCheck, title: 'נוכחים היום', value: presentToday, subtitle: `מתוך ${students.length}${attendanceDate !== today ? ` · ${attendanceDate}` : ''}`, color: 'green' },
+          attendanceExceptionsToday > 0 && { icon: AlertTriangle, title: 'חריגי נוכחות', value: attendanceExceptionsToday, subtitle: `${attendanceDate !== today ? attendanceDate : 'היום'}`, color: 'amber' },
           openTasks > 0 && { icon: CheckSquare, title: 'משימות פתוחות', value: openTasks, subtitle: 'לטיפול', color: openTasks > 3 ? 'amber' : 'slate' },
         ].filter(Boolean);
         if (kpis.length === 0) return null;
@@ -267,18 +273,14 @@ export default function Dashboard({ user, role }) {
       {/* Quick Actions — compact 4-col grid */}
       {(isActiveHomeroom || isActiveCoordinator || isActiveAdmin) && (() => {
         // Compute badges for relevant actions
-        const unmarkedToday = students.length > 0 && todayAttendance.length < students.length
-          ? students.length - todayAttendance.length : 0;
+        const attendanceExceptionsCount = attendanceExceptionsToday;
         const pendingParentTasks = tasks.filter(t => t.category === 'הורים' && t.status !== 'בוצע').length;
         const pendingDiscipline = discipline.filter(d => d.status === 'פתוח').length;
         const pendingTasksCount = tasks.filter(t => t.status !== 'בוצע').length;
-        const communityBehindCount = students.filter(s => {
-          const pct = s.community_service_goal > 0 ? (s.community_service_done / s.community_service_goal) * 100 : 0;
-          return pct < 50 && s.status === 'פעיל';
-        }).length;
+        const communityBehindCount = communityBehind.length;
 
         const quickActions = [
-          { icon: Clock, label: 'נוכחות', action: 'attendance', roles: ['admin', 'homeroom_teacher'], badge: unmarkedToday },
+          { icon: Clock, label: 'נוכחות', action: 'attendance', roles: ['admin', 'homeroom_teacher'], badge: attendanceExceptionsCount },
           { icon: Shield, label: 'משמעת', action: 'discipline', roles: ['admin', 'homeroom_teacher'], badge: pendingDiscipline },
           { icon: BookOpen, label: 'מבחן', action: 'exam', roles: ['admin', 'coordinator', 'homeroom_teacher'], badge: 0 },
           { icon: Megaphone, label: 'הודעה', action: 'announcement', roles: ['admin', 'coordinator', 'homeroom_teacher'], badge: 0 },

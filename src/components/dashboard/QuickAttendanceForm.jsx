@@ -69,11 +69,18 @@ export default function QuickAttendanceForm({ classId, onSaved }) {
     })();
   }, [classId, today]);
 
-  const filteredStudents = useMemo(() => {
-    if (!search.trim()) return students;
+  const exceptionStudents = useMemo(() => {
+    const list = students.filter(s => marks[s.id]);
+    if (!search.trim()) return list;
     const q = search.trim().toLowerCase();
-    return students.filter(s => (s.full_name || '').toLowerCase().includes(q));
-  }, [students, search]);
+    return list.filter(s => (s.full_name || '').toLowerCase().includes(q));
+  }, [students, marks, search]);
+
+  const searchableStudents = useMemo(() => {
+    if (!search.trim()) return [];
+    const q = search.trim().toLowerCase();
+    return students.filter(s => !marks[s.id] && (s.full_name || '').toLowerCase().includes(q));
+  }, [students, marks, search]);
 
   const exceptionsCount = Object.keys(marks).length;
   const presentCount = Math.max(0, students.length - exceptionsCount);
@@ -198,7 +205,7 @@ export default function QuickAttendanceForm({ classId, onSaved }) {
       <div className="flex items-center justify-between gap-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 px-3 py-2">
         <div className="flex items-center gap-2 text-sm text-emerald-700 dark:text-emerald-300 font-medium">
           <Check className="w-4 h-4" />
-          {presentCount} נוכחים · {exceptionsCount} חריגים
+          {exceptionsCount} חריגים בנוכחות
         </div>
         <button
           onClick={resetForm}
@@ -213,39 +220,58 @@ export default function QuickAttendanceForm({ classId, onSaved }) {
       <div className="relative">
         <Search className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="חיפוש תלמיד..."
+          placeholder="חיפוש תלמיד/ה להוספת חריג..."
           value={search}
           onChange={e => setSearch(e.target.value)}
           className="pr-9 h-9 text-sm"
         />
       </div>
 
-      <p className="text-xs text-muted-foreground">סמן/י רק תלמידים חריגים — השאר יישמרו כנוכחים</p>
+      <p className="text-xs text-muted-foreground text-right">מוצגים רק חריגים. לחיפוש והוספת חריג חדש, הקלד/י שם תלמיד/ה.</p>
 
-      {/* Student list */}
-      <div className="space-y-1.5">
-        {filteredStudents.map(s => {
+      {search.trim() && searchableStudents.length > 0 && (
+        <div className="space-y-1.5" dir="rtl">
+          <p className="text-xs font-medium text-muted-foreground text-right">הוסף/י חריג</p>
+          {searchableStudents.slice(0, 5).map(s => (
+            <div key={s.id} className="rounded-lg border border-border px-2.5 py-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-sm font-medium text-foreground truncate text-right flex-1 min-w-0">
+                  {displayName(s.full_name)}
+                </span>
+                <div className="flex gap-1 flex-shrink-0 justify-end">
+                  {EXCEPTION_OPTIONS.map(opt => {
+                    const Icon = opt.icon;
+                    return (
+                      <button
+                        key={opt.key}
+                        type="button"
+                        onClick={() => setMark(s.id, opt.key)}
+                        title={opt.label}
+                        className="w-8 h-8 rounded-md border bg-card border-border text-muted-foreground hover:bg-muted flex items-center justify-center transition-colors"
+                      >
+                        <Icon className="w-4 h-4" strokeWidth={2.5} />
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Exception list */}
+      <div className="space-y-1.5" dir="rtl">
+        {exceptionStudents.map(s => {
           const current = marks[s.id];
           const showNote = current === LATE || current === RELEASED;
           return (
-            <div
-              key={s.id}
-              className={`rounded-lg border px-2.5 py-2 transition-colors ${
-                current ? 'border-primary/30 bg-primary/[0.03]' : 'border-border'
-              }`}
-            >
+            <div key={s.id} className="rounded-lg border px-2.5 py-2 transition-colors border-primary/30 bg-primary/[0.03]">
               <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <span className="text-sm font-medium text-foreground truncate text-right">
-                    {displayName(s.full_name)}
-                  </span>
-                  {!current && (
-                    <span className="text-[9px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/50 px-1 py-0.5 rounded flex-shrink-0">
-                      נוכח/ת
-                    </span>
-                  )}
-                </div>
-                <div className="flex gap-0.5 flex-shrink-0">
+                <span className="text-sm font-medium text-foreground truncate text-right flex-1 min-w-0">
+                  {displayName(s.full_name)}
+                </span>
+                <div className="flex gap-1 flex-shrink-0 justify-end">
                   {EXCEPTION_OPTIONS.map(opt => {
                     const active = current === opt.key;
                     const Icon = opt.icon;
@@ -263,16 +289,14 @@ export default function QuickAttendanceForm({ classId, onSaved }) {
                       </button>
                     );
                   })}
-                  {current && (
-                    <button
-                      type="button"
-                      onClick={() => clearMark(s.id)}
-                      title="בטל סימון"
-                      className="w-8 h-8 rounded-md border border-border text-muted-foreground hover:bg-muted flex items-center justify-center"
-                    >
-                      <RotateCcw className="w-3.5 h-3.5" />
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => clearMark(s.id)}
+                    title="בטל סימון"
+                    className="w-8 h-8 rounded-md border border-border text-muted-foreground hover:bg-muted flex items-center justify-center"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
 
@@ -287,8 +311,8 @@ export default function QuickAttendanceForm({ classId, onSaved }) {
             </div>
           );
         })}
-        {filteredStudents.length === 0 && (
-          <p className="text-center text-sm text-muted-foreground py-4">לא נמצאו תוצאות</p>
+        {exceptionStudents.length === 0 && (
+          <p className="text-center text-sm text-muted-foreground py-4">אין חריגים להצגה</p>
         )}
       </div>
 
@@ -302,7 +326,7 @@ export default function QuickAttendanceForm({ classId, onSaved }) {
           {saving ? (
             <><Loader2 className="w-4 h-4 animate-spin ml-1.5" /> שומר...</>
           ) : (
-            <>שמור נוכחות · {presentCount} נוכחים, {exceptionsCount} חריגים</>
+            <>שמור נוכחות · {exceptionsCount} חריגים</>
           )}
         </Button>
       </div>
