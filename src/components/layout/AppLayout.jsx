@@ -84,7 +84,7 @@ const sidebarGroups = [
 const teacherBottomNav = [
   { path: '/', icon: LayoutDashboard, label: 'דשבורד', dynamicLabel: true, roles: ['admin', 'homeroom_teacher', 'coordinator'] },
   { path: '/students', icon: Users, label: 'תלמידים', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
-  { path: '/class-attendance', icon: CalendarCheck, label: 'נוכחות', roles: ['homeroom_teacher', 'admin'] },
+  { path: '/class-attendance', icon: CalendarCheck, label: 'נוכחות', roles: ['homeroom_teacher', 'admin', 'coordinator'] },
   { path: '/schedule', icon: Calendar, label: 'מערכת', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
   { path: '/exams', icon: BookOpen, label: 'לוח חכם', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
 ];

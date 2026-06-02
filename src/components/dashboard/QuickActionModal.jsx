@@ -99,6 +99,10 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
   async function handleSave() {
+    if (needsStudentPicker && !form.student_id) {
+      toast.error('יש לבחור תלמיד');
+      return;
+    }
     setSaving(true);
     try {
       const effectiveClassId = resolvedClassId;
@@ -148,8 +152,11 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
       } else if (action === 'community') {
         const student = students.find(s => s.id === form.student_id);
         if (!student) { toast.error('יש לבחור תלמיד'); setSaving(false); return; }
+        const doneVal = form.done !== undefined && form.done !== '' && !isNaN(Number(form.done))
+          ? Number(form.done)
+          : (student.community_service_done ?? 0);
         await base44.entities.Student.update(student.id, {
-          community_service_done: Number(form.done) ?? student.community_service_done ?? 0,
+          community_service_done: doneVal,
           community_service_place: form.place || student.community_service_place || '',
         });
       }
