@@ -13,7 +13,7 @@ import { getUserApprovedGrade } from '@/lib/schoolStructure';
 import { getAvailableRoles, hasApprovedRole } from '@/lib/roleUtils';
 import QuickAttendanceForm from '@/components/dashboard/QuickAttendanceForm';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
-import { getLocalDateString } from '@/lib/attendanceScope.js';
+import { getLocalDateString } from '@/lib/attendanceScope';
 
 const titles = {
   attendance: 'סימון נוכחות',
@@ -70,6 +70,13 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
     return () => { document.body.style.overflow = prev; };
   }, []);
 
+  // כל פעולה מהירה מתחילה מטופס נקי כדי למנוע זליגת נתונים בין מודולים
+  useEffect(() => {
+    setForm({});
+    setSearchQuery('');
+    setStudents([]);
+  }, [action]);
+
   async function loadStudents() {
     setLoadingStudents(true);
     let fetched = [];
@@ -89,83 +96,144 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
     }
 
     setStudents(fetched);
-    // Auto-select when only one student exists
-    if (fetched.length === 1) {
-      setForm(p => ({ ...p, student_id: fetched[0].id }));
-    }
     setLoadingStudents(false);
   }
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
+
+  const getSelectedStudent = () => students.find(s => s.id === form.student_id);
+
+  async function saveDisciplineAction() {
+    const student = getSelectedStudent();
+    const disciplineData = {
+      student_id: form.student_id,
+      student_name: student?.full_name,
+      class_id: resolvedClassId,
+      date: today,
+      time: form.time || '',
+      severity: form.severity || 'קלה',
+      category: form.category || 'התנהגות',
+      description: form.description || '',
+      treatment: '',
+      parents_updated: false,
+      status: 'פתוח'
+    };
+    await base44.entities.DisciplineEvent.create(disciplineData);
+  }
+
+  async function saveExamAction() {
+    const examData = {
+      class_id: resolvedClassId,
+      title: form.title,
+      subject: form.subject,
+      type: form.type || 'מבחן',
+      date: form.date || today,
+      time: form.time || '',
+      teacher: form.teacher || '',
+      material: form.material || '',
+      notes: form.notes || ''
+    };
+    await base44.entities.Exam.create(examData);
+  }
+
+  async function saveAnnouncementAction() {
+    const announcementData = {
+      class_id: resolvedClassId,
+      title: form.title,
+      content: form.content,
+      type: form.type || 'כיתתית',
+      requires_confirmation: false,
+      published_at: today,
+      is_published: true
+    };
+    await base44.entities.Announcement.create(announcementData);
+  }
+
+  async function saveNoteAction() {
+    const student = getSelectedStudent();
+    const noteData = {
+      student_id: form.student_id,
+      student_name: student?.full_name,
+      class_id: resolvedClassId,
+      date: today,
+      content: form.content,
+      category: form.category || 'כללי',
+      is_private: true
+    };
+    await base44.entities.TeacherNote.create(noteData);
+  }
+
+  async function saveCommunicationAction() {
+    const student = getSelectedStudent();
+    const communicationData = {
+      student_id: form.student_id,
+      student_name: student?.full_name,
+      class_id: resolvedClassId,
+      date: today,
+      type: form.type || 'שיחה טלפונית',
+      with_whom: form.with_whom || 'הורה 1',
+      summary: form.summary || '',
+      follow_up: form.follow_up || ''
+    };
+    await base44.entities.Communication.create(communicationData);
+  }
+
+  async function saveTaskAction() {
+    const student = getSelectedStudent();
+    const taskData = {
+      class_id: resolvedClassId,
+      student_id: form.student_id,
+      student_name: student?.full_name,
+      title: form.title,
+      description: form.description || '',
+      due_date: form.due_date || today,
+      priority: form.priority || 'בינונית',
+      status: 'לביצוע',
+      category: 'כללי'
+    };
+    await base44.entities.Task.create(taskData);
+  }
+
+  async function saveCommunityAction() {
+    const student = getSelectedStudent();
+    if (!student) { toast.error('יש לבחור תלמיד'); return false; }
+    const doneVal = form.done !== undefined && form.done !== '' && !isNaN(Number(form.done))
+      ? Number(form.done)
+      : (student.community_service_done ?? 0);
+    const communityData = {
+      community_service_done: doneVal,
+      community_service_place: form.place || student.community_service_place || '',
+    };
+    await base44.entities.Student.update(student.id, communityData);
+    return true;
+  }
+
+  const saveHandlers = {
+    discipline: saveDisciplineAction,
+    exam: saveExamAction,
+    announcement: saveAnnouncementAction,
+    note: saveNoteAction,
+    communication: saveCommunicationAction,
+    task: saveTaskAction,
+    community: saveCommunityAction,
+  };
 
   async function handleSave() {
     if (needsStudentPicker && !form.student_id) {
       toast.error('יש לבחור תלמיד');
       return;
     }
+    const saveAction = saveHandlers[action];
+    if (!saveAction) return;
     setSaving(true);
     try {
-      const effectiveClassId = resolvedClassId;
-
-      if (action === 'discipline') {
-        const student = students.find(s => s.id === form.student_id);
-        await base44.entities.DisciplineEvent.create({
-          student_id: form.student_id, student_name: student?.full_name, class_id: effectiveClassId,
-          date: today, time: form.time || '', severity: form.severity || 'קלה',
-          category: form.category || 'התנהגות', description: form.description || '',
-          treatment: '', parents_updated: false, status: 'פתוח'
-        });
-      } else if (action === 'exam') {
-        await base44.entities.Exam.create({
-          class_id: effectiveClassId, title: form.title, subject: form.subject,
-          type: form.type || 'מבחן', date: form.date || today, time: form.time || '',
-          teacher: form.teacher || '', material: form.material || '', notes: form.notes || ''
-        });
-      } else if (action === 'announcement') {
-        await base44.entities.Announcement.create({
-          class_id: effectiveClassId, title: form.title, content: form.content,
-          type: form.type || 'כיתתית', requires_confirmation: false,
-          published_at: today, is_published: true
-        });
-      } else if (action === 'note') {
-        const student = students.find(s => s.id === form.student_id);
-        await base44.entities.TeacherNote.create({
-          student_id: form.student_id, student_name: student?.full_name,
-          class_id: effectiveClassId, date: today, content: form.content,
-          category: form.category || 'כללי', is_private: true
-        });
-      } else if (action === 'communication') {
-        const student = students.find(s => s.id === form.student_id);
-        await base44.entities.Communication.create({
-          student_id: form.student_id, student_name: student?.full_name,
-          class_id: effectiveClassId, date: today, type: form.type || 'שיחה טלפונית',
-          with_whom: form.with_whom || 'הורה 1', summary: form.summary || '',
-          follow_up: form.follow_up || ''
-        });
-      } else if (action === 'task') {
-        const student = students.find(s => s.id === form.student_id);
-        await base44.entities.Task.create({
-          class_id: effectiveClassId, student_id: form.student_id, student_name: student?.full_name,
-          title: form.title, description: form.description || '',
-          due_date: form.due_date || today, priority: form.priority || 'בינונית', status: 'לביצוע', category: 'כללי'
-        });
-      } else if (action === 'community') {
-        const student = students.find(s => s.id === form.student_id);
-        if (!student) { toast.error('יש לבחור תלמיד'); setSaving(false); return; }
-        const doneVal = form.done !== undefined && form.done !== '' && !isNaN(Number(form.done))
-          ? Number(form.done)
-          : (student.community_service_done ?? 0);
-        await base44.entities.Student.update(student.id, {
-          community_service_done: doneVal,
-          community_service_place: form.place || student.community_service_place || '',
-        });
-      }
-
+      const saved = await saveAction();
+      if (saved === false) { setSaving(false); return; }
       await logActivity({
         user, role,
         actionName: `quick_${action}`,
         details: `${user?.full_name || 'משתמש'} ביצע/ה פעולה מהירה: ${titles[action]}`,
-        metadata: { classId: effectiveClassId }
+        metadata: { classId: resolvedClassId }
       });
       toast.success('נשמר בהצלחה!');
       onSuccess();

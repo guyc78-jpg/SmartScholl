@@ -22,17 +22,17 @@ import ExceptionRow from '@/components/attendance/ExceptionRow';
 import { getUserApprovedClass } from '@/lib/schoolStructure';
 import { useAuth } from '@/lib/AuthContext';
 import { formatStudentName } from '@/lib/studentName';
-import { ATTENDANCE_STATUSES, PRESENT_STATUS, getAttendanceScopedStudents, getLocalDateString, getScopedClassIds, filterScopedAttendance, getSelectedAttendanceDate, saveSelectedAttendanceDate } from '@/lib/attendanceScope.js';
+import { ATTENDANCE_STATUSES, PRESENT_STATUS, getAttendanceScopedStudents, getLocalDateString, getScopedClassIds, filterScopedAttendance, getSelectedAttendanceDate, saveSelectedAttendanceDate } from '@/lib/attendanceScope';
 
 const STATUSES = ATTENDANCE_STATUSES;
 const PRESENT = PRESENT_STATUS;
 
 // Short labels for the compact mobile chips
 const STATUS_SHORT = {
-  'נוכח/ת': 'נוכח',
-  'מאחר/ת': 'מאחר',
-  'נעדר/ת': 'נעדר',
-  'שוחרר/ת': 'שוחרר',
+  'נוכח/ת': 'נוכח/ת',
+  'מאחר/ת': 'מאחר/ת',
+  'נעדר/ת': 'נעדר/ת',
+  'שוחרר/ת': 'שוחרר/ת',
 };
 
 export const THRESHOLDS = { absences: 5, lates: 8 };
@@ -182,27 +182,6 @@ export default function ClassAttendance({ role }) {
   function handleEditException(student, status) {
     setDetailStudent(student);
     setDetailStatus(status);
-  }
-
-  // Create a task in "treatment" — uses the Task entity
-  async function handleAddToTreatment(student, status, note) {
-    try {
-      const reasonLabel = status === 'מאחר/ת' ? 'איחור' : status === 'נעדר/ת' ? 'היעדרות' : 'שחרור';
-      await base44.entities.Task.create({
-        class_id: student.class_id,
-        student_id: student.id,
-        student_name: student.full_name,
-        title: `מעקב ${reasonLabel} — ${student.full_name}`,
-        description: note || '',
-        due_date: getLocalDateString(),
-        priority: 'גבוהה',
-        status: 'לביצוע',
-        category: 'כללי',
-      });
-      toast.success(`${formatStudentName(student)} נוסף/ה לטיפול`);
-    } catch (e) {
-      console.error(e); toast.error('הוספה לטיפול נכשלה');
-    }
   }
 
   // ── Stats ─────────────────────────────────────────────────────────────────
@@ -445,7 +424,6 @@ export default function ClassAttendance({ role }) {
                           disabled={isPastDay(date)}
                           onMarkPresent={handleMarkPresent}
                           onEdit={handleEditException}
-                          onAddToTreatment={handleAddToTreatment}
                         />
                       );
                     }
@@ -456,9 +434,9 @@ export default function ClassAttendance({ role }) {
                         initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: Math.min(i * 0.015, 0.2) }}>
                         <Card className={isAlert ? 'border-red-200 dark:border-red-800/60' : ''}>
-                          <div className="p-2.5 flex items-center gap-2" dir="rtl">
+                          <div className="p-2 sm:p-2.5 flex items-center gap-1.5 sm:gap-2" dir="rtl">
                             <div className="flex-1 min-w-0 text-right">
-                              <p className="font-medium text-sm leading-tight truncate"><span className="text-xs text-muted-foreground me-1">{i + 1}.</span>{formatStudentName(student)}</p>
+                              <p className="font-medium text-sm leading-tight"><span className="text-xs text-muted-foreground me-0.5">{i + 1}.</span><span className="inline-block max-w-[calc(100%-20px)] truncate">{formatStudentName(student)}</span></p>
                               {current?.note && (
                                 <p className="text-[11px] text-muted-foreground truncate">{current.note}</p>
                               )}
@@ -474,7 +452,7 @@ export default function ClassAttendance({ role }) {
                                   onClick={() => handleQuickStatus(student, st)}
                                   disabled={isPastDay(date)}
                                   aria-label={st}
-                                  className={`text-[9px] leading-tight h-6 min-w-[40px] px-1 rounded-md border font-medium transition-all whitespace-nowrap text-center disabled:opacity-50
+                                  className={`text-[8px] sm:text-[9px] leading-tight h-6 min-w-[38px] sm:min-w-[40px] px-0.5 sm:px-1 rounded-md border font-medium transition-all whitespace-nowrap text-center disabled:opacity-50
                                     ${current?.status === st ? statusBtnStyle[st].active : statusBtnStyle[st].idle}`}>
                                   {STATUS_SHORT[st]}
                                 </button>

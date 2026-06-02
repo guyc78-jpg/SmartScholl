@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
-import { Clock, UserX, LogOut, RotateCcw, Pencil, ClipboardPlus } from 'lucide-react';
+import { Clock, UserX, LogOut, RotateCcw, Pencil } from 'lucide-react';
 import { formatStudentName } from '@/lib/studentName';
 
 const STATUS_META = {
@@ -29,7 +29,7 @@ function parseExceptionDetails(status, note = '') {
   return note;
 }
 
-export default function ExceptionRow({ student, status, note, disabled, onMarkPresent, onEdit, onAddToTreatment, index = 0 }) {
+export default function ExceptionRow({ student, status, note, disabled, onMarkPresent, onEdit, index = 0 }) {
   const meta = STATUS_META[status] || STATUS_META['נעדר/ת'];
   const Icon = meta.icon;
   const details = parseExceptionDetails(status, note);
@@ -78,14 +78,7 @@ export default function ExceptionRow({ student, status, note, disabled, onMarkPr
             >
               <Pencil className="w-4 h-4 text-muted-foreground" />
             </button>
-            <button
-              onClick={() => onAddToTreatment?.(student, status, note)}
-              disabled={disabled}
-              title="הוסף לטיפול"
-              className="w-8 h-8 rounded-lg border border-border bg-card hover:bg-primary/10 hover:border-primary/30 transition-colors flex items-center justify-center disabled:opacity-50"
-            >
-              <ClipboardPlus className="w-4 h-4 text-primary" />
-            </button>
+
           </div>
         </div>
       </Card>

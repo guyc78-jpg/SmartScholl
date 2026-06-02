@@ -2,14 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Check, X, Clock, LogOut, Loader2, Search, AlertTriangle, RotateCcw } from 'lucide-react';
+import { Check, X, Clock, LogOut, Loader2, Search, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from '@/components/ui/alert-dialog';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
-import { getSelectedAttendanceDate } from '@/lib/attendanceScope.js';
+import { getSelectedAttendanceDate } from '@/lib/attendanceScope';
 
 const PRESENT = 'נוכח/ת';
 const LATE = 'מאחר/ת';
@@ -130,25 +130,7 @@ export default function QuickAttendanceForm({ classId, onSaved }) {
     }
     await Promise.all(ops);
 
-    // Run pattern detection — surface immediate alerts for this class
-    let patternMsg = null;
-    try {
-      const res = await base44.functions.invoke('generateSmartAlerts', {});
-      const classAlerts = (res?.data?.alerts || []).filter(a =>
-        a.class_id === classId && ['high_absences', 'consecutive_lates'].includes(a.alert_type)
-      );
-      if (classAlerts.length > 0) {
-        const names = [...new Set(classAlerts.map(a => a.student_name))];
-        patternMsg = `⚠️ ${names.length} תלמיד/ים עם דפוס חריג: ${names.slice(0, 3).join(', ')}${names.length > 3 ? '...' : ''}`;
-      }
-    } catch {
-      // pattern detection is non-blocking
-    }
-
     toast.success('הנוכחות נשמרה בהצלחה');
-    if (patternMsg) {
-      setTimeout(() => toast.warning(patternMsg, { duration: 6000 }), 400);
-    }
     setSaving(false);
     onSaved?.();
   };
@@ -258,12 +240,12 @@ export default function QuickAttendanceForm({ classId, onSaved }) {
                     {displayName(s.full_name)}
                   </span>
                   {!current && (
-                    <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/50 px-1.5 py-0.5 rounded">
+                    <span className="text-[9px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/50 px-1 py-0.5 rounded flex-shrink-0">
                       נוכח/ת
                     </span>
                   )}
                 </div>
-                <div className="flex gap-1 flex-shrink-0">
+                <div className="flex gap-0.5 flex-shrink-0">
                   {EXCEPTION_OPTIONS.map(opt => {
                     const active = current === opt.key;
                     const Icon = opt.icon;
@@ -273,11 +255,11 @@ export default function QuickAttendanceForm({ classId, onSaved }) {
                         type="button"
                         onClick={() => setMark(s.id, opt.key)}
                         title={opt.label}
-                        className={`w-8 h-8 rounded-md border flex items-center justify-center transition-colors ${
+                        className={`w-7 h-7 rounded-md border flex items-center justify-center transition-colors ${
                           active ? opt.color : 'bg-card border-border text-muted-foreground hover:bg-muted'
                         }`}
                       >
-                        <Icon className="w-4 h-4" strokeWidth={2.5} />
+                        <Icon className="w-3.5 h-3.5" strokeWidth={2.5} />
                       </button>
                     );
                   })}
@@ -286,9 +268,9 @@ export default function QuickAttendanceForm({ classId, onSaved }) {
                       type="button"
                       onClick={() => clearMark(s.id)}
                       title="בטל סימון"
-                      className="w-8 h-8 rounded-md border border-border text-muted-foreground hover:bg-muted flex items-center justify-center"
+                      className="w-7 h-7 rounded-md border border-border text-muted-foreground hover:bg-muted flex items-center justify-center"
                     >
-                      <RotateCcw className="w-3.5 h-3.5" />
+                      <RotateCcw className="w-3 h-3" />
                     </button>
                   )}
                 </div>
