@@ -3,6 +3,9 @@ import { base44 } from '@/api/base44Client';
 export const CLASS_ID = 'class-yod-1';
 
 export async function seedDemoData() {
+  // Demo/seed data disabled — the app only shows real user-created or imported data.
+  return;
+  // eslint-disable-next-line no-unreachable
   try {
     // Check if already seeded
     const existing = await base44.entities.ClassRoom.filter({ name: 'י׳1' });
