@@ -27,6 +27,14 @@ import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName'
 const STATUSES = ['נוכח/ת', 'מאחר/ת', 'נעדר/ת', 'שוחרר/ה'];
 const PRESENT = 'נוכח/ת';
 
+// Short labels for the compact mobile chips
+const STATUS_SHORT = {
+  'נוכח/ת': 'נוכח',
+  'מאחר/ת': 'מאחר',
+  'נעדר/ת': 'נעדר',
+  'שוחרר/ה': 'שוחרר',
+};
+
 export const THRESHOLDS = { absences: 5, lates: 8 };
 
 const statusBtnStyle = {
@@ -448,11 +456,11 @@ export default function ClassAttendance({ role }) {
                         initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: Math.min(i * 0.015, 0.2) }}>
                         <Card className={isAlert ? 'border-red-200 dark:border-red-800/60' : ''}>
-                          <div className="p-2.5 flex items-center gap-1.5" dir="rtl">
+                          <div className="p-2.5 flex items-center gap-2" dir="rtl">
                             <div className="flex-1 min-w-0 text-right">
-                              <p className="font-medium text-sm leading-tight"><span className="text-xs text-muted-foreground me-1">{i + 1}.</span>{formatStudentName(student)}</p>
+                              <p className="font-medium text-sm leading-tight truncate"><span className="text-xs text-muted-foreground me-1">{i + 1}.</span>{formatStudentName(student)}</p>
                               {current?.note && (
-                                <p className="text-[11px] text-muted-foreground">{current.note}</p>
+                                <p className="text-[11px] text-muted-foreground truncate">{current.note}</p>
                               )}
                               {!current?.note && isAlert && (
                                 <p className="text-[10px] text-red-500 inline-flex items-center gap-0.5">
@@ -460,15 +468,15 @@ export default function ClassAttendance({ role }) {
                                 </p>
                               )}
                             </div>
-                            <div className="flex gap-1 flex-shrink-0 flex-wrap justify-end">
+                            <div className="flex gap-0.5 flex-shrink-0 justify-end">
                               {STATUSES.map(st => (
                                 <button key={st}
                                   onClick={() => handleQuickStatus(student, st)}
                                   disabled={isPastDay(date)}
                                   aria-label={st}
-                                  className={`text-[11px] h-8 w-[58px] px-0 rounded-lg border font-medium transition-all whitespace-nowrap text-center disabled:opacity-50
+                                  className={`text-[10px] leading-none h-7 min-w-[42px] px-1.5 rounded-md border font-medium transition-all whitespace-nowrap text-center disabled:opacity-50
                                     ${current?.status === st ? statusBtnStyle[st].active : statusBtnStyle[st].idle}`}>
-                                  {st}
+                                  {STATUS_SHORT[st]}
                                 </button>
                               ))}
                             </div>
