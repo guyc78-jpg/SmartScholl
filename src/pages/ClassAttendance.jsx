@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { CLASS_ID } from '@/lib/demoData';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -20,12 +19,13 @@ import StudentQuickPicker from '@/components/attendance/StudentQuickPicker';
 import ExceptionDetailDialog from '@/components/attendance/ExceptionDetailDialog';
 import WorthCheckingPanel from '@/components/attendance/WorthCheckingPanel';
 import ExceptionRow from '@/components/attendance/ExceptionRow';
-import { isStudentInApprovedScope, getUserApprovedClass, getUserApprovedClassId } from '@/lib/schoolStructure';
+import { getUserApprovedClass } from '@/lib/schoolStructure';
 import { useAuth } from '@/lib/AuthContext';
-import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
+import { formatStudentName } from '@/lib/studentName';
+import { ATTENDANCE_STATUSES, PRESENT_STATUS, getAttendanceScopedStudents, getLocalDateString, getScopedClassIds, filterScopedAttendance, getSelectedAttendanceDate, saveSelectedAttendanceDate } from '@/lib/attendanceScope.js';
 
-const STATUSES = ['נוכח/ת', 'מאחר/ת', 'נעדר/ת', 'שוחרר/ת'];
-const PRESENT = 'נוכח/ת';
+const STATUSES = ATTENDANCE_STATUSES;
+const PRESENT = PRESENT_STATUS;
 
 // Short labels for the compact mobile chips
 const STATUS_SHORT = {
@@ -45,17 +45,15 @@ const statusBtnStyle = {
 };
 
 function isPastDay(dateStr) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDateString();
   return dateStr < today;
 }
 
 export default function ClassAttendance({ role }) {
   const { user } = useAuth();
   const canEdit = role === 'homeroom_teacher' || role === 'admin' || role === 'coordinator';
-  const classId = getUserApprovedClassId(user, CLASS_ID);
-
   const [students, setStudents] = useState([]);
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(getSelectedAttendanceDate);
   const [attendanceMap, setAttendanceMap] = useState({});
   const [existingIds, setExistingIds] = useState({});
   const [loading, setLoading] = useState(true);
@@ -68,47 +66,42 @@ export default function ClassAttendance({ role }) {
   const [tab, setTab] = useState('daily');
 
   // Picker / dialog state
-  const [pickerStatus, setPickerStatus] = useState(null); // 'נעדר/ת' | 'מאחר/ת' | 'שוחרר/ה'
+  const [pickerStatus, setPickerStatus] = useState(null); // 'נעדר/ת' | 'מאחר/ת' | 'שוחרר/ת'
   const [detailStudent, setDetailStudent] = useState(null);
   const [detailStatus, setDetailStatus] = useState(null);
 
-  useEffect(() => { loadAll(); }, []);
-  useEffect(() => { if (students.length > 0) loadDay(); }, [date, students.length]);
+  useEffect(() => { loadAll(); }, [user?.id, role]);
+  useEffect(() => { if (students.length > 0) loadDay(); }, [date, students]);
 
   async function loadAll() {
     setLoading(true);
-    const allStudents = await base44.entities.Student.list();
-    const activeStudents = allStudents.filter(s => s.status === 'פעיל' || s.status === 'דורש מעקב');
-    let scopedStudents = activeStudents.filter(s => isStudentInApprovedScope(s, user, role));
-    if (scopedStudents.length === 0 && role === 'admin') scopedStudents = activeStudents;
-
-    const scopedIds = new Set(scopedStudents.map(s => s.id));
-    const classIds = [...new Set(scopedStudents.map(s => s.class_id).filter(Boolean))];
+    const scopedStudents = await getAttendanceScopedStudents(user, role);
+    const classIds = getScopedClassIds(scopedStudents);
     const recsArrays = await Promise.all(classIds.map(cid => base44.entities.AttendanceRecord.filter({ class_id: cid })));
     const recs = recsArrays.flat();
 
-    setStudents(scopedStudents.sort(compareStudentsByLastName));
-    setAllRecords(recs.filter(r => STATUSES.includes(r.status) && scopedIds.has(r.student_id)));
+    setStudents(scopedStudents);
+    setAllRecords(filterScopedAttendance(recs, scopedStudents));
     setLoading(false);
   }
 
   async function loadDay() {
-    const classIds = [...new Set(students.map(s => s.class_id).filter(Boolean))];
+    const classIds = getScopedClassIds(students);
     if (classIds.length === 0) { setAttendanceMap({}); setExistingIds({}); setConfirmed(false); return; }
     const attArrays = await Promise.all(classIds.map(cid => base44.entities.AttendanceRecord.filter({ class_id: cid, date })));
     const att = attArrays.flat();
-    const scopedIds = new Set(students.map(s => s.id));
+    const scopedAtt = filterScopedAttendance(att, students);
     const map = {}, ids = {};
-    att.filter(r => STATUSES.includes(r.status) && scopedIds.has(r.student_id)).forEach(a => {
+    scopedAtt.forEach(a => {
       map[a.student_id] = { status: a.status, note: a.note || '' };
       ids[a.student_id] = a.id;
     });
     setAttendanceMap(map);
     setExistingIds(ids);
-    // If any record exists for today → it was confirmed
-    setConfirmed(att.length > 0);
-    if (att.length > 0) {
-      const latest = att.reduce((acc, r) => {
+    // If any scoped record exists for this date → it was confirmed
+    setConfirmed(scopedAtt.length > 0);
+    if (scopedAtt.length > 0) {
+      const latest = scopedAtt.reduce((acc, r) => {
         const t = r.updated_date || r.created_date;
         return (!acc || (t && t > acc)) ? t : acc;
       }, null);
@@ -131,7 +124,7 @@ export default function ClassAttendance({ role }) {
     const data = {
       student_id: student.id,
       student_name: student.full_name,
-      class_id: student.class_id || classId,
+      class_id: student.class_id,
       date,
       status: statusOrNull,
       note,
@@ -196,12 +189,12 @@ export default function ClassAttendance({ role }) {
     try {
       const reasonLabel = status === 'מאחר/ת' ? 'איחור' : status === 'נעדר/ת' ? 'היעדרות' : 'שחרור';
       await base44.entities.Task.create({
-        class_id: student.class_id || classId,
+        class_id: student.class_id,
         student_id: student.id,
         student_name: student.full_name,
         title: `מעקב ${reasonLabel} — ${student.full_name}`,
         description: note || '',
-        due_date: new Date().toISOString().split('T')[0],
+        due_date: getLocalDateString(),
         priority: 'גבוהה',
         status: 'לביצוע',
         category: 'כללי',
@@ -330,7 +323,7 @@ export default function ClassAttendance({ role }) {
           <div className="flex items-center gap-2 text-right" dir="rtl">
             <Label htmlFor="date" className="text-sm flex-shrink-0">תאריך:</Label>
             <Input id="date" type="date" value={date}
-              onChange={e => setDate(e.target.value)} className="w-40" />
+            onChange={e => { setDate(e.target.value); saveSelectedAttendanceDate(e.target.value); }} className="w-40" />
             {isPastDay(date) && (
               <span className="text-xs text-amber-700 dark:text-amber-400 px-2 py-1 bg-amber-50 dark:bg-amber-900/20 rounded-md">
                 תצוגת עבר — לקריאה בלבד

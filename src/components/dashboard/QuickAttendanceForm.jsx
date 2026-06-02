@@ -9,23 +9,24 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from '@/components/ui/alert-dialog';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
+import { getSelectedAttendanceDate } from '@/lib/attendanceScope.js';
 
 const PRESENT = 'נוכח/ת';
 const LATE = 'מאחר/ת';
 const ABSENT = 'נעדר/ת';
-const RELEASED = 'שוחרר';
+const RELEASED = 'שוחרר/ת';
 
 const EXCEPTION_OPTIONS = [
   { key: LATE, label: 'מאחר/ת', icon: Clock, color: 'bg-amber-500 text-white border-amber-500 hover:bg-amber-500' },
   { key: ABSENT, label: 'נעדר/ת', icon: X, color: 'bg-red-600 text-white border-red-600 hover:bg-red-600' },
-  { key: RELEASED, label: 'שוחרר/ה', icon: LogOut, color: 'bg-blue-600 text-white border-blue-600 hover:bg-blue-600' },
+  { key: RELEASED, label: 'שוחרר/ת', icon: LogOut, color: 'bg-blue-600 text-white border-blue-600 hover:bg-blue-600' },
 ];
 
 const sortByLastName = (students) => [...students].sort(compareStudentsByLastName);
 const displayName = formatStudentName;
 
 export default function QuickAttendanceForm({ classId, onSaved }) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getSelectedAttendanceDate();
   const [students, setStudents] = useState([]);
   const [existing, setExisting] = useState({}); // student_id -> existing record
   const [marks, setMarks] = useState({}); // student_id -> status (only exceptions tracked; missing = present)

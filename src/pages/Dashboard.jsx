@@ -3,7 +3,6 @@ import { THRESHOLDS } from '@/pages/ClassAttendance';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { CLASS_ID } from '@/lib/demoData';
 import StatCard from '@/components/ui/StatCard';
 import UrgentFlagsSection from '@/components/urgent/UrgentFlagsSection';
 import DailySmartCard from '@/components/dashboard/DailySmartCard';
@@ -22,9 +21,10 @@ import QuickActionModal from '@/components/dashboard/QuickActionModal';
 import NotificationsDropdown from '@/components/dashboard/NotificationsDropdown';
 import SchoolNameBanner from '@/components/layout/SchoolNameBanner';
 import NowNextCard from '@/components/schedule/NowNextCard';
-import { isStudentInApprovedScope, getUserApprovedClass, getUserApprovedGrade, getUserApprovedClassId } from '@/lib/schoolStructure';
+import { getUserApprovedClass, getUserApprovedGrade } from '@/lib/schoolStructure';
 import { getAvailableRoles, getUserFirstName, hasApprovedRole, getRoleHomeLabel, getRoleShort } from '@/lib/roleUtils';
 import useReadNotifications from '@/hooks/useReadNotifications';
+import { getAttendanceScopedStudents, getScopedClassIds, filterScopedAttendance, getSelectedAttendanceDate, getLocalDateString } from '@/lib/attendanceScope.js';
 
 const HEBREW_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 const HEBREW_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
@@ -43,7 +43,8 @@ export default function Dashboard({ user, role }) {
   const [loading, setLoading] = useState(true);
   const [quickAction, setQuickAction] = useState(null);
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDateString();
+  const attendanceDate = getSelectedAttendanceDate();
   const approvedRoles = getAvailableRoles(user);
   const isAdmin = approvedRoles.includes('admin');
   const hasClassRole = approvedRoles.includes('homeroom_teacher');
@@ -52,7 +53,7 @@ export default function Dashboard({ user, role }) {
   const isActiveCoordinator = role === 'coordinator';
   const isActiveAdmin = role === 'admin';
   const dashboardTitle = getRoleHomeLabel(user, role);
-  const classId = getUserApprovedClassId(user, CLASS_ID);
+  const classId = students[0]?.class_id || user?.profile_class_id || '';
   const scopeLabels = [
     isActiveAdmin ? getRoleShort('admin', user) + ' מערכת' : null,
     isActiveHomeroom ? `${getRoleShort('homeroom_teacher', user)}${getUserApprovedClass(user) ? ` · ${getUserApprovedClass(user)}` : ''}` : null,
@@ -60,31 +61,41 @@ export default function Dashboard({ user, role }) {
   ].filter(Boolean).join(' | ') || 'מערכת כללית';
 
   useEffect(() => {
-    loadData();
-  }, []);
+    loadData(true);
+    const unsubscribe = base44.entities.AttendanceRecord.subscribe(() => loadData(false));
+    const handleFocus = () => loadData(false);
+    window.addEventListener('focus', handleFocus);
+    return () => {
+      unsubscribe();
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [user?.id, role, attendanceDate]);
 
-  async function loadData() {
-    setLoading(true);
-    // If no classId, fetch all students and filter by scope
-    const studentQuery = classId ? { class_id: classId } : {};
-    const [sts, att, exs, tks, dis, ann] = await Promise.all([
-      base44.entities.Student.filter(studentQuery),
-      classId ? base44.entities.AttendanceRecord.filter({ class_id: classId, date: today }) : Promise.resolve([]),
-      classId ? base44.entities.Exam.filter({ class_id: classId }) : Promise.resolve([]),
-      classId ? base44.entities.Task.filter({ class_id: classId }) : Promise.resolve([]),
-      classId ? base44.entities.DisciplineEvent.filter({ class_id: classId }) : Promise.resolve([]),
-      classId ? base44.entities.Announcement.filter({ class_id: classId }) : Promise.resolve([]),
-    ]);
-    const scopeRole = hasApprovedRole(user, 'homeroom_teacher') ? 'homeroom_teacher' : hasApprovedRole(user, 'coordinator') ? 'coordinator' : role;
-    // If no classId configured yet, show all fetched students (no scope filtering possible)
-    const scopedStudents = (!classId) ? sts : (isAdmin && !hasClassRole && !hasCoordinatorRole ? sts : sts.filter(student => isStudentInApprovedScope(student, user, scopeRole)));
+  async function loadData(showSpinner = true) {
+    if (showSpinner) setLoading(true);
+    const scopedStudents = await getAttendanceScopedStudents(user, role);
+    const classIds = getScopedClassIds(scopedStudents);
     const scopedIds = new Set(scopedStudents.map(student => student.id));
+    const fetchForClasses = async (loader) => (await Promise.all(classIds.map(loader))).flat();
+
+    const [att, allAtt, exs, tks, dis, ann, perf] = await Promise.all([
+      fetchForClasses(classId => base44.entities.AttendanceRecord.filter({ class_id: classId, date: attendanceDate })),
+      fetchForClasses(classId => base44.entities.AttendanceRecord.filter({ class_id: classId })),
+      fetchForClasses(classId => base44.entities.Exam.filter({ class_id: classId })),
+      fetchForClasses(classId => base44.entities.Task.filter({ class_id: classId })),
+      fetchForClasses(classId => base44.entities.DisciplineEvent.filter({ class_id: classId })),
+      fetchForClasses(classId => base44.entities.Announcement.filter({ class_id: classId })),
+      fetchForClasses(classId => base44.entities.PerformanceReview.filter({ class_id: classId })),
+    ]);
+
     setStudents(scopedStudents);
-    setTodayAttendance(att.filter(record => scopedIds.has(record.student_id)));
+    setTodayAttendance(filterScopedAttendance(att, scopedStudents));
+    setAllAttRecords(filterScopedAttendance(allAtt, scopedStudents));
     setDiscipline(dis.filter(record => scopedIds.has(record.student_id)));
     setTasks(tks.filter(task => !task.student_id || scopedIds.has(task.student_id)));
     setExams(exs);
     setAnnouncements(ann);
+    setPerformanceReviews(perf.filter(record => scopedIds.has(record.student_id)));
     setLoading(false);
   }
 
@@ -112,16 +123,6 @@ export default function Dashboard({ user, role }) {
   // Class attendance pattern alerts
   const [allAttRecords, setAllAttRecords] = useState([]);
   const [performanceReviews, setPerformanceReviews] = useState([]);
-  useEffect(() => {
-    if (!classId) return; // avoid fetching every record in the DB when no class is set
-    Promise.all([
-      base44.entities.AttendanceRecord.filter({ class_id: classId }),
-      base44.entities.PerformanceReview.filter({ class_id: classId })
-    ]).then(([att, perf]) => {
-      setAllAttRecords(att);
-      setPerformanceReviews(perf);
-    });
-  }, [classId]);
   const attendanceAlertStudents = students.filter(s => {
     const absences = allAttRecords.filter(r => r.student_id === s.id && ['נעדר/ת'].includes(r.status)).length;
     const lates    = allAttRecords.filter(r => r.student_id === s.id && ['מאחר/ת'].includes(r.status)).length;
@@ -252,7 +253,7 @@ export default function Dashboard({ user, role }) {
       {(() => {
         const kpis = [
           students.length > 0 && { icon: Users, title: 'תלמידים', value: students.length, subtitle: 'בכיתה', color: 'blue' },
-          presentToday > 0 && { icon: UserCheck, title: 'נוכחים היום', value: presentToday, subtitle: `מתוך ${todayAttendance.length}`, color: 'green' },
+          students.length > 0 && { icon: UserCheck, title: 'נוכחים היום', value: presentToday, subtitle: `מתוך ${students.length}${attendanceDate !== today ? ` · ${attendanceDate}` : ''}`, color: 'green' },
           openTasks > 0 && { icon: CheckSquare, title: 'משימות פתוחות', value: openTasks, subtitle: 'לטיפול', color: openTasks > 3 ? 'amber' : 'slate' },
         ].filter(Boolean);
         if (kpis.length === 0) return null;

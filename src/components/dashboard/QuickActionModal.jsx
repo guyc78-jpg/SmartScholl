@@ -9,11 +9,11 @@ import { X, Check } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { logActivity } from '@/lib/activityLogger';
-import { getUserApprovedClassId, getUserApprovedGrade } from '@/lib/schoolStructure';
+import { getUserApprovedGrade } from '@/lib/schoolStructure';
 import { getAvailableRoles, hasApprovedRole } from '@/lib/roleUtils';
-import { CLASS_ID } from '@/lib/demoData';
 import QuickAttendanceForm from '@/components/dashboard/QuickAttendanceForm';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
+import { getLocalDateString } from '@/lib/attendanceScope.js';
 
 const titles = {
   attendance: 'סימון נוכחות',
@@ -48,9 +48,9 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
   const sheetRef = useRef(null);
 
   const needsStudentPicker = ['discipline', 'note', 'communication', 'community'].includes(action);
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDateString();
 
-  const resolvedClassId = classIdProp || getUserApprovedClassId(user, CLASS_ID) || '';
+  const resolvedClassId = classIdProp || user?.profile_class_id || '';
   const approvedClass = user?.profile_homeroom_class || user?.profile_class || '';
   const approvedGrade = getUserApprovedGrade(user);
   const approvedRoles = getAvailableRoles(user);
