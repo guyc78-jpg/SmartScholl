@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import StatusBadge from '@/components/ui/StatusBadge';
 import QuickActionModal from '@/components/dashboard/QuickActionModal';
+import OpenTasksDialog from '@/components/dashboard/OpenTasksDialog';
 import NotificationsDropdown from '@/components/dashboard/NotificationsDropdown';
 import SchoolNameBanner from '@/components/layout/SchoolNameBanner';
 import NowNextCard from '@/components/schedule/NowNextCard';
@@ -42,6 +43,7 @@ export default function Dashboard({ user, role }) {
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [quickAction, setQuickAction] = useState(null);
+  const [tasksDialogOpen, setTasksDialogOpen] = useState(false);
 
   const today = getLocalDateString();
   const attendanceDate = getSelectedAttendanceDate();
@@ -115,10 +117,9 @@ export default function Dashboard({ user, role }) {
     .sort((a, b) => a.date.localeCompare(b.date))
     .slice(0, 5);
 
-  const urgentTasks = tasks
-    .filter(t => t.status !== 'בוצע' && ((t.priority === 'גבוהה' || t.priority === 'דחופה') || t.category === 'הורים'))
-    .sort((a, b) => (a.due_date || '').localeCompare(b.due_date || ''))
-    .slice(0, 3);
+  const openTaskItems = tasks
+    .filter(t => t.status !== 'בוצע')
+    .sort((a, b) => (a.due_date || '').localeCompare(b.due_date || ''));
 
   const watchStudents = students.filter(s => s.status === 'דורש מעקב');
 
@@ -260,7 +261,7 @@ export default function Dashboard({ user, role }) {
         const kpis = [
           students.length > 0 && { icon: Users, title: 'תלמידים', value: students.length, subtitle: 'בכיתה', color: 'blue' },
           attendanceExceptionsToday > 0 && { icon: AlertTriangle, title: 'חריגי נוכחות', value: attendanceExceptionsToday, subtitle: `${attendanceDate !== today ? attendanceDate : 'היום'}`, color: 'amber' },
-          openTasks > 0 && { icon: CheckSquare, title: 'משימות פתוחות', value: openTasks, subtitle: 'לטיפול', color: openTasks > 3 ? 'amber' : 'slate' },
+          openTasks > 0 && { icon: CheckSquare, title: 'משימות פתוחות', value: openTasks, subtitle: 'לטיפול', color: openTasks > 3 ? 'amber' : 'slate', onClick: () => setTasksDialogOpen(true) },
         ].filter(Boolean);
         if (kpis.length === 0) return null;
         return (
@@ -325,7 +326,7 @@ export default function Dashboard({ user, role }) {
       })()}
 
       {/* Lists — show only when there is content */}
-      {(upcomingEvents.length > 0 || urgentTasks.length > 0 || announcements.length > 0) && (
+      {(upcomingEvents.length > 0 || announcements.length > 0) && (
         <div className="grid lg:grid-cols-2 gap-4">
           {upcomingEvents.length > 0 && (
             <Card>
@@ -369,28 +370,6 @@ export default function Dashboard({ user, role }) {
             </Card>
           )}
 
-          {urgentTasks.length > 0 && (
-            <Card>
-              <CardHeader className="pb-3 flex flex-row items-center justify-between">
-                <CardTitle className="text-base font-semibold">משימות ותזכורות דחופות</CardTitle>
-                <Link to="/tasks" className="text-xs text-primary flex items-center gap-1 hover:underline">
-                  הכל <ChevronLeft className="w-3 h-3" />
-                </Link>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {urgentTasks.map(task => (
-                  <div key={task.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-muted/50">
-                    <div className={`w-1.5 h-10 rounded-full ${task.priority === 'דחופה' ? 'bg-destructive' : 'bg-amber-500'}`} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{task.title}</p>
-                      {task.student_name && <p className="text-xs text-muted-foreground">{task.category === 'הורים' ? 'תזכורת שיחה · ' : ''}{task.student_name}</p>}
-                    </div>
-                    <StatusBadge status={task.priority} />
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
 
           {announcements.length > 0 && (
             <Card>
@@ -415,6 +394,13 @@ export default function Dashboard({ user, role }) {
           )}
         </div>
       )}
+
+      <OpenTasksDialog
+        open={tasksDialogOpen}
+        onOpenChange={setTasksDialogOpen}
+        tasks={openTaskItems}
+        onChanged={() => loadData(false)}
+      />
 
       {quickAction && (
         <QuickActionModal
