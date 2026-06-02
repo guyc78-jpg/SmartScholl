@@ -263,16 +263,16 @@ export default function QuickAttendanceForm({ classId, onSaved }) {
                       </button>
                     );
                   })}
-                  <button
-                    type="button"
-                    onClick={() => clearMark(s.id)}
-                    title="בטל סימון"
-                    className={`w-8 h-8 rounded-md border flex items-center justify-center transition-colors ${
-                      current ? 'bg-destructive/10 border-destructive/30 text-destructive hover:bg-destructive/20' : 'border-border text-muted-foreground hover:bg-muted'
-                    }`}
-                  >
-                    <RotateCcw className="w-3.5 h-3.5" />
-                  </button>
+                  {current && (
+                    <button
+                      type="button"
+                      onClick={() => clearMark(s.id)}
+                      title="בטל סימון"
+                      className="w-8 h-8 rounded-md border border-border text-muted-foreground hover:bg-muted flex items-center justify-center"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
               </div>
 

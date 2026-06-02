@@ -358,7 +358,7 @@ export default function ClassAttendance({ role }) {
               }} />
 
               {/* Quick Actions */}
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2" dir="rtl">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2" dir="rtl">
                 <Button
                   onClick={handleConfirmAllPresent}
                   disabled={saving || isPastDay(date)}
@@ -366,15 +366,6 @@ export default function ClassAttendance({ role }) {
                 >
                   <CheckCircle2 className="w-4 h-4" />
                   <span className="text-xs sm:text-sm">אשר נוכחות</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => setResetConfirmOpen(true)}
-                  disabled={saving || isPastDay(date) || Object.keys(attendanceMap).length === 0}
-                  className="gap-1.5 h-11 hover:bg-destructive/10 hover:border-destructive/30 hover:text-destructive"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                  <span className="text-xs sm:text-sm">אפס נוכחות</span>
                 </Button>
                 <Button variant="outline" onClick={() => openPicker('נעדר/ת')}
                   disabled={isPastDay(date)}
@@ -398,28 +389,37 @@ export default function ClassAttendance({ role }) {
 
               {/* View toggle + search */}
               <div className="flex items-center gap-2 flex-wrap" dir="rtl">
-                <div className="inline-flex rounded-lg border bg-card p-1">
-                  <button onClick={() => setView('exceptions')}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors inline-flex items-center gap-1 ${
-                      view === 'exceptions' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
-                    }`}>
-                    <ListFilter className="w-3.5 h-3.5" />
-                    חריגים בלבד
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${view === 'exceptions' ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
-                      {exceptionCount}
-                    </span>
-                  </button>
-                  <button onClick={() => setView('all')}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors inline-flex items-center gap-1 ${
-                      view === 'all' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
-                    }`}>
-                    <Users className="w-3.5 h-3.5" />
-                    כל התלמידים
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${view === 'all' ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
-                      {students.length}
-                    </span>
-                  </button>
-                </div>
+               <div className="inline-flex rounded-lg border bg-card p-1">
+                 <button onClick={() => setView('exceptions')}
+                   className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors inline-flex items-center gap-1 ${
+                     view === 'exceptions' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+                   }`}>
+                   <ListFilter className="w-3.5 h-3.5" />
+                   חריגים בלבד
+                   <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${view === 'exceptions' ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                     {exceptionCount}
+                   </span>
+                 </button>
+                 <button onClick={() => setView('all')}
+                   className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors inline-flex items-center gap-1 ${
+                     view === 'all' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+                   }`}>
+                   <Users className="w-3.5 h-3.5" />
+                   כל התלמידים
+                   <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-bold ${view === 'all' ? 'bg-primary-foreground/20 text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                     {students.length}
+                   </span>
+                 </button>
+               </div>
+               <button
+                 onClick={() => setResetConfirmOpen(true)}
+                 disabled={saving || isPastDay(date) || Object.keys(attendanceMap).length === 0}
+                 className="px-3 h-8 rounded-md border text-xs font-medium transition-colors gap-1.5 flex items-center hover:bg-destructive/10 hover:border-destructive/30 hover:text-destructive disabled:opacity-50 disabled:cursor-not-allowed text-muted-foreground border-border bg-card"
+                 title="אפס את כל סימוני הנוכחות"
+               >
+                 <RotateCcw className="w-3.5 h-3.5" />
+                 <span className="hidden sm:inline">אפס</span>
+               </button>
                 <div className="relative flex-1 min-w-[180px] max-w-xs">
                   <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input value={search} onChange={e => setSearch(e.target.value)}
