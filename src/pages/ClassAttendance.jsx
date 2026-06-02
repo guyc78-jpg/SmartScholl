@@ -485,7 +485,7 @@ export default function ClassAttendance({ role }) {
                                 </p>
                               )}
                             </div>
-                            <div className="flex gap-0.5 flex-shrink-0 justify-end">
+                            <div className="flex gap-1 flex-shrink-0 justify-end">
                               {STATUSES.map(st => (
                                 <button key={st}
                                   onClick={() => handleQuickStatus(student, st)}
