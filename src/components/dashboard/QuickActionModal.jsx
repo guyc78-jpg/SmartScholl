@@ -57,11 +57,11 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
   const isCoordinator = hasApprovedRole(user, 'coordinator');
   const isAdmin = approvedRoles.includes('admin');
 
-  // Load students once on mount, not on every render
+  // טעינת תלמידים רק לפעולה הנוכחית שדורשת בחירת תלמיד
   useEffect(() => {
     if (!needsStudentPicker) return;
     loadStudents();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [action, needsStudentPicker, resolvedClassId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Prevent body scroll on iOS while sheet is open
   useEffect(() => {
