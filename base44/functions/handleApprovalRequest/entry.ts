@@ -449,7 +449,7 @@ ${suspicionNote}
     if (action === 'admin_update_user') {
       if (!requireAdmin(user)) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
-      const { target_user_id, target_role, approved_roles, profile_class_id, profile_homeroom_class, profile_grade_managed, profile_division } = body;
+      const { target_user_id, target_role, approved_roles, profile_class_id, profile_homeroom_class, profile_grade_managed, profile_division, profile_subject } = body;
       const approvedRoles = normalizeRoles(approved_roles, [target_role]);
       if (!approvedRoles.length || !approvedRoles.every(role => VALID_ROLES.includes(role)) || !approvedRoles.includes(target_role)) {
         return Response.json({ error: 'Invalid role' }, { status: 400 });
@@ -468,6 +468,7 @@ ${suspicionNote}
         profile_class: approvedRoles.includes('student') ? profile_homeroom_class || '' : target.profile_class || '',
         profile_grade_managed: profile_grade_managed || '',
         profile_division: approvedRoles.includes('division_manager') ? (profile_division || target.profile_division || '') : '',
+        profile_subject: profile_subject !== undefined ? profile_subject : (target.profile_subject || ''),
         onboarding_status: 'approved',
       });
 

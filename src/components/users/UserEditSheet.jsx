@@ -5,9 +5,10 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { Trash2 } from 'lucide-react';
 import GradeClassSelect from '@/components/profile/GradeClassSelect';
-import { extractGradeFromClass } from '@/lib/schoolStructure';
+import { extractGradeFromClass, DIVISIONS, getDivisionLabel } from '@/lib/schoolStructure';
 import { ROLE_LABELS, SYSTEM_ROLE_PRIORITY, getAvailableRoles, getUserDisplayName } from '@/lib/roleUtils';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
@@ -31,6 +32,7 @@ export default function UserEditSheet({ targetUser, open, onOpenChange, onSaved,
       profile_homeroom_class: targetUser.profile_homeroom_class || targetUser.profile_class || '',
       profile_grade_managed: targetUser.profile_grade_managed || extractGradeFromClass(targetUser.profile_homeroom_class || targetUser.profile_class || ''),
       profile_division: targetUser.profile_division || '',
+      profile_subject: targetUser.profile_subject || '',
     });
   }, [targetUser]);
 
@@ -48,18 +50,22 @@ export default function UserEditSheet({ targetUser, open, onOpenChange, onSaved,
     return { ...prev, extraRoles: exists ? prev.extraRoles.filter(r => r !== role) : [...prev.extraRoles, role] };
   });
 
+  const approvedRoles = Array.from(new Set([form.primaryRole, ...form.extraRoles]));
+  const isDivisionManager = approvedRoles.includes('division_manager');
+
   const save = async () => {
     setSaving(true);
-    const approvedRoles = Array.from(new Set([form.primaryRole, ...form.extraRoles]));
     const res = await base44.functions.invoke('handleApprovalRequest', {
       action: 'admin_update_user',
       target_user_id: targetUser.id,
       target_email: targetUser.email,
       target_role: form.primaryRole,
       approved_roles: approvedRoles,
-      profile_class_id: form.profile_class_id,
-      profile_homeroom_class: form.profile_homeroom_class,
+      profile_class_id: isDivisionManager ? '' : form.profile_class_id,
+      profile_homeroom_class: isDivisionManager ? '' : form.profile_homeroom_class,
       profile_grade_managed: form.profile_grade_managed,
+      profile_division: form.profile_division,
+      profile_subject: form.profile_subject,
     });
     toast.success('ההרשאות נשמרו');
     setSaving(false);
@@ -86,16 +92,48 @@ export default function UserEditSheet({ targetUser, open, onOpenChange, onSaved,
             </Select>
           </div>
 
-          <div className="grid grid-cols-1 gap-3">
-            <GradeClassSelect
-              grade={form.profile_grade_managed}
-              classNameValue={form.profile_homeroom_class}
-              classId={form.profile_class_id}
-              onGradeChange={(value) => setForm(prev => ({ ...prev, profile_grade_managed: value }))}
-              onClassChange={(value) => setForm(prev => ({ ...prev, profile_homeroom_class: value }))}
-              onClassIdChange={(value) => setForm(prev => ({ ...prev, profile_class_id: value }))}
-            />
-          </div>
+          {isDivisionManager ? (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>סוג חטיבה</Label>
+                <Select
+                  value={form.profile_division}
+                  onValueChange={(value) => setForm(prev => ({ ...prev, profile_division: value }))}
+                >
+                  <SelectTrigger><SelectValue placeholder="בחר/י סוג חטיבה" /></SelectTrigger>
+                  <SelectContent dir="rtl">
+                    {Object.entries(DIVISIONS).map(([key, item]) => (
+                      <SelectItem key={key} value={key}>{item.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {form.profile_division && (
+                  <p className="text-xs text-muted-foreground">
+                    שכבות מורשות: {DIVISIONS[form.profile_division].grades.map(g => g + '׳').join(', ')}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label>תחום דעת / מקצוע הוראה</Label>
+                <Input
+                  value={form.profile_subject}
+                  onChange={(e) => setForm(prev => ({ ...prev, profile_subject: e.target.value }))}
+                  placeholder="לדוגמה: מתמטיקה, מדעים, היסטוריה"
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-3">
+              <GradeClassSelect
+                grade={form.profile_grade_managed}
+                classNameValue={form.profile_homeroom_class}
+                classId={form.profile_class_id}
+                onGradeChange={(value) => setForm(prev => ({ ...prev, profile_grade_managed: value }))}
+                onClassChange={(value) => setForm(prev => ({ ...prev, profile_homeroom_class: value }))}
+                onClassIdChange={(value) => setForm(prev => ({ ...prev, profile_class_id: value }))}
+              />
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label>תפקידים נוספים / מאושרים</Label>
