@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertCircle, Users, ChevronLeft, Zap, TrendingDown, Clock } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { AlertCircle, ChevronLeft, Zap, TrendingDown, Clock } from 'lucide-react';
 import { formatStudentName } from '@/lib/studentName';
 
 const THRESHOLDS = {
@@ -13,9 +12,7 @@ export default function WatchStudentsSection({
   students,
   allAttendanceRecords,
   performanceReviews,
-  disciplineEvents,
-  tasks,
-  classId
+  tasks
 }) {
   // Identify students needing attention
   const watchList = students
@@ -23,7 +20,6 @@ export default function WatchStudentsSection({
       const studentId = student.id;
       const absences = allAttendanceRecords.filter(r => r.student_id === studentId && ['נעדר', 'נעדר/ת'].includes(r.status)).length;
       const lates = allAttendanceRecords.filter(r => r.student_id === studentId && ['מאחר', 'מאחר/ת'].includes(r.status)).length;
-      const recentDiscipline = disciplineEvents.filter(d => d.student_id === studentId && d.status === 'פתוח').length;
       const openTasks = tasks.filter(t => t.student_id === studentId && t.status !== 'בוצע').length;
       const recentPerformance = performanceReviews
         .filter(p => p.student_id === studentId)
@@ -42,7 +38,6 @@ export default function WatchStudentsSection({
       const reasons = [];
       if (absences >= THRESHOLDS.absences) reasons.push(`${absences} היעדרויות`);
       if (lates >= THRESHOLDS.lates) reasons.push(`${lates} איחורים`);
-      if (recentDiscipline > 0) reasons.push('אירועים חריגים פתוחים');
       if (openTasks > 0) reasons.push(`${openTasks} משימות לא סגורות`);
       if (lowScores) reasons.push('ירידה בביצועים');
       if (student.status === 'דורש מעקב') reasons.push('סומן ליעדכון');
@@ -51,11 +46,10 @@ export default function WatchStudentsSection({
         ...student,
         absences,
         lates,
-        recentDiscipline,
         openTasks,
         lowScores,
         reasons,
-        score: absences + lates + (recentDiscipline * 2) + openTasks + (lowScores ? 1 : 0),
+        score: absences + lates + openTasks + (lowScores ? 1 : 0),
       };
     })
     .filter(s => s.reasons.length > 0 || s.score > 2)
@@ -112,12 +106,7 @@ export default function WatchStudentsSection({
                     ביצועים
                   </span>
                 )}
-                {student.recentDiscipline > 0 && (
-                  <span className="inline-flex items-center gap-1 text-[11px] text-amber-700 dark:text-amber-300 bg-amber-100/50 dark:bg-amber-900/40 px-1.5 py-0.5 rounded">
-                    <AlertCircle className="w-2.5 h-2.5" />
-                    {student.recentDiscipline} אירוע
-                  </span>
-                )}
+
               </div>
             </div>
 

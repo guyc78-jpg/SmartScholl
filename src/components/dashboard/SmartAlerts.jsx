@@ -79,7 +79,7 @@ export default function SmartAlerts({ userRole }) {
     );
   }
 
-  const visibleAlerts = alerts.filter(alert => !dismissed.has(`${alert.student_id}-${alert.alert_type}`));
+  const visibleAlerts = alerts.filter(alert => alert.alert_type !== 'open_incident' && !dismissed.has(`${alert.student_id}-${alert.alert_type}`));
   const criticalCount = visibleAlerts.filter(a => a.severity === 'critical').length;
   const highCount = visibleAlerts.filter(a => a.severity === 'high').length;
 

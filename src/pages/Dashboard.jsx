@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import StatusBadge from '@/components/ui/StatusBadge';
 import QuickActionModal from '@/components/dashboard/QuickActionModal';
 import OpenTasksDialog from '@/components/dashboard/OpenTasksDialog';
+import DisciplineEventDialog from '@/components/dashboard/DisciplineEventDialog';
 import NotificationsDropdown from '@/components/dashboard/NotificationsDropdown';
 import SchoolNameBanner from '@/components/layout/SchoolNameBanner';
 import NowNextCard from '@/components/schedule/NowNextCard';
@@ -44,6 +45,7 @@ export default function Dashboard({ user, role }) {
   const [loading, setLoading] = useState(true);
   const [quickAction, setQuickAction] = useState(null);
   const [tasksDialogOpen, setTasksDialogOpen] = useState(false);
+  const [selectedDisciplineEvent, setSelectedDisciplineEvent] = useState(null);
 
   const today = getLocalDateString();
   const attendanceDate = getSelectedAttendanceDate();
@@ -107,8 +109,6 @@ export default function Dashboard({ user, role }) {
   const releasedToday = todayAttendance.filter(a => ['שוחרר', 'שוחרר/ת'].includes(a.status)).length;
   const attendanceExceptionsToday = absentToday + lateToday + releasedToday;
   const openTasks = tasks.filter(t => t.status !== 'בוצע').length;
-  const openDiscipline = discipline.filter(d => d.status === 'פתוח').length;
-  const pendingTasks = tasks.filter(t => t.status !== 'בוצע').length;
 
   const MONTH_SHORT = ['ינו', 'פבר', 'מרץ', 'אפר', 'מאי', 'יונ', 'יול', 'אוג', 'ספט', 'אוק', 'נוב', 'דצמ'];
 
@@ -142,20 +142,13 @@ export default function Dashboard({ user, role }) {
   const communityBehind = students.filter(isCommunityException);
 
   const canSeeClassAlerts = hasClassRole;
-  const canSeeCoordinatorAlerts = isAdmin || hasCoordinatorRole;
   const { isRead, markAsRead } = useReadNotifications();
 
   // Each notification has a "signature" derived from its current count.
   // When the count changes (new event), the signature changes and the
   // notification re-appears even if it was previously dismissed.
   const allNotifications = [
-    ...(canSeeClassAlerts && openDiscipline > 0 ? [{
-      id: 'discipline',
-      signature: `discipline-${openDiscipline}`,
-      title: `${openDiscipline} אירועי משמעת פתוחים`,
-      description: 'דורש טיפול ומעקב',
-      to: '/discipline'
-    }] : []),
+
     ...(openTasks > 0 ? [{
       id: 'tasks',
       signature: `tasks-${openTasks}`,
@@ -234,6 +227,7 @@ export default function Dashboard({ user, role }) {
           announcements={announcements}
           role={role}
           user={user}
+          onOpenDisciplineEvent={setSelectedDisciplineEvent}
         />
       )}
 
@@ -248,7 +242,6 @@ export default function Dashboard({ user, role }) {
           students={students}
           allAttendanceRecords={allAttRecords}
           performanceReviews={performanceReviews}
-          disciplineEvents={discipline}
           tasks={tasks}
           classId={classId}
         />
@@ -276,13 +269,12 @@ export default function Dashboard({ user, role }) {
         // Compute badges for relevant actions
         const attendanceExceptionsCount = attendanceExceptionsToday;
         const pendingParentTasks = tasks.filter(t => t.category === 'הורים' && t.status !== 'בוצע').length;
-        const pendingDiscipline = discipline.filter(d => d.status === 'פתוח').length;
         const pendingTasksCount = tasks.filter(t => t.status !== 'בוצע').length;
         const communityBehindCount = communityBehind.length;
 
         const quickActions = [
           { icon: Clock, label: 'נוכחות', action: 'attendance', roles: ['admin', 'homeroom_teacher'], badge: attendanceExceptionsCount },
-          { icon: Shield, label: 'משמעת', action: 'discipline', roles: ['admin', 'homeroom_teacher'], badge: pendingDiscipline },
+          { icon: Shield, label: 'משמעת', action: 'discipline', roles: ['admin', 'homeroom_teacher'], badge: 0 },
           { icon: BookOpen, label: 'מבחן', action: 'exam', roles: ['admin', 'coordinator', 'homeroom_teacher'], badge: 0 },
           { icon: Megaphone, label: 'הודעה', action: 'announcement', roles: ['admin', 'coordinator', 'homeroom_teacher'], badge: 0 },
           { icon: Star, label: 'הערה', action: 'note', roles: ['admin', 'homeroom_teacher'], badge: 0 },
@@ -399,6 +391,13 @@ export default function Dashboard({ user, role }) {
         open={tasksDialogOpen}
         onOpenChange={setTasksDialogOpen}
         tasks={openTaskItems}
+        onChanged={() => loadData(false)}
+      />
+
+      <DisciplineEventDialog
+        event={selectedDisciplineEvent}
+        open={!!selectedDisciplineEvent}
+        onOpenChange={(isOpen) => !isOpen && setSelectedDisciplineEvent(null)}
         onChanged={() => loadData(false)}
       />
 
