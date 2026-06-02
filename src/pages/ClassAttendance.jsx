@@ -6,11 +6,21 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import PageHeader from '@/components/ui/PageHeader';
 import { toast } from 'sonner';
 import {
   CheckCircle2, AlertTriangle, Users, Clock, UserX, LogOut,
-  Search, Save, ListFilter, X, Pencil
+  Search, Save, ListFilter, X, Pencil, RotateCcw
 } from 'lucide-react';
 import AttendanceAlerts from '@/components/attendance/AttendanceAlerts';
 import AttendancePatterns from '@/components/attendance/AttendancePatterns';
@@ -64,6 +74,7 @@ export default function ClassAttendance({ role }) {
   const [view, setView] = useState('exceptions'); // exceptions | all
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState('daily');
+  const [resetConfirmOpen, setResetConfirmOpen] = useState(false);
 
   // Picker / dialog state
   const [pickerStatus, setPickerStatus] = useState(null); // 'נעדר/ת' | 'מאחר/ת' | 'שוחרר/ת'
@@ -169,6 +180,25 @@ export default function ClassAttendance({ role }) {
       toast.success('נוכחות אושרה — כל התלמידים סומנו כנוכחים');
     } catch (e) {
       console.error(e); toast.error('שמירה חלקית — נסה שוב');
+    }
+    setSaving(false);
+  }
+
+  async function handleResetAllAttendance() {
+    if (!canEdit) return;
+    setSaving(true);
+    const idsToDelete = Object.values(existingIds).filter(Boolean);
+    setAttendanceMap({});
+    setExistingIds({});
+    setConfirmed(false);
+    setConfirmedAt(null);
+    setResetConfirmOpen(false);
+    try {
+      await Promise.all(idsToDelete.map(id => base44.entities.AttendanceRecord.delete(id)));
+      toast.success('כל סימוני הנוכחות אופסו');
+    } catch (e) {
+      console.error(e); toast.error('איפוס הנוכחות נכשל');
+      await loadDay();
     }
     setSaving(false);
   }
@@ -328,7 +358,7 @@ export default function ClassAttendance({ role }) {
               }} />
 
               {/* Quick Actions */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2" dir="rtl">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2" dir="rtl">
                 <Button
                   onClick={handleConfirmAllPresent}
                   disabled={saving || isPastDay(date)}
@@ -336,6 +366,15 @@ export default function ClassAttendance({ role }) {
                 >
                   <CheckCircle2 className="w-4 h-4" />
                   <span className="text-xs sm:text-sm">אשר נוכחות</span>
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setResetConfirmOpen(true)}
+                  disabled={saving || isPastDay(date) || Object.keys(attendanceMap).length === 0}
+                  className="gap-1.5 h-11 hover:bg-destructive/10 hover:border-destructive/30 hover:text-destructive"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  <span className="text-xs sm:text-sm">אפס נוכחות</span>
                 </Button>
                 <Button variant="outline" onClick={() => openPicker('נעדר/ת')}
                   disabled={isPastDay(date)}
@@ -497,6 +536,23 @@ export default function ClassAttendance({ role }) {
           <AttendancePatterns statsPerStudent={statsPerStudent} allRecords={allRecords} />
         </TabsContent>
       </Tabs>
+
+      <AlertDialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
+        <AlertDialogContent dir="rtl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-right">לאפס את כל סימוני הנוכחות?</AlertDialogTitle>
+            <AlertDialogDescription className="text-right">
+              כל הסטטוסים שסומנו לתאריך זה יימחקו, וכל התלמידים יחזרו למצב ללא סימון.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>ביטול</AlertDialogCancel>
+            <AlertDialogAction onClick={handleResetAllAttendance} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              אפס נוכחות
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Quick picker for exception adding */}
       <StudentQuickPicker
