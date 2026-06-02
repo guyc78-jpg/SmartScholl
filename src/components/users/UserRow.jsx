@@ -1,14 +1,28 @@
 import { Checkbox } from '@/components/ui/checkbox';
 import { Button } from '@/components/ui/button';
 import { Pencil } from 'lucide-react';
-import { ROLE_LABELS, getAvailableRoles, getUserDisplayName } from '@/lib/roleUtils';
-import { formatGrade } from '@/lib/schoolStructure';
+import { ROLE_LABELS, getAvailableRoles, getUserDisplayName, getRoleLabel } from '@/lib/roleUtils';
+import { formatGrade, getDivisionLabel } from '@/lib/schoolStructure';
 
 export default function UserRow({ user, selected, onSelectToggle, onEdit }) {
   const approvedRoles = getAvailableRoles(user);
   const extra = approvedRoles.filter(r => r !== user.role);
-  const grade = user.profile_grade_managed || '';
+  const isDivisionManager = approvedRoles.includes('division_manager');
+
+  // התג היחיד שמוצג למנהל/ת חטיבה (עליונה / ביניים), ללא שכבה/כיתה
+  const divisionTag = isDivisionManager
+    ? `${getRoleLabel('division_manager', user)}${getDivisionLabel(user.profile_division) ? ` ${getDivisionLabel(user.profile_division).replace('חטיבה ', '')}` : ''}`.trim()
+    : '';
+
+  // תגי השיוך מוצגים לפי סוג התפקיד בלבד — לא למנהל/ת חטיבה
+  const showHomeroomClass = !isDivisionManager && approvedRoles.includes('homeroom_teacher');
+  const showCoordinatorGrade = !isDivisionManager && approvedRoles.includes('coordinator');
+
   const klass = user.profile_homeroom_class || user.profile_class || '';
+  const grade = user.profile_grade_managed || '';
+
+  const classTag = showHomeroomClass && klass ? klass : '';
+  const gradeTag = showCoordinatorGrade && grade ? formatGrade(grade) : '';
 
   return (
     <div
@@ -23,9 +37,15 @@ export default function UserRow({ user, selected, onSelectToggle, onEdit }) {
         <div className="text-xs text-muted-foreground truncate force-ltr">{user.email}</div>
         {/* Mobile-only meta line */}
         <div className="md:hidden mt-1 flex flex-wrap gap-1.5 text-[11px]">
-          <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">{ROLE_LABELS[user.role] || '—'}</span>
-          {grade && <span className="px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{formatGrade(grade)}</span>}
-          {klass && <span className="px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{klass}</span>}
+          {isDivisionManager ? (
+            <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">{divisionTag}</span>
+          ) : (
+            <>
+              <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">{ROLE_LABELS[user.role] || '—'}</span>
+              {gradeTag && <span className="px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{gradeTag}</span>}
+              {classTag && <span className="px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{classTag}</span>}
+            </>
+          )}
         </div>
       </div>
 
@@ -33,11 +53,11 @@ export default function UserRow({ user, selected, onSelectToggle, onEdit }) {
       <div className="hidden md:block text-xs text-muted-foreground truncate force-ltr text-right">{user.email}</div>
       <div className="hidden md:flex justify-start">
         <span className="px-2 py-0.5 rounded-md bg-primary/10 text-primary text-xs font-medium">
-          {ROLE_LABELS[user.role] || '—'}
+          {isDivisionManager ? divisionTag : (ROLE_LABELS[user.role] || '—')}
         </span>
       </div>
-      <div className="hidden md:block text-sm text-muted-foreground text-right">{grade ? formatGrade(grade) : '—'}</div>
-      <div className="hidden md:block text-sm text-muted-foreground text-right">{klass || '—'}</div>
+      <div className="hidden md:block text-sm text-muted-foreground text-right">{gradeTag || '—'}</div>
+      <div className="hidden md:block text-sm text-muted-foreground text-right">{classTag || '—'}</div>
       <div className="hidden md:flex flex-wrap gap-1 justify-start">
         {extra.length === 0 && <span className="text-xs text-muted-foreground">—</span>}
         {extra.map(r => (
