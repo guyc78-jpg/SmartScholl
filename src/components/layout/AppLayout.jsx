@@ -192,7 +192,7 @@ function AccordionGroup({ group, role, pendingCount, location, onNavigate }) {
 }
 
 // ── AppLayout ─────────────────────────────────────────────────────────────────
-export default function AppLayout({ children, user, role, darkMode, toggleDark, onRoleChange }) {
+export default function AppLayout({ children, user, role, darkMode, toggleDark, onRoleChange, simulationOffset = false }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
   const location = useLocation();
@@ -306,7 +306,13 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
   );
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden" dir="rtl">
+    <div
+      className="flex bg-background overflow-hidden"
+      dir="rtl"
+      style={simulationOffset
+        ? { height: 'calc(100vh - 44px)', marginTop: 'calc(44px + env(safe-area-inset-top))' }
+        : { height: '100vh' }}
+    >
       {/* Desktop Sidebar */}
       <aside className={cn(
         'hidden lg:flex w-60 flex-col flex-shrink-0 border-s',

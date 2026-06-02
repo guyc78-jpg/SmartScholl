@@ -1,11 +1,11 @@
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Navigate, useNavigate } from 'react-router-dom';
 import PageNotFound from './lib/PageNotFound';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { seedDemoData } from '@/lib/demoData';
 import AppLayout from '@/components/layout/AppLayout';
 import { Toaster as SonnerToaster } from 'sonner';
@@ -42,12 +42,44 @@ import DivisionExams from './pages/DivisionExams';
 import PermissionsTester from './pages/PermissionsTester';
 import { isStaff, isStudent, defaultRoute } from './lib/permissions';
 import { getAvailableRoles, getInitialWorkRole, getSystemRole } from './lib/roleUtils';
+import { SimulationProvider, useSimulation } from '@/lib/SimulationContext';
+import SimulationBanner from '@/components/permissions/SimulationBanner';
+import { setSimulationGuard } from '@/lib/simulationGuard';
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user, updateCurrentUser, checkUserAuth } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user: realUser, updateCurrentUser, checkUserAuth } = useAuth();
   const { preference: themePreference, setPreference: setThemePreference, isDark: darkMode, toggleDark } = useThemePreference();
+  const { isSimulating, simRole, buildSimulatedUser } = useSimulation();
+  const navigate = useNavigate();
   const [seeded, setSeeded] = useState(false);
   const [workRole, setWorkRole] = useState(null);
+
+  // משתמש אפקטיבי — אמיתי במצב רגיל, מדומה במצב סימולציה
+  const user = isSimulating ? buildSimulatedUser(realUser, simRole) : realUser;
+  const effectiveWorkRole = isSimulating ? simRole : workRole;
+
+  // הפעלת/כיבוי מגן הסימולציה (חוסם כתיבת נתונים אמיתיים)
+  useEffect(() => {
+    setSimulationGuard(isSimulating);
+    return () => setSimulationGuard(false);
+  }, [isSimulating]);
+
+  // ניווט אוטומטי לעמוד הבית של התפקיד המדומה / חזרה לכלי הסימולציה ביציאה
+  const wasSimulatingRef = useRef(false);
+  useEffect(() => {
+    if (isSimulating) {
+      const home = simRole === 'student' ? '/student-home'
+        : simRole === 'division_manager' ? '/division'
+        : '/';
+      navigate(home, { replace: true });
+      wasSimulatingRef.current = true;
+    } else if (wasSimulatingRef.current) {
+      // ביציאה ממצב סימולציה — חזרה לכלי הסימולציה
+      wasSimulatingRef.current = false;
+      navigate('/permissions-tester', { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSimulating]);
 
   useEffect(() => {
     if (!seeded && !isLoadingAuth && !authError) {
@@ -56,8 +88,8 @@ const AuthenticatedApp = () => {
   }, [isLoadingAuth, authError]);
 
   useEffect(() => {
-    if (user) setWorkRole(getInitialWorkRole(user));
-  }, [user]);
+    if (realUser) setWorkRole(getInitialWorkRole(realUser));
+  }, [realUser]);
 
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
@@ -99,7 +131,7 @@ const AuthenticatedApp = () => {
   // Roles are approved by admin; system access is separated from current work mode
   const approvedRoles = getAvailableRoles(user);
   const systemRole = getSystemRole(user);
-  const role = workRole || systemRole;
+  const role = effectiveWorkRole || systemRole;
   const isDivisionManager = approvedRoles.includes('division_manager');
   // "staff" כאן = צוות חינוכי מלא (מורה/רכז/admin). מנהל חטיבה מטופל בנפרד.
   const staff = approvedRoles.some(r => ['admin', 'homeroom_teacher', 'coordinator'].includes(r));
@@ -184,9 +216,12 @@ const AuthenticatedApp = () => {
   );
 
   return (
-    <AppLayout user={user} role={role} darkMode={darkMode} toggleDark={toggleDark} onRoleChange={setWorkRole}>
-      {renderRoutes()}
-    </AppLayout>
+    <>
+      <SimulationBanner />
+      <AppLayout user={user} role={role} darkMode={darkMode} toggleDark={toggleDark} onRoleChange={setWorkRole} simulationOffset={isSimulating}>
+        {renderRoutes()}
+      </AppLayout>
+    </>
   );
 };
 
@@ -194,9 +229,11 @@ function App() {
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
-        <Router>
-          <AuthenticatedApp />
-        </Router>
+        <SimulationProvider>
+          <Router>
+            <AuthenticatedApp />
+          </Router>
+        </SimulationProvider>
         <Toaster />
         <SonnerToaster position="top-center" richColors dir="rtl" />
       </QueryClientProvider>
