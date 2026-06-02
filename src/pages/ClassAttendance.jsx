@@ -475,7 +475,7 @@ export default function ClassAttendance({ role }) {
                         <Card className={isAlert ? 'border-red-200 dark:border-red-800/60' : ''}>
                           <div className="p-2 sm:p-2.5 flex items-center gap-1.5 sm:gap-2" dir="rtl">
                             <div className="flex-1 min-w-0 text-right">
-                              <p className="font-medium text-sm leading-tight"><span className="text-xs text-muted-foreground me-0.5">{i + 1}.</span><span className="inline-block max-w-[calc(100%-20px)] truncate">{formatStudentName(student)}</span></p>
+                              <p className="font-medium text-sm leading-tight inline-flex items-center gap-0.5"><span className="text-xs text-muted-foreground flex-shrink-0">{i + 1}.</span><span className="truncate">{formatStudentName(student)}</span></p>
                               {current?.note && (
                                 <p className="text-[11px] text-muted-foreground truncate">{current.note}</p>
                               )}
