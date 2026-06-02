@@ -14,17 +14,29 @@ export default function UserRow({ user, selected, onSelectToggle, onEdit }) {
   const klass = user.profile_homeroom_class || user.profile_class || '';
   const grade = user.profile_grade_managed || '';
 
-  // תג ראשי מרוכזת עם שיוך כולל
-  let primaryTag = '';
+  // בניית מערך תגים: כל תפקיד עם שיוך הוא תג נפרד
+  const tags = [];
   if (isDivisionManager) {
-    primaryTag = `${getRoleLabel('division_manager', user)}${getDivisionLabel(user.profile_division) ? ` ${getDivisionLabel(user.profile_division).replace('חטיבה ', '')}` : ''}`.trim();
-  } else if (isCoordinator && grade) {
-    primaryTag = `${getRoleLabel('coordinator', user)} ${formatGrade(grade)}`;
-  } else if (isHomeroom && klass) {
-    primaryTag = `${getRoleLabel('homeroom_teacher', user)} ${klass}`;
+    const divisionLabel = getDivisionLabel(user.profile_division) ? ` ${getDivisionLabel(user.profile_division).replace('חטיבה ', '')}` : '';
+    tags.push(`${getRoleLabel('division_manager', user)}${divisionLabel}`.trim());
   } else {
-    primaryTag = ROLE_LABELS[user.role] || '—';
+    // רכז/ת שכבה — תמיד בניסוח ניטרלי
+    if (isCoordinator && grade) {
+      tags.push(`${ROLE_LABELS['coordinator']} ${formatGrade(grade)}`);
+    }
+    // מחנך/ת כיתה — בניסוח לפי גדר
+    if (isHomeroom && klass) {
+      tags.push(`${getRoleLabel('homeroom_teacher', user)} ${klass}`);
+    }
   }
+  
+  // אם אין תגים, הצג את התפקיד הראשי
+  if (tags.length === 0) {
+    tags.push(ROLE_LABELS[user.role] || '—');
+  }
+
+  const primaryTag = tags[0];
+  const secondaryTag = tags[1] || null;
 
   return (
     <div
@@ -40,18 +52,20 @@ export default function UserRow({ user, selected, onSelectToggle, onEdit }) {
         {/* Mobile-only meta line */}
         <div className="md:hidden mt-1 flex flex-wrap gap-1.5 text-[11px]">
           <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">{primaryTag}</span>
+          {secondaryTag && <span className="px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">{secondaryTag}</span>}
         </div>
       </div>
 
       {/* Desktop columns */}
       <div className="hidden md:block text-xs text-muted-foreground truncate force-ltr text-right">{user.email}</div>
-      <div className="hidden md:flex justify-start">
+      <div className="hidden md:flex gap-1 justify-start flex-wrap">
         <span className="px-2 py-0.5 rounded-md bg-primary/10 text-primary text-xs font-medium">
           {primaryTag}
         </span>
+        {secondaryTag && <span className="px-2 py-0.5 rounded-md bg-muted text-muted-foreground text-xs font-medium">{secondaryTag}</span>}
       </div>
-      <div className="hidden md:block text-sm text-muted-foreground text-right">{isCoordinator && grade ? formatGrade(grade) : '—'}</div>
-      <div className="hidden md:block text-sm text-muted-foreground text-right">{isHomeroom && klass ? klass : '—'}</div>
+      <div className="hidden md:block text-sm text-muted-foreground text-right">—</div>
+      <div className="hidden md:block text-sm text-muted-foreground text-right">—</div>
       <div className="hidden md:flex flex-wrap gap-1 justify-start">
         {extra.length === 0 && <span className="text-xs text-muted-foreground">—</span>}
         {extra.map(r => (
