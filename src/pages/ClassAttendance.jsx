@@ -147,6 +147,13 @@ export default function ClassAttendance({ role }) {
 
   async function setStatus(student, status, note = '') {
     if (!canEdit) { toast.error('אין הרשאה'); return; }
+    if (!status) {
+      // ביטול סימון — הסרה מהמפה והמסד
+      setAttendanceMap(p => { const n = { ...p }; delete n[student.id]; return n; });
+      try { await persistOne(student, null); }
+      catch (e) { console.error(e); toast.error('ביטול נכשל'); }
+      return;
+    }
     setAttendanceMap(p => ({ ...p, [student.id]: { status, note } }));
     try { await persistOne(student, status, note); }
     catch (e) { console.error(e); toast.error('שמירה נכשלה'); }
@@ -277,16 +284,16 @@ export default function ClassAttendance({ role }) {
 
   // Direct quick-button on "all" view
   async function handleQuickStatus(student, status) {
+    // לחיצה חוזרת על אותו סטטוס → ביטול הסימון
+    if (attendanceMap[student.id]?.status === status) {
+      await setStatus(student, null);
+      return;
+    }
     if (status === PRESENT) {
       await setStatus(student, PRESENT, '');
     } else {
-      // Clear marking by clicking same status again
-      if (attendanceMap[student.id]?.status === status) {
-        await setStatus(student, null);
-        setAttendanceMap(p => { const n = { ...p }; delete n[student.id]; return n; });
-      } else {
-        setDetailStudent(student); setDetailStatus(status);
-      }
+      // סטטוס חריג → פתיחת דיאלוג פרטים (מחליף את הקודם)
+      setDetailStudent(student); setDetailStatus(status);
     }
   }
 
