@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { X, Check } from 'lucide-react';
+import { X, Check, ChevronDown } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { logActivity } from '@/lib/activityLogger';
@@ -52,6 +52,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
   const [students, setStudents] = useState([]);
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [studentListOpen, setStudentListOpen] = useState(false);
   const sheetRef = useRef(null);
 
   const needsStudentPicker = ['discipline', 'note', 'communication', 'community'].includes(action);
@@ -81,6 +82,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
   useEffect(() => {
     setForm({});
     setSearchQuery('');
+    setStudentListOpen(false);
     setStudents([]);
   }, [action]);
 
@@ -109,6 +111,9 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
   const getSelectedStudent = () => students.find(s => s.id === form.student_id);
+
+  const filteredStudents = sortByLastName(students)
+    .filter(s => !searchQuery || getStudentDisplayName(s).toLowerCase().includes(searchQuery.toLowerCase()));
 
   async function saveDisciplineAction() {
     const student = getSelectedStudent();
@@ -315,19 +320,29 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
                     <p className="text-sm text-muted-foreground">{action === 'community' ? 'אין תלמידים חריגים במעורבות חברתית' : 'לא נמצאו תלמידים המשויכים לכיתה שלך'}</p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    {students.length > 5 && (
+                  <div className="space-y-2" dir="rtl">
+                    <div className="flex items-center gap-2" dir="rtl">
                       <Input
-                        placeholder="חיפוש תלמיד..."
+                        placeholder="חיפוש תלמיד/ה..."
                         value={searchQuery}
                         onChange={e => setSearchQuery(e.target.value)}
-                        className="text-sm"
+                        className="text-sm flex-1"
                       />
-                    )}
-                    <div className="max-h-48 overflow-y-auto rounded-lg border border-border divide-y divide-border" style={{ WebkitOverflowScrolling: 'touch' }}>
-                      {sortByLastName(students)
-                        .filter(s => !searchQuery || s.full_name.toLowerCase().includes(searchQuery.toLowerCase()))
-                        .map(s => {
+                      <button
+                        type="button"
+                        onClick={() => setStudentListOpen(open => !open)}
+                        aria-expanded={studentListOpen}
+                        aria-label={studentListOpen ? 'סגור רשימת תלמידים' : 'פתח רשימת תלמידים'}
+                        className="h-9 w-9 flex-shrink-0 rounded-md border border-input bg-background inline-flex items-center justify-center text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                      >
+                        <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${studentListOpen ? 'rotate-180' : ''}`} />
+                      </button>
+                    </div>
+                    <div className={`overflow-hidden transition-[max-height,opacity] duration-300 ease-out ${studentListOpen ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'}`}>
+                      <div className="max-h-48 overflow-y-auto rounded-lg border border-border divide-y divide-border" style={{ WebkitOverflowScrolling: 'touch' }} dir="rtl">
+                        {filteredStudents.length === 0 ? (
+                          <div className="px-3 py-3 text-sm text-muted-foreground text-right">לא נמצאו תלמידים תואמים</div>
+                        ) : filteredStudents.map(s => {
                           const selected = form.student_id === s.id;
                           return (
                             <button
@@ -335,12 +350,14 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
                               type="button"
                               onClick={() => set('student_id', s.id)}
                               className={`w-full flex items-center justify-between gap-2 text-right px-3 py-2.5 text-sm transition-colors ${selected ? 'bg-primary text-primary-foreground font-medium' : 'hover:bg-muted'}`}
+                              dir="rtl"
                             >
-                              <span>{getStudentDisplayName(s.full_name)}</span>
+                              <span>{getStudentDisplayName(s)}</span>
                               {selected && <Check size={16} className="flex-shrink-0" />}
                             </button>
                           );
                         })}
+                      </div>
                     </div>
                   </div>
                 )}
