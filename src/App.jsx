@@ -39,6 +39,7 @@ import Classrooms from './pages/Classrooms';
 import ApprovedStaff from './pages/ApprovedStaff';
 import DivisionManagement from './pages/DivisionManagement';
 import DivisionExams from './pages/DivisionExams';
+import PermissionsTester from './pages/PermissionsTester';
 import { isStaff, isStudent, defaultRoute } from './lib/permissions';
 import { getAvailableRoles, getInitialWorkRole, getSystemRole } from './lib/roleUtils';
 
@@ -130,6 +131,7 @@ const AuthenticatedApp = () => {
             <Route path="/approved-staff" element={<ApprovedStaff />} />
             <Route path="/classrooms" element={<Classrooms />} />
             <Route path="/bell-schedule" element={<BellScheduleSettings user={user} role={role} />} />
+            <Route path="/permissions-tester" element={<PermissionsTester />} />
           </>
         )}
         {(approvedRoles.includes('admin') || approvedRoles.includes('homeroom_teacher') || approvedRoles.includes('coordinator')) && (

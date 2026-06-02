@@ -8,7 +8,7 @@ import {
   Megaphone, BarChart2,
   Menu, X, Sun, Moon, BookMarked,
   UserCheck, UserRound, ShieldCheck, Settings, LogOut, Bell, School,
-  ChevronDown, Heart, MessageSquare, ClipboardList, AlertTriangle, GraduationCap, Building2
+  ChevronDown, Heart, MessageSquare, ClipboardList, AlertTriangle, GraduationCap, Building2, Eye
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getAvailableRoles, getUserContextLabel, getUserDisplayName } from '@/lib/roleUtils';
@@ -84,6 +84,7 @@ const sidebarGroups = [
       { path: '/approvals', icon: UserCheck, label: 'אישורי הרשמה', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
       { path: '/approved-staff', icon: UserCheck, label: 'צוות מאושר', roles: ['admin'] },
       { path: '/users', icon: ShieldCheck, label: 'הרשאות משתמשים', roles: ['admin'] },
+      { path: '/permissions-tester', icon: Eye, label: 'בדיקת הרשאות', roles: ['admin'] },
       { path: '/classrooms', icon: School, label: 'ניהול כיתות', roles: ['admin'] },
       { path: '/bell-schedule', icon: Bell, label: 'צלצולים והפסקות', roles: ['admin'] },
     ],
