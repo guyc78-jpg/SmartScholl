@@ -24,7 +24,7 @@ import { isStudentInApprovedScope, getUserApprovedClass, getUserApprovedClassId 
 import { useAuth } from '@/lib/AuthContext';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 
-const STATUSES = ['נוכח/ת', 'מאחר/ת', 'נעדר/ת', 'שוחרר/ה'];
+const STATUSES = ['נוכח/ת', 'מאחר/ת', 'נעדר/ת', 'שוחרר/ת'];
 const PRESENT = 'נוכח/ת';
 
 // Short labels for the compact mobile chips
@@ -32,7 +32,7 @@ const STATUS_SHORT = {
   'נוכח/ת': 'נוכח',
   'מאחר/ת': 'מאחר',
   'נעדר/ת': 'נעדר',
-  'שוחרר/ה': 'שוחרר',
+  'שוחרר/ת': 'שוחרר',
 };
 
 export const THRESHOLDS = { absences: 5, lates: 8 };
@@ -370,7 +370,7 @@ export default function ClassAttendance({ role }) {
                   <Clock className="w-4 h-4 text-amber-500" />
                   <span className="text-xs sm:text-sm">הוסף מאחר/ת</span>
                 </Button>
-                <Button variant="outline" onClick={() => openPicker('שוחרר/ה')}
+                <Button variant="outline" onClick={() => openPicker('שוחרר/ת')}
                   disabled={isPastDay(date)}
                   className="gap-1.5 h-11 hover:bg-purple-50 hover:border-purple-300 dark:hover:bg-purple-900/20">
                   <LogOut className="w-4 h-4 text-purple-500" />
@@ -474,7 +474,7 @@ export default function ClassAttendance({ role }) {
                                   onClick={() => handleQuickStatus(student, st)}
                                   disabled={isPastDay(date)}
                                   aria-label={st}
-                                  className={`text-[10px] leading-none h-7 min-w-[42px] px-1.5 rounded-md border font-medium transition-all whitespace-nowrap text-center disabled:opacity-50
+                                  className={`text-[9px] leading-tight h-6 min-w-[40px] px-1 rounded-md border font-medium transition-all whitespace-nowrap text-center disabled:opacity-50
                                     ${current?.status === st ? statusBtnStyle[st].active : statusBtnStyle[st].idle}`}>
                                   {STATUS_SHORT[st]}
                                 </button>
@@ -528,7 +528,7 @@ export default function ClassAttendance({ role }) {
         title={
           pickerStatus === 'נעדר/ת' ? 'בחר/י תלמיד/ה לסימון כנעדר/ת' :
           pickerStatus === 'מאחר/ת' ? 'בחר/י תלמיד/ה לסימון כמאחר/ת' :
-          pickerStatus === 'שוחרר/ה' ? 'בחר/י תלמיד/ה לסימון כמשוחרר/ת' : ''
+          pickerStatus === 'שוחרר/ת' ? 'בחר/י תלמיד/ה לסימון כשוחרר/ת' : ''
         }
         onSelect={handlePickerSelect}
         excludeIds={Object.entries(attendanceMap)
