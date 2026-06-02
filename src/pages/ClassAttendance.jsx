@@ -491,7 +491,7 @@ export default function ClassAttendance({ role }) {
                                   onClick={() => handleQuickStatus(student, st)}
                                   disabled={isPastDay(date)}
                                   aria-label={st}
-                                  className={`text-[8px] sm:text-[9px] leading-tight h-6 min-w-[38px] sm:min-w-[40px] px-0.5 sm:px-1 rounded-md border font-medium transition-all whitespace-nowrap text-center disabled:opacity-50
+                                  className={`text-[9px] sm:text-[10px] leading-normal h-7 min-w-[41px] sm:min-w-[44px] px-0.5 sm:px-1.5 rounded-md border font-medium transition-all whitespace-nowrap text-center disabled:opacity-50
                                     ${current?.status === st ? statusBtnStyle[st].active : statusBtnStyle[st].idle}`}>
                                   {STATUS_SHORT[st]}
                                 </button>

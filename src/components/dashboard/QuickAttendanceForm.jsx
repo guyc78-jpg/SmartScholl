@@ -255,11 +255,11 @@ export default function QuickAttendanceForm({ classId, onSaved }) {
                         type="button"
                         onClick={() => setMark(s.id, opt.key)}
                         title={opt.label}
-                        className={`w-7 h-7 rounded-md border flex items-center justify-center transition-colors ${
+                        className={`w-8 h-8 rounded-md border flex items-center justify-center transition-colors ${
                           active ? opt.color : 'bg-card border-border text-muted-foreground hover:bg-muted'
                         }`}
                       >
-                        <Icon className="w-3.5 h-3.5" strokeWidth={2.5} />
+                        <Icon className="w-4 h-4" strokeWidth={2.5} />
                       </button>
                     );
                   })}
@@ -268,9 +268,9 @@ export default function QuickAttendanceForm({ classId, onSaved }) {
                       type="button"
                       onClick={() => clearMark(s.id)}
                       title="בטל סימון"
-                      className="w-7 h-7 rounded-md border border-border text-muted-foreground hover:bg-muted flex items-center justify-center"
+                      className="w-8 h-8 rounded-md border border-border text-muted-foreground hover:bg-muted flex items-center justify-center"
                     >
-                      <RotateCcw className="w-3 h-3" />
+                      <RotateCcw className="w-3.5 h-3.5" />
                     </button>
                   )}
                 </div>
