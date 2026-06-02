@@ -57,29 +57,23 @@ export function getUserGender(user) {
   return value === 'male' || value === 'female' ? value : null;
 }
 
+// ניסוח אחיד וניטרלי בכל האפליקציה (מנהל/ת, מחנך/ת, רכז/ת) — ללא הבחנת לשון פנייה
 export function getRoleLabel(role, user) {
-  const gender = getUserGender(user);
-  if (gender && ROLE_LABELS_BY_GENDER[gender]?.[role]) {
-    return ROLE_LABELS_BY_GENDER[gender][role];
-  }
   return ROLE_LABELS[role] || 'משתמש';
 }
 
+// תווית קצרה ניטרלית (ללא ״כיתה״/״שכבה״) – לשימוש לצד שם הכיתה
+const ROLE_SHORT_NEUTRAL = {
+  admin: 'מנהל/ת',
+  division_manager: 'מנהל/ת חטיבה',
+  homeroom_teacher: 'מחנך/ת',
+  coordinator: 'רכז/ת',
+  student: 'תלמיד/ה',
+  parent: 'הורה',
+};
+
 export function getRoleShort(role, user) {
-  const gender = getUserGender(user);
-  if (gender && ROLE_SHORT_BY_GENDER[gender]?.[role]) {
-    return ROLE_SHORT_BY_GENDER[gender][role];
-  }
-  // ברירת מחדל ניטרלית (זהה ל־ROLE_LABELS אבל מקוצרת)
-  const fallback = {
-    admin: 'מנהל/ת',
-    division_manager: 'מנהל/ת חטיבה',
-    homeroom_teacher: 'מחנך/ת',
-    coordinator: 'רכז/ת',
-    student: 'תלמיד/ה',
-    parent: 'הורה',
-  };
-  return fallback[role] || 'משתמש';
+  return ROLE_SHORT_NEUTRAL[role] || 'משתמש';
 }
 
 export const VALID_ROLES = ['admin', 'division_manager', 'homeroom_teacher', 'coordinator', 'student', 'parent'];
