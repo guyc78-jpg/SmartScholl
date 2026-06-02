@@ -448,15 +448,11 @@ export default function ClassAttendance({ role }) {
                         initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: Math.min(i * 0.015, 0.2) }}>
                         <Card className={isAlert ? 'border-red-200 dark:border-red-800/60' : ''}>
-                          <div className="p-2.5 flex items-center gap-2.5" dir="rtl">
-                            <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0
-                              ${student.gender === 'נקבה' ? 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'}`}>
-                              {student.full_name.charAt(0)}
-                            </div>
+                          <div className="p-2.5 flex items-center gap-1.5" dir="rtl">
                             <div className="flex-1 min-w-0 text-right">
-                              <p className="font-medium text-sm truncate">{formatStudentName(student.full_name)}</p>
+                              <p className="font-medium text-sm leading-tight">{formatStudentName(student.full_name)}</p>
                               {current?.note && (
-                                <p className="text-[11px] text-muted-foreground truncate">{current.note}</p>
+                                <p className="text-[11px] text-muted-foreground">{current.note}</p>
                               )}
                               {!current?.note && isAlert && (
                                 <p className="text-[10px] text-red-500 inline-flex items-center gap-0.5">
