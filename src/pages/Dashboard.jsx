@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { THRESHOLDS } from '@/pages/ClassAttendance';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -42,6 +42,8 @@ export default function Dashboard({ user, role }) {
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [quickAction, setQuickAction] = useState(null);
+  const reloadTimerRef = useRef(null);
+  const isLoadingDataRef = useRef(false);
 
   const today = getLocalDateString();
   const attendanceDate = getSelectedAttendanceDate();
@@ -62,41 +64,60 @@ export default function Dashboard({ user, role }) {
 
   useEffect(() => {
     loadData(true);
-    const unsubscribe = base44.entities.AttendanceRecord.subscribe(() => loadData(false));
-    const handleFocus = () => loadData(false);
-    window.addEventListener('focus', handleFocus);
+    const scheduleReload = () => {
+      clearTimeout(reloadTimerRef.current);
+      reloadTimerRef.current = setTimeout(() => loadData(false), 1000);
+    };
+    const unsubscribe = base44.entities.AttendanceRecord.subscribe(scheduleReload);
+    window.addEventListener('focus', scheduleReload);
     return () => {
+      clearTimeout(reloadTimerRef.current);
       unsubscribe();
-      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('focus', scheduleReload);
     };
   }, [user?.id, role, attendanceDate]);
 
   async function loadData(showSpinner = true) {
+    if (isLoadingDataRef.current) return;
+    isLoadingDataRef.current = true;
     if (showSpinner) setLoading(true);
+
     const scopedStudents = await getAttendanceScopedStudents(user, role);
     const classIds = getScopedClassIds(scopedStudents);
+    const classIdSet = new Set(classIds);
     const scopedIds = new Set(scopedStudents.map(student => student.id));
-    const fetchForClasses = async (loader) => (await Promise.all(classIds.map(loader))).flat();
+    const fetchClassData = async (entity, filter = {}) => {
+      if (classIds.length === 0) return [];
+      if (classIds.length === 1) return base44.entities[entity].filter({ class_id: classIds[0], ...filter });
+      const records = await base44.entities[entity].list();
+      return records.filter(record => classIdSet.has(record.class_id) && Object.entries(filter).every(([key, value]) => record[key] === value));
+    };
 
-    const [att, allAtt, exs, tks, dis, ann, perf] = await Promise.all([
-      fetchForClasses(classId => base44.entities.AttendanceRecord.filter({ class_id: classId, date: attendanceDate })),
-      fetchForClasses(classId => base44.entities.AttendanceRecord.filter({ class_id: classId })),
-      fetchForClasses(classId => base44.entities.Exam.filter({ class_id: classId })),
-      fetchForClasses(classId => base44.entities.Task.filter({ class_id: classId })),
-      fetchForClasses(classId => base44.entities.DisciplineEvent.filter({ class_id: classId })),
-      fetchForClasses(classId => base44.entities.Announcement.filter({ class_id: classId })),
-      fetchForClasses(classId => base44.entities.PerformanceReview.filter({ class_id: classId })),
-    ]);
+    try {
+      const [att, allAtt, exs, tks, dis, ann, perf] = await Promise.all([
+        fetchClassData('AttendanceRecord', { date: attendanceDate }),
+        fetchClassData('AttendanceRecord'),
+        fetchClassData('Exam'),
+        fetchClassData('Task'),
+        fetchClassData('DisciplineEvent'),
+        fetchClassData('Announcement'),
+        fetchClassData('PerformanceReview'),
+      ]);
 
-    setStudents(scopedStudents);
-    setTodayAttendance(filterScopedAttendance(att, scopedStudents));
-    setAllAttRecords(filterScopedAttendance(allAtt, scopedStudents));
-    setDiscipline(dis.filter(record => scopedIds.has(record.student_id)));
-    setTasks(tks.filter(task => !task.student_id || scopedIds.has(task.student_id)));
-    setExams(exs);
-    setAnnouncements(ann);
-    setPerformanceReviews(perf.filter(record => scopedIds.has(record.student_id)));
-    setLoading(false);
+      setStudents(scopedStudents);
+      setTodayAttendance(filterScopedAttendance(att, scopedStudents));
+      setAllAttRecords(filterScopedAttendance(allAtt, scopedStudents));
+      setDiscipline(dis.filter(record => scopedIds.has(record.student_id)));
+      setTasks(tks.filter(task => !task.student_id || scopedIds.has(task.student_id)));
+      setExams(exs);
+      setAnnouncements(ann);
+      setPerformanceReviews(perf.filter(record => scopedIds.has(record.student_id)));
+    } catch (error) {
+      console.error('Dashboard data load failed:', error);
+    } finally {
+      isLoadingDataRef.current = false;
+      setLoading(false);
+    }
   }
 
   const presentToday = todayAttendance.filter(a => ['נוכח', 'נוכח/ת'].includes(a.status)).length;
