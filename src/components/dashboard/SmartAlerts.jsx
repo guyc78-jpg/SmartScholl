@@ -31,8 +31,16 @@ export default function SmartAlerts({ userRole }) {
 
   useEffect(() => {
     let didFinish = false;
+    const cacheKey = 'dashboard:smartAlerts:v1';
 
     const loadAlerts = async () => {
+      const cached = JSON.parse(sessionStorage.getItem(cacheKey) || 'null');
+      if (cached && Date.now() - cached.savedAt < 10 * 60_000) {
+        setAlerts(cached.alerts || []);
+        setLoading(false);
+        return;
+      }
+
       try {
         const timeoutPromise = new Promise((_, reject) =>
           setTimeout(() => reject(new Error('timeout')), 8000)
@@ -41,7 +49,9 @@ export default function SmartAlerts({ userRole }) {
           base44.functions.invoke('generateSmartAlerts', {}),
           timeoutPromise
         ]);
-        setAlerts(result?.data?.alerts || []);
+        const nextAlerts = result?.data?.alerts || [];
+        sessionStorage.setItem(cacheKey, JSON.stringify({ savedAt: Date.now(), alerts: nextAlerts }));
+        setAlerts(nextAlerts);
       } catch (error) {
         console.error('Failed to load alerts:', error);
         setAlerts([]);

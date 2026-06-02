@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { THRESHOLDS } from '@/pages/ClassAttendance';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -46,6 +46,10 @@ export default function Dashboard({ user, role }) {
   const [quickAction, setQuickAction] = useState(null);
   const [tasksDialogOpen, setTasksDialogOpen] = useState(false);
   const [selectedDisciplineEvent, setSelectedDisciplineEvent] = useState(null);
+  const loadTimerRef = useRef(null);
+  const isLoadingDataRef = useRef(false);
+  const pendingReloadRef = useRef(false);
+  const lastLoadAtRef = useRef(0);
 
   const today = getLocalDateString();
   const attendanceDate = getSelectedAttendanceDate();
@@ -66,41 +70,79 @@ export default function Dashboard({ user, role }) {
 
   useEffect(() => {
     loadData(true);
-    const unsubscribe = base44.entities.AttendanceRecord.subscribe(() => loadData(false));
-    const handleFocus = () => loadData(false);
+    const scheduleReload = () => {
+      clearTimeout(loadTimerRef.current);
+      loadTimerRef.current = setTimeout(() => loadData(false), 1200);
+    };
+    const unsubscribe = base44.entities.AttendanceRecord.subscribe(scheduleReload);
+    const handleFocus = () => {
+      if (Date.now() - lastLoadAtRef.current > 60_000) scheduleReload();
+    };
     window.addEventListener('focus', handleFocus);
     return () => {
+      clearTimeout(loadTimerRef.current);
       unsubscribe();
       window.removeEventListener('focus', handleFocus);
     };
   }, [user?.id, role, attendanceDate]);
 
   async function loadData(showSpinner = true) {
+    if (isLoadingDataRef.current) {
+      pendingReloadRef.current = true;
+      return;
+    }
+
+    isLoadingDataRef.current = true;
     if (showSpinner) setLoading(true);
-    const scopedStudents = await getAttendanceScopedStudents(user, role);
-    const classIds = getScopedClassIds(scopedStudents);
-    const scopedIds = new Set(scopedStudents.map(student => student.id));
-    const fetchForClasses = async (loader) => (await Promise.all(classIds.map(loader))).flat();
 
-    const [att, allAtt, exs, tks, dis, ann, perf] = await Promise.all([
-      fetchForClasses(classId => base44.entities.AttendanceRecord.filter({ class_id: classId, date: attendanceDate })),
-      fetchForClasses(classId => base44.entities.AttendanceRecord.filter({ class_id: classId })),
-      fetchForClasses(classId => base44.entities.Exam.filter({ class_id: classId })),
-      fetchForClasses(classId => base44.entities.Task.filter({ class_id: classId })),
-      fetchForClasses(classId => base44.entities.DisciplineEvent.filter({ class_id: classId })),
-      fetchForClasses(classId => base44.entities.Announcement.filter({ class_id: classId })),
-      fetchForClasses(classId => base44.entities.PerformanceReview.filter({ class_id: classId })),
-    ]);
+    try {
+      const scopedStudents = await getAttendanceScopedStudents(user, role);
+      const classIds = getScopedClassIds(scopedStudents);
+      const classIdSet = new Set(classIds);
+      const scopedIds = new Set(scopedStudents.map(student => student.id));
+      const shouldFetchAll = isActiveAdmin || classIds.length > 3;
+      const filterByClass = records => (records || []).filter(record => classIdSet.has(record.class_id));
+      const fetchForScope = async (entityName, query = null) => {
+        if (shouldFetchAll) {
+          const records = query
+            ? await base44.entities[entityName].filter(query)
+            : await base44.entities[entityName].list();
+          return filterByClass(records);
+        }
+        return (await Promise.all(classIds.map(classId => {
+          const scopedQuery = query ? { ...query, class_id: classId } : { class_id: classId };
+          return base44.entities[entityName].filter(scopedQuery);
+        }))).flat();
+      };
 
-    setStudents(scopedStudents);
-    setTodayAttendance(filterScopedAttendance(att, scopedStudents));
-    setAllAttRecords(filterScopedAttendance(allAtt, scopedStudents));
-    setDiscipline(dis.filter(record => scopedIds.has(record.student_id)));
-    setTasks(tks.filter(task => !task.student_id || scopedIds.has(task.student_id)));
-    setExams(exs);
-    setAnnouncements(ann);
-    setPerformanceReviews(perf.filter(record => scopedIds.has(record.student_id)));
-    setLoading(false);
+      const [att, allAtt, exs, tks, dis, ann, perf] = await Promise.all([
+        fetchForScope('AttendanceRecord', { date: attendanceDate }),
+        fetchForScope('AttendanceRecord'),
+        fetchForScope('Exam'),
+        fetchForScope('Task'),
+        fetchForScope('DisciplineEvent'),
+        fetchForScope('Announcement'),
+        fetchForScope('PerformanceReview'),
+      ]);
+
+      setStudents(scopedStudents);
+      setTodayAttendance(filterScopedAttendance(att, scopedStudents));
+      setAllAttRecords(filterScopedAttendance(allAtt, scopedStudents));
+      setDiscipline(dis.filter(record => scopedIds.has(record.student_id)));
+      setTasks(tks.filter(task => !task.student_id || scopedIds.has(task.student_id)));
+      setExams(exs);
+      setAnnouncements(ann);
+      setPerformanceReviews(perf.filter(record => scopedIds.has(record.student_id)));
+      lastLoadAtRef.current = Date.now();
+    } finally {
+      setLoading(false);
+      isLoadingDataRef.current = false;
+    }
+
+    if (pendingReloadRef.current) {
+      pendingReloadRef.current = false;
+      loadData(false);
+    }
   }
 
   const presentToday = todayAttendance.filter(a => ['נוכח', 'נוכח/ת'].includes(a.status)).length;
