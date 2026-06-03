@@ -52,8 +52,8 @@ export default function NowNextCard({ classId, className, showEmpty = false }) {
   if (state.loading) {
     return (
       <Card className={className}>
-        <CardContent className="p-2.5 sm:p-3">
-          <div className="h-[112px] rounded-xl bg-muted/40 animate-pulse" />
+        <CardContent className="p-2 sm:p-2.5">
+          <div className="h-[90px] rounded-xl bg-muted/40 animate-pulse" />
         </CardContent>
       </Card>
     );
@@ -84,8 +84,8 @@ export default function NowNextCard({ classId, className, showEmpty = false }) {
 
   return (
     <Card className={className}>
-      <CardContent className="p-2.5 sm:p-3 text-right" dir="rtl">
-        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 sm:gap-3 items-stretch" dir="rtl">
+      <CardContent className="p-2 sm:p-2.5 text-right" dir="rtl">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-2.5 items-stretch" dir="rtl">
           <LessonBlock title="השיעור עכשיו" slot={current} emptyText="אין שיעור כרגע" remainingMins={current ? remainingMins : null} />
           <LessonBlock title="השיעור הבא" slot={next} emptyText="אין שיעור נוסף היום" timeToNext={!current ? remainingMins : null} muted />
         </div>
@@ -118,36 +118,36 @@ function LessonBlock({ title, slot, emptyText, remainingMins, timeToNext, muted 
   return (
     <div
       className={cn(
-        'grid h-[112px] min-w-0 grid-rows-[18px_30px_18px_18px] items-start rounded-xl border px-3 py-2.5 text-right',
+        'grid h-[90px] min-w-0 grid-rows-[14px_24px_14px_14px] items-start rounded-xl border px-2.5 py-2 text-right',
         muted ? 'border-border/70 bg-muted/20' : 'border-emerald-200/70 bg-emerald-50/40 dark:border-emerald-800/70 dark:bg-emerald-900/15'
       )}
       dir="rtl"
     >
-      <div className="flex items-center justify-between gap-2" dir="rtl">
+      <div className="flex items-center justify-between gap-1.5" dir="rtl">
         <span className={cn(
-          'rounded-full px-1.5 py-0.5 text-[10px] font-semibold',
+          'rounded-full px-1 py-0.5 text-[8px] font-semibold leading-none',
           muted ? 'bg-muted text-muted-foreground' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300'
         )}>
           {title}
         </span>
-        <span className="text-[11px] font-medium text-muted-foreground force-ltr">{timeRange}</span>
+        <span className="text-[9px] font-medium text-muted-foreground force-ltr">{timeRange}</span>
       </div>
 
       <p className={cn(
-        'w-full truncate text-sm font-bold leading-[1.9] sm:text-[15px]',
+        'w-full truncate text-xs font-bold leading-[1.6]',
         slot ? 'text-foreground' : 'text-muted-foreground'
       )}>
         {slot?.subject || emptyText}
       </p>
 
       <p className={cn(
-        'w-full truncate text-[11px] font-medium',
+        'w-full truncate text-[9px] font-medium',
         slot && remainingMins != null ? 'text-emerald-700 dark:text-emerald-300' : 'text-muted-foreground'
       )}>
         {statusText}
       </p>
 
-      <p className="w-full truncate text-[11px] text-muted-foreground">
+      <p className="w-full truncate text-[9px] text-muted-foreground">
         {metaText}
       </p>
     </div>

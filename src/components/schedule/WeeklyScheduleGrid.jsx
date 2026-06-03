@@ -29,14 +29,14 @@ export default function WeeklyScheduleGrid({ periods, slotsByKey, todayDayName, 
         <table className="w-full min-w-[640px] table-fixed border-collapse text-center">
           <thead>
             <tr>
-              <th className="bg-primary text-primary-foreground w-16 sm:w-20 p-0 border-b border-l border-primary/30 align-middle">
+              <th className="bg-primary text-primary-foreground w-14 sm:w-16 p-0 border-b border-l border-primary/30 align-middle">
                 <CornerHeader />
               </th>
               {DAYS.map(day => (
                 <th
                   key={day}
                   className={cn(
-                    'text-[12px] font-bold py-2 px-1 border-b border-l border-primary/30 last:border-l-0 relative',
+                    'text-[11px] font-bold py-1.5 px-0.5 border-b border-l border-primary/30 last:border-l-0 relative',
                     day === highlightDay
                       ? 'bg-primary text-primary-foreground'
                       : 'bg-primary/85 text-primary-foreground/95'
@@ -44,7 +44,7 @@ export default function WeeklyScheduleGrid({ periods, slotsByKey, todayDayName, 
                 >
                   {day}
                   {day === highlightDay && (
-                    <span className="block text-[9px] font-normal opacity-90 mt-0.5">היום</span>
+                    <span className="block text-[8px] font-normal opacity-90 mt-0.5">היום</span>
                   )}
                 </th>
               ))}
@@ -57,17 +57,17 @@ export default function WeeklyScheduleGrid({ periods, slotsByKey, todayDayName, 
                 <tr key={p.period}>
                   <td
                     className={cn(
-                      'w-16 sm:w-20 font-bold border-b border-l border-border align-middle p-0',
+                      'w-14 sm:w-16 font-bold border-b border-l border-border align-middle p-0',
                       rowIdx % 2 === 0 ? 'bg-muted/40' : 'bg-card',
                       isCurrentRow && 'bg-primary/10 text-primary',
                     )}
                   >
-                    <div className="flex flex-col items-center justify-center gap-1.5 px-1 min-h-[58px] sm:min-h-[68px]">
-                      <div className={cn('text-sm sm:text-base leading-none', isCurrentRow ? 'text-primary' : 'text-foreground')}>
+                    <div className="flex flex-col items-center justify-center gap-1 px-1 min-h-[46px] sm:min-h-[54px]">
+                      <div className={cn('text-xs sm:text-sm leading-none', isCurrentRow ? 'text-primary' : 'text-foreground')}>
                         {p.period}
                       </div>
                       {p.start_time && (
-                        <div className="force-ltr text-xs sm:text-sm font-bold leading-none text-foreground/85 dark:text-foreground/90">
+                        <div className="force-ltr text-[10px] sm:text-xs font-bold leading-none text-foreground/85 dark:text-foreground/90">
                           {p.start_time}
                         </div>
                       )}
@@ -102,7 +102,7 @@ function CornerHeader() {
   // Diagonal-split corner: "יום" top-left, "שעה" bottom-right.
   // Triangles use primary + a slightly lighter shade, separated by a clean diagonal line.
   return (
-    <div className="relative w-full h-12 sm:h-14 overflow-hidden select-none" aria-label="יום / שעה">
+    <div className="relative w-full h-10 sm:h-11 overflow-hidden select-none" aria-label="יום / שעה">
       {/* Top-left triangle (darker primary) */}
       <div
         className="absolute inset-0 bg-primary"
@@ -118,11 +118,11 @@ function CornerHeader() {
         <line x1="100" y1="0" x2="0" y2="100" stroke="hsl(var(--primary-foreground))" strokeOpacity="0.45" strokeWidth="1.2" vectorEffect="non-scaling-stroke" />
       </svg>
       {/* "יום" — top-left triangle area */}
-      <span className="absolute top-0.5 left-1 sm:left-1.5 text-[10px] sm:text-[11px] font-bold text-primary-foreground leading-none">
+      <span className="absolute top-0.5 left-0.5 sm:left-1 text-[8px] sm:text-[9px] font-bold text-primary-foreground leading-none">
         יום
       </span>
       {/* "שעה" — bottom-right triangle area */}
-      <span className="absolute bottom-0.5 right-1 sm:right-1.5 text-[10px] sm:text-[11px] font-bold text-primary-foreground leading-none">
+      <span className="absolute bottom-0.5 right-0.5 sm:right-1 text-[8px] sm:text-[9px] font-bold text-primary-foreground leading-none">
         שעה
       </span>
     </div>
@@ -144,23 +144,23 @@ function Cell({ slot, isToday, isNow, canEdit, onClick }) {
       onClick={canEdit || slot ? onClick : undefined}
     >
       {slot ? (
-        <div className="px-1.5 py-2 min-h-[58px] sm:min-h-[68px] flex flex-col items-center justify-center gap-0.5 text-center">
-          <div className={cn('text-[12px] sm:text-sm font-bold leading-tight truncate w-full', color)}>
+        <div className="px-1 py-1.5 min-h-[46px] sm:min-h-[54px] flex flex-col items-center justify-center gap-0.5 text-center">
+          <div className={cn('text-[11px] sm:text-xs font-bold leading-tight truncate w-full', color)}>
             {slot.subject}
           </div>
           {slot.teacher && (
-            <div className="text-[10px] text-muted-foreground leading-tight truncate w-full inline-flex items-center justify-center gap-0.5">
-              <User className="w-2.5 h-2.5 flex-shrink-0" />
+            <div className="text-[9px] text-muted-foreground leading-tight truncate w-full inline-flex items-center justify-center gap-0.5">
+              <User className="w-2 h-2 flex-shrink-0" />
               <span className="truncate">{slot.teacher}</span>
             </div>
           )}
-          <div className="flex items-center justify-center gap-1 text-[10px] text-muted-foreground/90 leading-tight">
-            {slot.room && <span className="inline-flex items-center gap-0.5"><MapPin className="w-2.5 h-2.5" />{slot.room}</span>}
+          <div className="flex items-center justify-center gap-0.5 text-[9px] text-muted-foreground/90 leading-tight">
+            {slot.room && <span className="inline-flex items-center gap-0.5"><MapPin className="w-2 h-2" />{slot.room}</span>}
             {group && <span className="inline-flex items-center gap-0.5">· {group}</span>}
           </div>
         </div>
       ) : (
-        <div className="px-1 py-2 min-h-[58px] sm:min-h-[68px] flex flex-col items-center justify-center gap-1">
+        <div className="px-1 py-1.5 min-h-[46px] sm:min-h-[54px] flex flex-col items-center justify-center gap-1">
           {canEdit ? (
             <TooltipProvider>
               <Tooltip>
