@@ -8,7 +8,7 @@ import StatCard from '@/components/ui/StatCard';
 import UrgentFlagsSection from '@/components/urgent/UrgentFlagsSection';
 import DailySmartCard from '@/components/dashboard/DailySmartCard';
 import WatchStudentsSection from '@/components/dashboard/WatchStudentsSection';
-import SmartAlerts from '@/components/dashboard/SmartAlerts';
+
 import {
   Users, Clock, AlertTriangle, BookOpen, CheckSquare,
   Shield, Heart, UserCheck, Calendar, MessageSquare,
@@ -277,10 +277,7 @@ export default function Dashboard({ user, role }) {
         />
       )}
 
-      {/* Smart Alerts */}
-      {(isActiveHomeroom || isActiveAdmin || isActiveCoordinator) && (
-        <SmartAlerts userRole={role} />
-      )}
+
 
       {/* Watch Students Section — identify students needing attention */}
       {(isActiveHomeroom || isActiveAdmin || isActiveCoordinator) && (
