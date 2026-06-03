@@ -200,11 +200,12 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
   const activeRole = approvedRoles.includes(role) ? role : null;
   const isActiveDivisionManager = activeRole === 'division_manager';
   const isStaffRole = ['admin', 'homeroom_teacher', 'coordinator'].includes(activeRole);
-  const canAccess = (item) => item.roles.includes(activeRole);
+  const isApprovedAdmin = approvedRoles.includes('admin');
+  const canAccess = (item) => item.roles.includes(activeRole) || (isApprovedAdmin && item.roles.includes('admin'));
 
   const navGroups = sidebarGroups
     .filter(group => group.key !== 'division' || isActiveDivisionManager)
-    .filter(group => !group.adminOnly || activeRole === 'admin')
+    .filter(group => !group.adminOnly || isApprovedAdmin)
     .map(group => ({ ...group, items: group.items.filter(canAccess) }))
     .filter(group => group.items.length > 0);
 
