@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AlertCircle, ChevronLeft, Zap, TrendingDown, Clock } from 'lucide-react';
-import { formatStudentName } from '@/lib/studentName';
+import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 
 const THRESHOLDS = {
   absences: 5,
@@ -53,7 +53,7 @@ export default function WatchStudentsSection({
       };
     })
     .filter(s => s.reasons.length > 0 || s.score > 2)
-    .sort((a, b) => b.score - a.score)
+    .sort((a, b) => compareStudentsByLastName(a, b))
     .slice(0, 10);
 
   if (watchList.length === 0) return null;
@@ -81,12 +81,12 @@ export default function WatchStudentsSection({
           >
             {/* Avatar */}
             <div className="w-8 h-8 bg-amber-200 dark:bg-amber-800/50 rounded-lg flex items-center justify-center flex-shrink-0 text-amber-900 dark:text-amber-200 font-bold text-sm">
-              {student.full_name?.charAt(0) || '?'}
+              {formatStudentName(student).charAt(0) || '?'}
             </div>
 
             {/* Content */}
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground">{formatStudentName(student.full_name)}</p>
+              <p className="text-sm font-medium text-foreground">{formatStudentName(student)}</p>
               <div className="flex flex-wrap gap-1 mt-1">
                 {student.absences >= THRESHOLDS.absences && (
                   <span className="inline-flex items-center gap-1 text-[11px] text-amber-700 dark:text-amber-300 bg-amber-100/50 dark:bg-amber-900/40 px-1.5 py-0.5 rounded">

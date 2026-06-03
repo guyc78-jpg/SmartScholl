@@ -30,7 +30,7 @@ const RatingDots = ({ value }) => (
 );
 
 export default function StudentProfile({ role }) {
-  const { id } = useParams();
+  const { id: studentId } = useParams();
   const { user } = useAuth();
   const [student, setStudent] = useState(null);
   const [attendance, setAttendance] = useState([]);
@@ -54,18 +54,18 @@ export default function StudentProfile({ role }) {
     follow_up_date: ''
   });
 
-  useEffect(() => { loadAll(); }, [id]);
+  useEffect(() => { loadAll(); }, [studentId]);
 
   async function loadAll() {
     setLoading(true);
     const [st, att, dis, nts, rvs, cms, tks] = await Promise.all([
-      base44.entities.Student.filter({ id }),
-      base44.entities.AttendanceRecord.filter({ student_id: id }),
-      base44.entities.DisciplineEvent.filter({ student_id: id }),
-      base44.entities.TeacherNote.filter({ student_id: id }),
-      base44.entities.PerformanceReview.filter({ student_id: id }),
-      base44.entities.Communication.filter({ student_id: id }),
-      base44.entities.Task.filter({ student_id: id }),
+      base44.entities.Student.filter({ id: studentId }),
+      base44.entities.AttendanceRecord.filter({ student_id: studentId }),
+      base44.entities.DisciplineEvent.filter({ student_id: studentId }),
+      base44.entities.TeacherNote.filter({ student_id: studentId }),
+      base44.entities.PerformanceReview.filter({ student_id: studentId }),
+      base44.entities.Communication.filter({ student_id: studentId }),
+      base44.entities.Task.filter({ student_id: studentId }),
     ]);
     setStudent(st[0]);
     setAttendance(att.sort((a,b) => b.date.localeCompare(a.date)));
@@ -92,6 +92,7 @@ export default function StudentProfile({ role }) {
   const absentCount = attendance.filter(a => ['נעדר', 'נעדר/ת'].includes(a.status)).length;
   const lateCount = attendance.filter(a => ['מאחר', 'מאחר/ת'].includes(a.status)).length;
   const openDiscipline = discipline.filter(d => d.status === 'פתוח').length;
+  const studentDisplayName = formatStudentName(student);
 
   const formatDate = (d) => {
     if (!d) return '—';
@@ -111,8 +112,8 @@ export default function StudentProfile({ role }) {
 
     const communicationData = {
       ...conversationForm,
-      student_id: id,
-      student_name: student.full_name,
+      student_id: studentId,
+      student_name: studentDisplayName,
       class_id: student.class_id || CLASS_ID
     };
 
@@ -121,9 +122,9 @@ export default function StudentProfile({ role }) {
     if (conversationForm.follow_up.trim() && conversationForm.follow_up_date) {
       await base44.entities.Task.create({
         class_id: student.class_id || CLASS_ID,
-        student_id: id,
-        student_name: student.full_name,
-        title: `תזכורת המשך: ${student.full_name}`,
+        student_id: studentId,
+        student_name: studentDisplayName,
+        title: `תזכורת המשך: ${studentDisplayName}`,
         description: `${conversationForm.follow_up}\n\nמתוך סיכום שיחה: ${conversationForm.summary}`,
         due_date: conversationForm.follow_up_date,
         priority: 'גבוהה',
@@ -151,11 +152,11 @@ export default function StudentProfile({ role }) {
           {/* Collapsed summary row */}
           <div className="flex items-center gap-3 p-4 sm:p-5" dir="rtl">
             <div className={`w-14 h-14 rounded-2xl flex items-center justify-center font-bold text-xl flex-shrink-0 ${student.gender === 'נקבה' ? 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300'}`}>
-              {student.full_name.charAt(0)}
+              {studentDisplayName.charAt(0)}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-xl sm:text-2xl font-bold text-foreground truncate">{formatStudentName(student)}</h1>
+                <h1 className="text-xl sm:text-2xl font-bold text-foreground truncate">{studentDisplayName}</h1>
                 <StatusBadge status={student.status} />
               </div>
               <p className="text-sm text-muted-foreground mt-1">כיתה {student.class_name || 'י׳1'}</p>
@@ -261,7 +262,7 @@ export default function StudentProfile({ role }) {
             />
           )}
 
-          <GrowthReport studentId={id} studentName={student.full_name} />
+          <GrowthReport studentId={studentId} studentName={studentDisplayName} />
 
           {/* Community Service */}
             <Card>
@@ -359,9 +360,9 @@ export default function StudentProfile({ role }) {
         {/* Contacts */}
         <TabsContent value="contacts" className="space-y-4">
           <ParentContactLog 
-            studentId={id}
+            studentId={studentId}
             classId={student.class_id || CLASS_ID}
-            studentName={student.full_name}
+            studentName={studentDisplayName}
             parentPhone1={student.parent1_phone}
             parentPhone2={student.parent2_phone}
             user={user}

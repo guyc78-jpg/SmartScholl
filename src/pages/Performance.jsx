@@ -74,7 +74,7 @@ export default function Performance({ role = 'homeroom_teacher' }) {
   async function handleSave() {
     if (!form.student_id || !form.period) { toast.error('יש לבחור תלמיד ותקופה'); return; }
     const student = students.find(s => s.id === form.student_id);
-    const data = { ...form, student_name: student?.full_name, class_id: CLASS_ID };
+    const data = { ...form, student_name: student ? formatStudentName(student) : '', class_id: CLASS_ID };
     try {
       if (editReview) { await base44.entities.PerformanceReview.update(editReview.id, data); toast.success('עודכן'); }
       else { await base44.entities.PerformanceReview.create(data); toast.success('הערכה נשמרה!'); }
@@ -87,6 +87,9 @@ export default function Performance({ role = 'homeroom_teacher' }) {
     await base44.entities.PerformanceReview.delete(id);
     loadData();
   }
+
+  const studentById = new Map(students.map(student => [student.id, student]));
+  const displayStudentName = (studentId, fallbackName = '') => formatStudentName(studentById.get(studentId) || fallbackName);
 
   const formatDate = (d) => { if (!d) return ''; const dt = new Date(d); return `${dt.getDate().toString().padStart(2,'0')}/${(dt.getMonth()+1).toString().padStart(2,'0')}/${dt.getFullYear()}`; };
 
@@ -107,7 +110,7 @@ export default function Performance({ role = 'homeroom_teacher' }) {
                 <Card className="p-4">
                   <div className="flex justify-between items-start mb-3">
                     <div>
-                      <p className="font-semibold text-sm">{formatStudentName(r.student_name)}</p>
+                      <p className="font-semibold text-sm">{displayStudentName(r.student_id, r.student_name)}</p>
                       <p className="text-xs text-muted-foreground">{r.period} · {formatDate(r.date)}</p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -150,7 +153,7 @@ export default function Performance({ role = 'homeroom_teacher' }) {
                   <Label>תלמיד *</Label>
                   <Select value={form.student_id} onValueChange={v => set('student_id', v)}>
                     <SelectTrigger><SelectValue placeholder="בחר"/></SelectTrigger>
-                    <SelectContent>{[...students].sort(compareStudentsByLastName).map(s => <SelectItem key={s.id} value={s.id}>{formatStudentName(s.full_name)}</SelectItem>)}</SelectContent>
+                    <SelectContent>{[...students].sort(compareStudentsByLastName).map(s => <SelectItem key={s.id} value={s.id}>{formatStudentName(s)}</SelectItem>)}</SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1">

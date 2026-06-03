@@ -43,6 +43,9 @@ export default function Reports({ role }) {
     setLoading(false);
   }
 
+  const studentById = new Map(students.map(student => [student.id, student]));
+  const displayStudentName = (studentId, fallbackName = '') => formatStudentName(studentById.get(studentId) || fallbackName);
+
   const filteredAtt = attendance.filter(a => {
     const inRange = a.date >= dateFrom && a.date <= dateTo;
     const studentMatch = selectedStudent === 'all' || a.student_id === selectedStudent;
@@ -72,7 +75,7 @@ export default function Reports({ role }) {
   const studentAttStats = students.map(s => {
     const sAtt = filteredAtt.filter(a => a.student_id === s.id);
     return {
-      name: getLastName(s.full_name),
+      name: getLastName(s),
       נוכח: countStatuses(sAtt, ['נוכח', 'נוכח/ת']),
       נעדר: countStatuses(sAtt, ['נעדר', 'נעדר/ת']),
       מאחר: countStatuses(sAtt, ['מאחר', 'מאחר/ת']),
@@ -80,14 +83,14 @@ export default function Reports({ role }) {
   }).sort((a,b) => b.נעדר - a.נעדר);
 
   const communityData = students.map(s => ({
-    name: getLastName(s.full_name),
+    name: getLastName(s),
     שבוצע: s.community_service_done || 0,
     יעד: s.community_service_goal || 60,
   })).slice(0, 8);
 
   const exportCSV = () => {
     const rows = [['תלמיד', 'תאריך', 'סטטוס', 'הערה']];
-    filteredAtt.forEach(a => rows.push([formatStudentName(a.student_name), a.date, a.status, a.note || '']));
+    filteredAtt.forEach(a => rows.push([displayStudentName(a.student_id, a.student_name), a.date, a.status, a.note || '']));
     const csv = rows.map(r => r.join(',')).join('\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -109,7 +112,7 @@ export default function Reports({ role }) {
               <SelectTrigger><SelectValue/></SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">כל הכיתה</SelectItem>
-                {[...students].sort(compareStudentsByLastName).map(s => <SelectItem key={s.id} value={s.id}>{formatStudentName(s.full_name)}</SelectItem>)}
+                {[...students].sort(compareStudentsByLastName).map(s => <SelectItem key={s.id} value={s.id}>{formatStudentName(s)}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>
@@ -197,7 +200,7 @@ export default function Reports({ role }) {
                 <div className="space-y-2">
                   {filteredDis.map(d => (
                     <div key={d.id} className="flex items-center justify-between py-2 border-b last:border-0 text-sm">
-                      <span className="font-medium">{formatStudentName(d.student_name)}</span>
+                      <span className="font-medium">{displayStudentName(d.student_id, d.student_name)}</span>
                       <span className="text-muted-foreground text-xs">{d.date}</span>
                       <StatusBadge status={d.severity} />
                       <StatusBadge status={d.status} />

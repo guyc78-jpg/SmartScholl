@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { AlertTriangle, Clock, UserX, ChevronLeft } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import StatusBadge from '@/components/ui/StatusBadge';
-import { formatStudentName } from '@/lib/studentName';
+import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 
 export default function WatchStudentsList({ students, attByStudent }) {
   const watchStudents = students.filter(s => s.status === 'דורש מעקב');
@@ -10,7 +10,8 @@ export default function WatchStudentsList({ students, attByStudent }) {
   const lateWarning = students.filter(s => (attByStudent[s.id]?.lates || 0) >= 5);
 
   const allAlertIds = new Set([...watchStudents.map(s=>s.id), ...absenceWarning.map(s=>s.id), ...lateWarning.map(s=>s.id)]);
-  const alertStudents = students.filter(s => allAlertIds.has(s.id));
+  const alertStudents = students.filter(s => allAlertIds.has(s.id)).sort(compareStudentsByLastName);
+  const sortedStudents = [...students].sort(compareStudentsByLastName);
 
   return (
     <div className="space-y-4">
@@ -36,10 +37,10 @@ export default function WatchStudentsList({ students, attByStudent }) {
               return (
                 <Link key={s.id} to={`/students/${s.id}`} className="flex items-center gap-3 p-2.5 rounded-xl bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors">
                   <div className="w-9 h-9 bg-amber-200 dark:bg-amber-800 rounded-full flex items-center justify-center text-amber-700 dark:text-amber-300 font-bold text-sm flex-shrink-0">
-                    {s.full_name.charAt(0)}
+                    {formatStudentName(s).charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium">{formatStudentName(s.full_name)}</p>
+                    <p className="text-sm font-medium">{formatStudentName(s)}</p>
                     <div className="flex flex-wrap gap-1 mt-0.5">
                       {flags.map((f, i) => (
                         <span key={i} className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${f.color}`}>{f.label}</span>
@@ -64,13 +65,13 @@ export default function WatchStudentsList({ students, attByStudent }) {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {students.map(s => (
+            {sortedStudents.map(s => (
               <Link key={s.id} to={`/students/${s.id}`} className="flex items-center gap-2.5 p-2 rounded-lg hover:bg-muted transition-colors">
                 <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold text-xs flex-shrink-0">
-                  {s.full_name.charAt(0)}
+                  {formatStudentName(s).charAt(0)}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{formatStudentName(s.full_name)}</p>
+                  <p className="text-sm font-medium truncate">{formatStudentName(s)}</p>
                 </div>
                 <StatusBadge status={s.status} />
               </Link>

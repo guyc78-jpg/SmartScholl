@@ -4,7 +4,7 @@ import { base44 } from '@/api/base44Client';
 import { CLASS_ID } from '@/lib/demoData';
 import { getStudentClassId } from '@/lib/studentProfile';
 import { getUserApprovedClassId, isStudentInApprovedScope } from '@/lib/schoolStructure';
-import { compareStudentsByLastName } from '@/lib/studentName';
+import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -60,7 +60,7 @@ export default function Community({ role = 'homeroom_teacher', user }) {
 
   const pct = (s) => Number(s.community_service_goal) > 0 ? Math.round((Number(s.community_service_done || 0) / Number(s.community_service_goal)) * 100) : 0;
   
-  const sorted = [...students].sort((a,b) => pct(a) - pct(b));
+  const sorted = [...students].sort(compareStudentsByLastName);
   const filtered = filter === 'הכל' ? sorted : sorted.filter(s => s.community_service_status === filter);
 
   const totalDone = students.reduce((sum, s) => sum + Number(s.community_service_done || 0), 0);
@@ -114,11 +114,11 @@ export default function Community({ role = 'homeroom_teacher', user }) {
                       ${p >= 100 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
                         p >= 50 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
                         'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
-                      {s.full_name.charAt(0)}
+                      {formatStudentName(s).charAt(0)}
                     </div>
                     <div className="flex-1 min-w-0 text-right">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="font-semibold text-sm">{s.full_name}</span>
+                        <span className="font-semibold text-sm">{formatStudentName(s)}</span>
                         <StatusBadge status={s.community_service_status} />
                         {isBehind && s.community_service_status !== 'הושלם' && <AlertTriangle className="w-3.5 h-3.5 text-amber-500"/>}
                       </div>
@@ -150,7 +150,7 @@ export default function Community({ role = 'homeroom_teacher', user }) {
       {editStudent && (
         <Dialog open onOpenChange={() => setEditStudent(null)}>
           <DialogContent className="sm:max-w-sm" dir="rtl">
-            <DialogHeader><DialogTitle>עדכון מעורבות – {editStudent.full_name}</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>עדכון מעורבות – {formatStudentName(editStudent)}</DialogTitle></DialogHeader>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1"><Label>יעד שעות</Label><Input type="number" value={form.community_service_goal} onChange={e => set('community_service_goal', Number(e.target.value))}/></div>

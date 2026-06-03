@@ -31,7 +31,7 @@ import WorthCheckingPanel from '@/components/attendance/WorthCheckingPanel';
 import ExceptionRow from '@/components/attendance/ExceptionRow';
 import { getUserApprovedClass } from '@/lib/schoolStructure';
 import { useAuth } from '@/lib/AuthContext';
-import { formatStudentName } from '@/lib/studentName';
+import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 import { ATTENDANCE_STATUSES, PRESENT_STATUS, getAttendanceScopedStudents, getLocalDateString, getScopedClassIds, filterScopedAttendance, getSelectedAttendanceDate, saveSelectedAttendanceDate } from '@/lib/attendanceScope';
 
 const STATUSES = ATTENDANCE_STATUSES;
@@ -91,7 +91,7 @@ export default function ClassAttendance({ role }) {
     const recsArrays = await Promise.all(classIds.map(cid => base44.entities.AttendanceRecord.filter({ class_id: cid })));
     const recs = recsArrays.flat();
 
-    setStudents(scopedStudents);
+    setStudents([...scopedStudents].sort(compareStudentsByLastName));
     setAllRecords(filterScopedAttendance(recs, scopedStudents));
     setLoading(false);
   }
@@ -134,7 +134,7 @@ export default function ClassAttendance({ role }) {
     }
     const data = {
       student_id: student.id,
-      student_name: student.full_name,
+      student_name: formatStudentName(student),
       class_id: student.class_id,
       date,
       status: statusOrNull,
@@ -260,7 +260,7 @@ export default function ClassAttendance({ role }) {
     }
     if (search.trim()) {
       const term = search.trim().toLowerCase();
-      list = list.filter(s => s.full_name?.toLowerCase().includes(term));
+      list = list.filter(s => formatStudentName(s).toLowerCase().includes(term));
     }
     return list;
   }, [students, attendanceMap, view, search]);

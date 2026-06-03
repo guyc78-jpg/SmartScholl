@@ -108,7 +108,7 @@ export default function Students({ role }) {
   useEffect(() => { setVisibleCount(PAGE_SIZE); }, [search, statusFilter]);
 
   const filtered = useMemo(() => students.filter(s => {
-    const matchSearch = s.full_name.includes(search) || (s.student_number || '').includes(search);
+    const matchSearch = formatStudentName(s).includes(search) || (s.student_number || '').includes(search);
     const matchStatus = statusFilter === 'הכל' || s.status === statusFilter;
     return matchSearch && matchStatus;
   }).sort(compareStudentsByLastName), [students, search, statusFilter]);
@@ -238,7 +238,7 @@ export default function Students({ role }) {
                         ${student.status === 'דורש מעקב' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
                           student.gender === 'נקבה' ? 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400' :
                           'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'}`}>
-                        {student.full_name.charAt(0)}
+                        {formatStudentName(student).charAt(0)}
                       </div>
                       <div className="min-w-0 text-right">
                         <div className="flex items-center gap-2 mb-1 flex-row-reverse justify-end">

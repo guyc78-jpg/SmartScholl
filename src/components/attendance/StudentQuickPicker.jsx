@@ -2,17 +2,17 @@ import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Search, X } from 'lucide-react';
-import { formatStudentName } from '@/lib/studentName';
+import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 
 export default function StudentQuickPicker({ open, onClose, students, title, onSelect, excludeIds = [] }) {
   const [q, setQ] = useState('');
 
   const filtered = useMemo(() => {
     const exclude = new Set(excludeIds);
-    const available = students.filter(s => !exclude.has(s.id));
+    const available = students.filter(s => !exclude.has(s.id)).sort(compareStudentsByLastName);
     if (!q.trim()) return available;
     const term = q.trim().toLowerCase();
-    return available.filter(s => s.full_name?.toLowerCase().includes(term));
+    return available.filter(s => formatStudentName(s).toLowerCase().includes(term));
   }, [students, q, excludeIds]);
 
   return (
@@ -48,7 +48,7 @@ export default function StudentQuickPicker({ open, onClose, students, title, onS
               >
                 <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0
                   ${s.gender === 'נקבה' ? 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'}`}>
-                  {s.full_name?.charAt(0)}
+                  {formatStudentName(s).charAt(0)}
                 </div>
                 <span className="flex-1 text-sm font-medium text-right">{formatStudentName(s)}</span>
               </button>
