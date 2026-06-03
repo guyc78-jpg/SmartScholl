@@ -451,6 +451,7 @@ export default function Dashboard({ user, role }) {
           onClose={() => setQuickAction(null)}
           user={user}
           role={role}
+          initialStudents={students}
           onSuccess={() => { setQuickAction(null); loadData(); }}
         />
       )}

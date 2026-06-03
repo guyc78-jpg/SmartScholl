@@ -40,7 +40,7 @@ function studentMatchesClass(student, classId, className) {
 const getStudentDisplayName = formatStudentName;
 const sortByLastName = (students) => [...students].sort(compareStudentsByLastName);
 
-export default function QuickActionModal({ action, classId: classIdProp, user, role, onClose, onSuccess }) {
+export default function QuickActionModal({ action, classId: classIdProp, user, role, onClose, onSuccess, initialStudents = [] }) {
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
   const [students, setStudents] = useState([]);
@@ -103,12 +103,18 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
   const approvedRoles = getAvailableRoles(user);
   const isCoordinator = hasApprovedRole(user, 'coordinator');
   const isAdmin = approvedRoles.includes('admin');
+  const hasInitialStudents = initialStudents.length > 0;
 
   // טעינת תלמידים לפעולות שתלויות ברשימת תלמידים
   useEffect(() => {
     if (!usesStudentData) return;
+    if (hasInitialStudents) {
+      setStudents(initialStudents);
+      setLoadingStudents(false);
+      return;
+    }
     loadStudents();
-  }, [action, usesStudentData, resolvedClassId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [action, usesStudentData, resolvedClassId, hasInitialStudents, initialStudents]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Prevent body scroll on iOS while sheet is open
   useEffect(() => {
@@ -122,8 +128,8 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
     setForm({});
     setSearchQuery('');
     setStudentListOpen(false);
-    setStudents([]);
-  }, [action]);
+    setStudents(hasInitialStudents ? initialStudents : []);
+  }, [action, hasInitialStudents, initialStudents]);
 
   async function loadStudents() {
     setLoadingStudents(true);
