@@ -54,12 +54,18 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
   const [searchQuery, setSearchQuery] = useState('');
   const [studentListOpen, setStudentListOpen] = useState(false);
   const [sheetHeight, setSheetHeight] = useState(null);
+  const [sheetBottom, setSheetBottom] = useState(0);
   const sheetRef = useRef(null);
+  const scrollAreaRef = useRef(null);
 
-  // עדכון גובה דינמי לפי ה-viewport הנגלה (מקלדת פתוחה/סגורה)
+  // עדכון גובה ומיקום דינמי — מעביר את הפאנל מעל המקלדת ב-iOS
   useEffect(() => {
     const update = () => {
-      const vvh = window.visualViewport?.height ?? window.innerHeight;
+      const vv = window.visualViewport;
+      const vvh = vv?.height ?? window.innerHeight;
+      // כמה פיקסלים המקלדת "דחפה" את ה-viewport כלפי מעלה
+      const keyboardOffset = Math.max(0, window.innerHeight - vvh - (vv?.offsetTop ?? 0));
+      setSheetBottom(keyboardOffset);
       setSheetHeight(Math.min(Math.round(vvh * 0.85), 640));
     };
     update();
@@ -70,6 +76,14 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
       window.visualViewport?.removeEventListener('scroll', update);
     };
   }, []);
+
+  // גלילה אוטומטית לשדה הפעיל בתוך אזור הגלילה
+  function handleFieldFocus(e) {
+    const el = e.currentTarget;
+    setTimeout(() => {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 320); // המתן לסיום אנימציית המקלדת
+  }
 
   const needsStudentPicker = ['discipline', 'note', 'communication', 'community'].includes(action);
   const today = getLocalDateString();
@@ -299,12 +313,12 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
         onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       />
 
-      {/* Sheet panel — fixed height, never grows with keyboard */}
+      {/* Sheet panel — follows visualViewport so it floats above the keyboard */}
       <div
         ref={sheetRef}
         style={{
           position: 'absolute',
-          bottom: 0,
+          bottom: sheetBottom,
           right: 0,
           left: 0,
           height: sheetHeight ? `${sheetHeight}px` : '85vh',
@@ -314,7 +328,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          transition: 'height 0.2s ease',
+          transition: 'bottom 0.2s ease, height 0.2s ease',
         }}
       >
         {/* Handle bar */}
@@ -334,7 +348,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
         </div>
 
         {/* Scrollable content */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', WebkitOverflowScrolling: 'touch' }}>
+        <div ref={scrollAreaRef} style={{ flex: 1, overflowY: 'auto', padding: '1rem', WebkitOverflowScrolling: 'touch' }}>
           {action === 'attendance' ? (
             <QuickAttendanceForm
               classId={resolvedClassId}
@@ -425,7 +439,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
               </div>
               <div className="space-y-1">
                 <Label>תיאור האירוע</Label>
-                <Textarea placeholder="תיאור..." onChange={e => set('description', e.target.value)} rows={3} className="resize-none" />
+                <Textarea placeholder="תיאור..." onChange={e => set('description', e.target.value)} onFocus={handleFieldFocus} rows={3} className="resize-none" />
               </div>
             </>}
 
@@ -477,7 +491,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
               </div>
               <div className="space-y-1">
                 <Label>תוכן</Label>
-                <Textarea placeholder="תוכן ההודעה..." onChange={e => set('content', e.target.value)} rows={3} className="resize-none" />
+                <Textarea placeholder="תוכן ההודעה..." onChange={e => set('content', e.target.value)} onFocus={handleFieldFocus} rows={3} className="resize-none" />
               </div>
             </>}
 
@@ -506,7 +520,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
               )}
               <div className="space-y-1">
                 <Label>{action === 'note' ? 'הערה' : 'סיכום'}</Label>
-                <Textarea placeholder="כתוב כאן..." onChange={e => set(action === 'note' ? 'content' : 'summary', e.target.value)} rows={3} className="resize-none" />
+                <Textarea placeholder="כתוב כאן..." onChange={e => set(action === 'note' ? 'content' : 'summary', e.target.value)} onFocus={handleFieldFocus} rows={3} className="resize-none" />
               </div>
             </>}
 
@@ -546,7 +560,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
             )}
 
             {/* Actions */}
-            <div className="flex gap-2 pt-1 pb-2">
+            <div className="flex gap-2 pt-1" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
               <Button onClick={handleSave} disabled={saving || (needsStudentPicker && students.length === 0)} className="flex-1">
                 {saving ? 'שומר...' : 'שמור'}
               </Button>
