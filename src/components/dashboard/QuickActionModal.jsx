@@ -95,6 +95,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
 
   const needsStudentPicker = ['discipline', 'note', 'communication'].includes(action);
   const usesStudentData = needsStudentPicker || action === 'community';
+  const hasInitialStudents = Array.isArray(initialStudents);
   const today = getLocalDateString();
 
   const resolvedClassId = classIdProp || user?.profile_class_id || '';
@@ -103,9 +104,8 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
   const approvedRoles = getAvailableRoles(user);
   const isCoordinator = hasApprovedRole(user, 'coordinator');
   const isAdmin = approvedRoles.includes('admin');
-  const hasInitialStudents = initialStudents.length > 0;
 
-  // טעינת תלמידים לפעולות שתלויות ברשימת תלמידים
+  // שימוש בתלמידים שכבר נטענו בדשבורד כדי למנוע בקשות כפולות
   useEffect(() => {
     if (!usesStudentData) return;
     if (hasInitialStudents) {
