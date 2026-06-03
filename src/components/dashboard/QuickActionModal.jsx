@@ -53,7 +53,23 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [studentListOpen, setStudentListOpen] = useState(false);
+  const [sheetHeight, setSheetHeight] = useState(null);
   const sheetRef = useRef(null);
+
+  // עדכון גובה דינמי לפי ה-viewport הנגלה (מקלדת פתוחה/סגורה)
+  useEffect(() => {
+    const update = () => {
+      const vvh = window.visualViewport?.height ?? window.innerHeight;
+      setSheetHeight(Math.min(Math.round(vvh * 0.85), 640));
+    };
+    update();
+    window.visualViewport?.addEventListener('resize', update);
+    window.visualViewport?.addEventListener('scroll', update);
+    return () => {
+      window.visualViewport?.removeEventListener('resize', update);
+      window.visualViewport?.removeEventListener('scroll', update);
+    };
+  }, []);
 
   const needsStudentPicker = ['discipline', 'note', 'communication', 'community'].includes(action);
   const today = getLocalDateString();
@@ -287,13 +303,14 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
           bottom: 0,
           right: 0,
           left: 0,
-          height: '85vh',
+          height: sheetHeight ? `${sheetHeight}px` : '85vh',
           maxHeight: '640px',
           background: 'hsl(var(--card))',
           borderRadius: '1rem 1rem 0 0',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
+          transition: 'height 0.2s ease',
         }}
       >
         {/* Handle bar */}
