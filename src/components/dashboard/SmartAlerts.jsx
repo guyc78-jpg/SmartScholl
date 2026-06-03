@@ -24,6 +24,25 @@ const severityBadges = {
   critical: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
 };
 
+function AlertSourceDetails({ details }) {
+  const source = details?.source_info;
+  if (!source) return null;
+
+  const students = (source.related_student_names || []).slice(0, 4).join(', ');
+  const exam = source.exam_title || (source.exam_titles || []).join(', ');
+
+  return (
+    <div className="mt-2 rounded-lg border border-border/60 bg-background/60 px-3 py-2 text-[11px] text-muted-foreground text-right" dir="rtl">
+      <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1">
+        <span>מקור: <strong>{source.source}</strong></span>
+        {exam && <span>מבחן: <strong>{exam}</strong></span>}
+        {source.class_or_group && <span>כיתה/קבוצה: <strong>{source.class_or_group}</strong></span>}
+        {students && <span>תלמידים: <strong>{students}</strong></span>}
+      </div>
+    </div>
+  );
+}
+
 export default function SmartAlerts({ userRole }) {
   const [alerts, setAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,26 +50,16 @@ export default function SmartAlerts({ userRole }) {
 
   useEffect(() => {
     let didFinish = false;
-    const cacheKey = 'dashboard:smartAlerts:v1';
-
     const loadAlerts = async () => {
-      const cached = JSON.parse(sessionStorage.getItem(cacheKey) || 'null');
-      if (cached && Date.now() - cached.savedAt < 10 * 60_000) {
-        setAlerts(cached.alerts || []);
-        setLoading(false);
-        return;
-      }
-
       try {
         const timeoutPromise = new Promise((_, reject) =>
           setTimeout(() => reject(new Error('timeout')), 8000)
         );
         const result = await Promise.race([
-          base44.functions.invoke('generateSmartAlerts', {}),
+          base44.functions.invoke('generateSmartAlerts', { role: userRole }),
           timeoutPromise
         ]);
         const nextAlerts = result?.data?.alerts || [];
-        sessionStorage.setItem(cacheKey, JSON.stringify({ savedAt: Date.now(), alerts: nextAlerts }));
         setAlerts(nextAlerts);
       } catch (error) {
         console.error('Failed to load alerts:', error);
@@ -69,16 +78,16 @@ export default function SmartAlerts({ userRole }) {
     }, 10000);
 
     return () => clearTimeout(safetyTimer);
-  }, []);
+  }, [userRole]);
 
-  // Only show for staff
-  if (!['admin', 'homeroom_teacher', 'coordinator'].includes(userRole)) {
+  // Only show for approved dashboard roles
+  if (!['admin', 'homeroom_teacher', 'coordinator', 'student'].includes(userRole)) {
     return null;
   }
 
   if (loading) {
     return (
-      <Card>
+      <Card dir="rtl" className="text-right">
         <CardHeader>
           <CardTitle>התראות חכמות</CardTitle>
         </CardHeader>
@@ -95,7 +104,7 @@ export default function SmartAlerts({ userRole }) {
 
   if (visibleAlerts.length === 0) {
     return (
-      <Card>
+      <Card dir="rtl" className="text-right">
         <CardHeader>
           <CardTitle>התראות חכמות</CardTitle>
           <CardDescription>אין התראות פעילות כרגע</CardDescription>
@@ -109,9 +118,9 @@ export default function SmartAlerts({ userRole }) {
   };
 
   return (
-    <Card>
+    <Card dir="rtl" className="text-right">
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3 text-right" dir="rtl">
           <div>
             <CardTitle>התראות חכמות</CardTitle>
             <CardDescription>{visibleAlerts.length} התראות פעילות</CardDescription>
@@ -137,19 +146,20 @@ export default function SmartAlerts({ userRole }) {
             const Icon = config.icon;
 
             return (
-              <Alert key={idx} className={cn('border-0', config.bg)}>
-                <div className="flex gap-3 items-start">
+              <Alert key={idx} className={cn('border-0 text-right', config.bg)} dir="rtl">
+                <div className="flex gap-3 items-start text-right" dir="rtl">
                   <Icon className={cn('w-5 h-5 flex-shrink-0 mt-0.5', config.color)} />
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center justify-end gap-2 mb-1">
                       <span className="font-semibold text-sm">{formatStudentName(alert.student_name)}</span>
                       <Badge className={severityBadges[alert.severity]} variant="outline">
                         {alert.severity === 'critical' ? 'קריטי' : alert.severity === 'high' ? 'גבוה' : alert.severity === 'medium' ? 'בינוני' : 'נמוך'}
                       </Badge>
                     </div>
-                    <AlertDescription className="text-sm">
+                    <AlertDescription className="text-sm text-right" dir="rtl">
                       <span className="font-medium">{config.label}:</span> {alert.message}
                     </AlertDescription>
+                    <AlertSourceDetails details={alert.details} />
                   </div>
                   <Button
                     variant="ghost"
