@@ -110,6 +110,19 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
+  function handleStudentSelect(student) {
+    const studentName = getStudentDisplayName(student);
+    setForm(p => ({
+      ...p,
+      student_id: student.id,
+      student_name: studentName,
+      selectedStudentId: student.id,
+      selectedStudentName: studentName,
+    }));
+    setSearchQuery(studentName);
+    setStudentListOpen(false);
+  }
+
   const getSelectedStudent = () => students.find(s => s.id === form.student_id);
 
   const filteredStudents = sortByLastName(students)
@@ -119,7 +132,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
     const student = getSelectedStudent();
     const disciplineData = {
       student_id: form.student_id,
-      student_name: student?.full_name,
+      student_name: form.student_name || student?.full_name,
       class_id: resolvedClassId,
       date: today,
       time: form.time || '',
@@ -165,7 +178,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
     const student = getSelectedStudent();
     const noteData = {
       student_id: form.student_id,
-      student_name: student?.full_name,
+      student_name: form.student_name || student?.full_name,
       class_id: resolvedClassId,
       date: today,
       content: form.content,
@@ -179,7 +192,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
     const student = getSelectedStudent();
     const communicationData = {
       student_id: form.student_id,
-      student_name: student?.full_name,
+      student_name: form.student_name || student?.full_name,
       class_id: resolvedClassId,
       date: today,
       type: form.type || 'שיחה טלפונית',
@@ -195,7 +208,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
     const taskData = {
       class_id: resolvedClassId,
       student_id: form.student_id,
-      student_name: student?.full_name,
+      student_name: form.student_name || student?.full_name,
       title: form.title,
       description: form.description || '',
       due_date: form.due_date || today,
@@ -324,9 +337,13 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
                     <div className="flex items-center gap-2" dir="rtl">
                       <Input
                         placeholder="חיפוש תלמיד/ה..."
-                        value={searchQuery}
+                        value={studentListOpen ? searchQuery : (form.selectedStudentName || form.student_name || searchQuery || '')}
                         onChange={e => setSearchQuery(e.target.value)}
-                        className="text-sm flex-1"
+                        onFocus={() => {
+                          setSearchQuery(form.selectedStudentName || form.student_name || searchQuery || '');
+                          setStudentListOpen(true);
+                        }}
+                        className="text-sm flex-1 text-right"
                       />
                       <button
                         type="button"
@@ -343,12 +360,12 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
                         {filteredStudents.length === 0 ? (
                           <div className="px-3 py-3 text-sm text-muted-foreground text-right">לא נמצאו תלמידים תואמים</div>
                         ) : filteredStudents.map(s => {
-                          const selected = form.student_id === s.id;
+                          const selected = (form.selectedStudentId || form.student_id) === s.id;
                           return (
                             <button
                               key={s.id}
                               type="button"
-                              onClick={() => set('student_id', s.id)}
+                              onClick={() => handleStudentSelect(s)}
                               className={`w-full flex items-center justify-between gap-2 text-right px-3 py-2.5 text-sm transition-colors ${selected ? 'bg-primary text-primary-foreground font-medium' : 'hover:bg-muted'}`}
                               dir="rtl"
                             >
