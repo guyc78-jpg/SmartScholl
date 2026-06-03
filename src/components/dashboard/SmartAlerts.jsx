@@ -85,37 +85,33 @@ export default function SmartAlerts({ userRole }) {
     return null;
   }
 
-  if (loading) {
-    return (
-      <Card dir="rtl" className="text-right">
-        <CardHeader>
-          <CardTitle>התראות חכמות</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-4 text-muted-foreground">טוען...</div>
-        </CardContent>
-      </Card>
-    );
-  }
+  // Still loading — render nothing (no skeleton card) to keep dashboard clean
+  if (loading) return null;
 
   // For exam alerts use exam_id as key (no student_id); for others use student_id
   const alertKey = (alert) => alert.alert_type === 'upcoming_exam' || alert.alert_type === 'exam_overload'
     ? `exam-${alert.details?.source_info?.exam_id}-${alert.alert_type}`
     : `${alert.student_id}-${alert.alert_type}`;
-  const visibleAlerts = alerts.filter(alert => alert.alert_type !== 'open_incident' && !dismissed.has(alertKey(alert)));
+
+  // High-value alerts only:
+  // • Attendance / discipline / tasks — only high or critical severity
+  // • Exam alerts — only when there's a precise audience (class_or_group populated)
+  const isHighValue = (alert) => {
+    if (alert.alert_type === 'upcoming_exam' || alert.alert_type === 'exam_overload') {
+      return !!alert.details?.source_info?.class_or_group;
+    }
+    return alert.severity === 'high' || alert.severity === 'critical';
+  };
+
+  const visibleAlerts = alerts.filter(alert =>
+    isHighValue(alert) && !dismissed.has(alertKey(alert))
+  );
+
+  // Hide card entirely when nothing meaningful to show
+  if (visibleAlerts.length === 0) return null;
+
   const criticalCount = visibleAlerts.filter(a => a.severity === 'critical').length;
   const highCount = visibleAlerts.filter(a => a.severity === 'high').length;
-
-  if (visibleAlerts.length === 0) {
-    return (
-      <Card dir="rtl" className="text-right">
-        <CardHeader>
-          <CardTitle>התראות חכמות</CardTitle>
-          <CardDescription>אין התראות פעילות כרגע</CardDescription>
-        </CardHeader>
-      </Card>
-    );
-  }
 
   const handleDismiss = (alert) => {
     setDismissed(prev => new Set(prev).add(alertKey(alert)));
