@@ -32,7 +32,6 @@ const sidebarGroups = [
     items: [
       { path: '/', icon: LayoutDashboard, label: 'דשבורד', dynamicLabel: true, roles: ['admin', 'homeroom_teacher', 'coordinator'] },
       { path: '/student-home', icon: LayoutDashboard, label: 'היום שלי', roles: ['student'] },
-      { path: '/class-attendance', icon: CalendarCheck, label: 'מעקב נוכחות', roles: ['homeroom_teacher', 'admin', 'coordinator'] },
       { path: '/schedule', icon: Calendar, label: 'מערכת שעות', roles: ['homeroom_teacher', 'coordinator', 'student', 'admin'] },
       { path: '/tasks', icon: ClipboardList, label: 'משימות', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
     ],
@@ -53,6 +52,7 @@ const sidebarGroups = [
     icon: Users,
     items: [
       { path: '/students', icon: Users, label: 'רשימת תלמידים', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
+      { path: '/class-attendance', icon: CalendarCheck, label: 'נוכחות', roles: ['homeroom_teacher', 'admin', 'coordinator'] },
       { path: '/discipline', icon: AlertTriangle, label: 'משמעת', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
       { path: '/community', icon: Heart, label: 'מעורבות חברתית', roles: ['admin', 'homeroom_teacher', 'coordinator', 'student'] },
     ],
