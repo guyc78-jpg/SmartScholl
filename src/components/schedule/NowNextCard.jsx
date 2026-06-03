@@ -7,7 +7,7 @@ import { formatRemaining, invalidateBellCache } from '@/lib/bellSchedule';
 import { loadScheduleNowNextData, resolveScheduleNowNext } from '@/lib/scheduleNowNext';
 
 // Smart "now / next" card driven by real ScheduleSlot lessons for class + day, enriched with the same bell times shown in Schedule.
-export default function NowNextCard({ classId, className }) {
+export default function NowNextCard({ classId, className, showEmpty = false }) {
   const [state, setState] = useState({ loading: true, current: null, next: null, remainingMins: 0 });
   const slotsRef = useRef([]);
   const periodsRef = useRef([]);
@@ -61,7 +61,26 @@ export default function NowNextCard({ classId, className }) {
 
   const { current, next, remainingMins } = state;
 
-  if (!current && !next) return null;
+  if (!current && !next) {
+    if (!showEmpty) return null;
+    return (
+      <Card className={className}>
+        <CardContent className="p-3 sm:p-4 text-right" dir="rtl">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
+              <Clock className="w-5 h-5 text-muted-foreground" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-foreground/80">מערכת שעות</p>
+              <p className="text-xs text-muted-foreground">
+                {classId ? 'אין שיעורים מתוכננים להיום' : 'לא שויכת לכיתה — בדוק הגדרות פרופיל'}
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className={className}>

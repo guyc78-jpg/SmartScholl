@@ -62,6 +62,7 @@ export default function Dashboard({ user, role }) {
   const isActiveCoordinator = role === 'coordinator';
   const isActiveAdmin = role === 'admin';
   const dashboardTitle = getRoleHomeLabel(user, role);
+  // classId must be stable from the start — never depend on async-loaded students
   const classId = getUserApprovedClassId(user, CLASS_ID);
   const scopeLabels = [
     isActiveAdmin ? getRoleShort('admin', user) + ' מערכת' : null,
@@ -246,8 +247,10 @@ export default function Dashboard({ user, role }) {
         </div>
       </div>
 
-      {/* Now / Next — only useful for homeroom teachers (have a class) */}
-      {(isActiveHomeroom || isActiveAdmin) && <NowNextCard classId={classId} />}
+      {/* Now / Next — shown first, always visible for staff with a class */}
+      {(isActiveHomeroom || isActiveAdmin || isActiveCoordinator) && (
+        <NowNextCard classId={classId} showEmpty />
+      )}
 
       {/* Urgent Flags — dynamic items needing immediate attention (staff only) */}
       {(isActiveHomeroom || isActiveCoordinator || isActiveAdmin) && classId && (
