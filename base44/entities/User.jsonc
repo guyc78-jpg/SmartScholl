@@ -6,6 +6,7 @@
       "type": "string",
       "enum": [
         "admin",
+        "division_manager",
         "homeroom_teacher",
         "coordinator",
         "student",
@@ -20,6 +21,7 @@
         "type": "string",
         "enum": [
           "admin",
+          "division_manager",
           "homeroom_teacher",
           "coordinator",
           "student",
@@ -34,6 +36,7 @@
         "type": "string",
         "enum": [
           "admin",
+          "division_manager",
           "homeroom_teacher",
           "coordinator",
           "student",
@@ -46,6 +49,7 @@
       "type": "string",
       "enum": [
         "admin",
+        "division_manager",
         "homeroom_teacher",
         "coordinator",
         "student",
@@ -74,7 +78,8 @@
       "enum": [
         "homeroom_teacher",
         "coordinator",
-        "student"
+        "student",
+        "division_manager"
       ],
       "description": "\u05d4\u05ea\u05e4\u05e7\u05d9\u05d3 \u05e9\u05d4\u05de\u05e9\u05ea\u05de\u05e9 \u05d1\u05d9\u05e7\u05e9"
     },
@@ -157,30 +162,28 @@
       "type": "string",
       "description": "\u05db\u05d9\u05ea\u05d4 \u05de\u05e9\u05d5\u05d9\u05db\u05ea \u05de\u05d0\u05d5\u05e9\u05e8\u05ea"
     },
+    "profile_division": {
+      "type": "string",
+      "enum": [
+        "upper",
+        "middle"
+      ],
+      "description": "\u05d7\u05d8\u05d9\u05d1\u05d4 \u05de\u05e9\u05d5\u05d9\u05db\u05ea \u05dc\u05de\u05e0\u05d4\u05dc/\u05ea \u05d7\u05d8\u05d9\u05d1\u05d4"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "pending",
+        "disabled",
+        "rejected"
+      ],
+      "default": "active",
+      "description": "\u05e1\u05d8\u05d8\u05d5\u05e1 \u05de\u05e9\u05ea\u05de\u05e9 \u05e4\u05e0\u05d9\u05de\u05d9 \u05dc\u05e0\u05d9\u05d4\u05d5\u05dc"
+    },
     "school_name": {
       "type": "string",
       "description": "\u05e9\u05dd \u05d1\u05d9\u05ea \u05d4\u05e1\u05e4\u05e8 (\u05de\u05d5\u05d2\u05d3\u05e8 \u05e2\u05f4\u05d9 \u05de\u05e0\u05d4\u05dc \u05de\u05e2\u05e8\u05db\u05ea \u05d5\u05de\u05d5\u05e6\u05d2 \u05d1\u05e2\u05d3\u05d9\u05e0\u05d5\u05ea \u05d1\u05d3\u05e9\u05d1\u05d5\u05e8\u05d3 \u05d5\u05d1\u05db\u05d5\u05ea\u05e8\u05ea)"
     }
-  },
-  "required": [
-    "roles",
-    "available_roles",
-    "active_work_role",
-    "requested_role",
-    "login_type",
-    "profile_full_name",
-    "profile_phone",
-    "profile_email",
-    "profile_address",
-    "profile_gender",
-    "profile_class",
-    "profile_homeroom_teacher",
-    "profile_tracks",
-    "profile_subject",
-    "profile_school_role",
-    "profile_extra_roles",
-    "profile_grade_managed",
-    "profile_homeroom_class",
-    "school_name"
-  ]
+  }
 }

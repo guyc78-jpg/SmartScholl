@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 const ROLE_LABELS = {
   admin: 'מנהל/ת מערכת',
@@ -449,7 +449,22 @@ ${suspicionNote}
     if (action === 'admin_update_user') {
       if (!requireAdmin(user)) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
-      const { target_user_id, target_role, approved_roles, profile_class_id, profile_homeroom_class, profile_grade_managed, profile_division, profile_subject } = body;
+      const {
+        target_user_id,
+        target_role,
+        approved_roles,
+        profile_full_name,
+        profile_email,
+        profile_phone,
+        profile_school_role,
+        profile_class_id,
+        profile_homeroom_class,
+        profile_grade_managed,
+        profile_division,
+        profile_subject,
+        onboarding_status,
+        status,
+      } = body;
       const approvedRoles = normalizeRoles(approved_roles, [target_role]);
       if (!approvedRoles.length || !approvedRoles.every(role => VALID_ROLES.includes(role)) || !approvedRoles.includes(target_role)) {
         return Response.json({ error: 'Invalid role' }, { status: 400 });
@@ -458,18 +473,29 @@ ${suspicionNote}
       const targetUsers = await base44.asServiceRole.entities.User.filter({ id: target_user_id });
       const target = targetUsers[0] || {};
 
+      const cleanName = String(profile_full_name || '').trim();
+      const cleanProfileEmail = normalizeEmail(profile_email || target.profile_email || target.email || '');
+      const cleanOnboardingStatus = ['pending', 'awaiting_approval', 'approved', 'rejected'].includes(onboarding_status) ? onboarding_status : 'approved';
+      const cleanStatus = ['active', 'pending', 'disabled', 'rejected'].includes(status) ? status : 'active';
+
       const updatedUser = await base44.asServiceRole.entities.User.update(target_user_id, {
         role: target_role,
         roles: approvedRoles,
         available_roles: approvedRoles,
         active_work_role: approvedRoles.includes(target.active_work_role) ? target.active_work_role : target_role,
+        profile_full_name: cleanName,
+        profile_email: cleanProfileEmail,
+        profile_phone: profile_phone || '',
+        profile_school_role: profile_school_role || '',
         profile_class_id: profile_class_id || '',
         profile_homeroom_class: profile_homeroom_class || '',
         profile_class: approvedRoles.includes('student') ? profile_homeroom_class || '' : target.profile_class || '',
         profile_grade_managed: profile_grade_managed || '',
-        profile_division: approvedRoles.includes('division_manager') ? (profile_division || target.profile_division || '') : '',
-        profile_subject: profile_subject !== undefined ? profile_subject : (target.profile_subject || ''),
-        onboarding_status: 'approved',
+        profile_division: approvedRoles.includes('division_manager') ? (profile_division || '') : '',
+        profile_subject: profile_subject || '',
+        onboarding_status: cleanOnboardingStatus,
+        onboardingCompleted: cleanOnboardingStatus === 'approved',
+        status: cleanStatus,
       });
 
       await base44.asServiceRole.entities.ActivityLog.create({

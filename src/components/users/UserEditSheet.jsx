@@ -6,14 +6,38 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Trash2 } from 'lucide-react';
+import { Trash2, UserRound, ShieldCheck, School, Settings } from 'lucide-react';
 import GradeClassSelect from '@/components/profile/GradeClassSelect';
-import { extractGradeFromClass, DIVISIONS, getDivisionLabel } from '@/lib/schoolStructure';
+import { extractGradeFromClass, DIVISIONS } from '@/lib/schoolStructure';
 import { ROLE_LABELS, SYSTEM_ROLE_PRIORITY, getAvailableRoles, getUserDisplayName } from '@/lib/roleUtils';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 const ROLE_OPTIONS = SYSTEM_ROLE_PRIORITY.filter(r => r !== 'parent').map(value => ({ value, label: ROLE_LABELS[value] }));
+const STATUS_OPTIONS = [
+  { value: 'active', label: 'פעיל' },
+  { value: 'pending', label: 'ממתין' },
+  { value: 'disabled', label: 'מושבת' },
+  { value: 'rejected', label: 'נדחה' },
+];
+const ONBOARDING_OPTIONS = [
+  { value: 'approved', label: 'מאושר' },
+  { value: 'pending', label: 'טיוטה / התחלה' },
+  { value: 'awaiting_approval', label: 'ממתין לאישור' },
+  { value: 'rejected', label: 'נדחה' },
+];
+
+function Section({ icon: Icon, title, children }) {
+  return (
+    <section className="rounded-2xl border bg-card p-4 space-y-4 text-right" dir="rtl">
+      <div className="flex items-center gap-2 justify-end flex-row-reverse">
+        <Icon className="w-4 h-4 text-primary flex-shrink-0" />
+        <h3 className="text-sm font-semibold text-foreground flex-1 text-right">{title}</h3>
+      </div>
+      {children}
+    </section>
+  );
+}
 
 export default function UserEditSheet({ targetUser, open, onOpenChange, onSaved, onDeleted, currentUserId }) {
   const [form, setForm] = useState(null);
@@ -26,6 +50,10 @@ export default function UserEditSheet({ targetUser, open, onOpenChange, onSaved,
     const approved = getAvailableRoles(targetUser);
     const primary = targetUser.role || approved[0] || 'student';
     setForm({
+      profile_full_name: targetUser.profile_full_name || getUserDisplayName(targetUser) || '',
+      profile_email: targetUser.profile_email || targetUser.email || '',
+      profile_phone: targetUser.profile_phone || '',
+      profile_school_role: targetUser.profile_school_role || '',
       primaryRole: primary,
       extraRoles: approved.filter(r => r !== primary),
       profile_class_id: targetUser.profile_class_id || '',
@@ -33,10 +61,14 @@ export default function UserEditSheet({ targetUser, open, onOpenChange, onSaved,
       profile_grade_managed: targetUser.profile_grade_managed || extractGradeFromClass(targetUser.profile_homeroom_class || targetUser.profile_class || ''),
       profile_division: targetUser.profile_division || '',
       profile_subject: targetUser.profile_subject || '',
+      onboarding_status: targetUser.onboarding_status || 'approved',
+      status: targetUser.status || 'active',
     });
   }, [targetUser]);
 
   if (!form || !targetUser) return null;
+
+  const setField = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 
   const setPrimaryRole = (value) => setForm(prev => ({
     ...prev,
@@ -50,136 +82,195 @@ export default function UserEditSheet({ targetUser, open, onOpenChange, onSaved,
     return { ...prev, extraRoles: exists ? prev.extraRoles.filter(r => r !== role) : [...prev.extraRoles, role] };
   });
 
-  const approvedRoles = Array.from(new Set([form.primaryRole, ...form.extraRoles]));
+  const approvedRoles = Array.from(new Set([form.primaryRole, ...form.extraRoles].filter(Boolean)));
   const isDivisionManager = approvedRoles.includes('division_manager');
 
   const save = async () => {
+    const cleanName = form.profile_full_name.trim();
+    if (!cleanName) {
+      toast.error('יש למלא שם מלא');
+      return;
+    }
+
     setSaving(true);
-    const res = await base44.functions.invoke('handleApprovalRequest', {
-      action: 'admin_update_user',
-      target_user_id: targetUser.id,
-      target_email: targetUser.email,
-      target_role: form.primaryRole,
-      approved_roles: approvedRoles,
-      profile_class_id: isDivisionManager ? '' : form.profile_class_id,
-      profile_homeroom_class: isDivisionManager ? '' : form.profile_homeroom_class,
-      profile_grade_managed: form.profile_grade_managed,
-      profile_division: form.profile_division,
-      profile_subject: form.profile_subject,
-    });
-    toast.success('ההרשאות נשמרו');
-    setSaving(false);
-    onSaved?.(res.data.user, targetUser.id === currentUserId);
-    onOpenChange(false);
+    try {
+      const res = await base44.functions.invoke('handleApprovalRequest', {
+        action: 'admin_update_user',
+        target_user_id: targetUser.id,
+        target_email: targetUser.email,
+        target_role: form.primaryRole,
+        approved_roles: approvedRoles,
+        profile_full_name: cleanName,
+        profile_email: form.profile_email.trim(),
+        profile_phone: form.profile_phone.trim(),
+        profile_school_role: form.profile_school_role.trim(),
+        profile_class_id: isDivisionManager ? '' : form.profile_class_id,
+        profile_homeroom_class: isDivisionManager ? '' : form.profile_homeroom_class,
+        profile_grade_managed: form.profile_grade_managed,
+        profile_division: isDivisionManager ? form.profile_division : '',
+        profile_subject: form.profile_subject.trim(),
+        onboarding_status: form.onboarding_status,
+        status: form.status,
+      });
+      toast.success('פרטי המשתמש וההרשאות נשמרו בהצלחה');
+      onSaved?.(res.data.user, targetUser.id === currentUserId);
+      onOpenChange(false);
+    } catch (err) {
+      toast.error('לא הצלחנו לשמור את השינויים. נסה/י שוב.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="left" className="w-full sm:max-w-md overflow-y-auto" dir="rtl">
-        <SheetHeader className="text-right">
-          <SheetTitle>{getUserDisplayName(targetUser)}</SheetTitle>
-          <SheetDescription className="force-ltr text-right">{targetUser.email}</SheetDescription>
-        </SheetHeader>
+      <SheetContent side="left" className="w-full sm:max-w-xl h-full p-0 overflow-hidden" dir="rtl">
+        <div className="h-full flex flex-col text-right" dir="rtl">
+          <SheetHeader className="px-4 sm:px-6 py-4 border-b text-right">
+            <SheetTitle>עריכת משתמש</SheetTitle>
+            <SheetDescription className="text-right">
+              {getUserDisplayName(targetUser)} · <span className="force-ltr text-right inline-block">{targetUser.email}</span>
+            </SheetDescription>
+          </SheetHeader>
 
-        <div className="mt-5 space-y-5">
-          <div className="space-y-2">
-            <Label>תפקיד ראשי</Label>
-            <Select value={form.primaryRole} onValueChange={setPrimaryRole}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent dir="rtl">
-                {ROLE_OPTIONS.map(item => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          </div>
+          <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-4">
+            <Section icon={UserRound} title="פרטים אישיים">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-2 sm:col-span-2">
+                  <Label>שם מלא</Label>
+                  <Input value={form.profile_full_name} onChange={(e) => setField('profile_full_name', e.target.value)} placeholder="שם מלא לתצוגה" />
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label>מייל ליצירת קשר</Label>
+                  <Input type="email" value={form.profile_email} onChange={(e) => setField('profile_email', e.target.value)} placeholder="כתובת מייל" />
+                  <p className="text-xs text-muted-foreground">מייל התחברות: <span className="force-ltr inline-block">{targetUser.email}</span></p>
+                </div>
+                <div className="space-y-2">
+                  <Label>טלפון</Label>
+                  <Input value={form.profile_phone} onChange={(e) => setField('profile_phone', e.target.value)} placeholder="טלפון" />
+                </div>
+                <div className="space-y-2">
+                  <Label>תפקיד בבית הספר</Label>
+                  <Input value={form.profile_school_role} onChange={(e) => setField('profile_school_role', e.target.value)} placeholder="לדוגמה: מורה מקצועי/ת" />
+                </div>
+              </div>
+            </Section>
 
-          {isDivisionManager ? (
-            <div className="space-y-4">
+            <Section icon={ShieldCheck} title="תפקידים והרשאות">
               <div className="space-y-2">
-                <Label>סוג חטיבה</Label>
-                <Select
-                  value={form.profile_division}
-                  onValueChange={(value) => setForm(prev => ({ ...prev, profile_division: value }))}
-                >
-                  <SelectTrigger><SelectValue placeholder="בחר/י סוג חטיבה" /></SelectTrigger>
+                <Label>תפקיד ראשי</Label>
+                <Select value={form.primaryRole} onValueChange={setPrimaryRole}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent dir="rtl">
-                    {Object.entries(DIVISIONS).map(([key, item]) => (
-                      <SelectItem key={key} value={key}>{item.label}</SelectItem>
-                    ))}
+                    {ROLE_OPTIONS.map(item => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
-                {form.profile_division && (
-                  <p className="text-xs text-muted-foreground">
-                    שכבות מורשות: {DIVISIONS[form.profile_division].grades.map(g => g + '׳').join(', ')}
-                  </p>
-                )}
               </div>
-              <div className="space-y-2">
-                <Label>תחום דעת / מקצוע הוראה</Label>
-                <Input
-                  value={form.profile_subject}
-                  onChange={(e) => setForm(prev => ({ ...prev, profile_subject: e.target.value }))}
-                  placeholder="לדוגמה: מתמטיקה, מדעים, היסטוריה"
-                />
-              </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 gap-3">
-              <GradeClassSelect
-                grade={form.profile_grade_managed}
-                classNameValue={form.profile_homeroom_class}
-                classId={form.profile_class_id}
-                onGradeChange={(value) => setForm(prev => ({ ...prev, profile_grade_managed: value }))}
-                onClassChange={(value) => setForm(prev => ({ ...prev, profile_homeroom_class: value }))}
-                onClassIdChange={(value) => setForm(prev => ({ ...prev, profile_class_id: value }))}
-              />
-            </div>
-          )}
 
-          <div className="space-y-2">
-            <Label>תפקידים נוספים / מאושרים</Label>
-            <p className="text-xs text-muted-foreground">התפקיד הראשי כבר נכלל בהרשאות ואינו מופיע כאן.</p>
-            <div className="grid grid-cols-2 gap-2">
-              {ROLE_OPTIONS.filter(item => item.value !== form.primaryRole).map(item => {
-                const selected = form.extraRoles.includes(item.value);
-                return (
-                  <button
-                    type="button"
-                    key={item.value}
-                    onClick={() => toggleExtraRole(item.value)}
-                    className={cn(
-                      'h-10 px-3 rounded-xl border text-sm font-medium leading-none flex items-center justify-center text-center transition-colors',
-                      selected
-                        ? 'bg-primary text-primary-foreground border-primary hover:bg-primary/90'
-                        : 'bg-card text-foreground/80 border-border hover:bg-muted hover:text-foreground'
-                    )}
-                  >
-                    {item.label}
-                  </button>
-                );
-              })}
-            </div>
+              <div className="space-y-2">
+                <Label>תפקידים נוספים</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {ROLE_OPTIONS.filter(item => item.value !== form.primaryRole).map(item => {
+                    const selected = form.extraRoles.includes(item.value);
+                    return (
+                      <button
+                        type="button"
+                        key={item.value}
+                        onClick={() => toggleExtraRole(item.value)}
+                        className={cn(
+                          'h-10 px-3 rounded-xl border text-sm font-medium flex items-center justify-center text-center transition-colors',
+                          selected
+                            ? 'bg-primary text-primary-foreground border-primary hover:bg-primary/90'
+                            : 'bg-card text-foreground/80 border-border hover:bg-muted hover:text-foreground'
+                        )}
+                      >
+                        {item.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </Section>
+
+            <Section icon={School} title="שיוך לכיתה / שכבה">
+              {isDivisionManager ? (
+                <div className="grid grid-cols-1 gap-3">
+                  <div className="space-y-2">
+                    <Label>סוג חטיבה</Label>
+                    <Select value={form.profile_division} onValueChange={(value) => setField('profile_division', value)}>
+                      <SelectTrigger><SelectValue placeholder="בחר/י סוג חטיבה" /></SelectTrigger>
+                      <SelectContent dir="rtl">
+                        {Object.entries(DIVISIONS).map(([key, item]) => (
+                          <SelectItem key={key} value={key}>{item.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>תחום דעת / מקצוע</Label>
+                    <Input value={form.profile_subject} onChange={(e) => setField('profile_subject', e.target.value)} placeholder="לדוגמה: מתמטיקה" />
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 gap-3">
+                  <GradeClassSelect
+                    grade={form.profile_grade_managed}
+                    classNameValue={form.profile_homeroom_class}
+                    classId={form.profile_class_id}
+                    onGradeChange={(value) => setField('profile_grade_managed', value)}
+                    onClassChange={(value) => setField('profile_homeroom_class', value)}
+                    onClassIdChange={(value) => setField('profile_class_id', value)}
+                  />
+                  <div className="space-y-2">
+                    <Label>תחום דעת / מקצוע</Label>
+                    <Input value={form.profile_subject} onChange={(e) => setField('profile_subject', e.target.value)} placeholder="לדוגמה: אנגלית" />
+                  </div>
+                </div>
+              )}
+            </Section>
+
+            <Section icon={Settings} title="פעולות ניהול">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <Label>סטטוס משתמש</Label>
+                  <Select value={form.status} onValueChange={(value) => setField('status', value)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent dir="rtl">
+                      {STATUS_OPTIONS.map(item => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>סטטוס הרשמה</Label>
+                  <Select value={form.onboarding_status} onValueChange={(value) => setField('onboarding_status', value)}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent dir="rtl">
+                      {ONBOARDING_OPTIONS.map(item => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {targetUser.id !== currentUserId && (
+                <Button
+                  variant="ghost"
+                  className="w-full text-destructive hover:text-destructive hover:bg-destructive/10 gap-2"
+                  onClick={() => setConfirmDelete(true)}
+                  disabled={saving || deleting}
+                >
+                  <Trash2 className="w-4 h-4" />
+                  מחק משתמש מהמערכת
+                </Button>
+              )}
+            </Section>
           </div>
 
-          <div className="flex gap-2 pt-2">
+          <div className="border-t bg-card px-4 sm:px-6 py-3 flex gap-2" dir="rtl">
             <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)} disabled={saving}>ביטול</Button>
             <Button className="flex-1" onClick={save} disabled={saving}>
-              {saving ? 'שומר...' : 'שמור הרשאות'}
+              {saving ? 'שומר...' : 'שמור שינויים'}
             </Button>
           </div>
-
-          {targetUser.id !== currentUserId && (
-            <div className="pt-4 border-t">
-              <Button
-                variant="ghost"
-                className="w-full text-destructive hover:text-destructive hover:bg-destructive/10 gap-2"
-                onClick={() => setConfirmDelete(true)}
-                disabled={saving || deleting}
-              >
-                <Trash2 className="w-4 h-4" />
-                מחק משתמש מהמערכת
-              </Button>
-            </div>
-          )}
         </div>
 
         <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
