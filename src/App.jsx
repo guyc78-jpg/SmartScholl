@@ -132,7 +132,7 @@ const AuthenticatedApp = () => {
   const approvedRoles = getAvailableRoles(user);
   const systemRole = getSystemRole(user);
   const role = effectiveWorkRole || systemRole;
-  const isDivisionManager = approvedRoles.includes('division_manager');
+  const isDivisionManager = role === 'division_manager' && approvedRoles.includes('division_manager');
   // "staff" כאן = צוות חינוכי מלא (מורה/רכז/admin). מנהל חטיבה מטופל בנפרד.
   const staff = approvedRoles.some(r => ['admin', 'homeroom_teacher', 'coordinator'].includes(r));
   const studentRole = approvedRoles.includes('student') && !staff && !isDivisionManager;
@@ -183,11 +183,7 @@ const AuthenticatedApp = () => {
         {!staff && <Route path="/" element={<Navigate to="/division" replace />} />}
       </>}
 
-      {/* Admin also gets access to the division screens */}
-      {approvedRoles.includes('admin') && !isDivisionManager && <>
-        <Route path="/division" element={<DivisionManagement user={user} role={role} />} />
-        <Route path="/division-exams" element={<DivisionExams user={user} role={role} />} />
-      </>}
+      {/* Division screens are available only when the active role is division_manager */}
 
       {/* Student routes */}
       {studentRole && <>

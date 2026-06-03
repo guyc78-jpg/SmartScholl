@@ -21,8 +21,8 @@ const sidebarGroups = [
     title: 'ניהול חטיבה',
     icon: Building2,
     items: [
-      { path: '/division', icon: Building2, label: 'ניהול חטיבה', roles: ['division_manager', 'admin'] },
-      { path: '/division-exams', icon: BookOpen, label: 'לוח מבחנים חכם', roles: ['division_manager', 'admin'] },
+      { path: '/division', icon: Building2, label: 'ניהול חטיבה', roles: ['division_manager'] },
+      { path: '/division-exams', icon: BookOpen, label: 'לוח מבחנים חכם', roles: ['division_manager'] },
     ],
   },
   {
@@ -106,9 +106,8 @@ const studentBottomNav = [
 ];
 
 const divisionBottomNav = [
-  { path: '/division', icon: Building2, label: 'חטיבה', roles: ['division_manager', 'admin'] },
-  { path: '/division-exams', icon: BookOpen, label: 'לוח חכם', roles: ['division_manager', 'admin'] },
-  { path: '/reports', icon: BarChart2, label: 'דוחות', roles: ['division_manager', 'admin'] },
+  { path: '/division', icon: Building2, label: 'חטיבה', roles: ['division_manager'] },
+  { path: '/division-exams', icon: BookOpen, label: 'לוח חכם', roles: ['division_manager'] },
 ];
 
 // ── AccordionGroup ────────────────────────────────────────────────────────────
@@ -198,16 +197,17 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
   const location = useLocation();
 
   const approvedRoles = getAvailableRoles(user);
-  const isStaffRole = approvedRoles.some(item => ['admin', 'homeroom_teacher', 'coordinator'].includes(item));
-  const isPureDivisionManager = approvedRoles.includes('division_manager') && !isStaffRole;
-  const canAccess = (item) => item.roles.some(itemRole => approvedRoles.includes(itemRole));
+  const isActiveDivisionManager = role === 'division_manager' && approvedRoles.includes('division_manager');
+  const isStaffRole = ['admin', 'homeroom_teacher', 'coordinator'].includes(role) && approvedRoles.includes(role);
+  const canAccess = (item) => item.roles.includes(role) && approvedRoles.includes(role);
 
   const navGroups = sidebarGroups
-    .filter(group => !group.adminOnly || approvedRoles.includes('admin'))
+    .filter(group => group.key !== 'division' || isActiveDivisionManager)
+    .filter(group => !group.adminOnly || role === 'admin')
     .map(group => ({ ...group, items: group.items.filter(canAccess) }))
     .filter(group => group.items.length > 0);
 
-  const bottomNavSource = isPureDivisionManager ? divisionBottomNav : (isStaffRole ? teacherBottomNav : studentBottomNav);
+  const bottomNavSource = isActiveDivisionManager ? divisionBottomNav : (isStaffRole ? teacherBottomNav : studentBottomNav);
   const bottomNavItems = bottomNavSource.filter(canAccess);
   const displayName = getUserDisplayName(user);
   const contextLabel = getUserContextLabel(user, role);
