@@ -3,12 +3,26 @@ import { base44 } from '@/api/base44Client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Clock, BookOpen, ChevronLeft, MapPin, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { formatRemaining, getTodayHebrewName, timeToMinutes } from '@/lib/bellSchedule';
+import { findSlotForPeriod, formatRemaining, getTodayDayType, getTodayHebrewName, invalidateBellCache, loadBellSchedule, timeToMinutes } from '@/lib/bellSchedule';
 
-function getCurrentAndNextSlots(slots, now = new Date()) {
+function enrichSlotsWithTimes(slots, periods) {
+  const lessons = (periods || []).filter(period => period.kind === 'lesson');
+  return lessons
+    .map(period => {
+      const slot = findSlotForPeriod(slots, period.period);
+      if (!slot?.subject) return null;
+      return {
+        ...slot,
+        start_time: slot.start_time || period.start_time || '',
+        end_time: slot.end_time || period.end_time || '',
+      };
+    })
+    .filter(slot => slot?.start_time);
+}
+
+function getCurrentAndNextSlots(slots, periods, now = new Date()) {
   const nowMins = now.getHours() * 60 + now.getMinutes();
-  const sorted = (slots || [])
-    .filter(slot => slot.subject && slot.start_time)
+  const sorted = enrichSlotsWithTimes(slots, periods)
     .sort((a, b) => timeToMinutes(a.start_time) - timeToMinutes(b.start_time));
 
   const current = sorted.find(slot => {
@@ -26,42 +40,55 @@ function getCurrentAndNextSlots(slots, now = new Date()) {
   return { current, next, remainingMins };
 }
 
-// Smart "now / next" card driven only by real ScheduleSlot records for class + day + current time.
+// Smart "now / next" card driven by real ScheduleSlot lessons for class + day, enriched with the same bell times shown in Schedule.
 export default function NowNextCard({ classId, className }) {
   const [state, setState] = useState({ loading: true, current: null, next: null, remainingMins: 0 });
   const slotsRef = useRef([]);
+  const periodsRef = useRef([]);
 
   useEffect(() => {
     let cancelled = false;
     let tickTimer;
 
     const updateFromSlots = () => {
-      const { current, next, remainingMins } = getCurrentAndNextSlots(slotsRef.current);
+      const { current, next, remainingMins } = getCurrentAndNextSlots(slotsRef.current, periodsRef.current);
       if (!cancelled) setState({ loading: false, current, next, remainingMins });
     };
 
     async function refreshSlots() {
       if (!classId) {
         slotsRef.current = [];
+        periodsRef.current = [];
         updateFromSlots();
         return;
       }
       const todayName = getTodayHebrewName();
-      slotsRef.current = await base44.entities.ScheduleSlot.filter({ class_id: classId, day: todayName });
+      const dayType = getTodayDayType();
+      const [slots, periods] = await Promise.all([
+        base44.entities.ScheduleSlot.filter({ class_id: classId, day: todayName }),
+        loadBellSchedule(dayType),
+      ]);
+      slotsRef.current = slots;
+      periodsRef.current = periods;
       updateFromSlots();
     }
 
     refreshSlots();
     tickTimer = setInterval(updateFromSlots, 30_000);
-    const unsubscribe = base44.entities.ScheduleSlot.subscribe((event) => {
+    const unsubscribeSlots = base44.entities.ScheduleSlot.subscribe((event) => {
       const data = event?.data;
       if (!data || data.class_id === classId) refreshSlots();
+    });
+    const unsubscribeBells = base44.entities.BellSchedule.subscribe(() => {
+      invalidateBellCache();
+      refreshSlots();
     });
 
     return () => {
       cancelled = true;
       clearInterval(tickTimer);
-      unsubscribe?.();
+      unsubscribeSlots?.();
+      unsubscribeBells?.();
     };
   }, [classId]);
 
