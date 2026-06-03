@@ -3,6 +3,7 @@ import { THRESHOLDS } from '@/pages/ClassAttendance';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
+import { CLASS_ID } from '@/lib/demoData';
 import StatCard from '@/components/ui/StatCard';
 import UrgentFlagsSection from '@/components/urgent/UrgentFlagsSection';
 import DailySmartCard from '@/components/dashboard/DailySmartCard';
@@ -61,7 +62,7 @@ export default function Dashboard({ user, role }) {
   const isActiveCoordinator = role === 'coordinator';
   const isActiveAdmin = role === 'admin';
   const dashboardTitle = getRoleHomeLabel(user, role);
-  const classId = getUserApprovedClassId(user, students[0]?.class_id || '');
+  const classId = getUserApprovedClassId(user, CLASS_ID);
   const scopeLabels = [
     isActiveAdmin ? getRoleShort('admin', user) + ' מערכת' : null,
     isActiveHomeroom ? `${getRoleShort('homeroom_teacher', user)}${getUserApprovedClass(user) ? ` · ${getUserApprovedClass(user)}` : ''}` : null,
