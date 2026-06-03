@@ -121,7 +121,7 @@ function LessonBlock({ title, slot, emptyText, remainingMins, timeToNext, muted 
       )}>
         <BookOpen className="w-5 h-5" />
       </div>
-      <div className="flex-1 min-w-0 text-right">
+      <div className="flex-1 min-w-0 text-right space-y-1">
         <div className="flex items-center justify-between gap-2">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{title}</p>
           <span className="text-[10px] text-muted-foreground force-ltr">{timeRange}</span>
@@ -132,16 +132,16 @@ function LessonBlock({ title, slot, emptyText, remainingMins, timeToNext, muted 
           {slot.room && <span className="inline-flex items-center gap-0.5"><MapPin className="w-3 h-3" />{slot.room}</span>}
         </div>
         {remainingMins != null && (
-          <div className="mt-1.5 flex items-baseline gap-1.5 justify-end">
-            <span className="text-[10px] text-muted-foreground">נותר:</span>
-            <span className="text-sm font-bold text-emerald-600 dark:text-emerald-300">{formatRemaining(remainingMins)}</span>
-          </div>
+          <p className="text-[10px] text-muted-foreground">
+            <span>נותר:</span>
+            <span className="text-sm font-bold text-emerald-600 dark:text-emerald-300 inline-block mr-1">{formatRemaining(remainingMins)}</span>
+          </p>
         )}
         {timeToNext != null && timeToNext > 0 && (
-          <div className="mt-1.5 flex items-baseline gap-1.5 justify-end">
-            <span className="text-[10px] text-muted-foreground">בעוד:</span>
-            <span className="text-sm font-bold text-foreground">{formatRemaining(timeToNext)}</span>
-          </div>
+          <p className="text-[10px] text-muted-foreground">
+            <span>בעוד:</span>
+            <span className="text-sm font-bold text-foreground inline-block mr-1">{formatRemaining(timeToNext)}</span>
+          </p>
         )}
       </div>
     </div>
