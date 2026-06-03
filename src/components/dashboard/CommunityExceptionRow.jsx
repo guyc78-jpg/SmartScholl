@@ -13,7 +13,7 @@ export default function CommunityExceptionRow({ student, onStudentWhatsApp, onPa
   const studentName = student.full_name || [student.first_name, student.last_name].filter(Boolean).join(' ') || 'ללא שם';
 
   return (
-    <div className="rounded-2xl border bg-card p-3 text-right" dir="rtl">
+    <div className="rounded-2xl border bg-card p-2.5 text-right" dir="rtl">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1 space-y-1 text-right">
           <div className="flex items-center justify-between gap-2">
@@ -34,14 +34,14 @@ export default function CommunityExceptionRow({ student, onStudentWhatsApp, onPa
         </div>
       </div>
 
-      <div className="mt-3 flex flex-wrap justify-end gap-2">
+      <div className="mt-2.5 flex flex-wrap justify-end gap-2" dir="rtl">
         <Button size="sm" variant="outline" className="gap-2" onClick={() => onStudentWhatsApp(student)}>
           <MessageCircle className="h-4 w-4" />
-          וואטסאפ לתלמיד
+          הודעה מוכנה לתלמיד
         </Button>
         <Button size="sm" variant="outline" className="gap-2" onClick={() => onParentsWhatsApp(student)}>
           <MessageCircle className="h-4 w-4" />
-          וואטסאפ להורים
+          הודעה מוכנה להורים
         </Button>
       </div>
     </div>

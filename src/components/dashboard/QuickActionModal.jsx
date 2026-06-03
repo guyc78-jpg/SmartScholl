@@ -9,7 +9,7 @@ import { X, Check, ChevronDown } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { logActivity } from '@/lib/activityLogger';
-import { getUserApprovedGrade } from '@/lib/schoolStructure';
+import { getUserApprovedGrade, getUserDivisionGrades } from '@/lib/schoolStructure';
 import { getAvailableRoles, hasApprovedRole } from '@/lib/roleUtils';
 import QuickAttendanceForm from '@/components/dashboard/QuickAttendanceForm';
 import CommunityExceptionsQuickAction from '@/components/dashboard/CommunityExceptionsQuickAction';
@@ -40,7 +40,7 @@ function studentMatchesClass(student, classId, className) {
 const getStudentDisplayName = formatStudentName;
 const sortByLastName = (students) => [...students].sort(compareStudentsByLastName);
 
-export default function QuickActionModal({ action, classId: classIdProp, user, role, onClose, onSuccess, initialStudents = [] }) {
+export default function QuickActionModal({ action, classId: classIdProp, user, role, onClose, onSuccess, initialStudents = null }) {
   const [form, setForm] = useState({});
   const [saving, setSaving] = useState(false);
   const [students, setStudents] = useState([]);
@@ -95,7 +95,6 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
 
   const needsStudentPicker = ['discipline', 'note', 'communication'].includes(action);
   const usesStudentData = needsStudentPicker || action === 'community';
-  const hasInitialStudents = Array.isArray(initialStudents);
   const today = getLocalDateString();
 
   const resolvedClassId = classIdProp || user?.profile_class_id || '';
@@ -104,6 +103,8 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
   const approvedRoles = getAvailableRoles(user);
   const isCoordinator = hasApprovedRole(user, 'coordinator');
   const isAdmin = approvedRoles.includes('admin');
+  const activeRole = role || (isAdmin ? 'admin' : isCoordinator ? 'coordinator' : 'homeroom_teacher');
+  const hasInitialStudents = Array.isArray(initialStudents);
 
   // שימוש בתלמידים שכבר נטענו בדשבורד כדי למנוע בקשות כפולות
   useEffect(() => {
@@ -135,13 +136,15 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
     setLoadingStudents(true);
     let fetched = [];
 
-    if (isAdmin) {
+    if (activeRole === 'admin') {
       fetched = await base44.entities.Student.list();
-    } else if (isCoordinator && approvedGrade) {
+    } else if (activeRole === 'division_manager') {
+      const divisionGrades = getUserDivisionGrades(user);
+      const all = await base44.entities.Student.list();
+      fetched = all.filter(student => divisionGrades.includes(student.grade));
+    } else if (activeRole === 'coordinator' && approvedGrade) {
       fetched = await base44.entities.Student.filter({ grade: approvedGrade });
     } else {
-      // טעינת כל התלמידים וסינון לפי class_id או class_name —
-      // מניעת מצב שבו חלק מהתלמידים שמורים רק עם class_name ולא class_id
       const all = await base44.entities.Student.list();
       const seen = new Set();
       fetched = all.filter(s => {
@@ -367,7 +370,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
               onSaved={onSuccess}
             />
           ) : action === 'community' ? (
-            <CommunityExceptionsQuickAction students={students} loading={loadingStudents} />
+            <CommunityExceptionsQuickAction students={students} loading={loadingStudents} user={user} role={activeRole} />
           ) : (
           <div className="space-y-4">
 

@@ -323,7 +323,7 @@ export default function Dashboard({ user, role }) {
           { icon: Star, label: 'הערה', action: 'note', roles: ['admin', 'homeroom_teacher'], badge: 0 },
           { icon: MessageSquare, label: 'הורים', action: 'communication', roles: ['admin', 'homeroom_teacher'], badge: pendingParentTasks },
           { icon: CheckSquare, label: 'משימה', action: 'task', roles: ['admin', 'coordinator', 'homeroom_teacher'], badge: pendingTasksCount },
-          { icon: Heart, label: 'מעורבות', action: 'community', roles: ['admin', 'homeroom_teacher'], badge: communityBehindCount },
+          { icon: Heart, label: 'מעורבות', action: 'community', roles: ['admin', 'division_manager', 'coordinator', 'homeroom_teacher'], badge: communityBehindCount },
         ].filter(btn => btn.roles.some(itemRole => approvedRoles.includes(itemRole)));
         if (!quickActions.length) return null;
         return (
