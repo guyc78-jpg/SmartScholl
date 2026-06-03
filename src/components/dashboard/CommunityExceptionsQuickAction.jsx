@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertTriangle } from 'lucide-react';
 import CommunityExceptionRow from '@/components/dashboard/CommunityExceptionRow';
+import { compareStudentsByLastName, formatStudentName } from '@/lib/studentName';
 
 function normalizePhone(phone) {
   const digits = String(phone || '').replace(/\D/g, '');
@@ -11,12 +12,9 @@ function normalizePhone(phone) {
   return digits;
 }
 
-function buildStudentName(student) {
-  return student.full_name || [student.first_name, student.last_name].filter(Boolean).join(' ') || 'התלמיד/ה';
-}
 
 function buildWhatsAppText(student, audience) {
-  const name = buildStudentName(student);
+  const name = formatStudentName(student) || 'התלמיד/ה';
   const doneHours = Number(student.community_service_done ?? 0);
   const goalHours = Number(student.community_service_goal ?? 60);
   const missingHours = Math.max(0, goalHours - doneHours);
@@ -66,17 +64,13 @@ export default function CommunityExceptionsQuickAction({ students = [], loading 
         return {
           ...student,
           missingHours,
-          severityRank: doneHours <= 0 ? 10_000 + goalHours : missingHours,
           gradeValue: String(student.grade || '').trim(),
           classKey: student.class_id || student.class_name || 'no-class',
           classLabel: student.class_name || student.class_id || 'ללא כיתה',
         };
       })
       .filter(Boolean)
-      .sort((a, b) => {
-        if (b.severityRank !== a.severityRank) return b.severityRank - a.severityRank;
-        return buildStudentName(a).localeCompare(buildStudentName(b), 'he');
-      });
+      .sort(compareStudentsByLastName);
   }, [students]);
 
   const scopedOptions = useMemo(() => {
@@ -112,11 +106,13 @@ export default function CommunityExceptionsQuickAction({ students = [], loading 
   }, [classOptions, classFilter]);
 
   const filteredExceptions = useMemo(() => {
-    return exceptions.filter((student) => {
-      const matchesGrade = !canFilterByGrade || gradeFilter === 'all' || student.gradeValue === gradeFilter;
-      const matchesClass = !canFilterByClass || classFilter === 'all' || student.classKey === classFilter;
-      return matchesGrade && matchesClass;
-    });
+    return exceptions
+      .filter((student) => {
+        const matchesGrade = !canFilterByGrade || gradeFilter === 'all' || student.gradeValue === gradeFilter;
+        const matchesClass = !canFilterByClass || classFilter === 'all' || student.classKey === classFilter;
+        return matchesGrade && matchesClass;
+      })
+      .sort(compareStudentsByLastName);
   }, [exceptions, canFilterByGrade, canFilterByClass, gradeFilter, classFilter]);
 
   if (loading) {

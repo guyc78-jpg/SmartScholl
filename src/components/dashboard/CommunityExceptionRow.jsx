@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { MessageCircle } from 'lucide-react';
+import { formatStudentName } from '@/lib/studentName';
 
 export default function CommunityExceptionRow({ student, onStudentWhatsApp, onParentsWhatsApp }) {
   const doneHours = Number(student.community_service_done ?? 0);
@@ -10,7 +11,7 @@ export default function CommunityExceptionRow({ student, onStudentWhatsApp, onPa
   const statusClasses = doneHours <= 0
     ? 'bg-destructive/10 text-destructive border-destructive/20'
     : 'bg-secondary/15 text-secondary-foreground border-secondary/30';
-  const studentName = student.full_name || [student.first_name, student.last_name].filter(Boolean).join(' ') || 'ללא שם';
+  const studentName = formatStudentName(student) || 'ללא שם';
 
   return (
     <div className="rounded-2xl border bg-card p-2.5 text-right" dir="rtl">
