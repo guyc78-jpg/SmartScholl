@@ -3,7 +3,8 @@ import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { CLASS_ID } from '@/lib/demoData';
 import { getStudentClassId } from '@/lib/studentProfile';
-import { getUserApprovedClassId } from '@/lib/schoolStructure';
+import { getUserApprovedClassId, isStudentInApprovedScope } from '@/lib/schoolStructure';
+import { compareStudentsByLastName } from '@/lib/studentName';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -24,15 +25,28 @@ export default function Community({ role = 'homeroom_teacher', user }) {
   const [filter, setFilter] = useState('הכל');
   const classId = role === 'student' ? getStudentClassId(user, CLASS_ID) : getUserApprovedClassId(user, CLASS_ID);
 
-  useEffect(() => { loadStudents(); }, []);
+  const withCommunityDefaults = (student) => ({
+    ...student,
+    community_service_goal: student.community_service_goal ?? 60,
+    community_service_done: student.community_service_done ?? 0,
+    community_service_place: student.community_service_place || '',
+    community_service_contact: student.community_service_contact || '',
+    community_service_status: student.community_service_status || 'לא התחיל',
+  });
+
+  useEffect(() => { loadStudents(); }, [user?.id, role]);
   async function loadStudents() {
     setLoading(true);
-    const data = await base44.entities.Student.filter({ class_id: classId });
-    setStudents(data.filter(s => s.status !== 'מועבר' && s.status !== 'סיים'));
+    const data = await base44.entities.Student.list();
+    const activeStudents = data.filter(s => s.status !== 'מועבר' && s.status !== 'סיים');
+    const scopedStudents = role === 'student'
+      ? activeStudents.filter(s => s.class_id === classId || s.user_email === user?.email)
+      : activeStudents.filter(s => isStudentInApprovedScope(s, user, role));
+    setStudents(scopedStudents.map(withCommunityDefaults).sort(compareStudentsByLastName));
     setLoading(false);
   }
 
-  function openEdit(s) { setForm({ community_service_goal: s.community_service_goal || 60, community_service_done: s.community_service_done || 0, community_service_place: s.community_service_place || '', community_service_contact: s.community_service_contact || '', community_service_status: s.community_service_status || 'לא התחיל' }); setEditStudent(s); }
+  function openEdit(s) { const normalized = withCommunityDefaults(s); setForm({ community_service_goal: normalized.community_service_goal, community_service_done: normalized.community_service_done, community_service_place: normalized.community_service_place, community_service_contact: normalized.community_service_contact, community_service_status: normalized.community_service_status }); setEditStudent(s); }
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
   async function handleSave() {
@@ -44,12 +58,12 @@ export default function Community({ role = 'homeroom_teacher', user }) {
     } catch { toast.error('שגיאה'); }
   }
 
-  const pct = (s) => s.community_service_goal > 0 ? Math.round((s.community_service_done / s.community_service_goal) * 100) : 0;
+  const pct = (s) => Number(s.community_service_goal) > 0 ? Math.round((Number(s.community_service_done || 0) / Number(s.community_service_goal)) * 100) : 0;
   
   const sorted = [...students].sort((a,b) => pct(a) - pct(b));
   const filtered = filter === 'הכל' ? sorted : sorted.filter(s => s.community_service_status === filter);
 
-  const totalDone = students.reduce((sum, s) => sum + (s.community_service_done || 0), 0);
+  const totalDone = students.reduce((sum, s) => sum + Number(s.community_service_done || 0), 0);
   const avgPct = students.length > 0 ? Math.round(students.reduce((sum, s) => sum + pct(s), 0) / students.length) : 0;
   const completedCount = students.filter(s => s.community_service_status === 'הושלם').length;
   const behindCount = students.filter(s => pct(s) < 50).length;
@@ -88,21 +102,21 @@ export default function Community({ role = 'homeroom_teacher', user }) {
       </div>
 
       {loading ? <div className="flex justify-center py-12"><div className="w-7 h-7 border-4 border-primary/20 border-t-primary rounded-full animate-spin"/></div>
-      : <div className="space-y-2">
+      : <div className="space-y-2 text-right" dir="rtl">
           {filtered.map((s, i) => {
             const p = pct(s);
             const isBehind = p < 50;
             return (
               <motion.div key={s.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
                 <Card className={`p-4 transition-all ${isBehind && s.community_service_status !== 'הושלם' ? 'border-amber-200 dark:border-amber-700/50' : ''}`}>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 text-right" dir="rtl">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0
                       ${p >= 100 ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
                         p >= 50 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
                         'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'}`}>
                       {s.full_name.charAt(0)}
                     </div>
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 text-right">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="font-semibold text-sm">{s.full_name}</span>
                         <StatusBadge status={s.community_service_status} />
