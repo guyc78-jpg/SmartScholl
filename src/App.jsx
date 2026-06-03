@@ -133,9 +133,9 @@ const AuthenticatedApp = () => {
   const systemRole = getSystemRole(user);
   const role = effectiveWorkRole || systemRole;
   const isDivisionManager = role === 'division_manager' && approvedRoles.includes('division_manager');
-  // "staff" כאן = צוות חינוכי מלא (מורה/רכז/admin). מנהל חטיבה מטופל בנפרד.
-  const staff = approvedRoles.some(r => ['admin', 'homeroom_teacher', 'coordinator'].includes(r));
-  const studentRole = approvedRoles.includes('student') && !staff && !isDivisionManager;
+  // הרשאות מוצגות ונפתחות לפי התפקיד הפעיל המדויק, לא לפי תפקידים מאושרים אחרים.
+  const staff = ['admin', 'homeroom_teacher', 'coordinator'].includes(role) && approvedRoles.includes(role);
+  const studentRole = role === 'student' && approvedRoles.includes('student');
 
   const renderRoutes = () => (
     <Routes>

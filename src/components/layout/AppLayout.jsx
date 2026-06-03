@@ -197,13 +197,14 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
   const location = useLocation();
 
   const approvedRoles = getAvailableRoles(user);
-  const isActiveDivisionManager = role === 'division_manager' && approvedRoles.includes('division_manager');
-  const isStaffRole = ['admin', 'homeroom_teacher', 'coordinator'].includes(role) && approvedRoles.includes(role);
-  const canAccess = (item) => item.roles.includes(role) && approvedRoles.includes(role);
+  const activeRole = approvedRoles.includes(role) ? role : null;
+  const isActiveDivisionManager = activeRole === 'division_manager';
+  const isStaffRole = ['admin', 'homeroom_teacher', 'coordinator'].includes(activeRole);
+  const canAccess = (item) => item.roles.includes(activeRole);
 
   const navGroups = sidebarGroups
     .filter(group => group.key !== 'division' || isActiveDivisionManager)
-    .filter(group => !group.adminOnly || role === 'admin')
+    .filter(group => !group.adminOnly || activeRole === 'admin')
     .map(group => ({ ...group, items: group.items.filter(canAccess) }))
     .filter(group => group.items.length > 0);
 
@@ -213,14 +214,14 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
   const contextLabel = getUserContextLabel(user, role);
 
   useEffect(() => {
-    if (!approvedRoles.some(r => ['admin', 'homeroom_teacher', 'coordinator'].includes(r))) {
+    if (!['admin', 'homeroom_teacher', 'coordinator'].includes(activeRole)) {
       setPendingCount(0);
       return;
     }
     base44.functions.invoke('handleApprovalRequest', { action: 'get_pending' })
       .then(res => setPendingCount((res.data.pending || []).filter(r => r.status === 'pending').length))
       .catch(() => {});
-  }, [approvedRoles.join(',')]);
+  }, [activeRole]);
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full text-right" dir="rtl">
