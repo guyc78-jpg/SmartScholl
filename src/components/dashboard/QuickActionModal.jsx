@@ -55,18 +55,23 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
   const [studentListOpen, setStudentListOpen] = useState(false);
   const [sheetHeight, setSheetHeight] = useState(null);
   const [sheetBottom, setSheetBottom] = useState(0);
+  const [sheetTop, setSheetTop] = useState(null);
   const sheetRef = useRef(null);
   const scrollAreaRef = useRef(null);
 
-  // עדכון גובה ומיקום דינמי — מעביר את הפאנל מעל המקלדת ב-iOS
+  // עדכון גובה ומיקום דינמי — מצמיד את הפאנל ל-visual viewport האמיתי ב-iOS
   useEffect(() => {
     const update = () => {
       const vv = window.visualViewport;
-      const vvh = vv?.height ?? window.innerHeight;
-      // כמה פיקסלים המקלדת "דחפה" את ה-viewport כלפי מעלה
-      const keyboardOffset = Math.max(0, window.innerHeight - vvh - (vv?.offsetTop ?? 0));
-      setSheetBottom(keyboardOffset);
-      setSheetHeight(Math.min(Math.round(vvh * 0.85), 640));
+      const viewportTop = vv?.offsetTop ?? 0;
+      const viewportHeight = vv?.height ?? window.innerHeight;
+      const viewportBottom = viewportTop + viewportHeight;
+      const keyboardInset = Math.max(0, window.innerHeight - viewportBottom);
+      const nextHeight = Math.min(Math.round(viewportHeight * 0.85), 640);
+
+      setSheetBottom(keyboardInset);
+      setSheetHeight(nextHeight);
+      setSheetTop(Math.max(0, viewportBottom - nextHeight));
     };
     update();
     window.visualViewport?.addEventListener('resize', update);
@@ -79,10 +84,19 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
 
   // גלילה אוטומטית לשדה הפעיל בתוך אזור הגלילה
   function handleFieldFocus(e) {
-    const el = e.currentTarget;
+    const el = e.target;
+    const container = scrollAreaRef.current;
+    if (!(el instanceof HTMLElement) || !container) return;
+
+    const isTextField = ['INPUT', 'TEXTAREA'].includes(el.tagName) || el.getAttribute('role') === 'combobox';
+    if (!isTextField) return;
+
     setTimeout(() => {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 320); // המתן לסיום אנימציית המקלדת
+      const elRect = el.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      const nextTop = elRect.top - containerRect.top + container.scrollTop - Math.max(24, container.clientHeight * 0.28);
+      container.scrollTo({ top: Math.max(0, nextTop), behavior: 'smooth' });
+    }, 360);
   }
 
   const needsStudentPicker = ['discipline', 'note', 'communication', 'community'].includes(action);
@@ -317,8 +331,8 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
       <div
         ref={sheetRef}
         style={{
-          position: 'absolute',
-          bottom: sheetBottom,
+          position: 'fixed',
+          top: sheetTop ?? undefined,
           right: 0,
           left: 0,
           height: sheetHeight ? `${sheetHeight}px` : '85vh',
@@ -328,7 +342,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          transition: 'bottom 0.2s ease, height 0.2s ease',
+          transition: 'top 0.2s ease, height 0.2s ease',
         }}
       >
         {/* Handle bar */}
@@ -348,7 +362,19 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
         </div>
 
         {/* Scrollable content */}
-        <div ref={scrollAreaRef} style={{ flex: 1, overflowY: 'auto', padding: '1rem', WebkitOverflowScrolling: 'touch' }}>
+        <div
+          ref={scrollAreaRef}
+          onFocusCapture={handleFieldFocus}
+          style={{
+            flex: 1,
+            overflowY: 'auto',
+            paddingTop: '1rem',
+            paddingRight: '1rem',
+            paddingLeft: '1rem',
+            paddingBottom: `${Math.max(88, sheetBottom + 120)}px`,
+            WebkitOverflowScrolling: 'touch'
+          }}
+        >
           {action === 'attendance' ? (
             <QuickAttendanceForm
               classId={resolvedClassId}
