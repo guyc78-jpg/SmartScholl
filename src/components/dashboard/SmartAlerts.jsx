@@ -24,19 +24,19 @@ const severityBadges = {
   critical: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
 };
 
-function AlertSourceDetails({ details }) {
+function AlertSourceDetails({ details, alertType }) {
   const source = details?.source_info;
   if (!source) return null;
 
-  const students = (source.related_student_names || []).slice(0, 4).join(', ');
-  const exam = source.exam_title || (source.exam_titles || []).join(', ');
+  // For exam alerts — show class/group only, never student names
+  const isExamAlert = alertType === 'upcoming_exam' || alertType === 'exam_overload';
+  const students = isExamAlert ? null : (source.related_student_names || []).slice(0, 4).join(', ');
 
   return (
     <div className="mt-2 rounded-lg border border-border/60 bg-background/60 px-3 py-2 text-[11px] text-muted-foreground text-right" dir="rtl">
       <div className="flex flex-wrap items-center justify-end gap-x-3 gap-y-1">
-        <span>מקור: <strong>{source.source}</strong></span>
-        {exam && <span>מבחן: <strong>{exam}</strong></span>}
-        {source.class_or_group && <span>כיתה/קבוצה: <strong>{source.class_or_group}</strong></span>}
+        {source.class_or_group && <span>קהל יעד: <strong>{source.class_or_group}</strong></span>}
+        {source.exam_date && <span>תאריך: <strong>{source.exam_date}</strong></span>}
         {students && <span>תלמידים: <strong>{students}</strong></span>}
       </div>
     </div>
@@ -98,7 +98,11 @@ export default function SmartAlerts({ userRole }) {
     );
   }
 
-  const visibleAlerts = alerts.filter(alert => alert.alert_type !== 'open_incident' && !dismissed.has(`${alert.student_id}-${alert.alert_type}`));
+  // For exam alerts use exam_id as key (no student_id); for others use student_id
+  const alertKey = (alert) => alert.alert_type === 'upcoming_exam' || alert.alert_type === 'exam_overload'
+    ? `exam-${alert.details?.source_info?.exam_id}-${alert.alert_type}`
+    : `${alert.student_id}-${alert.alert_type}`;
+  const visibleAlerts = alerts.filter(alert => alert.alert_type !== 'open_incident' && !dismissed.has(alertKey(alert)));
   const criticalCount = visibleAlerts.filter(a => a.severity === 'critical').length;
   const highCount = visibleAlerts.filter(a => a.severity === 'high').length;
 
@@ -113,8 +117,8 @@ export default function SmartAlerts({ userRole }) {
     );
   }
 
-  const handleDismiss = (studentId, alertType) => {
-    setDismissed(prev => new Set(prev).add(`${studentId}-${alertType}`));
+  const handleDismiss = (alert) => {
+    setDismissed(prev => new Set(prev).add(alertKey(alert)));
   };
 
   return (
@@ -151,21 +155,23 @@ export default function SmartAlerts({ userRole }) {
                   <Icon className={cn('w-5 h-5 flex-shrink-0 mt-0.5', config.color)} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-end gap-2 mb-1">
-                      <span className="font-semibold text-sm">{formatStudentName(alert.student_name)}</span>
+                      {alert.student_name && (
+                        <span className="font-semibold text-sm">{formatStudentName(alert.student_name)}</span>
+                      )}
                       <Badge className={severityBadges[alert.severity]} variant="outline">
                         {alert.severity === 'critical' ? 'קריטי' : alert.severity === 'high' ? 'גבוה' : alert.severity === 'medium' ? 'בינוני' : 'נמוך'}
                       </Badge>
                     </div>
                     <AlertDescription className="text-sm text-right" dir="rtl">
-                      <span className="font-medium">{config.label}:</span> {alert.message}
+                      {alert.message}
                     </AlertDescription>
-                    <AlertSourceDetails details={alert.details} />
+                    <AlertSourceDetails details={alert.details} alertType={alert.alert_type} />
                   </div>
                   <Button
                     variant="ghost"
                     size="icon"
                     className="flex-shrink-0 h-7 w-7"
-                    onClick={() => handleDismiss(alert.student_id, alert.alert_type)}
+                    onClick={() => handleDismiss(alert)}
                   >
                     <X className="w-4 h-4" />
                   </Button>

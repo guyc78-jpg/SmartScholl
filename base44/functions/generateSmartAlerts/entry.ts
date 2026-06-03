@@ -168,11 +168,85 @@ Deno.serve(async (req) => {
 
     const students = getScopedStudents(allStudents || [], user, role);
     const scopedStudentIds = new Set(students.map(student => student.id));
+    const scopedClassIds = new Set(students.map(s => s.class_id).filter(Boolean));
+    const scopedGrades = new Set(students.map(s => normalize(s.grade || '')).filter(Boolean));
+
     const attByStudent = groupBy((attendance || []).filter(record => scopedStudentIds.has(record.student_id)), 'student_id');
     const tasksByStudent = groupBy((tasks || []).filter(record => scopedStudentIds.has(record.student_id)), 'student_id');
     const incidentsByStudent = groupBy((incidents || []).filter(record => scopedStudentIds.has(record.student_id)), 'student_id');
     const alerts = [];
 
+    // ── 1. Exam alerts — class/grade level only, no student names ──────────────
+    // An exam is relevant to the scoped scope when:
+    //   a) its class_id is in scope, OR
+    //   b) its audience_grades/grade_ids overlap with scoped grades, OR
+    //   c) scope=school (admin) and exam has audience_scope='school'
+    // When there IS a precise sub-group (subjectGroup/track/learningGroup), show the group label.
+    // Never list individual student names or counts for exams.
+    const seenExamIds = new Set();
+    for (const exam of (exams || [])) {
+      if (!EXAM_ALERT_TYPES.has(exam?.type)) continue;
+      const daysUntil = (new Date(exam.date) - today) / (1000 * 60 * 60 * 24);
+      if (daysUntil < 0 || daysUntil > 7) continue;
+      if (seenExamIds.has(exam.id)) continue;
+
+      // Check scope relevance
+      const examClassIds = toList(firstPresent(exam?.class_id)).concat(toList(exam?.class_ids));
+      const examGrades = toList(exam?.grade_id).concat(toList(exam?.grade_ids), toList(exam?.audience_grades));
+      const examScope = exam?.audience_scope;
+
+      const classMatch = examClassIds.some(id => scopedClassIds.has(id));
+      const gradeMatch = examGrades.some(g => scopedGrades.has(normalize(g)));
+      const schoolMatch = role === 'admin' && examScope === 'school';
+
+      if (!classMatch && !gradeMatch && !schoolMatch) continue;
+      seenExamIds.add(exam.id);
+
+      // Determine group label if exam has precise sub-group targeting
+      const subjectGroups = toList(exam?.subject_group_id).concat(toList(exam?.subject_group_ids), toList(exam?.audience_subjects));
+      const tracks = toList(exam?.track_id).concat(toList(exam?.track_ids), toList(exam?.audience_tracks));
+      const learningGroups = toList(exam?.learning_group_id).concat(toList(exam?.learning_group_ids));
+      const groupLabel = exam?.audience_group_label ||
+        (subjectGroups.length ? subjectGroups[0] : null) ||
+        (tracks.length ? tracks[0] : null) ||
+        (learningGroups.length ? learningGroups[0] : null) ||
+        null;
+
+      const scopeLabel = groupLabel
+        ? `קבוצה: ${groupLabel}`
+        : examGrades.length ? `שכבה ${examGrades.join(', ')}`
+        : examClassIds.length ? `כיתה ${examClassIds.join(', ')}`
+        : '';
+
+      const daysText = daysUntil === 0 ? 'היום' : daysUntil === 1 ? 'מחר' : `בעוד ${Math.round(daysUntil)} ימים`;
+      const subject = exam.subject ? ` ב${exam.subject}` : '';
+      const message = `יש ${exam.type}${subject} קרוב: "${exam.title}" — ${daysText}`;
+      const severity = daysUntil <= 1 ? 'high' : 'medium';
+
+      // Use a placeholder student_id (empty) — this is a class-level alert
+      alerts.push({
+        student_id: '',
+        student_name: '',
+        class_id: examClassIds[0] || '',
+        alert_type: 'upcoming_exam',
+        severity,
+        message,
+        details: {
+          source_info: {
+            source: 'Exam',
+            class_or_group: scopeLabel,
+            exam_id: exam.id,
+            exam_title: exam.title,
+            exam_subject: exam.subject,
+            exam_date: exam.date,
+            audience_type: groupLabel ? 'קבוצה/מגמה' : gradeMatch ? 'שכבה' : 'כיתה',
+          },
+        },
+        is_active: true,
+      });
+    }
+
+    // ── 2. Per-student alerts (absences, lates, tasks, incidents) ───────────────
     for (const student of students) {
       const sAtt = attByStudent.get(student.id) || [];
       const weekAbsences = sAtt.filter(record => ['נעדר', 'נעדר/ת'].includes(record.status) && record.date >= weekStartStr && record.date <= weekEndStr);
@@ -205,46 +279,6 @@ Deno.serve(async (req) => {
             is_active: true,
           });
         }
-      }
-
-      const relevantExamItems = (exams || []).map(exam => ({ exam, audience: isExamRelevantToStudent(exam, student) })).filter(item => item.audience);
-      const upcomingExamItems = relevantExamItems.filter(({ exam }) => {
-        const daysUntil = (new Date(exam.date) - today) / (1000 * 60 * 60 * 24);
-        return daysUntil >= 0 && daysUntil <= 2;
-      });
-      if (upcomingExamItems.length > 0) {
-        const { exam, audience } = upcomingExamItems[0];
-        alerts.push({
-          student_id: student.id,
-          student_name: student.full_name,
-          class_id: student.class_id,
-          alert_type: 'upcoming_exam',
-          severity: 'medium',
-          message: `מבחן קרוב: ${exam.title} - ${exam.subject} ב-${exam.date}`,
-          details: { source_info: sourceInfo('Exam', student, { exam_id: exam.id, exam_title: exam.title, exam_subject: exam.subject, exam_date: exam.date, class_or_group: audience.values.join(', '), audience_type: audience.label }) },
-          is_active: true,
-        });
-      }
-
-      const threeDaysExamItems = relevantExamItems.filter(({ exam }) => {
-        const daysUntil = (new Date(exam.date) - today) / (1000 * 60 * 60 * 24);
-        return daysUntil >= 0 && daysUntil <= 3;
-      });
-      if (threeDaysExamItems.length >= 3) {
-        alerts.push({
-          student_id: student.id,
-          student_name: student.full_name,
-          class_id: student.class_id,
-          alert_type: 'exam_overload',
-          severity: 'critical',
-          message: `עומס מבחנים: ${threeDaysExamItems.length} מבחנים ב-3 ימים הקרובים`,
-          details: {
-            exam_count: threeDaysExamItems.length,
-            exams: threeDaysExamItems.map(({ exam }) => ({ id: exam.id, title: exam.title, subject: exam.subject, date: exam.date })),
-            source_info: sourceInfo('Exam', student, { exam_ids: threeDaysExamItems.map(({ exam }) => exam.id), exam_titles: threeDaysExamItems.map(({ exam }) => exam.title) }),
-          },
-          is_active: true,
-        });
       }
 
       const pendingTasks = (tasksByStudent.get(student.id) || []).filter(task => new Date(task.due_date) <= today);
