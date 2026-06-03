@@ -1,39 +1,68 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Card, CardContent } from '@/components/ui/card';
-import { Clock, Coffee, BookOpen, ChevronLeft, MapPin, User } from 'lucide-react';
+import { Clock, BookOpen, ChevronLeft, MapPin, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import {
-  getTodayDayType, getTodayHebrewName, getNowAndNext,
-  loadBellSchedule, findSlotForPeriod, formatRemaining
-} from '@/lib/bellSchedule';
+import { formatRemaining, getTodayHebrewName, timeToMinutes } from '@/lib/bellSchedule';
 
-// Smart "now / next" card driven by bell schedule + class ScheduleSlot enrichment.
+function getCurrentAndNextSlots(slots, now = new Date()) {
+  const nowMins = now.getHours() * 60 + now.getMinutes();
+  const sorted = (slots || [])
+    .filter(slot => slot.subject && slot.start_time)
+    .sort((a, b) => timeToMinutes(a.start_time) - timeToMinutes(b.start_time));
+
+  const current = sorted.find(slot => {
+    if (!slot.end_time) return false;
+    return nowMins >= timeToMinutes(slot.start_time) && nowMins < timeToMinutes(slot.end_time);
+  }) || null;
+
+  const next = sorted.find(slot => timeToMinutes(slot.start_time) > nowMins && slot.id !== current?.id) || null;
+  const remainingMins = current?.end_time
+    ? timeToMinutes(current.end_time) - nowMins
+    : next?.start_time
+      ? timeToMinutes(next.start_time) - nowMins
+      : 0;
+
+  return { current, next, remainingMins };
+}
+
+// Smart "now / next" card driven only by real ScheduleSlot records for class + day + current time.
 export default function NowNextCard({ classId, className }) {
-  const [state, setState] = useState({ loading: true, current: null, next: null, remainingMins: 0, currentSlot: null, nextSlot: null });
+  const [state, setState] = useState({ loading: true, current: null, next: null, remainingMins: 0 });
+  const slotsRef = useRef([]);
 
   useEffect(() => {
     let cancelled = false;
-    let timer;
+    let tickTimer;
 
-    async function refresh() {
-      const dayType = getTodayDayType();
-      const periods = await loadBellSchedule(dayType);
+    const updateFromSlots = () => {
+      const { current, next, remainingMins } = getCurrentAndNextSlots(slotsRef.current);
+      if (!cancelled) setState({ loading: false, current, next, remainingMins });
+    };
+
+    async function refreshSlots() {
+      if (!classId) {
+        slotsRef.current = [];
+        updateFromSlots();
+        return;
+      }
       const todayName = getTodayHebrewName();
-      const slots = classId
-        ? await base44.entities.ScheduleSlot.filter({ class_id: classId, day: todayName }).catch(() => [])
-        : [];
-      const tick = () => {
-        const { current, next, remainingMins } = getNowAndNext(periods);
-        const currentSlot = current?.kind === 'lesson' ? findSlotForPeriod(slots, current.period) : null;
-        const nextSlot = next?.kind === 'lesson' ? findSlotForPeriod(slots, next.period) : null;
-        if (!cancelled) setState({ loading: false, current, next, remainingMins, currentSlot, nextSlot });
-      };
-      tick();
-      timer = setInterval(tick, 30_000);
+      slotsRef.current = await base44.entities.ScheduleSlot.filter({ class_id: classId, day: todayName });
+      updateFromSlots();
     }
-    refresh();
-    return () => { cancelled = true; if (timer) clearInterval(timer); };
+
+    refreshSlots();
+    tickTimer = setInterval(updateFromSlots, 30_000);
+    const unsubscribe = base44.entities.ScheduleSlot.subscribe((event) => {
+      const data = event?.data;
+      if (!data || data.class_id === classId) refreshSlots();
+    });
+
+    return () => {
+      cancelled = true;
+      clearInterval(tickTimer);
+      unsubscribe?.();
+    };
   }, [classId]);
 
   if (state.loading) {
@@ -46,130 +75,67 @@ export default function NowNextCard({ classId, className }) {
     );
   }
 
-  const { current, next, remainingMins, currentSlot, nextSlot } = state;
+  const { current, next, remainingMins } = state;
 
-  // Outside school day — hide the card entirely
   if (!current && !next) return null;
 
   return (
     <Card className={className}>
       <CardContent className="p-3 sm:p-4 text-right" dir="rtl">
         <div className="grid grid-cols-1 sm:grid-cols-[1fr,auto,1fr] gap-3 sm:gap-4 items-stretch">
-          {/* NOW block */}
-          <NowBlock current={current} currentSlot={currentSlot} remainingMins={remainingMins} hasNext={!!next} />
-
-          {/* Divider */}
+          <LessonBlock title="השיעור עכשיו" slot={current} emptyText="אין שיעור כרגע" remainingMins={current ? remainingMins : null} />
           <div className="hidden sm:block w-px bg-border/60 self-stretch" />
           <div className="sm:hidden h-px bg-border/60" />
-
-          {/* NEXT block */}
-          <NextBlock next={next} nextSlot={nextSlot} hasCurrent={!!current} timeToNext={!current ? remainingMins : null} />
+          <LessonBlock title="השיעור הבא" slot={next} emptyText="אין שיעור נוסף היום" timeToNext={!current ? remainingMins : null} muted />
         </div>
       </CardContent>
     </Card>
   );
 }
 
-function NowBlock({ current, currentSlot, remainingMins, hasNext }) {
-  if (!current) {
+function LessonBlock({ title, slot, emptyText, remainingMins, timeToNext, muted = false }) {
+  if (!slot) {
     return (
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 text-right" dir="rtl">
         <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
-          <Clock className="w-5 h-5 text-muted-foreground" />
+          {muted ? <ChevronLeft className="w-5 h-5 text-muted-foreground" /> : <Clock className="w-5 h-5 text-muted-foreground" />}
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">עכשיו</p>
-          <p className="text-sm font-medium text-muted-foreground">לפני תחילת היום</p>
+        <div className="flex-1 min-w-0 text-right">
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{title}</p>
+          <p className="text-sm font-medium text-muted-foreground">{emptyText}</p>
         </div>
       </div>
     );
   }
 
-  const isBreak = current.kind === 'break';
-  const isLesson = current.kind === 'lesson';
-  const isHomeroom = current.kind === 'homeroom';
-
-  const accent = isLesson
-    ? 'bg-emerald-50 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300'
-    : isBreak
-      ? 'bg-amber-50 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300'
-      : 'bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300';
-
-  const remainColor = isBreak
-    ? 'text-amber-600 dark:text-amber-300'
-    : isLesson ? 'text-emerald-600 dark:text-emerald-300'
-    : 'text-blue-600 dark:text-blue-300';
-
-  const Icon = isBreak ? Coffee : isLesson ? BookOpen : Clock;
-  const header = isLesson ? 'השיעור עכשיו' : isBreak ? 'הפסקה עכשיו' : isHomeroom ? 'מחנך עכשיו' : 'עכשיו';
-  const mainLine = (isLesson && currentSlot?.subject) ? currentSlot.subject : current.label;
-  const remainLabel = isBreak ? 'עד הצלצול' : 'נותר';
+  const timeRange = slot.end_time ? `${slot.start_time}–${slot.end_time}` : slot.start_time;
 
   return (
-    <div className="flex items-start gap-3 min-w-0">
-      <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0', accent)}>
-        <Icon className="w-5 h-5" />
+    <div className="flex items-start gap-3 min-w-0 text-right" dir="rtl">
+      <div className={cn(
+        'w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0',
+        muted ? 'bg-muted text-muted-foreground' : 'bg-emerald-50 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-300'
+      )}>
+        <BookOpen className="w-5 h-5" />
       </div>
-      <div className="flex-1 min-w-0">
+      <div className="flex-1 min-w-0 text-right">
         <div className="flex items-center justify-between gap-2">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{header}</p>
-          <span className="text-[10px] text-muted-foreground force-ltr">{current.start_time}–{current.end_time}</span>
+          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{title}</p>
+          <span className="text-[10px] text-muted-foreground force-ltr">{timeRange}</span>
         </div>
-        <p className="text-base font-bold truncate">{mainLine}</p>
-        {isLesson && currentSlot && (
-          <div className="flex items-center gap-2 text-[11px] text-muted-foreground truncate">
-            {currentSlot.teacher && <span className="inline-flex items-center gap-0.5"><User className="w-3 h-3" />{currentSlot.teacher}</span>}
-            {currentSlot.room && <span className="inline-flex items-center gap-0.5"><MapPin className="w-3 h-3" />{currentSlot.room}</span>}
+        <p className="text-base font-bold truncate text-foreground/90">{slot.subject}</p>
+        <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground justify-end" dir="rtl">
+          {slot.teacher && <span className="inline-flex items-center gap-0.5"><User className="w-3 h-3" />{slot.teacher}</span>}
+          {slot.room && <span className="inline-flex items-center gap-0.5"><MapPin className="w-3 h-3" />{slot.room}</span>}
+        </div>
+        {remainingMins != null && (
+          <div className="mt-1.5 flex items-baseline gap-1.5 justify-end">
+            <span className="text-[10px] text-muted-foreground">נותר:</span>
+            <span className="text-sm font-bold text-emerald-600 dark:text-emerald-300">{formatRemaining(remainingMins)}</span>
           </div>
         )}
-        <div className="mt-1.5 flex items-baseline gap-1.5">
-          <span className="text-[10px] text-muted-foreground">{remainLabel}:</span>
-          <span className={cn('text-sm font-bold', remainColor)}>{formatRemaining(remainingMins)}</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function NextBlock({ next, nextSlot, hasCurrent, timeToNext }) {
-  if (!next) {
-    return (
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
-          <ChevronLeft className="w-5 h-5 text-muted-foreground" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">הבא</p>
-          <p className="text-sm font-medium text-muted-foreground">סיום יום הלימודים</p>
-        </div>
-      </div>
-    );
-  }
-
-  const isBreak = next.kind === 'break';
-  const isLesson = next.kind === 'lesson';
-  const mainLine = (isLesson && nextSlot?.subject) ? nextSlot.subject : next.label;
-  const Icon = isBreak ? Coffee : isLesson ? BookOpen : Clock;
-
-  return (
-    <div className="flex items-start gap-3 min-w-0">
-      <div className="w-10 h-10 rounded-xl bg-muted text-muted-foreground flex items-center justify-center flex-shrink-0">
-        <Icon className="w-5 h-5" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">הבא</p>
-          <span className="text-[10px] text-muted-foreground force-ltr">{next.start_time}</span>
-        </div>
-        <p className="text-base font-bold truncate text-foreground/90">{mainLine}</p>
-        {isLesson && nextSlot && (
-          <div className="flex items-center gap-2 text-[11px] text-muted-foreground truncate">
-            {nextSlot.teacher && <span className="inline-flex items-center gap-0.5"><User className="w-3 h-3" />{nextSlot.teacher}</span>}
-            {nextSlot.room && <span className="inline-flex items-center gap-0.5"><MapPin className="w-3 h-3" />{nextSlot.room}</span>}
-          </div>
-        )}
-        {!hasCurrent && timeToNext != null && timeToNext > 0 && (
-          <div className="mt-1.5 flex items-baseline gap-1.5">
+        {timeToNext != null && timeToNext > 0 && (
+          <div className="mt-1.5 flex items-baseline gap-1.5 justify-end">
             <span className="text-[10px] text-muted-foreground">בעוד:</span>
             <span className="text-sm font-bold text-foreground">{formatRemaining(timeToNext)}</span>
           </div>

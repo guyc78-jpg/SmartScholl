@@ -23,7 +23,7 @@ import DisciplineEventDialog from '@/components/dashboard/DisciplineEventDialog'
 import NotificationsDropdown from '@/components/dashboard/NotificationsDropdown';
 import SchoolNameBanner from '@/components/layout/SchoolNameBanner';
 import NowNextCard from '@/components/schedule/NowNextCard';
-import { getUserApprovedClass, getUserApprovedGrade } from '@/lib/schoolStructure';
+import { getUserApprovedClass, getUserApprovedClassId, getUserApprovedGrade } from '@/lib/schoolStructure';
 import { getAvailableRoles, getUserFirstName, hasApprovedRole, getRoleHomeLabel, getRoleShort } from '@/lib/roleUtils';
 import useReadNotifications from '@/hooks/useReadNotifications';
 import { getAttendanceScopedStudents, getScopedClassIds, filterScopedAttendance, getSelectedAttendanceDate, getLocalDateString } from '@/lib/attendanceScope.js';
@@ -61,7 +61,7 @@ export default function Dashboard({ user, role }) {
   const isActiveCoordinator = role === 'coordinator';
   const isActiveAdmin = role === 'admin';
   const dashboardTitle = getRoleHomeLabel(user, role);
-  const classId = students[0]?.class_id || user?.profile_class_id || '';
+  const classId = getUserApprovedClassId(user, students[0]?.class_id || '');
   const scopeLabels = [
     isActiveAdmin ? getRoleShort('admin', user) + ' מערכת' : null,
     isActiveHomeroom ? `${getRoleShort('homeroom_teacher', user)}${getUserApprovedClass(user) ? ` · ${getUserApprovedClass(user)}` : ''}` : null,
