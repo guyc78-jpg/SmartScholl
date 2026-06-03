@@ -145,7 +145,7 @@ function Cell({ slot, isToday, isNow, canEdit, onClick }) {
     >
       {slot ? (
         <div className="px-1 py-1.5 min-h-[46px] sm:min-h-[54px] flex flex-col items-center justify-center gap-0.5 text-center">
-          <div className={cn('text-[11px] sm:text-xs font-bold leading-tight truncate w-full', color)}>
+          <div className={cn('text-sm sm:text-base font-extrabold leading-tight truncate w-full', color)}>
             {slot.subject}
           </div>
           {slot.teacher && (

@@ -134,7 +134,7 @@ function LessonBlock({ title, slot, emptyText, remainingMins, timeToNext, muted 
       </div>
 
       <p className={cn(
-        'w-full truncate text-xs font-bold leading-[1.6]',
+        'w-full truncate text-sm font-extrabold leading-[1.6]',
         slot ? 'text-foreground' : 'text-muted-foreground'
       )}>
         {slot?.subject || emptyText}
