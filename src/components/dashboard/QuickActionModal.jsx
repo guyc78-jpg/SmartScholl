@@ -106,18 +106,22 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
     setLoadingStudents(true);
     let fetched = [];
 
-    if (resolvedClassId) {
-      fetched = await base44.entities.Student.filter({ class_id: resolvedClassId });
-    }
-    if (fetched.length === 0 && approvedClass) {
-      const all = await base44.entities.Student.list();
-      fetched = all.filter(s => studentMatchesClass(s, resolvedClassId, approvedClass));
-    }
-    if (fetched.length === 0 && isCoordinator && approvedGrade) {
-      fetched = await base44.entities.Student.filter({ grade: approvedGrade });
-    }
-    if (fetched.length === 0 && isAdmin) {
+    if (isAdmin) {
       fetched = await base44.entities.Student.list();
+    } else if (isCoordinator && approvedGrade) {
+      fetched = await base44.entities.Student.filter({ grade: approvedGrade });
+    } else {
+      // טעינת כל התלמידים וסינון לפי class_id או class_name —
+      // מניעת מצב שבו חלק מהתלמידים שמורים רק עם class_name ולא class_id
+      const all = await base44.entities.Student.list();
+      const seen = new Set();
+      fetched = all.filter(s => {
+        if (studentMatchesClass(s, resolvedClassId, approvedClass) && !seen.has(s.id)) {
+          seen.add(s.id);
+          return true;
+        }
+        return false;
+      });
     }
 
     setStudents(fetched);
