@@ -12,6 +12,7 @@ import { logActivity } from '@/lib/activityLogger';
 import { getUserApprovedGrade } from '@/lib/schoolStructure';
 import { getAvailableRoles, hasApprovedRole } from '@/lib/roleUtils';
 import QuickAttendanceForm from '@/components/dashboard/QuickAttendanceForm';
+import CommunityExceptionsQuickAction from '@/components/dashboard/CommunityExceptionsQuickAction';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 import { getLocalDateString } from '@/lib/attendanceScope';
 
@@ -38,13 +39,6 @@ function studentMatchesClass(student, classId, className) {
 
 const getStudentDisplayName = formatStudentName;
 const sortByLastName = (students) => [...students].sort(compareStudentsByLastName);
-
-function isCommunityException(student) {
-  const goal = Number(student.community_service_goal ?? 60);
-  const done = Number(student.community_service_done ?? 0);
-  const status = student.community_service_status;
-  return done <= 0 || done < goal || (!!status && status !== 'הושלם') || student.status === 'דורש מעקב';
-}
 
 export default function QuickActionModal({ action, classId: classIdProp, user, role, onClose, onSuccess }) {
   const [form, setForm] = useState({});
@@ -99,7 +93,8 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
     }, 360);
   }
 
-  const needsStudentPicker = ['discipline', 'note', 'communication', 'community'].includes(action);
+  const needsStudentPicker = ['discipline', 'note', 'communication'].includes(action);
+  const usesStudentData = needsStudentPicker || action === 'community';
   const today = getLocalDateString();
 
   const resolvedClassId = classIdProp || user?.profile_class_id || '';
@@ -109,11 +104,11 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
   const isCoordinator = hasApprovedRole(user, 'coordinator');
   const isAdmin = approvedRoles.includes('admin');
 
-  // טעינת תלמידים רק לפעולה הנוכחית שדורשת בחירת תלמיד
+  // טעינת תלמידים לפעולות שתלויות ברשימת תלמידים
   useEffect(() => {
-    if (!needsStudentPicker) return;
+    if (!usesStudentData) return;
     loadStudents();
-  }, [action, needsStudentPicker, resolvedClassId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [action, usesStudentData, resolvedClassId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Prevent body scroll on iOS while sheet is open
   useEffect(() => {
@@ -267,20 +262,6 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
     await base44.entities.Task.create(taskData);
   }
 
-  async function saveCommunityAction() {
-    const student = getSelectedStudent();
-    if (!student) { toast.error('יש לבחור תלמיד'); return false; }
-    const doneVal = form.done !== undefined && form.done !== '' && !isNaN(Number(form.done))
-      ? Number(form.done)
-      : (student.community_service_done ?? 0);
-    const communityData = {
-      community_service_done: doneVal,
-      community_service_place: form.place || student.community_service_place || '',
-    };
-    await base44.entities.Student.update(student.id, communityData);
-    return true;
-  }
-
   const saveHandlers = {
     discipline: saveDisciplineAction,
     exam: saveExamAction,
@@ -288,7 +269,6 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
     note: saveNoteAction,
     communication: saveCommunicationAction,
     task: saveTaskAction,
-    community: saveCommunityAction,
   };
 
   async function handleSave() {
@@ -380,6 +360,8 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
               classId={resolvedClassId}
               onSaved={onSuccess}
             />
+          ) : action === 'community' ? (
+            <CommunityExceptionsQuickAction students={students} loading={loadingStudents} />
           ) : (
           <div className="space-y-4">
 
@@ -571,19 +553,6 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
                 </div>
               </div>
             </>}
-
-            {action === 'community' && (
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="space-y-1">
-                  <Label>שעות שבוצעו</Label>
-                  <Input type="number" placeholder="0" onChange={e => set('done', e.target.value)} />
-                </div>
-                <div className="space-y-1">
-                  <Label>מקום</Label>
-                  <Input placeholder="מקום ההתנדבות" onChange={e => set('place', e.target.value)} />
-                </div>
-              </div>
-            )}
 
             {/* Actions */}
             <div className="flex gap-2 pt-1" style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}>
