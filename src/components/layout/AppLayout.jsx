@@ -30,10 +30,10 @@ const sidebarGroups = [
     title: 'ניהול יומי',
     icon: LayoutDashboard,
     items: [
-      { path: '/', icon: LayoutDashboard, label: 'דשבורד', dynamicLabel: true, roles: ['admin', 'homeroom_teacher', 'coordinator'] },
+      { path: '/', icon: LayoutDashboard, label: 'דשבורד', dynamicLabel: true, roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'] },
       { path: '/student-home', icon: LayoutDashboard, label: 'היום שלי', roles: ['student'] },
-      { path: '/schedule', icon: Calendar, label: 'מערכת שעות', roles: ['homeroom_teacher', 'coordinator', 'student', 'admin'] },
-      { path: '/tasks', icon: ClipboardList, label: 'משימות', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
+      { path: '/schedule', icon: Calendar, label: 'מערכת שעות', roles: ['homeroom_teacher', 'grade_coordinator', 'coordinator', 'system_admin', 'admin'] },
+      { path: '/tasks', icon: ClipboardList, label: 'משימות', roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'] },
     ],
   },
   {
@@ -41,9 +41,9 @@ const sidebarGroups = [
     title: 'פדגוגיה',
     icon: BookOpen,
     items: [
-      { path: '/exams', icon: BookOpen, label: 'מבחנים ואירועים', roles: ['admin', 'homeroom_teacher', 'coordinator', 'student'] },
-      { path: '/performance', icon: GraduationCap, label: 'הערכות', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
-      { path: '/treatment-center', icon: ShieldCheck, label: 'מרכז טיפול', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
+      { path: '/exams', icon: BookOpen, label: 'מבחנים ואירועים', roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'] },
+      { path: '/performance', icon: GraduationCap, label: 'הערכות', roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'] },
+      { path: '/treatment-center', icon: ShieldCheck, label: 'מרכז טיפול', roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'] },
     ],
   },
   {
@@ -51,10 +51,10 @@ const sidebarGroups = [
     title: 'תלמידים',
     icon: Users,
     items: [
-      { path: '/students', icon: Users, label: 'רשימת תלמידים', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
-      { path: '/class-attendance', icon: CalendarCheck, label: 'נוכחות', roles: ['homeroom_teacher', 'admin', 'coordinator'] },
-      { path: '/discipline', icon: AlertTriangle, label: 'משמעת', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
-      { path: '/community', icon: Heart, label: 'מעורבות חברתית', roles: ['admin', 'homeroom_teacher', 'coordinator', 'student'] },
+      { path: '/students', icon: Users, label: 'רשימת תלמידים', roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'] },
+      { path: '/class-attendance', icon: CalendarCheck, label: 'נוכחות', roles: ['homeroom_teacher', 'system_admin', 'admin', 'grade_coordinator', 'coordinator'] },
+      { path: '/discipline', icon: AlertTriangle, label: 'משמעת', roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'] },
+      { path: '/community', icon: Heart, label: 'מעורבות חברתית', roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'] },
     ],
   },
   {
@@ -62,8 +62,8 @@ const sidebarGroups = [
     title: 'תקשורת',
     icon: MessageSquare,
     items: [
-      { path: '/announcements', icon: Megaphone, label: 'הודעות', roles: ['admin', 'homeroom_teacher', 'coordinator', 'student'] },
-      { path: '/communications', icon: MessageSquare, label: 'יומן תקשורת', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
+      { path: '/announcements', icon: Megaphone, label: 'הודעות', roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'] },
+      { path: '/communications', icon: MessageSquare, label: 'יומן תקשורת', roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'] },
     ],
   },
   {
@@ -71,8 +71,8 @@ const sidebarGroups = [
     title: 'דוחות וניתוח',
     icon: BarChart2,
     items: [
-      { path: '/reports', icon: BarChart2, label: 'דוחות', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
-      { path: '/grade-monitor', icon: GraduationCap, label: 'מעקב שכבה', roles: ['admin', 'coordinator', 'homeroom_teacher'] },
+      { path: '/reports', icon: BarChart2, label: 'דוחות', roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'] },
+      { path: '/grade-monitor', icon: GraduationCap, label: 'מעקב שכבה', roles: ['system_admin', 'admin', 'grade_coordinator', 'coordinator', 'homeroom_teacher'] },
     ],
   },
   {
@@ -81,28 +81,24 @@ const sidebarGroups = [
     icon: Settings,
     adminOnly: true,
     items: [
-      { path: '/approvals', icon: UserCheck, label: 'אישורי הרשמה', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
-      { path: '/approved-staff', icon: UserCheck, label: 'צוות מאושר', roles: ['admin'] },
-      { path: '/users', icon: ShieldCheck, label: 'הרשאות משתמשים', roles: ['admin'] },
-      { path: '/permissions-tester', icon: Eye, label: 'בדיקת הרשאות', roles: ['admin'] },
-      { path: '/classrooms', icon: School, label: 'ניהול כיתות', roles: ['admin'] },
-      { path: '/bell-schedule', icon: Bell, label: 'צלצולים והפסקות', roles: ['admin'] },
+      { path: '/users', icon: ShieldCheck, label: 'משתמשים מאושרים', roles: ['system_admin', 'admin'] },
+      { path: '/permissions-tester', icon: Eye, label: 'בדיקת הרשאות', roles: ['system_admin', 'admin'] },
+      { path: '/classrooms', icon: School, label: 'ניהול כיתות', roles: ['system_admin', 'admin'] },
+      { path: '/bell-schedule', icon: Bell, label: 'צלצולים והפסקות', roles: ['system_admin', 'admin'] },
     ],
   },
 ];
 
 const teacherBottomNav = [
-  { path: '/', icon: LayoutDashboard, label: 'דשבורד', dynamicLabel: true, roles: ['admin', 'homeroom_teacher', 'coordinator'] },
-  { path: '/students', icon: Users, label: 'תלמידים', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
-  { path: '/class-attendance', icon: CalendarCheck, label: 'נוכחות', roles: ['homeroom_teacher', 'admin', 'coordinator'] },
-  { path: '/schedule', icon: Calendar, label: 'מערכת', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
-  { path: '/exams', icon: BookOpen, label: 'לוח חכם', roles: ['admin', 'homeroom_teacher', 'coordinator'] },
+  { path: '/', icon: LayoutDashboard, label: 'דשבורד', dynamicLabel: true, roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'] },
+  { path: '/students', icon: Users, label: 'תלמידים', roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'] },
+  { path: '/class-attendance', icon: CalendarCheck, label: 'נוכחות', roles: ['homeroom_teacher', 'system_admin', 'admin', 'grade_coordinator', 'coordinator'] },
+  { path: '/schedule', icon: Calendar, label: 'מערכת', roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'] },
+  { path: '/exams', icon: BookOpen, label: 'לוח חכם', roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'] },
 ];
 
 const studentBottomNav = [
   { path: '/student-home', icon: LayoutDashboard, label: 'היום שלי', dynamicLabel: true, roles: ['student'] },
-  { path: '/schedule', icon: Calendar, label: 'מערכת', roles: ['student'] },
-  { path: '/exams', icon: BookOpen, label: 'לוח חכם', roles: ['student'] },
 ];
 
 const divisionBottomNav = [
@@ -199,9 +195,9 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
   const approvedRoles = getAvailableRoles(user);
   const activeRole = approvedRoles.includes(role) ? role : null;
   const isActiveDivisionManager = activeRole === 'division_manager';
-  const isStaffRole = ['admin', 'homeroom_teacher', 'coordinator'].includes(activeRole);
-  const isApprovedAdmin = approvedRoles.includes('admin');
-  const canAccess = (item) => item.roles.includes(activeRole) || (isApprovedAdmin && item.roles.includes('admin'));
+  const isStaffRole = ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'].includes(activeRole);
+  const isApprovedAdmin = approvedRoles.includes('system_admin') || approvedRoles.includes('admin');
+  const canAccess = (item) => item.roles.includes(activeRole) || (isApprovedAdmin && (item.roles.includes('system_admin') || item.roles.includes('admin')));
 
   const navGroups = sidebarGroups
     .filter(group => group.key !== 'division' || isActiveDivisionManager)
@@ -215,7 +211,7 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
   const contextLabel = getUserContextLabel(user, role);
 
   useEffect(() => {
-    if (!['admin', 'homeroom_teacher', 'coordinator'].includes(activeRole)) {
+    if (!['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'].includes(activeRole)) {
       setPendingCount(0);
       return;
     }
@@ -255,19 +251,21 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
 
       {/* Bottom actions */}
       <div className="px-3 py-3 border-t border-sidebar-border space-y-0.5">
-        <Link
-          to="/profile"
-          onClick={() => setSidebarOpen(false)}
-          className={cn(
-            'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors',
-            location.pathname === '/profile'
-              ? 'bg-accent text-accent-foreground font-semibold'
-              : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
-          )}
-        >
-          <UserRound className="w-4 h-4 flex-shrink-0" />
-          <span className="text-[13px] flex-1 text-right">פרופיל</span>
-        </Link>
+        {activeRole !== 'student' && (
+          <Link
+            to="/profile"
+            onClick={() => setSidebarOpen(false)}
+            className={cn(
+              'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors',
+              location.pathname === '/profile'
+                ? 'bg-accent text-accent-foreground font-semibold'
+                : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground'
+            )}
+          >
+            <UserRound className="w-4 h-4 flex-shrink-0" />
+            <span className="text-[13px] flex-1 text-right">פרופיל</span>
+          </Link>
+        )}
         <div className={cn(
           'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors',
           darkMode 

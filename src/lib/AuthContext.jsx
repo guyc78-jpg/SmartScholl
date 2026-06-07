@@ -94,7 +94,17 @@ export const AuthProvider = ({ children }) => {
       // Now check if the user is authenticated
       setIsLoadingAuth(true);
       const currentUser = await base44.auth.me();
-      setUser(currentUser);
+      const accessRes = await base44.functions.invoke('authorizeAccess', { action: 'getAccess' });
+      const accessUser = accessRes.data.user;
+      setUser({
+        ...currentUser,
+        ...accessUser,
+        role: accessUser.role,
+        roles: accessUser.roles,
+        available_roles: accessUser.roles,
+        active_work_role: accessUser.role,
+        authorization: accessUser,
+      });
       setIsAuthenticated(true);
       setIsLoadingAuth(false);
       setAuthChecked(true);
@@ -105,7 +115,12 @@ export const AuthProvider = ({ children }) => {
       setAuthChecked(true);
       
       // If user auth fails, it might be an expired token
-      if (error.status === 401 || error.status === 403) {
+      if (error.status === 403 || error?.response?.status === 403) {
+        setAuthError({
+          type: 'access_denied',
+          message: 'המשתמש אינו מורשה להיכנס למערכת'
+        });
+      } else if (error.status === 401 || error?.response?.status === 401) {
         setAuthError({
           type: 'auth_required',
           message: 'Authentication required'

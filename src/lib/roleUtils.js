@@ -1,7 +1,9 @@
 export const ROLE_LABELS = {
+  system_admin: 'מנהל/ת מערכת',
   admin: 'מנהל/ת מערכת',
   division_manager: 'מנהל/ת חטיבה',
   homeroom_teacher: 'מחנך/ת כיתה',
+  grade_coordinator: 'רכז/ת שכבה',
   coordinator: 'רכז/ת שכבה',
   student: 'תלמיד/ה',
   parent: 'הורה',
@@ -64,9 +66,11 @@ export function getRoleLabel(role, user) {
 
 // תווית קצרה ניטרלית (ללא ״כיתה״/״שכבה״) – לשימוש לצד שם הכיתה
 const ROLE_SHORT_NEUTRAL = {
+  system_admin: 'מנהל/ת',
   admin: 'מנהל/ת',
   division_manager: 'מנהל/ת חטיבה',
   homeroom_teacher: 'מחנך/ת',
+  grade_coordinator: 'רכז/ת',
   coordinator: 'רכז/ת',
   student: 'תלמיד/ה',
   parent: 'הורה',
@@ -76,8 +80,8 @@ export function getRoleShort(role, user) {
   return ROLE_SHORT_NEUTRAL[role] || 'משתמש';
 }
 
-export const VALID_ROLES = ['admin', 'division_manager', 'homeroom_teacher', 'coordinator', 'student', 'parent'];
-export const SYSTEM_ROLE_PRIORITY = ['admin', 'division_manager', 'coordinator', 'homeroom_teacher', 'student', 'parent'];
+export const VALID_ROLES = ['system_admin', 'admin', 'division_manager', 'homeroom_teacher', 'grade_coordinator', 'coordinator', 'student', 'parent'];
+export const SYSTEM_ROLE_PRIORITY = ['system_admin', 'admin', 'division_manager', 'grade_coordinator', 'coordinator', 'homeroom_teacher', 'student', 'parent'];
 
 export function parseRoles(value) {
   if (Array.isArray(value)) return value;
@@ -133,6 +137,7 @@ export function getInitialWorkRole(user) {
   if (roles.includes('admin') && roles.includes('coordinator') && (!preferred || preferred === 'admin')) return 'coordinator';
   if (roles.includes(preferred)) return preferred;
   if (roles.includes('homeroom_teacher')) return 'homeroom_teacher';
+  if (roles.includes('grade_coordinator')) return 'grade_coordinator';
   if (roles.includes('coordinator')) return 'coordinator';
   return getSystemRole(user);
 }
@@ -154,9 +159,9 @@ export function getUserContextLabel(user, activeRole) {
     return `${getRoleShort('homeroom_teacher', user)} ${klass}`.trim();
   }
 
-  if (role === 'coordinator' && roles.includes('coordinator')) {
-    const grade = user?.profile_grade_managed || '';
-    return `${getRoleShort('coordinator', user)} ${grade}`.trim();
+  if ((role === 'grade_coordinator' || role === 'coordinator') && (roles.includes('grade_coordinator') || roles.includes('coordinator'))) {
+    const grade = user?.profile_grade_managed || user?.authorization?.scope?.gradeId || '';
+    return `${getRoleShort('grade_coordinator', user)} ${grade}`.trim();
   }
 
   return getRoleLabel(role, user);
@@ -170,9 +175,9 @@ export function getRoleHomeLabel(user, activeRole) {
     return klass ? `${getRoleShort('homeroom_teacher', user)} ${klass}` : getRoleLabel('homeroom_teacher', user);
   }
 
-  if (role === 'coordinator') {
-    const grade = user?.profile_grade_managed;
-    return grade ? `${getRoleShort('coordinator', user)} ${grade}` : getRoleLabel('coordinator', user);
+  if (role === 'grade_coordinator' || role === 'coordinator') {
+    const grade = user?.profile_grade_managed || user?.authorization?.scope?.gradeId;
+    return grade ? `${getRoleShort('grade_coordinator', user)} ${grade}` : getRoleLabel('grade_coordinator', user);
   }
 
   return getRoleLabel(role, user);

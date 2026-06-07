@@ -5,19 +5,21 @@
  */
 
 export const ROLES = {
-  ADMIN: 'admin',
+  ADMIN: 'system_admin',
   DIVISION_MANAGER: 'division_manager',
   TEACHER: 'homeroom_teacher',
-  COORDINATOR: 'coordinator',
+  COORDINATOR: 'grade_coordinator',
   STUDENT: 'student',
   PARENT: 'parent',
 };
 
 // Routes each role can access
 export const ROLE_ROUTES = {
-  admin:            ['/', '/students', '/attendance', '/class-attendance', '/schedule', '/exams', '/discipline', '/communications', '/tasks', '/announcements', '/community', '/performance', '/reports'],
+  system_admin:     ['/', '/students', '/attendance', '/class-attendance', '/schedule', '/exams', '/discipline', '/communications', '/tasks', '/announcements', '/community', '/performance', '/reports', '/users', '/classrooms', '/bell-schedule'],
+  admin:            ['/', '/students', '/attendance', '/class-attendance', '/schedule', '/exams', '/discipline', '/communications', '/tasks', '/announcements', '/community', '/performance', '/reports', '/users', '/classrooms', '/bell-schedule'],
   division_manager: ['/division', '/exams', '/reports', '/grade-monitor'],
   homeroom_teacher: ['/', '/students', '/attendance', '/class-attendance', '/schedule', '/exams', '/discipline', '/communications', '/tasks', '/announcements', '/community', '/performance', '/reports'],
+  grade_coordinator:['/', '/students', '/attendance', '/schedule', '/exams', '/discipline', '/communications', '/tasks', '/announcements', '/community', '/performance', '/reports'],
   coordinator:      ['/', '/students', '/attendance', '/schedule', '/exams', '/discipline', '/communications', '/tasks', '/announcements', '/community', '/performance', '/reports'],
   student:          ['/student-home', '/schedule', '/exams', '/announcements', '/community'],
   parent:           ['/announcements'],
@@ -25,7 +27,7 @@ export const ROLE_ROUTES = {
 
 // Which roles are "staff" (teacher-side)
 export function isStaff(role) {
-  return ['admin', 'division_manager', 'homeroom_teacher', 'coordinator'].includes(role);
+  return ['system_admin', 'admin', 'division_manager', 'homeroom_teacher', 'grade_coordinator', 'coordinator'].includes(role);
 }
 
 // Is this role a division manager?
@@ -52,5 +54,6 @@ export function defaultRoute(role) {
   if (isStudent(role)) return '/student-home';
   if (role === 'parent') return '/announcements';
   if (role === 'division_manager') return '/division';
+  if (role === 'system_admin') return '/';
   return '/';
 }

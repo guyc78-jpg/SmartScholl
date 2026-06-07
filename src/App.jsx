@@ -2,9 +2,10 @@ import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import { BrowserRouter as Router, Route, Routes, Navigate, useNavigate } from 'react-router-dom';
-import PageNotFound from './lib/PageNotFound';
+import UnauthorizedAccessLog from '@/components/auth/UnauthorizedAccessLog';
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
+import AccessDenied from '@/components/auth/AccessDenied';
 import { useState, useEffect, useRef } from 'react';
 import { seedDemoData } from '@/lib/demoData';
 import AppLayout from '@/components/layout/AppLayout';
@@ -103,13 +104,14 @@ const AuthenticatedApp = () => {
   }
 
   if (authError) {
+    if (authError.type === 'access_denied') return <AccessDenied />;
     if (authError.type === 'user_not_registered') return <UserNotRegisteredError />;
     else if (authError.type === 'auth_required') { navigateToLogin(); return null; }
   }
 
   // Onboarding gate — admin (by any approved role) always bypasses
   const onboardingStatus = user?.onboarding_status;
-  const userIsAdmin = user ? getAvailableRoles(user).includes('admin') : false;
+  const userIsAdmin = user ? (getAvailableRoles(user).includes('system_admin') || getAvailableRoles(user).includes('admin')) : false;
   const onboardingDone = user?.onboardingCompleted || onboardingStatus === 'approved';
   if (user && !userIsAdmin && !onboardingDone) {
     if (!onboardingStatus || onboardingStatus === 'pending') {
@@ -124,7 +126,7 @@ const AuthenticatedApp = () => {
   }
 
   // Gender gate — שדה חובה ראשוני לפני המשך שימוש
-  if (user && !user.profile_gender) {
+  if (user && !user.authorization && !user.profile_gender) {
     return <GenderRequiredGate user={user} onSaved={(updated) => updateCurrentUser(updated)} />;
   }
 
@@ -132,54 +134,54 @@ const AuthenticatedApp = () => {
   const approvedRoles = getAvailableRoles(user);
   const systemRole = getSystemRole(user);
   const role = effectiveWorkRole || systemRole;
+  const isSystemAdmin = ['system_admin', 'admin'].includes(role) && (approvedRoles.includes('system_admin') || approvedRoles.includes('admin'));
   const isDivisionManager = role === 'division_manager' && approvedRoles.includes('division_manager');
-  // הרשאות מוצגות ונפתחות לפי התפקיד הפעיל המדויק, לא לפי תפקידים מאושרים אחרים.
-  const staff = ['admin', 'homeroom_teacher', 'coordinator'].includes(role) && approvedRoles.includes(role);
+  // הרשאות מוצגות ונפתחות לפי role+scope מהמסד בלבד.
+  const staff = ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'].includes(role) && approvedRoles.includes(role);
   const studentRole = role === 'student' && approvedRoles.includes('student');
+  const pageRole = role === 'system_admin' ? 'admin' : role === 'grade_coordinator' ? 'coordinator' : role;
 
   const renderRoutes = () => (
     <Routes>
       {/* Staff routes */}
       {staff && <>
-        <Route path="/" element={<Dashboard user={user} role={role} />} />
-        <Route path="/students" element={<Students role={role} />} />
-        <Route path="/students/:id" element={<StudentProfile role={role} />} />
+        <Route path="/" element={<Dashboard user={user} role={pageRole} />} />
+        <Route path="/students" element={<Students role={pageRole} />} />
+        <Route path="/students/:id" element={<StudentProfile role={pageRole} />} />
         <Route path="/attendance" element={<Attendance />} />
-        <Route path="/class-attendance" element={<ClassAttendance role={role} />} />
-        <Route path="/schedule" element={<Schedule role={role} user={user} />} />
-        <Route path="/exams" element={<Exams role={role} user={user} />} />
-        <Route path="/community" element={<Community role={role} user={user} />} />
-        <Route path="/discipline" element={<Discipline role={role} />} />
-        <Route path="/performance" element={<Performance role={role} />} />
-        <Route path="/communications" element={<Communications role={role} />} />
-        <Route path="/tasks" element={<Tasks role={role} user={user} />} />
+        <Route path="/class-attendance" element={<ClassAttendance role={pageRole} />} />
+        <Route path="/schedule" element={<Schedule role={pageRole} user={user} />} />
+        <Route path="/exams" element={<Exams role={pageRole} user={user} />} />
+        <Route path="/community" element={<Community role={pageRole} user={user} />} />
+        <Route path="/discipline" element={<Discipline role={pageRole} />} />
+        <Route path="/performance" element={<Performance role={pageRole} />} />
+        <Route path="/communications" element={<Communications role={pageRole} />} />
+        <Route path="/tasks" element={<Tasks role={pageRole} user={user} />} />
         <Route path="/treatment-center" element={<TreatmentCenter />} />
-        <Route path="/announcements" element={<Announcements role={role} user={user} />} />
-        <Route path="/reports" element={<Reports role={role} />} />
-        <Route path="/profile" element={<Profile user={user} role={role} onRoleChange={setWorkRole} themePreference={themePreference} onThemePreferenceChange={setThemePreference} />} />
-        {approvedRoles.includes('admin') && (
+        <Route path="/announcements" element={<Announcements role={pageRole} user={user} />} />
+        <Route path="/reports" element={<Reports role={pageRole} />} />
+        <Route path="/profile" element={<Profile user={user} role={pageRole} onRoleChange={setWorkRole} themePreference={themePreference} onThemePreferenceChange={setThemePreference} />} />
+        {isSystemAdmin && (
           <>
             <Route path="/users" element={<UserManagement />} />
-            <Route path="/approved-staff" element={<ApprovedStaff />} />
             <Route path="/classrooms" element={<Classrooms />} />
-            <Route path="/bell-schedule" element={<BellScheduleSettings user={user} role={role} />} />
+            <Route path="/bell-schedule" element={<BellScheduleSettings user={user} role={pageRole} />} />
             <Route path="/permissions-tester" element={<PermissionsTester />} />
           </>
         )}
-        {(approvedRoles.includes('admin') || approvedRoles.includes('homeroom_teacher') || approvedRoles.includes('coordinator')) && (
+        {(isSystemAdmin || approvedRoles.includes('homeroom_teacher') || approvedRoles.includes('grade_coordinator') || approvedRoles.includes('coordinator')) && (
           <>
-            <Route path="/approvals" element={<ApprovalManagement role={role} />} />
-            <Route path="/grade-monitor" element={<GradeMonitor user={user} role={role} />} />
+            <Route path="/grade-monitor" element={<GradeMonitor user={user} role={pageRole} />} />
           </>
         )}
       </>}
 
       {/* Division manager routes */}
       {isDivisionManager && <>
-        <Route path="/division" element={<DivisionManagement user={user} role={role} />} />
-        <Route path="/division-exams" element={<DivisionExams user={user} role={role} />} />
-        <Route path="/exams" element={<DivisionExams user={user} role={role} />} />
-        <Route path="/profile" element={<Profile user={user} role={role} onRoleChange={setWorkRole} themePreference={themePreference} onThemePreferenceChange={setThemePreference} />} />
+        <Route path="/division" element={<DivisionManagement user={user} role={pageRole} />} />
+        <Route path="/division-exams" element={<DivisionExams user={user} role={pageRole} />} />
+        <Route path="/exams" element={<DivisionExams user={user} role={pageRole} />} />
+        <Route path="/profile" element={<Profile user={user} role={pageRole} onRoleChange={setWorkRole} themePreference={themePreference} onThemePreferenceChange={setThemePreference} />} />
         {!staff && <Route path="/" element={<Navigate to="/division" replace />} />}
       </>}
 
@@ -188,11 +190,6 @@ const AuthenticatedApp = () => {
       {/* Student routes */}
       {studentRole && <>
         <Route path="/student-home" element={<StudentHome user={user} />} />
-        <Route path="/schedule" element={<Schedule role={role} user={user} />} />
-        <Route path="/exams" element={<Exams role={role} user={user} />} />
-        <Route path="/announcements" element={<Announcements role={role} user={user} />} />
-        <Route path="/community" element={<Community role={role} user={user} />} />
-        <Route path="/profile" element={<Profile user={user} role={role} onRoleChange={setWorkRole} themePreference={themePreference} onThemePreferenceChange={setThemePreference} />} />
       </>}
 
       {/* Block students from any staff route — redirect to their home */}
@@ -207,7 +204,7 @@ const AuthenticatedApp = () => {
       {studentRole && <Route path="/reports/*" element={<Navigate to="/student-home" replace />} />}
       {studentRole && <Route path="/approvals/*" element={<Navigate to="/student-home" replace />} />}
       {studentRole && <Route path="/grade-monitor/*" element={<Navigate to="/student-home" replace />} />}
-      <Route path="*" element={<PageNotFound />} />
+      <Route path="*" element={<UnauthorizedAccessLog />} />
     </Routes>
   );
 

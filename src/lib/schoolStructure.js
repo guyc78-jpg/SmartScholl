@@ -17,7 +17,7 @@ export function getDivisionLabel(division) {
 
 // השכבות שמנהל/ת החטיבה מורשה/ת להן, לפי profile_division
 export function getUserDivisionGrades(user) {
-  return getDivisionGrades(user?.profile_division);
+  return getDivisionGrades(user?.profile_division || user?.authorization?.scope?.divisionType);
 }
 
 export function isGradeInUserDivision(user, grade) {
@@ -62,14 +62,18 @@ export function getUserApprovedClassId(user, fallbackClassId = '') {
 }
 
 export function isStudentInApprovedScope(student, user, role) {
-  if (role === 'admin') return true;
+  if (role === 'system_admin' || role === 'admin') return true;
   const studentGrade = normalizeGrade(student?.grade || extractGradeFromClass(student?.class_name));
   const studentClass = normalizeClassName(student?.class_name || '');
   const approvedClassId = user?.profile_class_id || '';
 
-  if (role === 'coordinator') {
+  if (role === 'grade_coordinator' || role === 'coordinator') {
     const approvedGrade = getUserApprovedGrade(user);
     return !!approvedGrade && studentGrade === approvedGrade;
+  }
+
+  if (role === 'division_manager') {
+    return isGradeInUserDivision(user, studentGrade);
   }
 
   if (role === 'homeroom_teacher') {
