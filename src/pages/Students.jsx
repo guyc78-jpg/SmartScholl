@@ -9,7 +9,7 @@ import { Card } from '@/components/ui/card';
 import StatusBadge from '@/components/ui/StatusBadge';
 import EmptyState from '@/components/ui/EmptyState';
 import PageHeader from '@/components/ui/PageHeader';
-import { Search, Plus, Upload, Users, ChevronLeft, Phone, Trash2, AlertTriangle, RefreshCw, MoreVertical } from 'lucide-react';
+import { Search, Plus, Upload, Users, ChevronLeft, Phone, Trash2, AlertTriangle, RefreshCw, MoreVertical, MessageSquare } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -33,6 +33,7 @@ import {
 } from '@/lib/schoolStructure';
 import AddStudentModal from '@/components/students/AddStudentModal';
 import ImportStudentsModal from '@/components/students/ImportStudentsModal';
+import ParentConversationDialog from '@/components/student/ParentConversationDialog';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 
 const PAGE_SIZE = 40;
@@ -76,6 +77,7 @@ export default function Students({ role }) {
   const [showAdd, setShowAdd] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [selectedConversationStudent, setSelectedConversationStudent] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
   const canDeleteAllStudents = role === 'admin' || role === 'coordinator' || role === 'homeroom_teacher';
@@ -254,16 +256,28 @@ export default function Students({ role }) {
                         </div>
                         <p className="text-xs text-muted-foreground">{student.class_name || 'כיתה י׳1'} · {student.grade || 'י'}</p>
                         <div className="flex gap-3 mt-1.5 flex-wrap flex-row-reverse justify-end">
-                          {student.phone && (
-                             <a href={`tel:${student.phone}`} className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors">
-                               <Phone className="w-3 h-3 text-primary" />{student.phone}
-                             </a>
-                           )}
-                           {student.parent1_phone && !student.phone && (
-                             <a href={`tel:${student.parent1_phone}`} className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors">
-                               <Phone className="w-3 h-3 text-primary" />{student.parent1_phone}
-                             </a>
-                           )}
+                         {student.phone && (
+                            <a href={`tel:${student.phone}`} className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors">
+                              <Phone className="w-3 h-3 text-primary" />{student.phone}
+                            </a>
+                          )}
+                          {student.parent1_phone && !student.phone && (
+                            <a href={`tel:${student.parent1_phone}`} className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors">
+                              <Phone className="w-3 h-3 text-primary" />{student.parent1_phone}
+                            </a>
+                          )}
+                          <button
+                            type="button"
+                            onClick={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              setSelectedConversationStudent(student);
+                            }}
+                            className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+                          >
+                            <MessageSquare className="w-3 h-3 text-primary" />
+                            הוסף שיחת הורה
+                          </button>
                         </div>
                         {/* Community progress */}
                         <div className="mt-3">
@@ -306,6 +320,11 @@ export default function Students({ role }) {
 
       {showAdd && <AddStudentModal classId={classId} onClose={() => setShowAdd(false)} onSuccess={() => { setShowAdd(false); loadStudents(); }} />}
       {showImport && <ImportStudentsModal classId={classId} onClose={() => setShowImport(false)} onSuccess={() => { setShowImport(false); loadStudents(); }} />}
+      <ParentConversationDialog
+        open={!!selectedConversationStudent}
+        onOpenChange={(open) => !open && setSelectedConversationStudent(null)}
+        student={selectedConversationStudent}
+      />
 
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent dir="rtl" className="text-right">
