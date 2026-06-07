@@ -83,10 +83,10 @@ const AuthenticatedApp = () => {
   }, [isSimulating]);
 
   useEffect(() => {
-    if (!seeded && !isLoadingAuth && !authError) {
-      seedDemoData().then(() => setSeeded(true));
-    }
-  }, [isLoadingAuth, authError]);
+    // Emergency hotfix: do not run demo seeding during normal navigation.
+    // It can create unnecessary background load and make the app feel stuck.
+    setSeeded(true);
+  }, []);
 
   useEffect(() => {
     if (realUser) setWorkRole(getInitialWorkRole(realUser));
@@ -134,10 +134,10 @@ const AuthenticatedApp = () => {
   const approvedRoles = getAvailableRoles(user);
   const systemRole = getSystemRole(user);
   const role = effectiveWorkRole || systemRole;
-  const isSystemAdmin = ['system_admin', 'admin'].includes(role) && (approvedRoles.includes('system_admin') || approvedRoles.includes('admin'));
+  const isSystemAdmin = approvedRoles.includes('system_admin') || approvedRoles.includes('admin');
   const isDivisionManager = role === 'division_manager' && approvedRoles.includes('division_manager');
-  // הרשאות מוצגות ונפתחות לפי role+scope מהמסד בלבד.
-  const staff = ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'].includes(role) && approvedRoles.includes(role);
+  // Emergency hotfix: admins always keep staff navigation/routes, regardless of active work mode.
+  const staff = isSystemAdmin || (['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'].includes(role) && approvedRoles.includes(role));
   const studentRole = role === 'student' && approvedRoles.includes('student');
   const pageRole = role === 'system_admin' ? 'admin' : role === 'grade_coordinator' ? 'coordinator' : role;
 

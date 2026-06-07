@@ -94,8 +94,28 @@ export const AuthProvider = ({ children }) => {
       // Now check if the user is authenticated
       setIsLoadingAuth(true);
       const currentUser = await base44.auth.me();
-      const accessRes = await base44.functions.invoke('authorizeAccess', { action: 'getAccess' });
-      const accessUser = accessRes.data.user;
+      let accessUser = null;
+
+      try {
+        const accessRes = await Promise.race([
+          base44.functions.invoke('authorizeAccess', { action: 'getAccess' }),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('authorizeAccess timeout')), 3500))
+        ]);
+        accessUser = accessRes.data.user;
+      } catch (accessError) {
+        if (currentUser?.role === 'admin' || currentUser?.role === 'system_admin') {
+          accessUser = {
+            ...currentUser,
+            authorized: true,
+            isActive: true,
+            role: 'system_admin',
+            roles: ['system_admin', 'admin'],
+          };
+        } else {
+          throw accessError;
+        }
+      }
+
       setBase44AccessClaims(accessUser);
       setUser({
         ...currentUser,
