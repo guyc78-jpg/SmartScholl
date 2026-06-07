@@ -140,9 +140,19 @@ async function recordAllowed(rawClient, entityName, record, mode = 'read') {
   if (entityName === 'Student') return studentAllowed(rawClient, claims, record);
 
   if (role === 'student') {
-    if (['AnnouncementRead', 'ExamCompletion'].includes(entityName)) return record?.student_id === claims?.student_id;
-    if (record?.student_id) return record.student_id === claims?.student_id;
+    if (record?.student_id) {
+      const student = await studentById(rawClient, record.student_id);
+      const ownRecord = await studentAllowed(rawClient, claims, student);
+      if (!ownRecord) return false;
+      if (entityName === 'ExamGradeReport') return mode === 'read' || ['דיווח תלמיד', 'דורש תיקון'].includes(record.status);
+      if (entityName === 'CommunityServiceReport') return mode === 'read' || ['ממתין לאישור', 'דורש תיקון'].includes(record.status);
+      return true;
+    }
     if (record?.class_id) return classAllowed(rawClient, claims, record.class_id);
+    return false;
+  }
+
+  if (['ExamGradeReport', 'CommunityServiceReport'].includes(entityName) && ['grade_coordinator', 'coordinator', 'division_manager'].includes(role) && mode !== 'read') {
     return false;
   }
 

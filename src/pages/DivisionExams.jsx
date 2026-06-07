@@ -11,6 +11,7 @@ import EventDetailsDialog from '@/components/exams/EventDetailsDialog';
 import SmartCalendarImportDialog from '@/components/exams/SmartCalendarImportDialog';
 import DivisionEventFormDialog from '@/components/division/DivisionEventFormDialog';
 import ConflictWarnings from '@/components/division/ConflictWarnings';
+import ExamGradeReportsPanel from '@/components/staff/ExamGradeReportsPanel';
 import { normalizeGrade, formatGrade, getUserDivisionGrades, getDivisionLabel } from '@/lib/schoolStructure';
 import { detectConflicts } from '@/lib/examConflicts';
 import { logActivity } from '@/lib/activityLogger';
@@ -20,6 +21,7 @@ const gradeOrder = ['ז', 'ח', 'ט', 'י', 'יא', 'יב'];
 export default function DivisionExams({ user, role }) {
   const [events, setEvents] = useState([]);
   const [classes, setClasses] = useState([]);
+  const [gradeReports, setGradeReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('list');
   const [offset, setOffset] = useState(0);
@@ -37,9 +39,10 @@ export default function DivisionExams({ user, role }) {
 
   async function loadData() {
     setLoading(true);
-    const [allClasses, allExams] = await Promise.all([
+    const [allClasses, allExams, reports] = await Promise.all([
       base44.entities.ClassRoom.list('grade', 500),
       base44.entities.Exam.list('-date', 1000),
+      base44.entities.ExamGradeReport.list('-updated_action_at', 500),
     ]);
     const divClasses = allClasses
       .filter(c => allowedGrades.includes(normalizeGrade(c.grade)))
@@ -58,6 +61,7 @@ export default function DivisionExams({ user, role }) {
       return grades.some(g => allowedGrades.includes(g));
     });
     setEvents(divEvents.sort((a, b) => (a.date || '').localeCompare(b.date || '')));
+    setGradeReports(reports || []);
     setLoading(false);
   }
 
@@ -183,6 +187,8 @@ export default function DivisionExams({ user, role }) {
           </Button>
         ))}
       </div>
+
+      {!loading && <ExamGradeReportsPanel reports={gradeReports} user={user} onChanged={loadData} readOnly />}
 
       {loading ? (
         <div className="flex justify-center py-16"><div className="w-8 h-8 rounded-full border-4 border-primary/20 border-t-primary animate-spin" /></div>

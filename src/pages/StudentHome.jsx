@@ -7,9 +7,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { toast } from 'sonner';
-import { Calendar, BookOpen, Megaphone, Heart, CheckSquare, Check, Clock, RotateCcw } from 'lucide-react';
+import { Calendar, Megaphone, Check } from 'lucide-react';
 import { getUserFirstName } from '@/lib/roleUtils';
 import NowNextCard from '@/components/schedule/NowNextCard';
+import { isEventRelevantForStudent } from '@/components/exams/AudienceEditor';
+import StudentExamCalendar from '@/components/student/StudentExamCalendar';
+import StudentCommunityService from '@/components/student/StudentCommunityService';
 
 export default function StudentHome({ user }) {
   const [announcements, setAnnouncements] = useState([]);
@@ -19,6 +22,8 @@ export default function StudentHome({ user }) {
   const [studentData, setStudentData] = useState(null);
   const [reads, setReads] = useState([]);
   const [examCompletions, setExamCompletions] = useState([]);
+  const [gradeReports, setGradeReports] = useState([]);
+  const [communityReports, setCommunityReports] = useState([]);
   const [celebratingExamId, setCelebratingExamId] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -34,7 +39,7 @@ export default function StudentHome({ user }) {
     setLoading(true);
     const [anns, exs, tks, slots, students] = await Promise.all([
       base44.entities.Announcement.filter({ class_id: studentClassId, is_published: true }),
-      base44.entities.Exam.filter({ class_id: studentClassId }),
+      base44.entities.Exam.list('date', 300),
       base44.entities.Task.filter({ class_id: studentClassId }),
       base44.entities.ScheduleSlot.filter({ class_id: studentClassId, day: todayDayName }),
       base44.entities.Student.filter({ class_id: studentClassId }),
@@ -43,15 +48,20 @@ export default function StudentHome({ user }) {
     const myStudent = students.find(s => s.email === user?.email || s.user_email === user?.email);
     setStudentData(myStudent || null);
 
-    const [myReads, myExamCompletions] = myStudent ? await Promise.all([
+    const [myReads, myExamCompletions, myGradeReports, myCommunityReports] = myStudent ? await Promise.all([
       base44.entities.AnnouncementRead.filter({ student_id: myStudent.id }),
-      base44.entities.ExamCompletion.filter({ student_id: myStudent.id })
-    ]) : [[], []];
+      base44.entities.ExamCompletion.filter({ student_id: myStudent.id }),
+      base44.entities.ExamGradeReport.filter({ student_id: myStudent.id }),
+      base44.entities.CommunityServiceReport.filter({ student_id: myStudent.id })
+    ]) : [[], [], [], []];
     setReads(myReads);
     setExamCompletions(myExamCompletions);
+    setGradeReports(myGradeReports.sort((a,b) => (b.updated_action_at || '').localeCompare(a.updated_action_at || '')));
+    setCommunityReports(myCommunityReports.sort((a,b) => (b.activity_date || '').localeCompare(a.activity_date || '')));
 
+    const relevantExams = (exs || []).filter(e => myStudent ? isEventRelevantForStudent(e, myStudent) : e.class_id === studentClassId);
     setAnnouncements(anns.filter(a => ['כיתתית', 'חשובה'].includes(a.type)).sort((a,b) => (b.published_at||'').localeCompare(a.published_at||'')));
-    setExams(exs.filter(e => e.date >= today).sort((a,b) => a.date.localeCompare(b.date)));
+    setExams(relevantExams.sort((a,b) => (a.date || '').localeCompare(b.date || '')));
     setTasks(tks.filter(t => t.status !== 'בוצע').slice(0, 5));
     setScheduleToday(slots.sort((a,b) => a.period - b.period));
     setLoading(false);
@@ -91,14 +101,7 @@ export default function StudentHome({ user }) {
     toast.success('כל הכבוד! המבחן סומן כבוצע');
   }
 
-  const communityPct = studentData?.community_service_goal > 0
-    ? Math.round((studentData.community_service_done / studentData.community_service_goal) * 100) : 0;
-  const completedExamCount = exams.filter(exam => examCompletions.some(item => item.exam_id === exam.id)).length;
-  const examProgressPct = exams.length ? Math.round((completedExamCount / exams.length) * 100) : 0;
-
   if (loading) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin"/></div>;
-
-  const formatDate = (d) => { const dt = new Date(d); return `${dt.getDate().toString().padStart(2,'0')}/${(dt.getMonth()+1).toString().padStart(2,'0')}`; };
 
   return (
     <div className="p-4 lg:p-6 space-y-5 text-right" dir="rtl">
@@ -132,71 +135,9 @@ export default function StudentHome({ user }) {
         </Card>
       )}
 
-      {/* Upcoming Exams */}
-      {exams.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2"><BookOpen className="w-4 h-4 text-purple-500"/>מבחנים קרובים</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="rounded-xl bg-purple-50 dark:bg-purple-900/20 p-3">
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-muted-foreground">התקדמות מבחנים</span>
-                <span className="font-bold">{completedExamCount} / {exams.length} בוצעו</span>
-              </div>
-              <div className="h-2.5 bg-white/70 dark:bg-slate-800 rounded-full overflow-hidden">
-                <div className="h-full bg-purple-500 rounded-full transition-all" style={{ width: `${examProgressPct}%` }} />
-              </div>
-            </div>
-            {exams.slice(0, 4).map(exam => {
-              const completed = examCompletions.some(item => item.exam_id === exam.id);
-              const celebrating = celebratingExamId === exam.id;
-              return (
-                <div key={exam.id} className={`relative flex flex-col sm:flex-row sm:items-center gap-3 py-2 border-b last:border-0 ${completed ? 'opacity-80' : ''}`}>
-                  {celebrating && <motion.div initial={{ scale: 0, opacity: 0 }} animate={{ scale: [0, 1.4, 1], opacity: [0, 1, 0] }} transition={{ duration: 0.8 }} className="absolute left-4 top-1 text-3xl pointer-events-none">✅</motion.div>}
-                  <div className="flex items-center gap-3 flex-1">
-                    <div className={`w-10 h-10 rounded-xl flex flex-col items-center justify-center flex-shrink-0 ${completed ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400' : 'bg-purple-50 text-purple-600 dark:bg-purple-900/20 dark:text-purple-400'}`}>
-                      <span className="text-xs font-bold">{completed ? '✓' : formatDate(exam.date)}</span>
-                    </div>
-                    <div className="flex-1">
-                      <p className={`text-sm font-medium ${completed ? 'line-through text-muted-foreground' : ''}`}>{exam.title} {completed && '✅'}</p>
-                      <p className="text-xs text-muted-foreground">{exam.subject}{exam.time ? ` · ${exam.time}` : ''}{exam.class_or_grade ? ` · ${exam.class_or_grade}` : ''}</p>
-                      {exam.material && <p className="text-xs text-muted-foreground">📚 {exam.material}</p>}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <StatusBadge status={completed ? 'בוצע' : exam.type} />
-                    <Button size="sm" variant={completed ? 'outline' : 'default'} className="h-8 text-xs gap-1.5" onClick={() => toggleExamCompletion(exam)}>
-                      {completed ? <RotateCcw className="w-3 h-3" /> : <Check className="w-3 h-3" />}
-                      {completed ? 'בטל סימון' : 'סיימתי את המבחן'}
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-      )}
+      <StudentExamCalendar exams={exams} student={studentData} user={user} reports={gradeReports} completions={examCompletions} onToggleCompletion={toggleExamCompletion} onChanged={loadData} />
 
-      {/* Community Service */}
-      {studentData && (
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2"><Heart className="w-4 h-4 text-pink-500"/>מעורבות חברתית</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex justify-between text-sm mb-2">
-              <span className="text-muted-foreground">התקדמות</span>
-              <span className="font-bold">{studentData.community_service_done || 0} / {studentData.community_service_goal || 60} שע׳ ({communityPct}%)</span>
-            </div>
-            <div className="h-3 bg-muted rounded-full overflow-hidden mb-2">
-              <div className={`h-full rounded-full ${communityPct >= 100 ? 'bg-emerald-500' : communityPct >= 50 ? 'bg-blue-500' : 'bg-red-400'}`}
-                style={{ width: `${Math.min(communityPct, 100)}%` }}/>
-            </div>
-            <StatusBadge status={studentData.community_service_status} />
-          </CardContent>
-        </Card>
-      )}
+      {studentData && <StudentCommunityService student={studentData} user={user} reports={communityReports} onChanged={loadData} />}
 
       {/* Announcements */}
       {announcements.length > 0 && (

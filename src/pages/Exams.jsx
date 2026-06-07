@@ -17,6 +17,7 @@ import SmartCalendarImportDialog from '@/components/exams/SmartCalendarImportDia
 import EventFormDialog from '@/components/exams/EventFormDialog';
 import EventDetailsDialog from '@/components/exams/EventDetailsDialog';
 import ClassTrackingPanel from '@/components/exams/ClassTrackingPanel';
+import ExamGradeReportsPanel from '@/components/staff/ExamGradeReportsPanel';
 import UpcomingEventsPanel from '@/components/exams/UpcomingEventsPanel';
 import SmartCalendarEmptyState from '@/components/exams/SmartCalendarEmptyState';
 import { isEventRelevantForStudent } from '@/components/exams/AudienceEditor';
@@ -26,6 +27,7 @@ export default function Exams({ role, user }) {
   const [events, setEvents] = useState([]);
   const [students, setStudents] = useState([]);
   const [completions, setCompletions] = useState([]);
+  const [gradeReports, setGradeReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('week');
   const [offset, setOffset] = useState(0);
@@ -42,7 +44,7 @@ export default function Exams({ role, user }) {
   const approvedRoles = getAvailableRoles(user);
   const canImport = approvedRoles.includes('admin') || approvedRoles.includes('coordinator');
   const canEdit = role !== 'student' && (approvedRoles.includes('admin') || approvedRoles.includes('coordinator') || approvedRoles.includes('homeroom_teacher'));
-  const canTrack = role !== 'student' && (approvedRoles.includes('coordinator') || approvedRoles.includes('homeroom_teacher'));
+  const canTrack = role !== 'student' && (approvedRoles.includes('coordinator') || approvedRoles.includes('grade_coordinator') || approvedRoles.includes('homeroom_teacher'));
   const isStudent = role === 'student';
   const classId = isStudent ? getStudentClassId(user, CLASS_ID) : getUserApprovedClassId(user, CLASS_ID);
   const todayIso = new Date().toISOString().split('T')[0];
@@ -51,14 +53,16 @@ export default function Exams({ role, user }) {
 
   async function loadData() {
     setLoading(true);
-    const [eventData, studentData, completionData] = await Promise.all([
+    const [eventData, studentData, completionData, reportData] = await Promise.all([
       base44.entities.Exam.filter({ class_id: classId }),
       base44.entities.Student.filter({ class_id: classId }),
-      base44.entities.ExamCompletion.list()
+      base44.entities.ExamCompletion.list(),
+      base44.entities.ExamGradeReport.list('-updated_action_at', 300)
     ]);
     setEvents((eventData || []).sort((a, b) => (a.date || '').localeCompare(b.date || '')));
     setStudents(studentData || []);
     setCompletions(completionData || []);
+    setGradeReports(reportData || []);
     setLoading(false);
   }
 
@@ -210,6 +214,7 @@ export default function Exams({ role, user }) {
       {visibleEvents.length > 0 && <UpcomingEventsPanel events={visibleEvents} todayIso={todayIso} onEventClick={setSelectedEvent} />}
 
       {showTracking && canTrack && <ClassTrackingPanel events={visibleEvents} classId={classId} todayIso={todayIso} />}
+      {canTrack && <ExamGradeReportsPanel reports={gradeReports} user={user} onChanged={loadData} readOnly={!['admin','system_admin','homeroom_teacher'].includes(role)} />}
 
       {loading ? (
         <div className="flex justify-center py-16"><div className="w-8 h-8 rounded-full border-4 border-primary/20 border-t-primary animate-spin" /></div>

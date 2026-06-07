@@ -14,12 +14,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import StatusBadge from '@/components/ui/StatusBadge';
 import PageHeader from '@/components/ui/PageHeader';
 import EmptyState from '@/components/ui/EmptyState';
+import CommunityServiceReportsPanel from '@/components/staff/CommunityServiceReportsPanel';
 import { toast } from 'sonner';
 import { Heart, Edit, AlertTriangle, TrendingUp } from 'lucide-react';
 
 export default function Community({ role = 'homeroom_teacher', user }) {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [serviceReports, setServiceReports] = useState([]);
   const [editStudent, setEditStudent] = useState(null);
   const [form, setForm] = useState({});
   const [filter, setFilter] = useState('הכל');
@@ -37,7 +39,11 @@ export default function Community({ role = 'homeroom_teacher', user }) {
   useEffect(() => { loadStudents(); }, [user?.id, role]);
   async function loadStudents() {
     setLoading(true);
-    const data = await base44.entities.Student.list();
+    const [data, reports] = await Promise.all([
+      base44.entities.Student.list(),
+      base44.entities.CommunityServiceReport.list('-updated_action_at', 500)
+    ]);
+    setServiceReports(reports || []);
     const activeStudents = data.filter(s => s.status !== 'מועבר' && s.status !== 'סיים');
     const scopedStudents = role === 'student'
       ? activeStudents.filter(s => s.class_id === classId || s.user_email === user?.email)
@@ -100,6 +106,10 @@ export default function Community({ role = 'homeroom_teacher', user }) {
           </button>
         ))}
       </div>
+
+      {!loading && ['admin','system_admin','homeroom_teacher','coordinator','grade_coordinator','division_manager'].includes(role) && (
+        <CommunityServiceReportsPanel reports={serviceReports} user={user} onChanged={loadStudents} readOnly={!['admin','system_admin','homeroom_teacher'].includes(role)} />
+      )}
 
       {loading ? <div className="flex justify-center py-12"><div className="w-7 h-7 border-4 border-primary/20 border-t-primary rounded-full animate-spin"/></div>
       : <div className="space-y-2 text-right" dir="rtl">

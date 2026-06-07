@@ -181,6 +181,7 @@ const AuthenticatedApp = () => {
         <Route path="/division" element={<DivisionManagement user={user} role={pageRole} />} />
         <Route path="/division-exams" element={<DivisionExams user={user} role={pageRole} />} />
         <Route path="/exams" element={<DivisionExams user={user} role={pageRole} />} />
+        <Route path="/community" element={<Community role={pageRole} user={user} />} />
         <Route path="/profile" element={<Profile user={user} role={pageRole} onRoleChange={setWorkRole} themePreference={themePreference} onThemePreferenceChange={setThemePreference} />} />
         {!staff && <Route path="/" element={<Navigate to="/division" replace />} />}
       </>}

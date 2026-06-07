@@ -1,0 +1,105 @@
+{
+  "name": "ExamGradeReport",
+  "type": "object",
+  "properties": {
+    "exam_id": {
+      "type": "string",
+      "description": "\u05de\u05d6\u05d4\u05d4 \u05de\u05d1\u05d7\u05df/\u05d0\u05d9\u05e8\u05d5\u05e2"
+    },
+    "exam_title": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05d4\u05de\u05d1\u05d7\u05df"
+    },
+    "exam_type": {
+      "type": "string",
+      "description": "\u05e1\u05d5\u05d2 \u05d4\u05d0\u05d9\u05e8\u05d5\u05e2"
+    },
+    "subject": {
+      "type": "string",
+      "description": "\u05de\u05e7\u05e6\u05d5\u05e2"
+    },
+    "exam_date": {
+      "type": "string",
+      "format": "date",
+      "description": "\u05ea\u05d0\u05e8\u05d9\u05da \u05d4\u05de\u05d1\u05d7\u05df"
+    },
+    "student_id": {
+      "type": "string",
+      "description": "\u05de\u05d6\u05d4\u05d4 \u05ea\u05dc\u05de\u05d9\u05d3"
+    },
+    "student_name": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05ea\u05dc\u05de\u05d9\u05d3"
+    },
+    "class_id": {
+      "type": "string",
+      "description": "\u05de\u05d6\u05d4\u05d4 \u05db\u05d9\u05ea\u05d4"
+    },
+    "reported_grade": {
+      "type": "number",
+      "description": "\u05e6\u05d9\u05d5\u05df \u05e9\u05d3\u05d5\u05d5\u05d7 \u05e2\u05dc \u05d9\u05d3\u05d9 \u05ea\u05dc\u05de\u05d9\u05d3"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "\u05d3\u05d9\u05d5\u05d5\u05d7 \u05ea\u05dc\u05de\u05d9\u05d3",
+        "\u05d0\u05d5\u05e9\u05e8",
+        "\u05d3\u05d5\u05e8\u05e9 \u05ea\u05d9\u05e7\u05d5\u05df",
+        "\u05e0\u05d3\u05d7\u05d4"
+      ],
+      "default": "\u05d3\u05d9\u05d5\u05d5\u05d7 \u05ea\u05dc\u05de\u05d9\u05d3",
+      "description": "\u05e1\u05d8\u05d8\u05d5\u05e1 \u05d0\u05d9\u05e9\u05d5\u05e8 \u05d4\u05d3\u05d9\u05d5\u05d5\u05d7"
+    },
+    "student_note": {
+      "type": "string",
+      "description": "\u05d4\u05e2\u05e8\u05ea \u05ea\u05dc\u05de\u05d9\u05d3"
+    },
+    "staff_note": {
+      "type": "string",
+      "description": "\u05d4\u05e2\u05e8\u05ea \u05e6\u05d5\u05d5\u05ea"
+    },
+    "submitted_by_name": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05d4\u05de\u05d3\u05d5\u05d5\u05d7"
+    },
+    "submitted_by_email": {
+      "type": "string",
+      "description": "\u05de\u05d9\u05d9\u05dc \u05d4\u05de\u05d3\u05d5\u05d5\u05d7"
+    },
+    "submitted_at": {
+      "type": "string",
+      "description": "\u05ea\u05d0\u05e8\u05d9\u05da \u05d5\u05e9\u05e2\u05ea \u05d3\u05d9\u05d5\u05d5\u05d7"
+    },
+    "reviewed_by_name": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05d4\u05de\u05d0\u05e9\u05e8/\u05e2\u05d5\u05e8\u05da"
+    },
+    "reviewed_by_email": {
+      "type": "string",
+      "description": "\u05de\u05d9\u05d9\u05dc \u05d4\u05de\u05d0\u05e9\u05e8/\u05e2\u05d5\u05e8\u05da"
+    },
+    "reviewed_at": {
+      "type": "string",
+      "description": "\u05ea\u05d0\u05e8\u05d9\u05da \u05d5\u05e9\u05e2\u05ea \u05d8\u05d9\u05e4\u05d5\u05dc"
+    },
+    "updated_by_name": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05de\u05e9\u05ea\u05de\u05e9 \u05e9\u05d1\u05d9\u05e6\u05e2 \u05e4\u05e2\u05d5\u05dc\u05d4 \u05d0\u05d7\u05e8\u05d5\u05e0\u05d4"
+    },
+    "updated_by_email": {
+      "type": "string",
+      "description": "\u05de\u05d9\u05d9\u05dc \u05de\u05e9\u05ea\u05de\u05e9 \u05e9\u05d1\u05d9\u05e6\u05e2 \u05e4\u05e2\u05d5\u05dc\u05d4 \u05d0\u05d7\u05e8\u05d5\u05e0\u05d4"
+    },
+    "updated_action_at": {
+      "type": "string",
+      "description": "\u05ea\u05d0\u05e8\u05d9\u05da \u05d5\u05e9\u05e2\u05ea \u05e4\u05e2\u05d5\u05dc\u05d4 \u05d0\u05d7\u05e8\u05d5\u05e0\u05d4"
+    }
+  },
+  "required": [
+    "exam_id",
+    "student_id",
+    "class_id",
+    "reported_grade",
+    "status"
+  ]
+}

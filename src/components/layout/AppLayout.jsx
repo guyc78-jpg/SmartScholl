@@ -23,6 +23,7 @@ const sidebarGroups = [
     items: [
       { path: '/division', icon: Building2, label: 'ניהול חטיבה', roles: ['division_manager'] },
       { path: '/division-exams', icon: BookOpen, label: 'לוח מבחנים חכם', roles: ['division_manager'] },
+      { path: '/community', icon: Heart, label: 'מעורבות חברתית', roles: ['division_manager'] },
     ],
   },
   {
@@ -104,6 +105,7 @@ const studentBottomNav = [
 const divisionBottomNav = [
   { path: '/division', icon: Building2, label: 'חטיבה', roles: ['division_manager'] },
   { path: '/division-exams', icon: BookOpen, label: 'לוח חכם', roles: ['division_manager'] },
+  { path: '/community', icon: Heart, label: 'מעורבות', roles: ['division_manager'] },
 ];
 
 // ── AccordionGroup ────────────────────────────────────────────────────────────
