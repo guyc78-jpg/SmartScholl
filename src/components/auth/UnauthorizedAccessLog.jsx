@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import PageNotFound from '@/lib/PageNotFound';
+import AccessDenied from '@/components/auth/AccessDenied';
 
 export default function UnauthorizedAccessLog() {
   useEffect(() => {
@@ -11,5 +11,5 @@ export default function UnauthorizedAccessLog() {
     }).catch(() => {});
   }, []);
 
-  return <PageNotFound />;
+  return <AccessDenied />;
 }

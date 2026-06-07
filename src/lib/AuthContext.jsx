@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { base44 } from '@/api/base44Client';
+import { base44, setBase44AccessClaims, clearBase44AccessClaims } from '@/api/base44Client';
 import { appParams } from '@/lib/app-params';
 import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
 
@@ -96,6 +96,7 @@ export const AuthProvider = ({ children }) => {
       const currentUser = await base44.auth.me();
       const accessRes = await base44.functions.invoke('authorizeAccess', { action: 'getAccess' });
       const accessUser = accessRes.data.user;
+      setBase44AccessClaims(accessUser);
       setUser({
         ...currentUser,
         ...accessUser,
@@ -109,6 +110,7 @@ export const AuthProvider = ({ children }) => {
       setIsLoadingAuth(false);
       setAuthChecked(true);
     } catch (error) {
+      clearBase44AccessClaims();
       console.error('User auth check failed:', error);
       setIsLoadingAuth(false);
       setIsAuthenticated(false);
@@ -134,6 +136,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = (shouldRedirect = true) => {
+    clearBase44AccessClaims();
     setUser(null);
     setIsAuthenticated(false);
     

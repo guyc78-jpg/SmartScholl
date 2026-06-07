@@ -21,7 +21,7 @@ async function writeLog(base44, { eventType, actorEmail, targetEmail, targetName
     work_role: role || '',
     work_role_label: role || '',
     details: details || '',
-    metadata: JSON.stringify(metadata),
+    metadata: JSON.stringify({ ...metadata, timestamp: new Date().toISOString() }),
     severity,
   });
 }
@@ -192,10 +192,10 @@ Deno.serve(async (req) => {
         actorEmail: normalizeEmail(user.email),
         targetEmail: normalizeEmail(user.email),
         targetName: access.claims?.fullName || user.full_name || '',
-        actionName: 'unauthorized_access',
-        role: access.claims?.role || '',
+        actionName: body.attemptedAction || body.actionName || 'unauthorized_access',
+        role: access.claims?.role || body.role || '',
         details: body.details || 'ניסיון גישה לא מורשה',
-        metadata: { path: body.path || '' },
+        metadata: { ...(body.metadata || {}), path: body.path || '' },
         severity: 'critical',
       });
       return Response.json({ success: true });

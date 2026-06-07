@@ -21,7 +21,7 @@ export const ROLE_ROUTES = {
   homeroom_teacher: ['/', '/students', '/attendance', '/class-attendance', '/schedule', '/exams', '/discipline', '/communications', '/tasks', '/announcements', '/community', '/performance', '/reports'],
   grade_coordinator:['/', '/students', '/attendance', '/schedule', '/exams', '/discipline', '/communications', '/tasks', '/announcements', '/community', '/performance', '/reports'],
   coordinator:      ['/', '/students', '/attendance', '/schedule', '/exams', '/discipline', '/communications', '/tasks', '/announcements', '/community', '/performance', '/reports'],
-  student:          ['/student-home', '/schedule', '/exams', '/announcements', '/community'],
+  student:          ['/student-home'],
   parent:           ['/announcements'],
 };
 
