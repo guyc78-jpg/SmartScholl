@@ -13,6 +13,7 @@ import NowNextCard from '@/components/schedule/NowNextCard';
 import { isEventRelevantForStudent } from '@/components/exams/AudienceEditor';
 import StudentExamCalendar from '@/components/student/StudentExamCalendar';
 import StudentCommunityService from '@/components/student/StudentCommunityService';
+import LearningAccommodationsCard from '@/components/student/LearningAccommodationsCard';
 
 export default function StudentHome({ user }) {
   const [announcements, setAnnouncements] = useState([]);
@@ -138,6 +139,8 @@ export default function StudentHome({ user }) {
       <StudentExamCalendar exams={exams} student={studentData} user={user} reports={gradeReports} completions={examCompletions} onToggleCompletion={toggleExamCompletion} onChanged={loadData} />
 
       {studentData && <StudentCommunityService student={studentData} user={user} reports={communityReports} onChanged={loadData} />}
+
+      {studentData && <LearningAccommodationsCard studentId={studentData.id} studentName={studentData.full_name} readOnly />}
 
       {/* Announcements */}
       {announcements.length > 0 && (

@@ -1,0 +1,57 @@
+{
+  "name": "StudentAccommodation",
+  "type": "object",
+  "properties": {
+    "student_id": {
+      "type": "string",
+      "description": "\u05de\u05d6\u05d4\u05d4 \u05ea\u05dc\u05de\u05d9\u05d3"
+    },
+    "student_name": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05ea\u05dc\u05de\u05d9\u05d3"
+    },
+    "class_id": {
+      "type": "string",
+      "description": "\u05de\u05d6\u05d4\u05d4 \u05db\u05d9\u05ea\u05d4"
+    },
+    "class_name": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05db\u05d9\u05ea\u05d4"
+    },
+    "grade": {
+      "type": "string",
+      "description": "\u05e9\u05db\u05d1\u05d4"
+    },
+    "accommodations": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "\u05e8\u05e9\u05d9\u05de\u05ea \u05d4\u05ea\u05d0\u05de\u05d5\u05ea \u05dc\u05d9\u05de\u05d5\u05d3\u05d9\u05d5\u05ea \u05e4\u05e2\u05d9\u05dc\u05d5\u05ea \u05d5\u05dc\u05d0 \u05e4\u05e2\u05d9\u05dc\u05d5\u05ea \u05e2\u05dd \u05e4\u05d9\u05e8\u05d5\u05d8"
+    },
+    "history": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      },
+      "description": "\u05d4\u05d9\u05e1\u05d8\u05d5\u05e8\u05d9\u05d9\u05ea \u05e9\u05d9\u05e0\u05d5\u05d9\u05d9\u05dd \u05d1\u05d4\u05ea\u05d0\u05de\u05d5\u05ea"
+    },
+    "last_updated_by_name": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05d4\u05de\u05e9\u05ea\u05de\u05e9 \u05e9\u05e2\u05e8\u05da \u05dc\u05d0\u05d7\u05e8\u05d5\u05e0\u05d4"
+    },
+    "last_updated_by_email": {
+      "type": "string",
+      "description": "\u05de\u05d9\u05d9\u05dc \u05d4\u05de\u05e9\u05ea\u05de\u05e9 \u05e9\u05e2\u05e8\u05da \u05dc\u05d0\u05d7\u05e8\u05d5\u05e0\u05d4"
+    },
+    "last_updated_at": {
+      "type": "string",
+      "description": "\u05ea\u05d0\u05e8\u05d9\u05da \u05d5\u05e9\u05e2\u05ea \u05e2\u05d3\u05db\u05d5\u05df \u05d0\u05d7\u05e8\u05d5\u05df"
+    }
+  },
+  "required": [
+    "student_id",
+    "student_name",
+    "accommodations"
+  ]
+}

@@ -33,8 +33,10 @@ import {
 } from '@/lib/schoolStructure';
 import AddStudentModal from '@/components/students/AddStudentModal';
 import ImportStudentsModal from '@/components/students/ImportStudentsModal';
+import ImportAccommodationsModal from '@/components/students/ImportAccommodationsModal';
 import ParentConversationDialog from '@/components/student/ParentConversationDialog';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
+import { ACCOMMODATION_TYPES, activeAccommodationLabels } from '@/lib/accommodations';
 
 const PAGE_SIZE = 40;
 const LOAD_TIMEOUT_MS = 15000;
@@ -45,9 +47,17 @@ const withTimeout = (promise, ms) => Promise.race([
   new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
 ]);
 
+const getDivisionGrades = (user) => {
+  const division = user?.profile_division || user?.authorization?.scope?.divisionType;
+  if (division === 'upper') return ['י', 'יא', 'יב'];
+  if (division === 'middle') return ['ז', 'ח', 'ט'];
+  return [];
+};
+
 // Build a server-side filter so we only fetch the students the user is allowed to see.
 const buildScopeFilter = (user, role) => {
   if (role === 'admin') return {};
+  if (role === 'division_manager') return getDivisionGrades(user).length ? {} : null;
   if (role === 'coordinator') {
     if (getActiveScopeMode() === 'class') {
       const homeroomClassId = getUserHomeroomClassId(user, '');
@@ -73,16 +83,33 @@ export default function Students({ role }) {
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('הכל');
+  const [accommodationFilter, setAccommodationFilter] = useState('הכל');
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [showAdd, setShowAdd] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [showAccommodationImport, setShowAccommodationImport] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedConversationStudent, setSelectedConversationStudent] = useState(null);
+  const [accommodationRecords, setAccommodationRecords] = useState({});
   const [deleting, setDeleting] = useState(false);
 
   const canDeleteAllStudents = role === 'admin' || role === 'coordinator' || role === 'homeroom_teacher';
   const scopeMode = getActiveScopeMode();
   const classId = role === 'coordinator' && scopeMode === 'class' ? getUserHomeroomClassId(user, CLASS_ID) : getUserApprovedClassId(user, CLASS_ID);
+
+  const loadAccommodationSummaries = useCallback(async (studentRows) => {
+    if (!studentRows.length) {
+      setAccommodationRecords({});
+      return;
+    }
+    const response = await base44.functions.invoke('learningAccommodations', {
+      action: 'listForStudents',
+      student_ids: studentRows.map(student => student.id),
+    });
+    const next = {};
+    for (const record of response.data.records || []) next[record.student_id] = record;
+    setAccommodationRecords(next);
+  }, []);
 
   const loadStudents = useCallback(async () => {
     setLoading(true);
@@ -103,24 +130,30 @@ export default function Students({ role }) {
           : base44.entities.Student.filter(scopeFilter, '-updated_date', 500),
         LOAD_TIMEOUT_MS
       );
-      setStudents(Array.isArray(data) ? data : []);
+      const allStudents = Array.isArray(data) ? data : [];
+      const divisionGrades = role === 'division_manager' ? getDivisionGrades(user) : [];
+      const nextStudents = divisionGrades.length ? allStudents.filter(student => divisionGrades.includes(normalizeGrade(student.grade))) : allStudents;
+      setStudents(nextStudents);
+      await loadAccommodationSummaries(nextStudents);
     } catch (e) {
       setError(e.message === 'timeout' ? 'הטעינה ארכה זמן רב מדי. נסה שוב.' : 'אירעה שגיאה בטעינת התלמידים.');
       setStudents([]);
     }
     setLoading(false);
-  }, [user, role, scopeMode]);
+  }, [user, role, scopeMode, loadAccommodationSummaries]);
 
   useEffect(() => { loadStudents(); }, [loadStudents]);
 
   // Reset pagination when search/filter changes.
-  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [search, statusFilter]);
+  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [search, statusFilter, accommodationFilter]);
 
   const filtered = useMemo(() => students.filter(s => {
     const matchSearch = formatStudentName(s).includes(search) || (s.student_number || '').includes(search);
     const matchStatus = statusFilter === 'הכל' || s.status === statusFilter;
-    return matchSearch && matchStatus;
-  }).sort(compareStudentsByLastName), [students, search, statusFilter]);
+    const labels = activeAccommodationLabels(accommodationRecords[s.id]?.accommodations || []);
+    const matchAccommodation = accommodationFilter === 'הכל' || labels.includes(accommodationFilter);
+    return matchSearch && matchStatus && matchAccommodation;
+  }).sort(compareStudentsByLastName), [students, search, statusFilter, accommodationFilter, accommodationRecords]);
 
   const visible = filtered.slice(0, visibleCount);
   const hasMore = filtered.length > visibleCount;
@@ -153,12 +186,16 @@ export default function Students({ role }) {
     <div className="p-4 lg:p-6 space-y-5 text-right" dir="rtl">
       <PageHeader
         title="תלמידים"
-        subtitle={`${students.length} תלמידים ${role === 'coordinator' && scopeMode !== 'class' ? `בשכבה ${getUserApprovedGrade(user)}` : `בכיתה ${getUserApprovedClass(user) || 'שלי'}`}`}
+        subtitle={`${students.length} תלמידים ${role === 'division_manager' ? 'בחטיבה' : role === 'coordinator' && scopeMode !== 'class' ? `בשכבה ${getUserApprovedGrade(user)}` : `בכיתה ${getUserApprovedClass(user) || 'שלי'}`}`}
         actions={
           <>
             <Button variant="outline" size="sm" className="gap-2" onClick={() => setShowImport(true)}>
               <Upload className="w-4 h-4" />
               <span className="hidden sm:inline">ייבוא מאקסל</span>
+            </Button>
+            <Button variant="outline" size="sm" className="gap-2" onClick={() => setShowAccommodationImport(true)}>
+              <Upload className="w-4 h-4" />
+              <span className="hidden sm:inline">ייבוא התאמות</span>
             </Button>
             <Button size="sm" className="gap-2" onClick={() => setShowAdd(true)}>
               <Plus className="w-4 h-4" />
@@ -205,6 +242,17 @@ export default function Students({ role }) {
           <SelectContent>
             {['הכל', 'פעיל', 'דורש מעקב', 'מועבר', 'סיים'].map(s => (
               <SelectItem key={s} value={s}>{s}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={accommodationFilter} onValueChange={setAccommodationFilter}>
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="סינון התאמות" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="הכל">כל ההתאמות</SelectItem>
+            {ACCOMMODATION_TYPES.map(item => (
+              <SelectItem key={item.key} value={item.label}>{item.label}</SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -292,6 +340,14 @@ export default function Students({ role }) {
                             />
                           </div>
                         </div>
+                        {/* Learning accommodations */}
+                        {activeAccommodationLabels(accommodationRecords[student.id]?.accommodations || []).length > 0 && (
+                          <div className="flex gap-1 flex-wrap mt-2 flex-row-reverse justify-end">
+                            {activeAccommodationLabels(accommodationRecords[student.id]?.accommodations || []).slice(0, 3).map(label => (
+                              <span key={label} className="text-[10px] bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-900/40 px-2 py-0.5 rounded-full">{label}</span>
+                            ))}
+                          </div>
+                        )}
                         {/* Tags */}
                         {student.tags?.length > 0 && (
                           <div className="flex gap-1 flex-wrap mt-2 flex-row-reverse justify-end">
@@ -320,6 +376,7 @@ export default function Students({ role }) {
 
       {showAdd && <AddStudentModal classId={classId} onClose={() => setShowAdd(false)} onSuccess={() => { setShowAdd(false); loadStudents(); }} />}
       {showImport && <ImportStudentsModal classId={classId} onClose={() => setShowImport(false)} onSuccess={() => { setShowImport(false); loadStudents(); }} />}
+      {showAccommodationImport && <ImportAccommodationsModal onClose={() => setShowAccommodationImport(false)} onSuccess={() => { setShowAccommodationImport(false); loadStudents(); }} />}
       <ParentConversationDialog
         open={!!selectedConversationStudent}
         onOpenChange={(open) => !open && setSelectedConversationStudent(null)}

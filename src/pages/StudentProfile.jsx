@@ -16,6 +16,7 @@ import ParentContactLog from '@/components/student/ParentContactLog';
 import GrowthReport from '@/components/student/GrowthReport';
 import ParentDetailsCard from '@/components/student/ParentDetailsCard';
 import FamilySensitiveInfoCard from '@/components/student/FamilySensitiveInfoCard';
+import LearningAccommodationsCard from '@/components/student/LearningAccommodationsCard';
 import { CLASS_ID } from '@/lib/demoData';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/AuthContext';
@@ -261,6 +262,8 @@ export default function StudentProfile({ role }) {
               canEdit={canAccessSensitiveFamilyInfo}
             />
           )}
+
+          <LearningAccommodationsCard studentId={studentId} studentName={studentDisplayName} />
 
           <GrowthReport studentId={studentId} studentName={studentDisplayName} />
 
