@@ -87,6 +87,9 @@ async function classAllowed(rawClient, claims, classIdOrName) {
     return classIdOrName === approvedId || normalize(classIdOrName) === normalize(approvedName);
   }
 
+  const coordinatorHomeroomId = claims?.scope?.homeroomClassId || claims?.homeroomClassId || claims?.profile_homeroom_class_id;
+  if ((role === 'grade_coordinator' || role === 'coordinator') && coordinatorHomeroomId && classIdOrName === coordinatorHomeroomId) return true;
+
   const grade = await classGrade(rawClient, classIdOrName);
   if (!grade) return false;
   if (role === 'grade_coordinator' || role === 'coordinator') {
@@ -152,7 +155,7 @@ async function recordAllowed(rawClient, entityName, record, mode = 'read') {
     return false;
   }
 
-  if (['ExamGradeReport', 'CommunityServiceReport'].includes(entityName) && ['grade_coordinator', 'coordinator', 'division_manager'].includes(role) && mode !== 'read') {
+  if (['ExamGradeReport', 'CommunityServiceReport'].includes(entityName) && role === 'division_manager' && mode !== 'read') {
     return false;
   }
 

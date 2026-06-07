@@ -27,13 +27,14 @@ const emptyForm = {
   role: 'homeroom_teacher',
   classId: '',
   gradeId: '',
+  homeroomClassId: '',
   divisionType: 'upper',
   isActive: true,
 };
 
 function scopeFromForm(form) {
   if (form.role === 'homeroom_teacher') return { classId: form.classId };
-  if (form.role === 'grade_coordinator') return { gradeId: form.gradeId };
+  if (form.role === 'grade_coordinator') return { gradeId: form.gradeId, homeroomClassId: form.homeroomClassId || '' };
   if (form.role === 'division_manager') return { divisionType: form.divisionType };
   return null;
 }
@@ -47,6 +48,7 @@ function formFromUser(user) {
     role: user.role || 'homeroom_teacher',
     classId: scope.classId || '',
     gradeId: scope.gradeId || '',
+    homeroomClassId: user.homeroomClassId || scope.homeroomClassId || '',
     divisionType: scope.divisionType || 'upper',
     isActive: user.isActive !== false,
   };
@@ -55,7 +57,10 @@ function formFromUser(user) {
 function scopeLabel(user) {
   const scope = user.scope || {};
   if (user.role === 'homeroom_teacher') return scope.classId || 'לא הוגדרה כיתה';
-  if (user.role === 'grade_coordinator') return scope.gradeId ? `שכבה ${formatGrade(scope.gradeId)}` : 'לא הוגדרה שכבה';
+  if (user.role === 'grade_coordinator') {
+    const gradeLabel = scope.gradeId ? `שכבה ${formatGrade(scope.gradeId)}` : 'לא הוגדרה שכבה';
+    return (user.homeroomClassId || scope.homeroomClassId) ? `${gradeLabel} · כיתת חינוך משויכת` : gradeLabel;
+  }
   if (user.role === 'division_manager') return DIVISIONS[scope.divisionType]?.label || 'לא הוגדרה חטיבה';
   return 'גישה מלאה';
 }
@@ -118,6 +123,7 @@ export default function UserManagement() {
           email: form.email.trim(),
           role: form.role,
           scope,
+          homeroomClassId: form.role === 'grade_coordinator' ? form.homeroomClassId : '',
           isActive: form.isActive,
         },
       });
@@ -226,14 +232,27 @@ export default function UserManagement() {
             )}
 
             {form.role === 'grade_coordinator' && (
-              <div className="space-y-2">
-                <Label>שכבה</Label>
-                <Select value={form.gradeId} onValueChange={(value) => setForm(prev => ({ ...prev, gradeId: value }))}>
-                  <SelectTrigger><SelectValue placeholder="בחר/י שכבה" /></SelectTrigger>
-                  <SelectContent dir="rtl">
-                    {GRADES.map(grade => <SelectItem key={grade} value={grade}>{formatGrade(grade)}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+              <div className="space-y-3" dir="rtl">
+                <div className="space-y-2">
+                  <Label>שכבה</Label>
+                  <Select value={form.gradeId} onValueChange={(value) => setForm(prev => ({ ...prev, gradeId: value }))}>
+                    <SelectTrigger><SelectValue placeholder="בחר/י שכבה" /></SelectTrigger>
+                    <SelectContent dir="rtl">
+                      {GRADES.map(grade => <SelectItem key={grade} value={grade}>{formatGrade(grade)}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>כיתת חינוך אופציונלית</Label>
+                  <Select value={form.homeroomClassId || 'none'} onValueChange={(value) => setForm(prev => ({ ...prev, homeroomClassId: value === 'none' ? '' : value }))}>
+                    <SelectTrigger><SelectValue placeholder="בחר/י כיתה" /></SelectTrigger>
+                    <SelectContent dir="rtl">
+                      <SelectItem value="none">ללא כיתת חינוך</SelectItem>
+                      {sortedClasses.map(item => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground text-right">אם תוגדר כיתה, הרכז/ת יקבל/תקבל גם אזור “הכיתה שלי”.</p>
+                </div>
               </div>
             )}
 

@@ -27,6 +27,8 @@ import {
   getUserApprovedClass,
   getUserApprovedGrade,
   getUserApprovedClassId,
+  getUserHomeroomClassId,
+  getActiveScopeMode,
   normalizeGrade,
 } from '@/lib/schoolStructure';
 import AddStudentModal from '@/components/students/AddStudentModal';
@@ -46,6 +48,10 @@ const withTimeout = (promise, ms) => Promise.race([
 const buildScopeFilter = (user, role) => {
   if (role === 'admin') return {};
   if (role === 'coordinator') {
+    if (getActiveScopeMode() === 'class') {
+      const homeroomClassId = getUserHomeroomClassId(user, '');
+      return homeroomClassId ? { class_id: homeroomClassId } : null;
+    }
     const grade = getUserApprovedGrade(user);
     return grade ? { grade: normalizeGrade(grade) } : null;
   }
@@ -73,7 +79,8 @@ export default function Students({ role }) {
   const [deleting, setDeleting] = useState(false);
 
   const canDeleteAllStudents = role === 'admin' || role === 'coordinator' || role === 'homeroom_teacher';
-  const classId = getUserApprovedClassId(user, CLASS_ID);
+  const scopeMode = getActiveScopeMode();
+  const classId = role === 'coordinator' && scopeMode === 'class' ? getUserHomeroomClassId(user, CLASS_ID) : getUserApprovedClassId(user, CLASS_ID);
 
   const loadStudents = useCallback(async () => {
     setLoading(true);
@@ -100,7 +107,7 @@ export default function Students({ role }) {
       setStudents([]);
     }
     setLoading(false);
-  }, [user, role]);
+  }, [user, role, scopeMode]);
 
   useEffect(() => { loadStudents(); }, [loadStudents]);
 
@@ -144,7 +151,7 @@ export default function Students({ role }) {
     <div className="p-4 lg:p-6 space-y-5 text-right" dir="rtl">
       <PageHeader
         title="תלמידים"
-        subtitle={`${students.length} תלמידים ${role === 'coordinator' ? `בשכבה ${getUserApprovedGrade(user)}` : `בכיתה ${getUserApprovedClass(user) || ''}`}`}
+        subtitle={`${students.length} תלמידים ${role === 'coordinator' && scopeMode !== 'class' ? `בשכבה ${getUserApprovedGrade(user)}` : `בכיתה ${getUserApprovedClass(user) || 'שלי'}`}`}
         actions={
           <>
             <Button variant="outline" size="sm" className="gap-2" onClick={() => setShowImport(true)}>

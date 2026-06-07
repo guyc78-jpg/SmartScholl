@@ -214,7 +214,7 @@ export default function Exams({ role, user }) {
       {visibleEvents.length > 0 && <UpcomingEventsPanel events={visibleEvents} todayIso={todayIso} onEventClick={setSelectedEvent} />}
 
       {showTracking && canTrack && <ClassTrackingPanel events={visibleEvents} classId={classId} todayIso={todayIso} />}
-      {canTrack && <ExamGradeReportsPanel reports={gradeReports} user={user} onChanged={loadData} readOnly={!['admin','system_admin','homeroom_teacher'].includes(role)} />}
+      {canTrack && <ExamGradeReportsPanel reports={gradeReports} user={user} onChanged={loadData} readOnly={!['admin','system_admin','homeroom_teacher','coordinator','grade_coordinator'].includes(role)} />}
 
       {loading ? (
         <div className="flex justify-center py-16"><div className="w-8 h-8 rounded-full border-4 border-primary/20 border-t-primary animate-spin" /></div>

@@ -16,8 +16,12 @@ import EmptyState from '@/components/ui/EmptyState';
 import { toast } from 'sonner';
 import { Shield, Plus, Edit, Trash2, Filter } from 'lucide-react';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
+import { useAuth } from '@/lib/AuthContext';
+import { getUserHomeroomClassId, getUserApprovedClassId } from '@/lib/schoolStructure';
 
 export default function Discipline({ role = 'homeroom_teacher' }) {
+  const { user } = useAuth();
+  const classId = role === 'coordinator' ? getUserHomeroomClassId(user, CLASS_ID) : getUserApprovedClassId(user, CLASS_ID);
   const [events, setEvents] = useState([]);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -31,8 +35,8 @@ export default function Discipline({ role = 'homeroom_teacher' }) {
   async function loadData() {
     setLoading(true);
     const [evs, sts] = await Promise.all([
-      base44.entities.DisciplineEvent.filter({ class_id: CLASS_ID }),
-      base44.entities.Student.filter({ class_id: CLASS_ID }),
+      base44.entities.DisciplineEvent.filter({ class_id: classId }),
+      base44.entities.Student.filter({ class_id: classId }),
     ]);
     setEvents(evs.sort((a,b) => b.date.localeCompare(a.date)));
     setStudents(sts);
@@ -46,7 +50,7 @@ export default function Discipline({ role = 'homeroom_teacher' }) {
   async function handleSave() {
     if (!form.student_id || !form.description) { toast.error('יש למלא תלמיד ותיאור'); return; }
     const student = students.find(s => s.id === form.student_id);
-    const data = { ...form, student_name: student?.full_name, class_id: CLASS_ID };
+    const data = { ...form, student_name: student?.full_name, class_id: classId };
     try {
       if (editEvent) { await base44.entities.DisciplineEvent.update(editEvent.id, data); toast.success('עודכן'); }
       else { await base44.entities.DisciplineEvent.create(data); toast.success('אירוע תועד!'); }

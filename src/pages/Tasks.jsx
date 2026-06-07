@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { CLASS_ID } from '@/lib/demoData';
-import { getUserApprovedClassId } from '@/lib/schoolStructure';
+import { getUserApprovedClassId, getUserHomeroomClassId } from '@/lib/schoolStructure';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -26,7 +26,7 @@ export default function Tasks({ role = 'homeroom_teacher', user }) {
   const [statusFilter, setStatusFilter] = useState('הכל');
   const today = new Date().toISOString().split('T')[0];
   const [form, setForm] = useState({ student_id: '', student_name: '', title: '', description: '', due_date: today, priority: 'בינונית', status: 'לביצוע', category: 'כללי' });
-  const classId = getUserApprovedClassId(user, CLASS_ID);
+  const classId = role === 'coordinator' ? getUserHomeroomClassId(user, CLASS_ID) : getUserApprovedClassId(user, CLASS_ID);
 
   useEffect(() => { loadData(); }, []);
   async function loadData() {

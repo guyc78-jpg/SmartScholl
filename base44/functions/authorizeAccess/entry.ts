@@ -35,8 +35,10 @@ function validateScope(role, scope = {}) {
 }
 
 function buildClaimsFromApprovedUser(record) {
-  const scope = record.scope || {};
   const role = record.role;
+  const scope = role === 'grade_coordinator'
+    ? { ...(record.scope || {}), homeroomClassId: record.homeroomClassId || record.scope?.homeroomClassId || '' }
+    : (record.scope || {});
   return {
     authorized: true,
     source: 'approved_user',
@@ -48,6 +50,8 @@ function buildClaimsFromApprovedUser(record) {
     isActive: record.isActive !== false,
     profile_full_name: record.fullName,
     profile_class_id: role === 'homeroom_teacher' ? scope.classId || '' : '',
+    profile_homeroom_class_id: role === 'grade_coordinator' ? scope.homeroomClassId || '' : '',
+    homeroomClassId: role === 'grade_coordinator' ? scope.homeroomClassId || '' : '',
     profile_grade_managed: role === 'grade_coordinator' ? normalizeGrade(scope.gradeId || '') : '',
     profile_division: role === 'division_manager' ? scope.divisionType || '' : '',
     onboarding_status: 'approved',
@@ -224,6 +228,7 @@ Deno.serve(async (req) => {
       const email = normalizeEmail(record.email);
       const role = record.role;
       const scope = role === 'system_admin' ? null : (record.scope || {});
+      const homeroomClassId = role === 'grade_coordinator' ? (record.homeroomClassId || scope?.homeroomClassId || '') : '';
       if (!email || !record.fullName || !VALID_STAFF_ROLES.includes(role) || !validateScope(role, scope || {})) {
         return Response.json({ error: 'Invalid approved user details' }, { status: 400 });
       }
@@ -232,7 +237,8 @@ Deno.serve(async (req) => {
         fullName: String(record.fullName).trim(),
         email,
         role,
-        scope,
+        scope: role === 'grade_coordinator' ? { ...scope, homeroomClassId } : scope,
+        homeroomClassId,
         isActive: record.isActive !== false,
       };
 

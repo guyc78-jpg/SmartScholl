@@ -14,10 +14,14 @@ import EmptyState from '@/components/ui/EmptyState';
 import { toast } from 'sonner';
 import { MessageSquare, Plus, Edit, Trash2, Phone, Mail, Video } from 'lucide-react';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
+import { useAuth } from '@/lib/AuthContext';
+import { getUserHomeroomClassId, getUserApprovedClassId } from '@/lib/schoolStructure';
 
 const typeIcons = { 'שיחה טלפונית': Phone, 'פגישה': MessageSquare, 'מייל': Mail, 'הודעה': MessageSquare, 'שיחת זום': Video };
 
 export default function Communications({ role = 'homeroom_teacher' }) {
+  const { user } = useAuth();
+  const classId = role === 'coordinator' ? getUserHomeroomClassId(user, CLASS_ID) : getUserApprovedClassId(user, CLASS_ID);
   const [comms, setComms] = useState([]);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,8 +34,8 @@ export default function Communications({ role = 'homeroom_teacher' }) {
   async function loadData() {
     setLoading(true);
     const [cms, sts] = await Promise.all([
-      base44.entities.Communication.filter({ class_id: CLASS_ID }),
-      base44.entities.Student.filter({ class_id: CLASS_ID }),
+      base44.entities.Communication.filter({ class_id: classId }),
+      base44.entities.Student.filter({ class_id: classId }),
     ]);
     setComms(cms.sort((a,b) => b.date.localeCompare(a.date)));
     setStudents(sts);
@@ -45,7 +49,7 @@ export default function Communications({ role = 'homeroom_teacher' }) {
   async function handleSave() {
     if (!form.student_id || !form.summary) { toast.error('יש לבחור תלמיד ולמלא סיכום'); return; }
     const student = students.find(s => s.id === form.student_id);
-    const data = { ...form, student_name: student?.full_name, class_id: CLASS_ID };
+    const data = { ...form, student_name: student?.full_name, class_id: classId };
     try {
       if (editComm) { await base44.entities.Communication.update(editComm.id, data); toast.success('עודכן'); }
       else { await base44.entities.Communication.create(data); toast.success('שיחה תועדה!'); }

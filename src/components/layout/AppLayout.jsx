@@ -13,6 +13,7 @@ import {
 import { cn } from '@/lib/utils';
 import { getAvailableRoles, getUserContextLabel, getUserDisplayName } from '@/lib/roleUtils';
 import { getDashboardLabel } from '@/lib/dashboardLabels';
+import { coordinatorHasHomeroom } from '@/lib/schoolStructure';
 
 // ── Accordion nav groups ──────────────────────────────────────────────────────
 const sidebarGroups = [
@@ -108,10 +109,40 @@ const divisionBottomNav = [
   { path: '/community', icon: Heart, label: 'מעורבות', roles: ['division_manager'] },
 ];
 
+const coordinatorDualScopeGroups = [
+  {
+    key: 'my-class',
+    title: 'הכיתה שלי',
+    icon: UserCheck,
+    items: [
+      { path: '/students?scope=class', icon: Users, label: 'תלמידי הכיתה', roles: ['grade_coordinator', 'coordinator'] },
+      { path: '/class-attendance?scope=class', icon: CalendarCheck, label: 'מעקב נוכחות', roles: ['grade_coordinator', 'coordinator'] },
+      { path: '/tasks?scope=class', icon: ClipboardList, label: 'משימות', roles: ['grade_coordinator', 'coordinator'] },
+      { path: '/communications?scope=class', icon: MessageSquare, label: 'שיחות הורים', roles: ['grade_coordinator', 'coordinator'] },
+      { path: '/discipline?scope=class', icon: AlertTriangle, label: 'משמעת', roles: ['grade_coordinator', 'coordinator'] },
+      { path: '/community?scope=class', icon: Heart, label: 'מעורבות חברתית', roles: ['grade_coordinator', 'coordinator'] },
+    ],
+  },
+  {
+    key: 'my-grade',
+    title: 'השכבה שלי',
+    icon: GraduationCap,
+    items: [
+      { path: '/students?scope=grade', icon: Users, label: 'תלמידי השכבה', roles: ['grade_coordinator', 'coordinator'] },
+      { path: '/exams?scope=grade', icon: BookOpen, label: 'מבחנים ואירועים', roles: ['grade_coordinator', 'coordinator'] },
+      { path: '/community?scope=grade', icon: Heart, label: 'מעורבות חברתית', roles: ['grade_coordinator', 'coordinator'] },
+      { path: '/performance?scope=grade', icon: GraduationCap, label: 'הערכות', roles: ['grade_coordinator', 'coordinator'] },
+      { path: '/reports?scope=grade', icon: BarChart2, label: 'דוחות', roles: ['grade_coordinator', 'coordinator'] },
+      { path: '/grade-monitor?scope=grade', icon: GraduationCap, label: 'מעקב שכבה', roles: ['grade_coordinator', 'coordinator'] },
+    ],
+  },
+];
+
 // ── AccordionGroup ────────────────────────────────────────────────────────────
 function AccordionGroup({ group, role, pendingCount, location, onNavigate }) {
   const [open, setOpen] = useState(false);
-  const hasActive = group.items.some(item => location.pathname === item.path);
+  const currentPath = `${location.pathname}${location.search}`;
+  const hasActive = group.items.some(item => currentPath === item.path || (!item.path.includes('?') && location.pathname === item.path));
 
   const GroupIcon = group.icon;
 
@@ -152,12 +183,12 @@ function AccordionGroup({ group, role, pendingCount, location, onNavigate }) {
           >
             <div className="pe-0 ps-3 space-y-0.5 pb-1 border-e-2 border-sidebar-border me-1">
               {group.items.map(item => {
-                const isActive = location.pathname === item.path;
+                const isActive = currentPath === item.path || (!item.path.includes('?') && location.pathname === item.path);
                 const itemLabel = item.dynamicLabel ? getDashboardLabel(role) : item.label;
                 const badge = item.path === '/approvals' && pendingCount > 0 ? pendingCount : null;
                 return (
                   <Link
-                    key={item.path}
+                    key={`${group.key}:${item.path}`}
                     to={item.path}
                     onClick={onNavigate}
                     className={cn(
@@ -201,7 +232,15 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
   const isApprovedAdmin = approvedRoles.includes('system_admin') || approvedRoles.includes('admin');
   const canAccess = (item) => item.roles.includes(activeRole) || (isApprovedAdmin && (item.roles.includes('system_admin') || item.roles.includes('admin')));
 
-  const navGroups = sidebarGroups
+  const hasCoordinatorClassScope = ['grade_coordinator', 'coordinator'].includes(activeRole) && coordinatorHasHomeroom(user);
+  const sidebarSource = hasCoordinatorClassScope
+    ? [
+        ...coordinatorDualScopeGroups,
+        ...sidebarGroups.filter(group => !['daily', 'students', 'communication', 'reports'].includes(group.key)),
+      ]
+    : sidebarGroups;
+
+  const navGroups = sidebarSource
     .filter(group => group.key !== 'division' || isActiveDivisionManager)
     .filter(group => !group.adminOnly || isApprovedAdmin)
     .map(group => ({ ...group, items: group.items.filter(canAccess) }))

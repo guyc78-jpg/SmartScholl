@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { CLASS_ID } from '@/lib/demoData';
 import { getStudentClassId } from '@/lib/studentProfile';
-import { getUserApprovedClassId, isStudentInApprovedScope } from '@/lib/schoolStructure';
+import { getUserApprovedClassId, isStudentInApprovedScope, getActiveScopeMode } from '@/lib/schoolStructure';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -25,6 +25,7 @@ export default function Community({ role = 'homeroom_teacher', user }) {
   const [editStudent, setEditStudent] = useState(null);
   const [form, setForm] = useState({});
   const [filter, setFilter] = useState('הכל');
+  const scopeMode = getActiveScopeMode();
   const classId = role === 'student' ? getStudentClassId(user, CLASS_ID) : getUserApprovedClassId(user, CLASS_ID);
 
   const withCommunityDefaults = (student) => ({
@@ -36,18 +37,19 @@ export default function Community({ role = 'homeroom_teacher', user }) {
     community_service_status: student.community_service_status || 'לא התחיל',
   });
 
-  useEffect(() => { loadStudents(); }, [user?.id, role]);
+  useEffect(() => { loadStudents(); }, [user?.id, role, scopeMode]);
   async function loadStudents() {
     setLoading(true);
     const [data, reports] = await Promise.all([
       base44.entities.Student.list(),
       base44.entities.CommunityServiceReport.list('-updated_action_at', 500)
     ]);
-    setServiceReports(reports || []);
     const activeStudents = data.filter(s => s.status !== 'מועבר' && s.status !== 'סיים');
     const scopedStudents = role === 'student'
       ? activeStudents.filter(s => s.class_id === classId || s.user_email === user?.email)
       : activeStudents.filter(s => isStudentInApprovedScope(s, user, role));
+    const scopedStudentIds = new Set(scopedStudents.map(s => s.id));
+    setServiceReports((reports || []).filter(report => scopedStudentIds.has(report.student_id)));
     setStudents(scopedStudents.map(withCommunityDefaults).sort(compareStudentsByLastName));
     setLoading(false);
   }
@@ -108,7 +110,7 @@ export default function Community({ role = 'homeroom_teacher', user }) {
       </div>
 
       {!loading && ['admin','system_admin','homeroom_teacher','coordinator','grade_coordinator','division_manager'].includes(role) && (
-        <CommunityServiceReportsPanel reports={serviceReports} user={user} onChanged={loadStudents} readOnly={!['admin','system_admin','homeroom_teacher'].includes(role)} />
+        <CommunityServiceReportsPanel reports={serviceReports} user={user} onChanged={loadStudents} readOnly={!['admin','system_admin','homeroom_teacher','coordinator','grade_coordinator'].includes(role)} />
       )}
 
       {loading ? <div className="flex justify-center py-12"><div className="w-7 h-7 border-4 border-primary/20 border-t-primary rounded-full animate-spin"/></div>
@@ -144,7 +146,7 @@ export default function Community({ role = 'homeroom_teacher', user }) {
                         {s.community_service_place && <span>· {s.community_service_place}</span>}
                       </div>
                     </div>
-                    {['admin','homeroom_teacher','coordinator'].includes(role) && (
+                    {['admin','system_admin','homeroom_teacher','coordinator','grade_coordinator'].includes(role) && (
                       <Button variant="ghost" size="icon" className="w-8 h-8 flex-shrink-0" onClick={() => openEdit(s)}>
                         <Edit className="w-4 h-4"/>
                       </Button>
