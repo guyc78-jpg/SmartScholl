@@ -9,6 +9,10 @@ const normalizeEmail = (value = '') => String(value).trim().toLowerCase();
 
 export function setBase44AccessClaims(claims) {
   claimsCache = claims || null;
+  // Reset per-request caches whenever the active user/claims change,
+  // so data from a previous session never leaks into authorization checks.
+  classCache.rows = null;
+  studentCache.clear();
   if (typeof window !== 'undefined') {
     if (claimsCache) sessionStorage.setItem(CLAIMS_KEY, JSON.stringify(claimsCache));
     else sessionStorage.removeItem(CLAIMS_KEY);
@@ -74,6 +78,27 @@ async function studentById(rawClient, studentId) {
   const student = rows?.[0] || null;
   studentCache.set(studentId, student);
   return student;
+}
+
+// Pre-load every student referenced by a batch of rows in as few calls as
+// possible, so per-row checks read from cache instead of firing N+1 requests.
+async function preloadStudents(rawClient, rows) {
+  const missing = new Set();
+  for (const row of rows || []) {
+    const id = row?.student_id;
+    if (id && !studentCache.has(id)) missing.add(id);
+  }
+  if (missing.size === 0) return;
+
+  // One bulk fetch of all classmates is far cheaper than one request per id.
+  // Cache by id; any id still missing afterwards is marked null (not found).
+  const all = await rawClient.entities.Student.list('-updated_date', 1000).catch(() => []);
+  for (const student of all || []) {
+    if (student?.id) studentCache.set(student.id, student);
+  }
+  for (const id of missing) {
+    if (!studentCache.has(id)) studentCache.set(id, null);
+  }
 }
 
 async function classAllowed(rawClient, claims, classIdOrName) {
@@ -182,11 +207,21 @@ async function recordAllowed(rawClient, entityName, record, mode = 'read') {
 }
 
 async function filterRecords(rawClient, entityName, rows) {
-  const allowed = [];
-  for (const row of rows || []) {
-    if (await recordAllowed(rawClient, entityName, row, 'read')) allowed.push(row);
-  }
-  return allowed;
+  if (!Array.isArray(rows) || rows.length === 0) return rows || [];
+
+  const claims = getClaims();
+  // Admins see everything — skip all per-row work entirely.
+  if (isAdmin(claims)) return rows;
+
+  // Warm caches once for the whole batch to avoid N+1 network calls,
+  // then evaluate every row's permission in parallel.
+  if (entityName !== 'Student') await preloadStudents(rawClient, rows);
+  if (!classCache.rows) await getClasses(rawClient).catch(() => {});
+
+  const decisions = await Promise.all(
+    rows.map(row => recordAllowed(rawClient, entityName, row, 'read').catch(() => false))
+  );
+  return rows.filter((_, i) => decisions[i]);
 }
 
 async function existingRecord(rawClient, entityName, id) {
