@@ -45,7 +45,7 @@ export default function AttendanceExceptionsDialog({ open, onOpenChange, records
   const sortedRecords = [...records].sort((a, b) => (a.student_name || '').localeCompare(b.student_name || '', 'he'));
 
   return (
-    <div className="fixed inset-0 z-50" dir="rtl" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-[9999]" dir="rtl" role="dialog" aria-modal="true">
       <button
         className="absolute inset-0 bg-black/50 cursor-default"
         onClick={() => onOpenChange(false)}
@@ -53,13 +53,13 @@ export default function AttendanceExceptionsDialog({ open, onOpenChange, records
         type="button"
       />
 
-      <div className="absolute inset-x-0 bottom-0 flex justify-center px-0 sm:px-4 pointer-events-none">
+      <div className="absolute inset-x-0 bottom-[var(--app-mobile-overlay-bottom-space)] flex justify-center px-0 sm:px-4 pointer-events-none">
         <div
           className="pointer-events-auto w-full sm:max-w-2xl flex flex-col rounded-t-3xl sm:rounded-3xl bg-card border border-border shadow-2xl text-right overflow-hidden"
           dir="rtl"
           style={{
             height: 'min(85dvh, 720px)',
-            maxHeight: 'calc(100dvh - env(safe-area-inset-top) - 16px)',
+            maxHeight: 'calc(100dvh - var(--app-mobile-overlay-bottom-space) - env(safe-area-inset-top) - 16px)',
             overscrollBehavior: 'contain',
           }}
         >

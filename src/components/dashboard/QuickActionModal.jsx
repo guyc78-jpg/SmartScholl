@@ -61,11 +61,14 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
       const viewportHeight = vv?.height ?? window.innerHeight;
       const viewportBottom = viewportTop + viewportHeight;
       const keyboardInset = Math.max(0, window.innerHeight - viewportBottom);
-      const nextHeight = Math.min(Math.round(viewportHeight * 0.85), 640);
+      const navInset = window.innerWidth < 1024 ? 112 : 0;
+      const usableBottom = viewportBottom - navInset;
+      const usableHeight = Math.max(320, viewportHeight - navInset);
+      const nextHeight = Math.min(Math.round(usableHeight * 0.85), 640);
 
-      setSheetBottom(keyboardInset);
+      setSheetBottom(Math.max(keyboardInset, navInset));
       setSheetHeight(nextHeight);
-      setSheetTop(Math.max(0, viewportBottom - nextHeight));
+      setSheetTop(Math.max(0, usableBottom - nextHeight));
     };
     update();
     window.visualViewport?.addEventListener('resize', update);
@@ -326,7 +329,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
           right: 0,
           left: 0,
           height: sheetHeight ? `${sheetHeight}px` : '85vh',
-          maxHeight: '640px',
+          maxHeight: 'calc(100dvh - var(--app-mobile-overlay-bottom-space) - 1rem)',
           background: 'hsl(var(--card))',
           borderRadius: '1rem 1rem 0 0',
           display: 'flex',
@@ -361,7 +364,8 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
             paddingTop: '1rem',
             paddingRight: '1rem',
             paddingLeft: '1rem',
-            paddingBottom: `${Math.max(88, sheetBottom + 120)}px`,
+            paddingBottom: `max(var(--app-overlay-padding-bottom), ${Math.max(104, sheetBottom + 120)}px)`,
+            overscrollBehavior: 'contain',
             WebkitOverflowScrolling: 'touch'
           }}
         >
