@@ -3,17 +3,25 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Save, UserRound, School, Palette, Briefcase } from 'lucide-react';
 import WorkModeSelector from '@/components/layout/WorkModeSelector';
 import ThemePreferenceCard from '@/components/profile/ThemePreferenceCard';
 import { invalidateSchoolNameCache } from '@/components/layout/SchoolNameBanner';
-import { getAvailableRoles, getUserDisplayName, GENDER_OPTIONS } from '@/lib/roleUtils';
+import { getAvailableRoles, getUserDisplayName, GENDER_OPTIONS, getDefaultDisplayRole, getRoleContextLabel } from '@/lib/roleUtils';
+import { logActivity } from '@/lib/activityLogger';
 import { useAuth } from '@/lib/AuthContext';
 
 export default function Profile({ user, role, onRoleChange, themePreference, onThemePreferenceChange }) {
   const { updateCurrentUser } = useAuth();
+  const approvedRoles = getAvailableRoles(user);
+  const primaryDisplayRole = getDefaultDisplayRole(user, role);
+  const isAdmin = approvedRoles.includes('admin') || approvedRoles.includes('system_admin');
+  const hasMultipleRoles = approvedRoles.length > 1;
+  const hasTeachingRole = approvedRoles.some(item => ['division_manager', 'grade_coordinator', 'coordinator', 'homeroom_teacher'].includes(item));
+  const canSetSubjectArea = hasTeachingRole;
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({
     profile_full_name: getUserDisplayName(user) || '',
@@ -22,6 +30,8 @@ export default function Profile({ user, role, onRoleChange, themePreference, onT
     profile_address: user?.profile_address || '',
     profile_gender: user?.profile_gender || '',
     school_name: user?.school_name || '',
+    profile_display_primary_role: primaryDisplayRole,
+    profile_subject_area: user?.profile_subject_area || user?.profile_subject || '',
   });
 
   const updateField = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
@@ -39,18 +49,31 @@ export default function Profile({ user, role, onRoleChange, themePreference, onT
       profile_email: form.profile_email,
       profile_address: form.profile_address,
       profile_gender: form.profile_gender,
+      profile_display_primary_role: approvedRoles.includes(form.profile_display_primary_role) ? form.profile_display_primary_role : primaryDisplayRole,
+      profile_display_additional_roles: approvedRoles.filter(item => item !== form.profile_display_primary_role),
+      profile_subject_area: canSetSubjectArea ? form.profile_subject_area?.trim() || '' : '',
+      profile_subject: canSetSubjectArea ? form.profile_subject_area?.trim() || '' : user?.profile_subject || '',
     };
     if (isAdmin) data.school_name = form.school_name?.trim() || '';
     const savedUser = await base44.auth.updateMe(data);
     updateCurrentUser(savedUser || data);
+    await logActivity({
+      user: { ...user, ...data },
+      role,
+      actionName: 'profile_display_settings_updated',
+      details: `עודכנה תצוגת תפקיד: ${getRoleContextLabel({ ...user, ...data }, data.profile_display_primary_role)}`,
+      metadata: {
+        primaryRole: data.profile_display_primary_role,
+        additionalRoles: data.profile_display_additional_roles,
+        subjectArea: data.profile_subject_area,
+      },
+    });
     if (isAdmin) invalidateSchoolNameCache();
     toast.success('הפרופיל נשמר בהצלחה');
     setSaving(false);
   };
 
-  const approvedRoles = getAvailableRoles(user);
-  const isAdmin = approvedRoles.includes('admin');
-  const hasMultipleRoles = approvedRoles.length > 1;
+  const formAdditionalRoles = approvedRoles.filter(item => item !== form.profile_display_primary_role);
 
   return (
     <div className="min-h-full bg-background p-4 md:p-8" dir="rtl">
@@ -130,6 +153,52 @@ export default function Profile({ user, role, onRoleChange, themePreference, onT
                 <p className="text-xs text-muted-foreground">משפיע על ניסוחי תפקיד בלבד.</p>
               </div>
 
+              {/* תצוגת תפקיד — לתצוגה בלבד, לא משנה הרשאות */}
+              <div className="space-y-3 md:col-span-2 pt-1 border-t border-border" dir="rtl">
+                <div className="space-y-1.5">
+                  <Label className="text-xs">תפקיד מוצג ראשי</Label>
+                  <Select
+                    value={form.profile_display_primary_role}
+                    onValueChange={(value) => updateField('profile_display_primary_role', value)}
+                  >
+                    <SelectTrigger className="h-9 w-full text-right">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent dir="rtl" align="start">
+                      {approvedRoles.map(roleOption => (
+                        <SelectItem key={roleOption} value={roleOption}>{getRoleContextLabel(user, roleOption)}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground text-right">ניתן לבחור רק מתוך התפקידים שכבר אושרו לך.</p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs">תפקידים נוספים</Label>
+                  <div className="flex flex-wrap justify-start gap-2 text-right" dir="rtl">
+                    {formAdditionalRoles.length ? formAdditionalRoles.map(roleOption => (
+                      <span key={roleOption} className="rounded-full border bg-muted/50 px-3 py-1 text-xs text-muted-foreground">
+                        {getRoleContextLabel(user, roleOption)}
+                      </span>
+                    )) : (
+                      <span className="text-xs text-muted-foreground">אין תפקידים נוספים</span>
+                    )}
+                  </div>
+                </div>
+
+                {canSetSubjectArea && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">מקצוע/תחום דעת</Label>
+                    <Input
+                      value={form.profile_subject_area}
+                      onChange={(e) => updateField('profile_subject_area', e.target.value)}
+                      placeholder="לדוגמה: מתמטיקה, מדעים, חינוך חברתי"
+                      className="h-9"
+                    />
+                  </div>
+                )}
+              </div>
+
               {/* שם בית ספר — מנהלים בלבד */}
               {isAdmin && (
                 <div className="space-y-1.5 md:col-span-2 pt-1 border-t border-border">
@@ -164,7 +233,7 @@ export default function Profile({ user, role, onRoleChange, themePreference, onT
                 <Briefcase className="w-4 h-4 text-primary" />
                 <CardTitle className="text-base">מצב עבודה</CardTitle>
               </div>
-              <CardDescription className="text-xs">בחר/י את התפקיד הפעיל שיוצג בתפריט ובדשבורד.</CardDescription>
+              <CardDescription className="text-xs">בחירה זו משפיעה על מצב העבודה בלבד; תצוגת התפקיד נקבעת בשדה “תפקיד מוצג ראשי”.</CardDescription>
             </CardHeader>
             <CardContent className="pb-4">
               <WorkModeSelector user={user} activeRole={role} onRoleChange={onRoleChange} />

@@ -82,19 +82,19 @@ function buildClaimsFromStudent(student, email) {
 
 async function getAccess(base44, user) {
   const email = normalizeEmail(user.email);
-  const approved = await base44.asServiceRole.entities.ApprovedUser.filter({ email });
-  let approvedRecord = approved[0];
+  let approvedRecords = await base44.asServiceRole.entities.ApprovedUser.filter({ email });
 
-  if (!approvedRecord) {
+  if (!approvedRecords.length) {
     const firstAdmins = await base44.asServiceRole.entities.ApprovedUser.filter({ role: 'system_admin' });
     if (firstAdmins.length === 0 && user.role === 'admin') {
-      approvedRecord = await base44.asServiceRole.entities.ApprovedUser.create({
+      const approvedRecord = await base44.asServiceRole.entities.ApprovedUser.create({
         fullName: user.full_name || user.email,
         email,
         role: 'system_admin',
         scope: null,
         isActive: true,
       });
+      approvedRecords = [approvedRecord];
       await writeLog(base44, {
         eventType: 'approved_user_created',
         actorEmail: email,
@@ -108,31 +108,54 @@ async function getAccess(base44, user) {
     }
   }
 
-  if (approvedRecord) {
-    if (approvedRecord.isActive === false || !validateScope(approvedRecord.role, approvedRecord.scope || {})) {
+  if (approvedRecords.length) {
+    const validRecords = approvedRecords.filter(record => record.isActive !== false && validateScope(record.role, record.scope || {}));
+    if (!validRecords.length) {
       await writeLog(base44, {
         eventType: 'login_blocked',
         actorEmail: email,
         targetEmail: email,
-        targetName: approvedRecord.fullName,
+        targetName: approvedRecords[0]?.fullName || '',
         actionName: 'blocked_login',
-        role: approvedRecord.role,
-        details: 'ניסיון כניסה נחסם: משתמש לא פעיל או scope לא תקין',
+        role: approvedRecords.map(record => record.role).join(','),
+        details: 'ניסיון כניסה נחסם: אין תפקיד מאושר פעיל עם scope תקין',
         severity: 'warning',
       });
       return { allowed: false };
     }
 
-    const claims = buildClaimsFromApprovedUser(approvedRecord);
+    const priority = ['system_admin', 'division_manager', 'grade_coordinator', 'homeroom_teacher'];
+    const roles = [...new Set(validRecords.map(record => record.role))];
+    const primaryRole = priority.find(role => roles.includes(role)) || roles[0];
+    const primaryRecord = validRecords.find(record => record.role === primaryRole) || validRecords[0];
+    const homeroomRecord = validRecords.find(record => record.role === 'homeroom_teacher');
+    const coordinatorRecord = validRecords.find(record => record.role === 'grade_coordinator');
+    const divisionRecord = validRecords.find(record => record.role === 'division_manager');
+    const scopesByRole = {};
+    for (const record of validRecords) scopesByRole[record.role] = record.scope || {};
+
+    const claims = {
+      ...buildClaimsFromApprovedUser(primaryRecord),
+      role: primaryRole,
+      roles,
+      scope: primaryRecord.scope || {},
+      scopes_by_role: scopesByRole,
+      profile_class_id: homeroomRecord?.scope?.classId || '',
+      profile_homeroom_class_id: coordinatorRecord?.homeroomClassId || coordinatorRecord?.scope?.homeroomClassId || '',
+      homeroomClassId: coordinatorRecord?.homeroomClassId || coordinatorRecord?.scope?.homeroomClassId || '',
+      profile_grade_managed: coordinatorRecord ? normalizeGrade(coordinatorRecord.scope?.gradeId || '') : '',
+      profile_division: divisionRecord?.scope?.divisionType || '',
+    };
+
     await writeLog(base44, {
       eventType: 'login_success',
       actorEmail: email,
       targetEmail: email,
-      targetName: approvedRecord.fullName,
+      targetName: primaryRecord.fullName,
       actionName: 'login_success',
-      role: approvedRecord.role,
+      role: primaryRole,
       details: 'כניסה מוצלחת למערכת',
-      metadata: { scope: claims.scope },
+      metadata: { roles, scopesByRole },
     });
     return { allowed: true, claims };
   }
@@ -267,7 +290,7 @@ Deno.serve(async (req) => {
       }
 
       const existing = await base44.asServiceRole.entities.ApprovedUser.filter({ email });
-      if (existing[0]) return Response.json({ error: 'משתמש עם מייל זה כבר קיים' }, { status: 400 });
+      if (existing.some(item => item.role === role)) return Response.json({ error: 'למשתמש כבר קיימת הרשאה לתפקיד זה' }, { status: 400 });
       const created = await base44.asServiceRole.entities.ApprovedUser.create(data);
       await writeLog(base44, {
         eventType: 'approved_user_created',

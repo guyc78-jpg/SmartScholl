@@ -25,7 +25,7 @@ import NotificationsDropdown from '@/components/dashboard/NotificationsDropdown'
 import SchoolNameBanner from '@/components/layout/SchoolNameBanner';
 import NowNextCard from '@/components/schedule/NowNextCard';
 import { getUserApprovedClass, getUserApprovedClassId, getUserApprovedGrade } from '@/lib/schoolStructure';
-import { getAvailableRoles, getUserFirstName, hasApprovedRole, getRoleHomeLabel, getRoleShort } from '@/lib/roleUtils';
+import { getAvailableRoles, getUserFirstName, hasApprovedRole, getRoleDisplayLines, getRoleShort } from '@/lib/roleUtils';
 import useReadNotifications from '@/hooks/useReadNotifications';
 import { getAttendanceScopedStudents, getScopedClassIds, filterScopedAttendance, getSelectedAttendanceDate, getLocalDateString } from '@/lib/attendanceScope.js';
 
@@ -61,7 +61,9 @@ export default function Dashboard({ user, role }) {
   const isActiveHomeroom = role === 'homeroom_teacher';
   const isActiveCoordinator = role === 'coordinator';
   const isActiveAdmin = role === 'admin';
-  const dashboardTitle = getRoleHomeLabel(user, role);
+  const roleDisplayLines = getRoleDisplayLines(user, role);
+  const dashboardTitle = roleDisplayLines[0];
+  const dashboardSecondaryTitle = roleDisplayLines.slice(1).join(' · ');
   // classId must be stable from the start — never depend on async-loaded students
   const classId = getUserApprovedClassId(user, CLASS_ID);
   const scopeLabels = [
@@ -240,6 +242,7 @@ export default function Dashboard({ user, role }) {
             <NotificationsDropdown notifications={notifications} onRead={handleNotificationRead} />
           </div>
           <p className="text-sm font-medium text-foreground/70 mt-0.5">{dashboardTitle}</p>
+          {dashboardSecondaryTitle && <p className="text-xs text-muted-foreground/80 mt-0.5">{dashboardSecondaryTitle}</p>}
           <p className="text-xs text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-1.5">
             <SchoolNameBanner inline />
             <span>{hebrewDate()}</span>

@@ -133,8 +133,11 @@ export function getInitialWorkRole(user) {
   const roles = getAvailableRoles(user);
   const saved = user?.email ? localStorage.getItem(`workRole:${user.email}`) : null;
   const preferred = saved || user?.active_work_role;
-  if (roles.includes('admin') && roles.includes('homeroom_teacher') && (!preferred || preferred === 'admin')) return 'homeroom_teacher';
-  if (roles.includes('admin') && roles.includes('coordinator') && (!preferred || preferred === 'admin')) return 'coordinator';
+  const isAdmin = roles.includes('system_admin') || roles.includes('admin');
+  if (isAdmin && roles.includes('homeroom_teacher') && (!preferred || preferred === 'admin' || preferred === 'system_admin')) return 'homeroom_teacher';
+  if (isAdmin && (roles.includes('grade_coordinator') || roles.includes('coordinator')) && (!preferred || preferred === 'admin' || preferred === 'system_admin')) {
+    return roles.includes('grade_coordinator') ? 'grade_coordinator' : 'coordinator';
+  }
   if (roles.includes(preferred)) return preferred;
   if (roles.includes('homeroom_teacher')) return 'homeroom_teacher';
   if (roles.includes('grade_coordinator')) return 'grade_coordinator';
@@ -150,9 +153,29 @@ export function getUserFirstName(user) {
   return getUserDisplayName(user).split(' ')[0] || 'משתמש';
 }
 
-export function getUserContextLabel(user, activeRole) {
+export function getDefaultDisplayRole(user, activeRole) {
   const roles = getAvailableRoles(user);
-  const role = activeRole || getInitialWorkRole(user);
+  const savedDisplay = user?.profile_display_primary_role;
+  if (roles.includes(savedDisplay)) return savedDisplay;
+
+  const isAdmin = roles.includes('system_admin') || roles.includes('admin');
+  if (isAdmin && roles.includes('homeroom_teacher')) return 'homeroom_teacher';
+  if ((activeRole === 'grade_coordinator' || activeRole === 'coordinator' || activeRole === 'homeroom_teacher') && roles.includes(activeRole)) return activeRole;
+  if (roles.includes('grade_coordinator')) return 'grade_coordinator';
+  if (roles.includes('coordinator')) return 'coordinator';
+  if (roles.includes('homeroom_teacher')) return 'homeroom_teacher';
+  return getSystemRole(user);
+}
+
+export function getDisplayAdditionalRoles(user, primaryRole) {
+  const roles = getAvailableRoles(user);
+  const saved = Array.isArray(user?.profile_display_additional_roles) ? user.profile_display_additional_roles : [];
+  const cleanSaved = saved.filter(role => roles.includes(role) && role !== primaryRole);
+  return cleanSaved.length ? cleanSaved : roles.filter(role => role !== primaryRole);
+}
+
+export function getRoleContextLabel(user, role) {
+  const roles = getAvailableRoles(user);
 
   if (role === 'homeroom_teacher' && roles.includes('homeroom_teacher')) {
     const klass = user?.profile_homeroom_class || user?.profile_class || '';
@@ -167,22 +190,17 @@ export function getUserContextLabel(user, activeRole) {
   return getRoleLabel(role, user);
 }
 
+export function getUserContextLabel(user, activeRole) {
+  return getRoleContextLabel(user, getDefaultDisplayRole(user, activeRole));
+}
+
 export function getRoleHomeLabel(user, activeRole) {
-  const role = activeRole || getInitialWorkRole(user);
-
-  if (role === 'homeroom_teacher') {
-    const klass = user?.profile_homeroom_class || user?.profile_class;
-    return klass ? `${getRoleShort('homeroom_teacher', user)} ${klass}` : getRoleLabel('homeroom_teacher', user);
-  }
-
-  if (role === 'grade_coordinator' || role === 'coordinator') {
-    const grade = user?.profile_grade_managed || user?.authorization?.scope?.gradeId;
-    return grade ? `${getRoleShort('grade_coordinator', user)} ${grade}` : getRoleLabel('grade_coordinator', user);
-  }
-
-  return getRoleLabel(role, user);
+  return getUserContextLabel(user, activeRole);
 }
 
 export function getRoleDisplayLines(user, activeRole) {
-  return [getUserContextLabel(user, activeRole)];
+  const primaryRole = getDefaultDisplayRole(user, activeRole);
+  const primary = getRoleContextLabel(user, primaryRole);
+  const additional = getDisplayAdditionalRoles(user, primaryRole).map(role => getRoleContextLabel(user, role));
+  return [primary, ...additional];
 }

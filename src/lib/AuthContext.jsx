@@ -123,7 +123,7 @@ export const AuthProvider = ({ children }) => {
         role: accessUser.role,
         roles: accessUser.roles,
         available_roles: accessUser.roles,
-        active_work_role: accessUser.role,
+        active_work_role: (accessUser.roles || []).includes(currentUser.active_work_role) ? currentUser.active_work_role : accessUser.role,
         authorization: accessUser,
       });
       setIsAuthenticated(true);

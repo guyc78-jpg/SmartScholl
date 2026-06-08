@@ -11,7 +11,7 @@ import {
   ChevronDown, Heart, MessageSquare, ClipboardList, AlertTriangle, GraduationCap, Building2, Eye
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { getAvailableRoles, getUserContextLabel, getUserDisplayName } from '@/lib/roleUtils';
+import { getAvailableRoles, getRoleDisplayLines, getUserDisplayName } from '@/lib/roleUtils';
 import { getDashboardLabel } from '@/lib/dashboardLabels';
 import { coordinatorHasHomeroom } from '@/lib/schoolStructure';
 
@@ -249,7 +249,9 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
   const bottomNavSource = isActiveDivisionManager ? divisionBottomNav : (isStaffRole ? teacherBottomNav : studentBottomNav);
   const bottomNavItems = bottomNavSource.filter(canAccess);
   const displayName = getUserDisplayName(user);
-  const contextLabel = getUserContextLabel(user, role);
+  const roleDisplayLines = getRoleDisplayLines(user, role);
+  const contextLabel = roleDisplayLines[0];
+  const secondaryContextLabel = roleDisplayLines.slice(1).join(' · ');
 
   useEffect(() => {
     if (!['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'].includes(activeRole)) {
@@ -271,7 +273,8 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
           </div>
           <div className="flex-1 min-w-0 text-right">
             <p className="font-semibold text-sm text-sidebar-foreground truncate">{displayName}</p>
-            <p className="text-[11px] text-sidebar-foreground/60 truncate">{contextLabel}</p>
+            <p className="text-[11px] text-sidebar-foreground/70 truncate">{contextLabel}</p>
+            {secondaryContextLabel && <p className="text-[10px] text-sidebar-foreground/45 truncate">{secondaryContextLabel}</p>}
           </div>
         </div>
       </div>
