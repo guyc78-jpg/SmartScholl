@@ -235,7 +235,7 @@ export default function UserManagement() {
                       <p className="font-semibold text-sm truncate">{user.fullName}</p>
                     </td>
                     <td className="px-4 py-3 align-middle text-right">
-                      <p className="text-sm text-muted-foreground force-ltr truncate text-right">{user.email}</p>
+                      <p dir="ltr" className="text-sm text-muted-foreground truncate text-right">{user.email}</p>
                     </td>
                     <td className="px-4 py-3 align-middle text-right">
                       <p className="text-sm font-medium truncate">{ROLE_LABELS[user.role] || 'משתמש/ת'}</p>
