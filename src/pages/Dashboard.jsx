@@ -113,10 +113,16 @@ export default function Dashboard({ user, role }) {
             : await base44.entities[entityName].list();
           return filterByClass(records);
         }
-        return (await Promise.all(classIds.map(classId => {
+        // Sequential fetch to avoid rate limiting
+        const results = [];
+        for (const classId of classIds) {
           const scopedQuery = query ? { ...query, class_id: classId } : { class_id: classId };
-          return base44.entities[entityName].filter(scopedQuery);
-        }))).flat();
+          const classRecords = await base44.entities[entityName].filter(scopedQuery);
+          results.push(...classRecords);
+          // Small delay between requests
+          await new Promise(resolve => setTimeout(resolve, 50));
+        }
+        return results;
       };
 
       const [att, allAtt, exs, tks, dis, ann, perf] = await Promise.all([
