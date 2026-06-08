@@ -12,35 +12,35 @@ import AppLayout from '@/components/layout/AppLayout';
 import { Toaster as SonnerToaster } from 'sonner';
 import useThemePreference from '@/hooks/useThemePreference';
 
+import { lazy, Suspense } from 'react';
+
 import Dashboard from './pages/Dashboard';
-import Students from './pages/Students';
-import StudentProfile from './pages/StudentProfile';
-import Attendance from './pages/Attendance';
-import Schedule from './pages/Schedule';
-import Exams from './pages/Exams';
-import Community from './pages/Community';
-import Discipline from './pages/Discipline';
-import Performance from './pages/Performance';
-import Communications from './pages/Communications';
-import Tasks from './pages/Tasks';
-import Announcements from './pages/Announcements';
-import Reports from './pages/Reports';
-import StudentHome from './pages/StudentHome';
-import ClassAttendance from './pages/ClassAttendance';
-import ApprovalManagement from './pages/ApprovalManagement';
-import GradeMonitor from './pages/GradeMonitor';
+const Students = lazy(() => import('./pages/Students'));
+const StudentProfile = lazy(() => import('./pages/StudentProfile'));
+const Attendance = lazy(() => import('./pages/Attendance'));
+const Schedule = lazy(() => import('./pages/Schedule'));
+const Exams = lazy(() => import('./pages/Exams'));
+const Community = lazy(() => import('./pages/Community'));
+const Discipline = lazy(() => import('./pages/Discipline'));
+const Performance = lazy(() => import('./pages/Performance'));
+const Communications = lazy(() => import('./pages/Communications'));
+const Tasks = lazy(() => import('./pages/Tasks'));
+const Announcements = lazy(() => import('./pages/Announcements'));
+const Reports = lazy(() => import('./pages/Reports'));
+const StudentHome = lazy(() => import('./pages/StudentHome'));
+const ClassAttendance = lazy(() => import('./pages/ClassAttendance'));
+const GradeMonitor = lazy(() => import('./pages/GradeMonitor'));
 import Onboarding from './pages/Onboarding';
 import PendingApproval from './pages/PendingApproval';
 import GenderRequiredGate from '@/components/profile/GenderRequiredGate';
-import Profile from './pages/Profile';
-import UserManagement from './pages/UserManagement';
-import BellScheduleSettings from './pages/BellScheduleSettings';
-import TreatmentCenter from './pages/TreatmentCenter';
-import Classrooms from './pages/Classrooms';
-import ApprovedStaff from './pages/ApprovedStaff';
-import DivisionManagement from './pages/DivisionManagement';
-import DivisionExams from './pages/DivisionExams';
-import PermissionsTester from './pages/PermissionsTester';
+const Profile = lazy(() => import('./pages/Profile'));
+const UserManagement = lazy(() => import('./pages/UserManagement'));
+const BellScheduleSettings = lazy(() => import('./pages/BellScheduleSettings'));
+const TreatmentCenter = lazy(() => import('./pages/TreatmentCenter'));
+const Classrooms = lazy(() => import('./pages/Classrooms'));
+const DivisionManagement = lazy(() => import('./pages/DivisionManagement'));
+const DivisionExams = lazy(() => import('./pages/DivisionExams'));
+const PermissionsTester = lazy(() => import('./pages/PermissionsTester'));
 import { isStaff, isStudent, defaultRoute } from './lib/permissions';
 import { getAvailableRoles, getInitialWorkRole, getSystemRole } from './lib/roleUtils';
 import { SimulationProvider, useSimulation } from '@/lib/SimulationContext';
@@ -141,76 +141,82 @@ const AuthenticatedApp = () => {
   const studentRole = role === 'student' && approvedRoles.includes('student');
   const pageRole = role === 'system_admin' ? 'admin' : role === 'grade_coordinator' ? 'coordinator' : role;
 
+  const LoadingFallback = () => (
+    <div className="flex items-center justify-center h-96">
+      <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+    </div>
+  );
+
   const renderRoutes = () => (
-    <Routes>
-      {/* Staff routes */}
-      {staff && <>
-        <Route path="/" element={<Dashboard user={user} role={pageRole} />} />
-        <Route path="/students" element={<Students role={pageRole} />} />
-        <Route path="/students/:id" element={<StudentProfile role={pageRole} />} />
-        <Route path="/classrooms" element={<Classrooms user={user} role={pageRole} />} />
-        <Route path="/attendance" element={<Attendance />} />
-        <Route path="/class-attendance" element={<ClassAttendance role={pageRole} />} />
-        <Route path="/schedule" element={<Schedule role={pageRole} user={user} />} />
-        <Route path="/exams" element={<Exams role={pageRole} user={user} />} />
-        <Route path="/community" element={<Community role={pageRole} user={user} />} />
-        <Route path="/discipline" element={<Discipline role={pageRole} />} />
-        <Route path="/performance" element={<Performance role={pageRole} />} />
-        <Route path="/communications" element={<Communications role={pageRole} />} />
-        <Route path="/tasks" element={<Tasks role={pageRole} user={user} />} />
-        <Route path="/treatment-center" element={<TreatmentCenter />} />
-        <Route path="/announcements" element={<Announcements role={pageRole} user={user} />} />
-        <Route path="/reports" element={<Reports role={pageRole} />} />
-        <Route path="/profile" element={<Profile user={user} role={pageRole} onRoleChange={setWorkRole} themePreference={themePreference} onThemePreferenceChange={setThemePreference} />} />
-        {isSystemAdmin && (
-          <>
-            <Route path="/users" element={<UserManagement />} />
-            <Route path="/bell-schedule" element={<BellScheduleSettings user={user} role={pageRole} />} />
-            <Route path="/permissions-tester" element={<PermissionsTester />} />
-          </>
-        )}
-        {(isSystemAdmin || approvedRoles.includes('homeroom_teacher') || approvedRoles.includes('grade_coordinator') || approvedRoles.includes('coordinator')) && (
-          <>
-            <Route path="/grade-monitor" element={<GradeMonitor user={user} role={pageRole} />} />
-          </>
-        )}
-      </>}
+    <Suspense fallback={<LoadingFallback />}>
+      <Routes>
+        {/* Staff routes */}
+        {staff && <>
+          <Route path="/" element={<Dashboard user={user} role={pageRole} />} />
+          <Route path="/students" element={<Students role={pageRole} />} />
+          <Route path="/students/:id" element={<StudentProfile role={pageRole} />} />
+          <Route path="/classrooms" element={<Classrooms user={user} role={pageRole} />} />
+          <Route path="/attendance" element={<Attendance />} />
+          <Route path="/class-attendance" element={<ClassAttendance role={pageRole} />} />
+          <Route path="/schedule" element={<Schedule role={pageRole} user={user} />} />
+          <Route path="/exams" element={<Exams role={pageRole} user={user} />} />
+          <Route path="/community" element={<Community role={pageRole} user={user} />} />
+          <Route path="/discipline" element={<Discipline role={pageRole} />} />
+          <Route path="/performance" element={<Performance role={pageRole} />} />
+          <Route path="/communications" element={<Communications role={pageRole} />} />
+          <Route path="/tasks" element={<Tasks role={pageRole} user={user} />} />
+          <Route path="/treatment-center" element={<TreatmentCenter />} />
+          <Route path="/announcements" element={<Announcements role={pageRole} user={user} />} />
+          <Route path="/reports" element={<Reports role={pageRole} />} />
+          <Route path="/profile" element={<Profile user={user} role={pageRole} onRoleChange={setWorkRole} themePreference={themePreference} onThemePreferenceChange={setThemePreference} />} />
+          {isSystemAdmin && (
+            <>
+              <Route path="/users" element={<UserManagement />} />
+              <Route path="/bell-schedule" element={<BellScheduleSettings user={user} role={pageRole} />} />
+              <Route path="/permissions-tester" element={<PermissionsTester />} />
+            </>
+          )}
+          {(isSystemAdmin || approvedRoles.includes('homeroom_teacher') || approvedRoles.includes('grade_coordinator') || approvedRoles.includes('coordinator')) && (
+            <>
+              <Route path="/grade-monitor" element={<GradeMonitor user={user} role={pageRole} />} />
+            </>
+          )}
+        </>}
 
-      {/* Division manager routes */}
-      {isDivisionManager && <>
-        <Route path="/division" element={<DivisionManagement user={user} role={pageRole} />} />
-        <Route path="/division-exams" element={<DivisionExams user={user} role={pageRole} />} />
-        <Route path="/exams" element={<DivisionExams user={user} role={pageRole} />} />
-        <Route path="/community" element={<Community role={pageRole} user={user} />} />
-        <Route path="/students" element={<Students role={pageRole} />} />
-        <Route path="/students/:id" element={<StudentProfile role={pageRole} />} />
-        <Route path="/classrooms" element={<Classrooms user={user} role={pageRole} />} />
-        <Route path="/profile" element={<Profile user={user} role={pageRole} onRoleChange={setWorkRole} themePreference={themePreference} onThemePreferenceChange={setThemePreference} />} />
-        {!staff && <Route path="/" element={<Navigate to="/division" replace />} />}
-      </>}
+        {/* Division manager routes */}
+        {isDivisionManager && <>
+          <Route path="/division" element={<DivisionManagement user={user} role={pageRole} />} />
+          <Route path="/division-exams" element={<DivisionExams user={user} role={pageRole} />} />
+          <Route path="/exams" element={<DivisionExams user={user} role={pageRole} />} />
+          <Route path="/community" element={<Community role={pageRole} user={user} />} />
+          <Route path="/students" element={<Students role={pageRole} />} />
+          <Route path="/students/:id" element={<StudentProfile role={pageRole} />} />
+          <Route path="/classrooms" element={<Classrooms user={user} role={pageRole} />} />
+          <Route path="/profile" element={<Profile user={user} role={pageRole} onRoleChange={setWorkRole} themePreference={themePreference} onThemePreferenceChange={setThemePreference} />} />
+          {!staff && <Route path="/" element={<Navigate to="/division" replace />} />}
+        </>}
 
-      {/* Division screens are available only when the active role is division_manager */}
+        {/* Student routes */}
+        {studentRole && <>
+          <Route path="/student-home" element={<StudentHome user={user} />} />
+        </>}
 
-      {/* Student routes */}
-      {studentRole && <>
-        <Route path="/student-home" element={<StudentHome user={user} />} />
-      </>}
-
-      {/* Block students from any staff route — redirect to their home */}
-      {studentRole && <Route path="/" element={<Navigate to="/student-home" replace />} />}
-      {studentRole && <Route path="/students/*" element={<Navigate to="/student-home" replace />} />}
-      {studentRole && <Route path="/attendance/*" element={<Navigate to="/student-home" replace />} />}
-      {studentRole && <Route path="/class-attendance/*" element={<Navigate to="/student-home" replace />} />}
-      {studentRole && <Route path="/classrooms/*" element={<Navigate to="/student-home" replace />} />}
-      {studentRole && <Route path="/discipline/*" element={<Navigate to="/student-home" replace />} />}
-      {studentRole && <Route path="/performance/*" element={<Navigate to="/student-home" replace />} />}
-      {studentRole && <Route path="/communications/*" element={<Navigate to="/student-home" replace />} />}
-      {studentRole && <Route path="/tasks/*" element={<Navigate to="/student-home" replace />} />}
-      {studentRole && <Route path="/reports/*" element={<Navigate to="/student-home" replace />} />}
-      {studentRole && <Route path="/approvals/*" element={<Navigate to="/student-home" replace />} />}
-      {studentRole && <Route path="/grade-monitor/*" element={<Navigate to="/student-home" replace />} />}
-      <Route path="*" element={<UnauthorizedAccessLog />} />
-    </Routes>
+        {/* Block students from any staff route — redirect to their home */}
+        {studentRole && <Route path="/" element={<Navigate to="/student-home" replace />} />}
+        {studentRole && <Route path="/students/*" element={<Navigate to="/student-home" replace />} />}
+        {studentRole && <Route path="/attendance/*" element={<Navigate to="/student-home" replace />} />}
+        {studentRole && <Route path="/class-attendance/*" element={<Navigate to="/student-home" replace />} />}
+        {studentRole && <Route path="/classrooms/*" element={<Navigate to="/student-home" replace />} />}
+        {studentRole && <Route path="/discipline/*" element={<Navigate to="/student-home" replace />} />}
+        {studentRole && <Route path="/performance/*" element={<Navigate to="/student-home" replace />} />}
+        {studentRole && <Route path="/communications/*" element={<Navigate to="/student-home" replace />} />}
+        {studentRole && <Route path="/tasks/*" element={<Navigate to="/student-home" replace />} />}
+        {studentRole && <Route path="/reports/*" element={<Navigate to="/student-home" replace />} />}
+        {studentRole && <Route path="/approvals/*" element={<Navigate to="/student-home" replace />} />}
+        {studentRole && <Route path="/grade-monitor/*" element={<Navigate to="/student-home" replace />} />}
+        <Route path="*" element={<UnauthorizedAccessLog />} />
+      </Routes>
+    </Suspense>
   );
 
   return (
