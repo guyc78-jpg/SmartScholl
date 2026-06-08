@@ -4,6 +4,38 @@ import { setBase44AccessClaims, clearBase44AccessClaims } from '@/lib/accessGuar
 
 const { appId, token, functionsVersion, appBaseUrl, serverUrl } = appParams;
 
+const APP_LOG_CLAIMS_KEY = '__approved_user_claims';
+const isUserInAppLogUrl = (url = '') => String(url).includes('/api/app-logs/') && String(url).includes('/log-user-in-app/');
+const isUsersScreenLogUrl = (url = '') => isUserInAppLogUrl(url) && String(url).includes('/log-user-in-app/users');
+
+const hasAuthorizedLogUser = () => {
+  if (typeof window === 'undefined') return false;
+  const rawClaims = window.sessionStorage.getItem(APP_LOG_CLAIMS_KEY);
+  if (!rawClaims) return false;
+  try {
+    const claims = JSON.parse(rawClaims);
+    return claims?.authorized === true && claims?.isActive !== false;
+  } catch {
+    return false;
+  }
+};
+
+if (typeof window !== 'undefined' && !window.__base44AppLogGuardInstalled) {
+  window.__base44AppLogGuardInstalled = true;
+  const originalFetch = window.fetch.bind(window);
+  window.fetch = async (input, init) => {
+    const url = typeof input === 'string' ? input : input?.url;
+    if (isUsersScreenLogUrl(url) || (isUserInAppLogUrl(url) && !hasAuthorizedLogUser())) {
+      return new Response(null, { status: 204 });
+    }
+    const response = await originalFetch(input, init);
+    if (isUserInAppLogUrl(url) && response.status === 403) {
+      return new Response(null, { status: 204 });
+    }
+    return response;
+  };
+}
+
 //Create a client with authentication required
 const rawBase44 = createClient({
   appId,
