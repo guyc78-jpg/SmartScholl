@@ -196,33 +196,35 @@ export default function Students({ role }) {
       />
 
       <div className="space-y-3" dir="rtl">
-        <div className="flex flex-wrap justify-end gap-2" dir="rtl">
-          <Button variant="outline" size="sm" className="h-9 gap-2" onClick={() => setShowImport(true)}>
-            <Upload className="w-4 h-4" />
-            <span className="hidden sm:inline">ייבוא מאקסל</span>
-          </Button>
+        <div className="flex w-full flex-wrap items-center justify-start gap-2" dir="rtl">
           <Button size="sm" className="h-9 gap-2" onClick={() => setShowAdd(true)}>
             <Plus className="w-4 h-4" />
             תלמיד חדש
           </Button>
+          <Button variant="outline" size="sm" className="h-9 gap-2" onClick={() => setShowImport(true)}>
+            <Upload className="w-4 h-4" />
+            <span className="hidden sm:inline">ייבוא מאקסל</span>
+          </Button>
           {canDeleteAllStudents && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-9 w-9">
-                  <MoreVertical className="w-4 h-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem
-                  onClick={() => setShowDeleteConfirm(true)}
-                  disabled={students.length === 0 || deleting}
-                  className="text-destructive focus:text-destructive"
-                >
-                  <Trash2 className="w-4 h-4 ms-2" />
-                  מחיקת הכל
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="ms-auto">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-9 w-9">
+                    <MoreVertical className="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem
+                    onClick={() => setShowDeleteConfirm(true)}
+                    disabled={students.length === 0 || deleting}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="w-4 h-4 ms-2" />
+                    מחיקת הכל
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           )}
         </div>
 

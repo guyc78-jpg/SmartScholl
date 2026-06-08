@@ -13,7 +13,7 @@ export default function PageHeader({ title, subtitle, actions }) {
         <h1 className="text-xl sm:text-2xl font-bold text-foreground leading-snug break-words">{title}</h1>
         {subtitle && <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 leading-snug break-words">{subtitle}</p>}
       </div>
-      {actions && <div className="flex flex-row-reverse items-center gap-2 flex-wrap justify-end sm:justify-start w-full sm:w-auto">{actions}</div>}
+      {actions && <div className="flex items-center gap-2 flex-wrap justify-start w-full sm:w-auto" dir="rtl">{actions}</div>}
     </motion.div>
   );
 }
