@@ -204,5 +204,15 @@ export function getRoleHomeLabel(user, activeRole) {
 export function getRoleDisplayLines(user, activeRole) {
   const primaryRole = getDefaultDisplayRole(user, activeRole);
   const primary = getRoleContextLabel(user, primaryRole);
-  return [primary, ...getDisplayAdditionalRoles(user, primaryRole)];
+  const additionalRoles = getDisplayAdditionalRoles(user, primaryRole);
+  
+  // סנן תפקידים נוספים: הצג רק אלה שמשנים בפועל הרשאות ותצוגה
+  const filtered = additionalRoles.filter(roleText => {
+    const roleKey = Object.keys(ROLE_LABELS).find(k => 
+      ROLE_LABELS[k] === roleText || roleText.includes(ROLE_LABELS[k])
+    );
+    return roleKey ? WORK_MODE_ROLES.includes(roleKey) : false;
+  });
+  
+  return [primary, ...filtered];
 }
