@@ -300,7 +300,10 @@ Deno.serve(async (req) => {
       const role = record.role;
       const scope = role === 'system_admin' ? null : (record.scope || {});
       const homeroomClassId = ['homeroom_teacher', 'grade_coordinator', 'system_admin'].includes(role) ? (record.homeroomClassId || scope?.homeroomClassId || scope?.classId || '') : '';
-      const roles = role === 'system_admin' && homeroomClassId ? ['system_admin', 'homeroom_teacher'] : [role];
+      const gradeId = record.gradeId || scope?.gradeId || '';
+      const roles = role === 'system_admin'
+        ? ['system_admin', ...(homeroomClassId ? ['homeroom_teacher'] : []), ...(gradeId && homeroomClassId ? ['grade_coordinator'] : [])]
+        : [role];
       if (!email || !record.fullName || !VALID_STAFF_ROLES.includes(role) || !validateScope(role, scope || {})) {
         return Response.json({ error: 'Invalid approved user details' }, { status: 400 });
       }
@@ -313,7 +316,7 @@ Deno.serve(async (req) => {
         primaryDisplayRole: role,
         scope: role === 'grade_coordinator' ? { ...scope, homeroomClassId } : scope,
         homeroomClassId: role === 'homeroom_teacher' ? scope?.classId || '' : homeroomClassId,
-        gradeId: role === 'grade_coordinator' ? scope?.gradeId || '' : '',
+        gradeId: ['grade_coordinator', 'system_admin'].includes(role) ? gradeId : '',
         divisionType: role === 'division_manager' ? scope?.divisionType || '' : '',
         teachingSubject: record.teachingSubject || '',
         isActive: record.isActive !== false,
