@@ -163,17 +163,20 @@ async function getAccess(base44, user) {
     }
 
     const priority = ['system_admin', 'division_manager', 'grade_coordinator', 'homeroom_teacher'];
-    const roles = [...new Set(roleRecords.map(item => item.role))];
-    const displayDefault = approvedRecords.find(record => roles.includes(record.primaryDisplayRole))?.primaryDisplayRole;
-    const primaryRole = priority.find(role => roles.includes(role)) || roles[0];
-    const displayPrimaryRole = displayDefault || (roles.includes('system_admin') && roles.includes('homeroom_teacher') ? 'homeroom_teacher' : primaryRole);
-    const primaryItem = roleRecords.find(item => item.role === primaryRole) || roleRecords[0];
-    const homeroomItem = roleRecords.find(item => item.role === 'homeroom_teacher');
-    const coordinatorItem = roleRecords.find(item => item.role === 'grade_coordinator');
-    const divisionItem = roleRecords.find(item => item.role === 'division_manager');
-    const subjectItem = roleRecords.find(item => item.record.teachingSubject);
+    const allRoles = [...new Set(roleRecords.map(item => item.role))];
+    const canUseMultipleRealRoles = allRoles.includes('system_admin');
+    const primaryRole = priority.find(role => allRoles.includes(role)) || allRoles[0];
+    const activeRoleRecords = canUseMultipleRealRoles
+      ? roleRecords
+      : roleRecords.filter(item => item.role === primaryRole).slice(0, 1);
+    const roles = canUseMultipleRealRoles ? allRoles : [primaryRole];
+    const primaryItem = activeRoleRecords.find(item => item.role === primaryRole) || activeRoleRecords[0];
+    const homeroomItem = activeRoleRecords.find(item => item.role === 'homeroom_teacher');
+    const coordinatorItem = activeRoleRecords.find(item => item.role === 'grade_coordinator');
+    const divisionItem = activeRoleRecords.find(item => item.role === 'division_manager');
+    const subjectItem = activeRoleRecords.find(item => item.record.teachingSubject);
     const scopesByRole = {};
-    for (const item of roleRecords) scopesByRole[item.role] = item.scope;
+    for (const item of activeRoleRecords) scopesByRole[item.role] = item.scope;
 
     const claims = {
       ...buildClaimsFromApprovedUser(primaryItem.record, primaryRole, primaryItem.scope),
@@ -188,8 +191,8 @@ async function getAccess(base44, user) {
       profile_division: divisionItem?.scope?.divisionType || '',
       profile_subject_area: subjectItem?.record?.teachingSubject || '',
       profile_subject: subjectItem?.record?.teachingSubject || '',
-      profile_display_primary_role: displayPrimaryRole,
-      profile_display_additional_roles: roles.filter(role => role !== displayPrimaryRole),
+      profile_display_primary_role: primaryRole,
+      profile_display_additional_roles: [],
     };
 
     await writeLog(base44, {

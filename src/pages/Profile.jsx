@@ -3,7 +3,6 @@ import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Save, UserRound, School, Palette, Briefcase } from 'lucide-react';
@@ -30,7 +29,7 @@ export default function Profile({ user, role, onRoleChange, themePreference, onT
     profile_address: user?.profile_address || '',
     profile_gender: user?.profile_gender || '',
     school_name: user?.school_name || '',
-    profile_display_primary_role: primaryDisplayRole,
+    profile_extra_roles: user?.profile_extra_roles || '',
     profile_subject_area: user?.profile_subject_area || user?.profile_subject || '',
   });
 
@@ -49,8 +48,9 @@ export default function Profile({ user, role, onRoleChange, themePreference, onT
       profile_email: form.profile_email,
       profile_address: form.profile_address,
       profile_gender: form.profile_gender,
-      profile_display_primary_role: approvedRoles.includes(form.profile_display_primary_role) ? form.profile_display_primary_role : primaryDisplayRole,
-      profile_display_additional_roles: approvedRoles.filter(item => item !== form.profile_display_primary_role),
+      profile_extra_roles: form.profile_extra_roles?.trim() || '',
+      profile_display_primary_role: primaryDisplayRole,
+      profile_display_additional_roles: [],
       profile_subject_area: canSetSubjectArea ? form.profile_subject_area?.trim() || '' : '',
       profile_subject: canSetSubjectArea ? form.profile_subject_area?.trim() || '' : user?.profile_subject || '',
     };
@@ -61,10 +61,10 @@ export default function Profile({ user, role, onRoleChange, themePreference, onT
       user: { ...user, ...data },
       role,
       actionName: 'profile_display_settings_updated',
-      details: `עודכנה תצוגת תפקיד: ${getRoleContextLabel({ ...user, ...data }, data.profile_display_primary_role)}`,
+      details: `עודכן פרופיל אישי: ${getRoleContextLabel({ ...user, ...data }, primaryDisplayRole)}`,
       metadata: {
-        primaryRole: data.profile_display_primary_role,
-        additionalRoles: data.profile_display_additional_roles,
+        primaryRole: primaryDisplayRole,
+        extraRoleText: data.profile_extra_roles,
         subjectArea: data.profile_subject_area,
       },
     });
@@ -72,8 +72,6 @@ export default function Profile({ user, role, onRoleChange, themePreference, onT
     toast.success('הפרופיל נשמר בהצלחה');
     setSaving(false);
   };
-
-  const formAdditionalRoles = approvedRoles.filter(item => item !== form.profile_display_primary_role);
 
   return (
     <div className="min-h-full bg-background p-4 md:p-8" dir="rtl">
@@ -154,36 +152,22 @@ export default function Profile({ user, role, onRoleChange, themePreference, onT
               </div>
 
               {/* תצוגת תפקיד — לתצוגה בלבד, לא משנה הרשאות */}
-              <div className="space-y-3 md:col-span-2 pt-1 border-t border-border" dir="rtl">
-                <div className="space-y-1.5">
-                  <Label className="text-xs">תפקיד מוצג ראשי</Label>
-                  <Select
-                    value={form.profile_display_primary_role}
-                    onValueChange={(value) => updateField('profile_display_primary_role', value)}
-                  >
-                    <SelectTrigger className="h-9 w-full text-right">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent dir="rtl" align="start">
-                      {approvedRoles.map(roleOption => (
-                        <SelectItem key={roleOption} value={roleOption}>{getRoleContextLabel(user, roleOption)}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground text-right">ניתן לבחור רק מתוך התפקידים שכבר אושרו לך.</p>
+              <div className="space-y-3 md:col-span-2 pt-1 border-t border-border text-right" dir="rtl">
+                <div className="rounded-xl border bg-muted/30 p-3 text-right" dir="rtl">
+                  <Label className="text-xs text-muted-foreground">תפקיד ראשי</Label>
+                  <p className="mt-1 text-sm font-semibold text-foreground">{getRoleContextLabel(user, primaryDisplayRole)}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">התפקיד הראשי נקבע על ידי מנהל מערכת בלבד.</p>
                 </div>
 
                 <div className="space-y-1.5">
-                  <Label className="text-xs">תפקידים נוספים</Label>
-                  <div className="flex flex-wrap justify-start gap-2 text-right" dir="rtl">
-                    {formAdditionalRoles.length ? formAdditionalRoles.map(roleOption => (
-                      <span key={roleOption} className="rounded-full border bg-muted/50 px-3 py-1 text-xs text-muted-foreground">
-                        {getRoleContextLabel(user, roleOption)}
-                      </span>
-                    )) : (
-                      <span className="text-xs text-muted-foreground">אין תפקידים נוספים</span>
-                    )}
-                  </div>
+                  <Label className="text-xs">תפקיד נוסף לתצוגה בלבד</Label>
+                  <Input
+                    value={form.profile_extra_roles}
+                    onChange={(e) => updateField('profile_extra_roles', e.target.value)}
+                    placeholder="לדוגמה: רכז/ת טיולים, מוביל/ת תקשוב"
+                    className="h-9"
+                  />
+                  <p className="text-xs text-muted-foreground text-right">טקסט זה יוצג מתחת לתפקיד הראשי ואינו משנה הרשאות או מסכים.</p>
                 </div>
 
                 {canSetSubjectArea && (
@@ -233,7 +217,7 @@ export default function Profile({ user, role, onRoleChange, themePreference, onT
                 <Briefcase className="w-4 h-4 text-primary" />
                 <CardTitle className="text-base">מצב עבודה</CardTitle>
               </div>
-              <CardDescription className="text-xs">בחירה זו משפיעה על מצב העבודה בלבד; תצוגת התפקיד נקבעת בשדה “תפקיד מוצג ראשי”.</CardDescription>
+              <CardDescription className="text-xs text-right">בחירה זו זמינה רק למנהל מערכת עם כמה תפקידים אמיתיים.</CardDescription>
             </CardHeader>
             <CardContent className="pb-4">
               <WorkModeSelector user={user} activeRole={role} onRoleChange={onRoleChange} />

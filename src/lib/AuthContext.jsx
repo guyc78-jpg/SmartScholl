@@ -103,27 +103,12 @@ export const AuthProvider = ({ children }) => {
         ]);
         accessUser = accessRes.data.user;
       } catch (accessError) {
-        if (currentUser?.role === 'admin' || currentUser?.role === 'system_admin') {
-          accessUser = {
-            ...currentUser,
-            authorized: true,
-            isActive: true,
-            role: 'system_admin',
-            roles: ['system_admin', 'admin'],
-          };
-        } else {
-          throw accessError;
-        }
+        throw accessError;
       }
 
       setBase44AccessClaims(accessUser);
       const mergedRoles = accessUser.roles || [];
-      const savedDisplayRole = mergedRoles.includes(currentUser.profile_display_primary_role)
-        ? currentUser.profile_display_primary_role
-        : accessUser.profile_display_primary_role;
-      const savedAdditionalRoles = Array.isArray(currentUser.profile_display_additional_roles)
-        ? currentUser.profile_display_additional_roles
-        : (Array.isArray(accessUser.profile_display_additional_roles) ? accessUser.profile_display_additional_roles : []);
+      const approvedPrimaryRole = accessUser.profile_display_primary_role || accessUser.role;
       setUser({
         ...currentUser,
         ...accessUser,
@@ -131,8 +116,9 @@ export const AuthProvider = ({ children }) => {
         roles: mergedRoles,
         available_roles: mergedRoles,
         active_work_role: mergedRoles.includes(currentUser.active_work_role) ? currentUser.active_work_role : accessUser.role,
-        profile_display_primary_role: savedDisplayRole,
-        profile_display_additional_roles: savedAdditionalRoles.filter(role => mergedRoles.includes(role) && role !== savedDisplayRole),
+        profile_display_primary_role: approvedPrimaryRole,
+        profile_display_additional_roles: [],
+        profile_extra_roles: currentUser.profile_extra_roles || '',
         authorization: accessUser,
       });
       setIsAuthenticated(true);

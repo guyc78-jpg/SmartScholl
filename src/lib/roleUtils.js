@@ -105,10 +105,10 @@ export function parseRoles(value) {
 export function getAvailableRoles(user) {
   if (!user) return ['student'];
 
+  const sourceRoles = user.authorization?.roles || user.roles;
   const roles = [
-    ...parseRoles(user.roles),
-    ...parseRoles(user.available_roles),
-    user.role,
+    ...parseRoles(sourceRoles),
+    user.authorization?.role || user.role,
   ];
 
   const unique = [...new Set(roles.filter(role => VALID_ROLES.includes(role)))];
@@ -155,23 +155,15 @@ export function getUserFirstName(user) {
 
 export function getDefaultDisplayRole(user, activeRole) {
   const roles = getAvailableRoles(user);
-  const savedDisplay = user?.profile_display_primary_role;
-  if (roles.includes(savedDisplay)) return savedDisplay;
-
-  const isAdmin = roles.includes('system_admin') || roles.includes('admin');
-  if (isAdmin && roles.includes('homeroom_teacher')) return 'homeroom_teacher';
-  if ((activeRole === 'grade_coordinator' || activeRole === 'coordinator' || activeRole === 'homeroom_teacher') && roles.includes(activeRole)) return activeRole;
-  if (roles.includes('grade_coordinator')) return 'grade_coordinator';
-  if (roles.includes('coordinator')) return 'coordinator';
-  if (roles.includes('homeroom_teacher')) return 'homeroom_teacher';
+  const approvedPrimary = user?.authorization?.role || user?.role;
+  if (roles.includes(approvedPrimary)) return approvedPrimary;
+  if (roles.includes(activeRole)) return activeRole;
   return getSystemRole(user);
 }
 
 export function getDisplayAdditionalRoles(user, primaryRole) {
-  const roles = getAvailableRoles(user);
-  const saved = Array.isArray(user?.profile_display_additional_roles) ? user.profile_display_additional_roles : [];
-  const cleanSaved = saved.filter(role => roles.includes(role) && role !== primaryRole);
-  return cleanSaved.length ? cleanSaved : roles.filter(role => role !== primaryRole);
+  const extraText = String(user?.profile_extra_roles || '').trim();
+  return extraText ? [extraText] : [];
 }
 
 export function getRoleContextLabel(user, role) {
@@ -201,6 +193,5 @@ export function getRoleHomeLabel(user, activeRole) {
 export function getRoleDisplayLines(user, activeRole) {
   const primaryRole = getDefaultDisplayRole(user, activeRole);
   const primary = getRoleContextLabel(user, primaryRole);
-  const additional = getDisplayAdditionalRoles(user, primaryRole).map(role => getRoleContextLabel(user, role));
-  return [primary, ...additional];
+  return [primary, ...getDisplayAdditionalRoles(user, primaryRole)];
 }

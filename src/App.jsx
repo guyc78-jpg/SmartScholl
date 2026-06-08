@@ -148,6 +148,7 @@ const AuthenticatedApp = () => {
         <Route path="/" element={<Dashboard user={user} role={pageRole} />} />
         <Route path="/students" element={<Students role={pageRole} />} />
         <Route path="/students/:id" element={<StudentProfile role={pageRole} />} />
+        <Route path="/classrooms" element={<Classrooms user={user} role={pageRole} />} />
         <Route path="/attendance" element={<Attendance />} />
         <Route path="/class-attendance" element={<ClassAttendance role={pageRole} />} />
         <Route path="/schedule" element={<Schedule role={pageRole} user={user} />} />
@@ -164,7 +165,6 @@ const AuthenticatedApp = () => {
         {isSystemAdmin && (
           <>
             <Route path="/users" element={<UserManagement />} />
-            <Route path="/classrooms" element={<Classrooms />} />
             <Route path="/bell-schedule" element={<BellScheduleSettings user={user} role={pageRole} />} />
             <Route path="/permissions-tester" element={<PermissionsTester />} />
           </>
@@ -184,6 +184,7 @@ const AuthenticatedApp = () => {
         <Route path="/community" element={<Community role={pageRole} user={user} />} />
         <Route path="/students" element={<Students role={pageRole} />} />
         <Route path="/students/:id" element={<StudentProfile role={pageRole} />} />
+        <Route path="/classrooms" element={<Classrooms user={user} role={pageRole} />} />
         <Route path="/profile" element={<Profile user={user} role={pageRole} onRoleChange={setWorkRole} themePreference={themePreference} onThemePreferenceChange={setThemePreference} />} />
         {!staff && <Route path="/" element={<Navigate to="/division" replace />} />}
       </>}
@@ -200,6 +201,7 @@ const AuthenticatedApp = () => {
       {studentRole && <Route path="/students/*" element={<Navigate to="/student-home" replace />} />}
       {studentRole && <Route path="/attendance/*" element={<Navigate to="/student-home" replace />} />}
       {studentRole && <Route path="/class-attendance/*" element={<Navigate to="/student-home" replace />} />}
+      {studentRole && <Route path="/classrooms/*" element={<Navigate to="/student-home" replace />} />}
       {studentRole && <Route path="/discipline/*" element={<Navigate to="/student-home" replace />} />}
       {studentRole && <Route path="/performance/*" element={<Navigate to="/student-home" replace />} />}
       {studentRole && <Route path="/communications/*" element={<Navigate to="/student-home" replace />} />}

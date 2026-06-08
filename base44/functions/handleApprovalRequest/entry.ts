@@ -460,6 +460,7 @@ ${suspicionNote}
         profile_email,
         profile_phone,
         profile_school_role,
+        profile_extra_roles,
         profile_class_id,
         profile_homeroom_class,
         profile_grade_managed,
@@ -468,8 +469,8 @@ ${suspicionNote}
         onboarding_status,
         status,
       } = body;
-      const approvedRoles = normalizeRoles(approved_roles, [target_role]);
-      if (!approvedRoles.length || !approvedRoles.every(role => VALID_ROLES.includes(role)) || !approvedRoles.includes(target_role)) {
+      const approvedRoles = [target_role].filter(Boolean);
+      if (!approvedRoles.length || !approvedRoles.every(role => VALID_ROLES.includes(role))) {
         return Response.json({ error: 'Invalid role' }, { status: 400 });
       }
 
@@ -497,6 +498,7 @@ ${suspicionNote}
         profile_email: cleanProfileEmail,
         profile_phone: profile_phone || '',
         profile_school_role: profile_school_role || '',
+        profile_extra_roles: profile_extra_roles || '',
         profile_class_id: profile_class_id || '',
         profile_homeroom_class: profile_homeroom_class || '',
         profile_class: approvedRoles.includes('student') ? profile_homeroom_class || '' : target.profile_class || '',
@@ -513,8 +515,8 @@ ${suspicionNote}
         actor_email: user.email,
         action_name: 'admin_update_user_role',
         target_email: body.target_email || '',
-        details: `הרשאות משתמש עודכנו: ${approvedRoles.map(role => ROLE_LABELS[role] || role).join(', ')}`,
-        metadata: JSON.stringify({ target_user_id, target_role, approvedRoles, profile_class_id, profile_homeroom_class, profile_grade_managed }),
+        details: `תפקיד ראשי ופרטי משתמש עודכנו: ${approvedRoles.map(role => ROLE_LABELS[role] || role).join(', ')}`,
+        metadata: JSON.stringify({ target_user_id, target_role, approvedRoles, profile_extra_roles, profile_class_id, profile_homeroom_class, profile_grade_managed }),
         severity: 'warning',
       });
 

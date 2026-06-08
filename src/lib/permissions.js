@@ -15,12 +15,12 @@ export const ROLES = {
 
 // Routes each role can access
 export const ROLE_ROUTES = {
-  system_admin:     ['/', '/students', '/attendance', '/class-attendance', '/schedule', '/exams', '/discipline', '/communications', '/tasks', '/announcements', '/community', '/performance', '/reports', '/users', '/classrooms', '/bell-schedule'],
-  admin:            ['/', '/students', '/attendance', '/class-attendance', '/schedule', '/exams', '/discipline', '/communications', '/tasks', '/announcements', '/community', '/performance', '/reports', '/users', '/classrooms', '/bell-schedule'],
-  division_manager: ['/division', '/exams', '/reports', '/grade-monitor'],
-  homeroom_teacher: ['/', '/students', '/attendance', '/class-attendance', '/schedule', '/exams', '/discipline', '/communications', '/tasks', '/announcements', '/community', '/performance', '/reports'],
-  grade_coordinator:['/', '/students', '/attendance', '/schedule', '/exams', '/discipline', '/communications', '/tasks', '/announcements', '/community', '/performance', '/reports'],
-  coordinator:      ['/', '/students', '/attendance', '/schedule', '/exams', '/discipline', '/communications', '/tasks', '/announcements', '/community', '/performance', '/reports'],
+  system_admin:     ['/', '/students', '/attendance', '/class-attendance', '/classrooms', '/schedule', '/exams', '/discipline', '/communications', '/tasks', '/announcements', '/community', '/performance', '/reports', '/users', '/bell-schedule'],
+  admin:            ['/', '/students', '/attendance', '/class-attendance', '/classrooms', '/schedule', '/exams', '/discipline', '/communications', '/tasks', '/announcements', '/community', '/performance', '/reports', '/users', '/bell-schedule'],
+  division_manager: ['/division', '/classrooms', '/exams', '/reports', '/grade-monitor'],
+  homeroom_teacher: ['/', '/students', '/attendance', '/class-attendance', '/classrooms', '/schedule', '/exams', '/discipline', '/communications', '/tasks', '/announcements', '/community', '/performance', '/reports'],
+  grade_coordinator:['/', '/students', '/attendance', '/classrooms', '/schedule', '/exams', '/discipline', '/communications', '/tasks', '/announcements', '/community', '/performance', '/reports'],
+  coordinator:      ['/', '/students', '/attendance', '/classrooms', '/schedule', '/exams', '/discipline', '/communications', '/tasks', '/announcements', '/community', '/performance', '/reports'],
   student:          ['/student-home'],
   parent:           ['/announcements'],
 };

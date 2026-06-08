@@ -54,6 +54,7 @@ const sidebarGroups = [
     icon: Users,
     items: [
       { path: '/students', icon: Users, label: 'רשימת תלמידים', roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'] },
+      { path: '/classrooms', icon: School, label: 'ניהול כיתות', roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator', 'division_manager'] },
       { path: '/class-attendance', icon: CalendarCheck, label: 'נוכחות', roles: ['homeroom_teacher', 'system_admin', 'admin', 'grade_coordinator', 'coordinator'] },
       { path: '/discipline', icon: AlertTriangle, label: 'משמעת', roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'] },
       { path: '/community', icon: Heart, label: 'מעורבות חברתית', roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'] },
@@ -85,7 +86,6 @@ const sidebarGroups = [
     items: [
       { path: '/users', icon: ShieldCheck, label: 'משתמשים מאושרים', roles: ['system_admin', 'admin'] },
       { path: '/permissions-tester', icon: Eye, label: 'בדיקת הרשאות', roles: ['system_admin', 'admin'] },
-      { path: '/classrooms', icon: School, label: 'ניהול כיתות', roles: ['system_admin', 'admin'] },
       { path: '/bell-schedule', icon: Bell, label: 'צלצולים והפסקות', roles: ['system_admin', 'admin'] },
     ],
   },
@@ -129,6 +129,7 @@ const coordinatorDualScopeGroups = [
     icon: GraduationCap,
     items: [
       { path: '/students?scope=grade', icon: Users, label: 'תלמידי השכבה', roles: ['grade_coordinator', 'coordinator'] },
+      { path: '/classrooms', icon: School, label: 'ניהול כיתות', roles: ['grade_coordinator', 'coordinator'] },
       { path: '/exams?scope=grade', icon: BookOpen, label: 'מבחנים ואירועים', roles: ['grade_coordinator', 'coordinator'] },
       { path: '/community?scope=grade', icon: Heart, label: 'מעורבות חברתית', roles: ['grade_coordinator', 'coordinator'] },
       { path: '/performance?scope=grade', icon: GraduationCap, label: 'הערכות', roles: ['grade_coordinator', 'coordinator'] },

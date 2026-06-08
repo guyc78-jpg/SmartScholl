@@ -10,7 +10,6 @@ import { Trash2, UserRound, ShieldCheck, School, Settings } from 'lucide-react';
 import GradeClassSelect from '@/components/profile/GradeClassSelect';
 import { extractGradeFromClass, DIVISIONS } from '@/lib/schoolStructure';
 import { ROLE_LABELS, SYSTEM_ROLE_PRIORITY, getAvailableRoles, getUserDisplayName } from '@/lib/roleUtils';
-import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 const ROLE_OPTIONS = SYSTEM_ROLE_PRIORITY.filter(r => r !== 'parent').map(value => ({ value, label: ROLE_LABELS[value] }));
@@ -55,7 +54,7 @@ export default function UserEditSheet({ targetUser, open, onOpenChange, onSaved,
       profile_phone: targetUser.profile_phone || '',
       profile_school_role: targetUser.profile_school_role || '',
       primaryRole: primary,
-      extraRoles: approved.filter(r => r !== primary),
+      profile_extra_roles: targetUser.profile_extra_roles || '',
       profile_class_id: targetUser.profile_class_id || '',
       profile_homeroom_class: targetUser.profile_homeroom_class || targetUser.profile_class || '',
       profile_grade_managed: targetUser.profile_grade_managed || extractGradeFromClass(targetUser.profile_homeroom_class || targetUser.profile_class || ''),
@@ -70,19 +69,9 @@ export default function UserEditSheet({ targetUser, open, onOpenChange, onSaved,
 
   const setField = (field, value) => setForm(prev => ({ ...prev, [field]: value }));
 
-  const setPrimaryRole = (value) => setForm(prev => ({
-    ...prev,
-    primaryRole: value,
-    extraRoles: prev.extraRoles.filter(r => r !== value),
-  }));
+  const setPrimaryRole = (value) => setForm(prev => ({ ...prev, primaryRole: value }));
 
-  const toggleExtraRole = (role) => setForm(prev => {
-    if (role === prev.primaryRole) return prev;
-    const exists = prev.extraRoles.includes(role);
-    return { ...prev, extraRoles: exists ? prev.extraRoles.filter(r => r !== role) : [...prev.extraRoles, role] };
-  });
-
-  const approvedRoles = Array.from(new Set([form.primaryRole, ...form.extraRoles].filter(Boolean)));
+  const approvedRoles = [form.primaryRole].filter(Boolean);
   const isDivisionManager = approvedRoles.includes('division_manager');
 
   const save = async () => {
@@ -101,6 +90,7 @@ export default function UserEditSheet({ targetUser, open, onOpenChange, onSaved,
         target_role: form.primaryRole,
         approved_roles: approvedRoles,
         profile_full_name: cleanName,
+        profile_extra_roles: form.profile_extra_roles.trim(),
         profile_email: form.profile_email.trim(),
         profile_phone: form.profile_phone.trim(),
         profile_school_role: form.profile_school_role.trim(),
@@ -168,27 +158,13 @@ export default function UserEditSheet({ targetUser, open, onOpenChange, onSaved,
               </div>
 
               <div className="space-y-2">
-                <Label>תפקידים נוספים</Label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {ROLE_OPTIONS.filter(item => item.value !== form.primaryRole).map(item => {
-                    const selected = form.extraRoles.includes(item.value);
-                    return (
-                      <button
-                        type="button"
-                        key={item.value}
-                        onClick={() => toggleExtraRole(item.value)}
-                        className={cn(
-                          'h-10 px-3 rounded-xl border text-sm font-medium flex items-center justify-center text-center transition-colors',
-                          selected
-                            ? 'bg-primary text-primary-foreground border-primary hover:bg-primary/90'
-                            : 'bg-card text-foreground/80 border-border hover:bg-muted hover:text-foreground'
-                        )}
-                      >
-                        {item.label}
-                      </button>
-                    );
-                  })}
-                </div>
+                <Label>תפקיד נוסף לתצוגה בלבד</Label>
+                <Input
+                  value={form.profile_extra_roles}
+                  onChange={(e) => setField('profile_extra_roles', e.target.value)}
+                  placeholder="לדוגמה: רכז/ת טיולים, מוביל/ת תקשוב"
+                />
+                <p className="text-xs text-muted-foreground text-right">טקסט חופשי בלבד — לא משנה הרשאות או מסכים.</p>
               </div>
             </Section>
 
