@@ -156,7 +156,9 @@
 
   [data-radix-popper-content-wrapper] {
     z-index: 10000 !important;
+    max-width: calc(100vw - 1rem) !important;
     max-height: calc(100dvh - var(--app-mobile-overlay-bottom-space) - 0.75rem) !important;
+    overflow-x: hidden;
   }
 
   [data-radix-select-content],

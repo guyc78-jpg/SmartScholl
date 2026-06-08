@@ -51,7 +51,7 @@ function EventCard({ event, onClick, canEdit }) {
         <div className="flex items-center justify-between gap-2">
           <p className="text-[11px] text-muted-foreground truncate flex items-center gap-1">
             <span>{formatHebDate(event.date)}</span>
-            {event.time && <><span className="opacity-50">·</span><Clock className="w-2.5 h-2.5" />{event.time}</>}
+            {event.time && <><span className="opacity-50">·</span><Clock className="w-2.5 h-2.5" />{event.end_time ? `${event.time}–${event.end_time}` : event.time}</>}
           </p>
           {canEdit && <ChevronLeft className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />}
         </div>

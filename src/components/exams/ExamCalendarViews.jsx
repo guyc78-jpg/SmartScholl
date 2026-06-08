@@ -152,7 +152,7 @@ function MiniEvent({ event, onClick }) {
        <div className="w-1 h-4 rounded-full shrink-0 opacity-70" style={{ backgroundColor: 'currentColor' }} />
        <div className="flex-1 min-w-0">
          <span className="font-medium truncate block text-foreground/90">{event.title}</span>
-         {event.time && <span className="opacity-70 flex items-center gap-0.5 text-[9px]"><Clock className="w-2.5 h-2.5" />{event.time}</span>}
+         {event.time && <span className="opacity-70 flex items-center gap-0.5 text-[9px]"><Clock className="w-2.5 h-2.5" />{event.end_time ? `${event.time}–${event.end_time}` : event.time}</span>}
        </div>
      </button>
    );
@@ -174,7 +174,7 @@ function EventRow({ event, onClick }) {
        <div className={`w-0.5 shrink-0 ${sideColor}`} />
        <div className="flex-1 min-w-0 px-3">
          <div className="flex items-center gap-2 flex-wrap justify-end flex-row-reverse"><h3 className="font-semibold text-foreground">{event.title}</h3><EventTypeBadge type={event.type} /></div>
-         <div className="text-xs text-muted-foreground mt-1">{event.date}{event.time ? ` · ${event.time}` : ''}{event.class_or_grade ? ` · ${event.class_or_grade}` : ''}</div>
+         <div className="text-xs text-muted-foreground mt-1">{event.date}{event.time ? ` · ${event.end_time ? `${event.time}–${event.end_time}` : event.time}` : ''}{event.class_or_grade ? ` · ${event.class_or_grade}` : ''}</div>
        </div>
      </button>
    );

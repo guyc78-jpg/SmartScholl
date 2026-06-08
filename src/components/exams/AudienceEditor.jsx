@@ -18,7 +18,7 @@ export default function AudienceEditor({ value, onChange }) {
         <Label className="text-xs">רלוונטיות</Label>
         <Select value={scope} onValueChange={audience_scope => update({ audience_scope })}>
           <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>{AUDIENCE_SCOPES.map(scope => <SelectItem key={scope.value} value={scope.value}>{scope.label}</SelectItem>)}</SelectContent>
+          <SelectContent collisionPadding={16} className="max-w-[calc(100vw-2rem)]">{AUDIENCE_SCOPES.map(scope => <SelectItem key={scope.value} value={scope.value}>{scope.label}</SelectItem>)}</SelectContent>
         </Select>
       </div>
 
