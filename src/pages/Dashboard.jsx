@@ -471,26 +471,36 @@ export default function Dashboard({ user, role }) {
         />
       )}
 
-      {/* Attendance Exceptions Filter Dialog */}
+      {/* Attendance Exceptions Bottom Sheet */}
       {attendanceFilterOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-end lg:items-center justify-center p-4">
-          <div className="bg-card rounded-2xl lg:rounded-3xl w-full lg:max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl" dir="rtl">
-            <div className="sticky top-0 bg-card border-b border-border p-4 lg:p-6 flex items-center justify-between">
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/50"
+            onClick={() => setAttendanceFilterOpen(false)}
+          />
+          <div
+            className="fixed inset-x-0 bottom-0 z-50 flex flex-col max-h-[85vh] rounded-t-3xl bg-card border-t border-border shadow-2xl"
+            dir="rtl"
+            style={{ paddingBottom: 'calc(76px + env(safe-area-inset-bottom))' }}
+          >
+            {/* Header */}
+            <div className="sticky top-0 flex items-center justify-between px-4 lg:px-6 py-4 border-b border-border bg-card rounded-t-3xl flex-shrink-0">
               <h2 className="text-lg font-bold text-foreground">חריגי נוכחות - {attendanceDate !== today ? attendanceDate : 'היום'}</h2>
               <button
                 onClick={() => setAttendanceFilterOpen(false)}
-                className="w-9 h-9 flex items-center justify-center text-muted-foreground hover:bg-muted rounded-lg transition"
+                className="w-9 h-9 flex items-center justify-center text-muted-foreground hover:bg-muted rounded-lg transition flex-shrink-0"
                 type="button"
               >
                 ✕
               </button>
             </div>
-            <div className="p-4 lg:p-6 space-y-2">
+
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-4 space-y-2">
               {todayAttendance
                 .filter(a => ['נעדר', 'נעדר/ת', 'מאחר', 'מאחר/ת', 'שוחרר', 'שוחרר/ת'].includes(a.status))
                 .sort((a, b) => a.student_name.localeCompare(b.student_name))
                 .map(record => {
-                  const student = students.find(s => s.id === record.student_id);
                   const statusLabels = {
                     'נעדר': 'היעדר',
                     'נעדר/ת': 'היעדר',
@@ -515,9 +525,9 @@ export default function Dashboard({ user, role }) {
                   return (
                     <div key={record.id} className={`p-3 rounded-lg border ${colorClass}`}>
                       <div className="flex items-center justify-between gap-2">
-                        <div>
-                          <p className="text-sm font-semibold text-foreground">{record.student_name}</p>
-                          {record.note && <p className="text-xs text-muted-foreground mt-1">{record.note}</p>}
+                        <div className="flex-1 min-w-0 text-right">
+                          <p className="text-sm font-semibold text-foreground truncate">{record.student_name}</p>
+                          {record.note && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{record.note}</p>}
                         </div>
                         <span className={`text-xs font-bold px-2 py-1 rounded ${bgColorClass} flex-shrink-0`}>
                           {statusLabel}
@@ -533,7 +543,7 @@ export default function Dashboard({ user, role }) {
               )}
             </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
