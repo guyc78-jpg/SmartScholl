@@ -212,11 +212,11 @@ export default function UserManagement() {
             <table className="w-full table-fixed border-collapse text-right" dir="rtl">
               <colgroup>
                 <col className="w-[20%]" />
-                <col className="w-[25%]" />
-                <col className="w-[14%]" />
-                <col className="w-[24%]" />
-                <col className="w-[9%]" />
-                <col className="w-[88px]" />
+                <col className="w-[22%]" />
+                <col className="w-[16%]" />
+                <col className="w-[20%]" />
+                <col className="w-[12%]" />
+                <col className="w-[10%]" />
               </colgroup>
               <thead className="bg-muted/50 border-b text-xs font-semibold text-muted-foreground">
                 <tr>
