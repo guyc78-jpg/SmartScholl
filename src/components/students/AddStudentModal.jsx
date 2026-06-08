@@ -8,6 +8,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { normalizeStudentNameFields } from '@/lib/studentName';
+import { findClassRoomByName } from '@/lib/classAssignment';
 
 export default function AddStudentModal({ classId, editData, onClose, onSuccess }) {
   const [form, setForm] = useState(() => {
@@ -26,13 +27,21 @@ export default function AddStudentModal({ classId, editData, onClose, onSuccess 
   });
   const [saving, setSaving] = useState(false);
   const [classRoom, setClassRoom] = useState(null);
+  const [classRooms, setClassRooms] = useState([]);
 
   useEffect(() => {
     if (!classId || !/^[a-f0-9]{24}$/i.test(classId)) {
       setClassRoom(null);
+      base44.entities.ClassRoom.list('-updated_date', 200).then(data => setClassRooms(data || []));
       return;
     }
-    base44.entities.ClassRoom.filter({ id: classId }).then(data => setClassRoom(data[0] || null));
+    Promise.all([
+      base44.entities.ClassRoom.filter({ id: classId }),
+      base44.entities.ClassRoom.list('-updated_date', 200),
+    ]).then(([byId, allRooms]) => {
+      setClassRoom(byId[0] || null);
+      setClassRooms(allRooms || []);
+    });
   }, [classId]);
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
@@ -46,10 +55,11 @@ export default function AddStudentModal({ classId, editData, onClose, onSuccess 
     }
     setSaving(true);
     try {
+      const resolvedClassRoom = classRoom || findClassRoomByName(classRooms, form.class_name);
       const classData = {
-        class_id: classId,
-        class_name: classRoom?.name || form.class_name || '',
-        grade: classRoom?.grade || form.grade || '',
+        class_id: resolvedClassRoom?.id || classId,
+        class_name: resolvedClassRoom?.name || form.class_name || '',
+        grade: resolvedClassRoom?.grade || form.grade || '',
       };
       const payload = {
         ...form,

@@ -9,6 +9,7 @@ import RtlActionBar from '@/components/ui/RtlActionBar';
 import RtlFilterGrid from '@/components/ui/RtlFilterGrid';
 import RtlSearchField from '@/components/ui/RtlSearchField';
 import StudentCard from '@/components/students/StudentCard';
+import ClassAssignmentAlert from '@/components/students/ClassAssignmentAlert';
 import { Plus, Upload, Users, Trash2, AlertTriangle, RefreshCw } from 'lucide-react';
 import {
   AlertDialog,
@@ -193,6 +194,8 @@ export default function Students({ role }) {
         title="תלמידים"
         subtitle={`${students.length} תלמידים ${role === 'division_manager' ? 'בחטיבה' : role === 'coordinator' && scopeMode !== 'class' ? `בשכבה ${getUserApprovedGrade(user)}` : `בכיתה ${getUserApprovedClass(user) || 'שלי'}`}`}
       />
+
+      <ClassAssignmentAlert enabled={role === 'admin'} onFixed={loadStudents} />
 
       <div className="space-y-3" dir="rtl">
         <RtlActionBar

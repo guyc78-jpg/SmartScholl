@@ -7,6 +7,7 @@ import { Upload, FileText, Check, AlertCircle } from 'lucide-react';
 import SelectedFileNotice from '@/components/import/SelectedFileNotice';
 import { parseStudentsWorksheetRows } from '@/lib/studentImport';
 import { formatStudentName } from '@/lib/studentName';
+import { findClassRoomByName } from '@/lib/classAssignment';
 
 function parseGradeFromClassName(className = '') {
   const clean = String(className).replace(/[\s״"׳']/g, '');
@@ -19,16 +20,18 @@ function parseGradeFromClassName(className = '') {
   return 'י';
 }
 
-async function getOrCreateClassRoom(student) {
+async function getOrCreateClassRoom(student, classRooms = []) {
   const className = student.class_name || '';
-  const existing = await base44.entities.ClassRoom.filter({ name: className });
-  if (existing[0]) return existing[0];
-  return base44.entities.ClassRoom.create({
+  const existing = findClassRoomByName(classRooms, className);
+  if (existing) return existing;
+  const created = await base44.entities.ClassRoom.create({
     name: className,
     grade: student.grade || parseGradeFromClassName(className),
     year: 'תשפ״ו',
     is_active: true
   });
+  classRooms.push(created);
+  return created;
 }
 
 export default function ImportStudentsModal({ classId, onClose, onSuccess }) {
@@ -90,9 +93,10 @@ export default function ImportStudentsModal({ classId, onClose, onSuccess }) {
   async function handleImport() {
     setImporting(true);
     let success = 0;
+    const classRooms = await base44.entities.ClassRoom.list('-updated_date', 200);
     for (const student of preview) {
       try {
-        const classForStudent = await getOrCreateClassRoom(student);
+        const classForStudent = classRoom || await getOrCreateClassRoom(student, classRooms);
         await base44.entities.Student.create({
           ...student,
           class_id: classForStudent.id,

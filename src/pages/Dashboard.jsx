@@ -9,6 +9,7 @@ import UrgentFlagsSection from '@/components/urgent/UrgentFlagsSection';
 import DailySmartCard from '@/components/dashboard/DailySmartCard';
 import WatchStudentsSection from '@/components/dashboard/WatchStudentsSection';
 import AttendanceExceptionsCard from '@/components/dashboard/AttendanceExceptionsCard';
+import ClassAssignmentAlert from '@/components/students/ClassAssignmentAlert';
 
 import {
   Users, Clock, AlertTriangle, BookOpen, CheckSquare,
@@ -281,6 +282,8 @@ export default function Dashboard({ user, role }) {
           </p>
         </div>
       </div>
+
+      <ClassAssignmentAlert enabled={isActiveAdmin} onFixed={() => loadData(false)} />
 
       {/* Now / Next — shown first, always visible for staff with a class */}
       {(isActiveHomeroom || isActiveAdmin || isActiveCoordinator) && (
