@@ -9,7 +9,7 @@ import { Card } from '@/components/ui/card';
 import StatusBadge from '@/components/ui/StatusBadge';
 import EmptyState from '@/components/ui/EmptyState';
 import PageHeader from '@/components/ui/PageHeader';
-import { Search, Plus, Upload, Users, ChevronLeft, Phone, Trash2, AlertTriangle, RefreshCw, MoreVertical, MessageSquare, Shield } from 'lucide-react';
+import { Search, Plus, Upload, Users, ChevronLeft, Phone, Trash2, AlertTriangle, RefreshCw, MoreVertical, MessageSquare } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -157,11 +157,16 @@ export default function Students({ role }) {
 
   const visible = filtered.slice(0, visibleCount);
   const hasMore = filtered.length > visibleCount;
+  const hasActiveFilters = search.trim() || statusFilter !== 'הכל' || accommodationFilter !== 'הכל';
+
+  const clearFilters = () => {
+    setSearch('');
+    setStatusFilter('הכל');
+    setAccommodationFilter('הכל');
+  };
 
   const communityPct = (s) => s.community_service_goal > 0
     ? Math.round((s.community_service_done / s.community_service_goal) * 100) : 0;
-
-  const canShowAccommodationMarker = ['homeroom_teacher', 'coordinator', 'division_manager'].includes(role);
 
   async function deleteAllStudents() {
     setDeleting(true);
@@ -189,75 +194,81 @@ export default function Students({ role }) {
       <PageHeader
         title="תלמידים"
         subtitle={`${students.length} תלמידים ${role === 'division_manager' ? 'בחטיבה' : role === 'coordinator' && scopeMode !== 'class' ? `בשכבה ${getUserApprovedGrade(user)}` : `בכיתה ${getUserApprovedClass(user) || 'שלי'}`}`}
-        actions={
-          <>
-            <Button variant="outline" size="sm" className="gap-2" onClick={() => setShowImport(true)}>
-              <Upload className="w-4 h-4" />
-              <span className="hidden sm:inline">ייבוא מאקסל</span>
-            </Button>
-            <Button variant="outline" size="sm" className="gap-2" onClick={() => setShowAccommodationImport(true)}>
-              <Upload className="w-4 h-4" />
-              <span className="hidden sm:inline">ייבוא התאמות</span>
-            </Button>
-            <Button size="sm" className="gap-2" onClick={() => setShowAdd(true)}>
-              <Plus className="w-4 h-4" />
-              תלמיד חדש
-            </Button>
-            {canDeleteAllStudents && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <MoreVertical className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  <DropdownMenuItem
-                    onClick={() => setShowDeleteConfirm(true)}
-                    disabled={students.length === 0 || deleting}
-                    className="text-destructive focus:text-destructive"
-                  >
-                    <Trash2 className="w-4 h-4 ml-2" />
-                    מחיקת הכל
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </>
-        }
       />
 
-      {/* Filters */}
-      <div className="flex gap-2 flex-wrap" dir="rtl">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+      <div className="space-y-3" dir="rtl">
+        <div className="flex flex-wrap justify-end gap-2" dir="rtl">
+          <Button variant="outline" size="sm" className="h-9 gap-2" onClick={() => setShowImport(true)}>
+            <Upload className="w-4 h-4" />
+            <span className="hidden sm:inline">ייבוא מאקסל</span>
+          </Button>
+          <Button variant="outline" size="sm" className="h-9 gap-2" onClick={() => setShowAccommodationImport(true)}>
+            <Upload className="w-4 h-4" />
+            <span className="hidden sm:inline">ייבוא התאמות</span>
+          </Button>
+          <Button size="sm" className="h-9 gap-2" onClick={() => setShowAdd(true)}>
+            <Plus className="w-4 h-4" />
+            תלמיד חדש
+          </Button>
+          {canDeleteAllStudents && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-9 w-9">
+                  <MoreVertical className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem
+                  onClick={() => setShowDeleteConfirm(true)}
+                  disabled={students.length === 0 || deleting}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="w-4 h-4 ms-2" />
+                  מחיקת הכל
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
+
+        <div className="relative w-full">
+          <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="חיפוש לפי שם או מספר..."
-            className="pr-9 pl-3 text-right"
+            className="h-10 ps-9 pe-3 text-right"
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-36">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {['הכל', 'פעיל', 'דורש מעקב', 'מועבר', 'סיים'].map(s => (
-              <SelectItem key={s} value={s}>{s}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={accommodationFilter} onValueChange={setAccommodationFilter}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="סינון התאמות" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="הכל">כל ההתאמות</SelectItem>
-            {ACCOMMODATION_TYPES.map(item => (
-              <SelectItem key={item.key} value={item.label}>{item.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" dir="rtl">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="h-10 w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {['הכל', 'פעיל', 'דורש מעקב', 'מועבר', 'סיים'].map(s => (
+                <SelectItem key={s} value={s}>{s}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={accommodationFilter} onValueChange={setAccommodationFilter}>
+            <SelectTrigger className="h-10 w-full">
+              <SelectValue placeholder="סינון התאמות" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="הכל">כל ההתאמות</SelectItem>
+              {ACCOMMODATION_TYPES.map(item => (
+                <SelectItem key={item.key} value={item.label}>{item.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {hasActiveFilters && (
+            <Button variant="outline" className="h-10 w-full justify-center" onClick={clearFilters}>
+              נקה סינון
+            </Button>
+          )}
+        </div>
       </div>
 
       {loading ? (
@@ -342,11 +353,7 @@ export default function Students({ role }) {
                             />
                           </div>
                         </div>
-                        {canShowAccommodationMarker && activeAccommodationLabels(accommodationRecords[student.id]?.accommodations || []).length > 0 && (
-                          <div className="mt-2 flex justify-end" dir="rtl">
-                            <Shield className="h-3.5 w-3.5 text-amber-500/70" aria-label="קיימות התאמות לימודיות" />
-                          </div>
-                        )}
+
                       </div>
                       <ChevronLeft className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-1 justify-self-end" />
                     </div>
@@ -382,7 +389,7 @@ export default function Students({ role }) {
               פעולה זו תמחק את כל התלמידים ולא ניתן לשחזר אותה
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="gap-2 sm:justify-start">
+          <AlertDialogFooter className="gap-2 sm:justify-end">
             <Button variant="outline" onClick={() => setShowDeleteConfirm(false)} disabled={deleting}>
               ביטול
             </Button>
