@@ -113,6 +113,7 @@ export default function UserManagement() {
     const scope = scopeFromForm(form);
     if (form.role === 'homeroom_teacher' && !scope.classId) return toast.error('יש לבחור כיתה למחנך/ת');
     if (form.role === 'grade_coordinator' && !scope.gradeId) return toast.error('יש לבחור שכבה לרכז/ת');
+    if (form.role === 'grade_coordinator' && !form.homeroomClassId) return toast.error('יש לבחור גם כיתת חינוך לרכז/ת');
     setSaving(true);
     try {
       await base44.functions.invoke('authorizeAccess', {
@@ -235,7 +236,7 @@ export default function UserManagement() {
               <div className="space-y-3" dir="rtl">
                 <div className="space-y-2">
                   <Label>שכבה</Label>
-                  <Select value={form.gradeId} onValueChange={(value) => setForm(prev => ({ ...prev, gradeId: value }))}>
+                  <Select value={form.gradeId} onValueChange={(value) => setForm(prev => ({ ...prev, gradeId: value, homeroomClassId: '' }))}>
                     <SelectTrigger><SelectValue placeholder="בחר/י שכבה" /></SelectTrigger>
                     <SelectContent dir="rtl">
                       {GRADES.map(grade => <SelectItem key={grade} value={grade}>{formatGrade(grade)}</SelectItem>)}
@@ -243,15 +244,16 @@ export default function UserManagement() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>כיתת חינוך אופציונלית</Label>
-                  <Select value={form.homeroomClassId || 'none'} onValueChange={(value) => setForm(prev => ({ ...prev, homeroomClassId: value === 'none' ? '' : value }))}>
-                    <SelectTrigger><SelectValue placeholder="בחר/י כיתה" /></SelectTrigger>
+                  <Label>כיתת חינוך</Label>
+                  <Select value={form.homeroomClassId || ''} onValueChange={(value) => setForm(prev => ({ ...prev, homeroomClassId: value }))}>
+                    <SelectTrigger><SelectValue placeholder="בחר/י כיתת חינוך" /></SelectTrigger>
                     <SelectContent dir="rtl">
-                      <SelectItem value="none">ללא כיתת חינוך</SelectItem>
-                      {sortedClasses.map(item => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}
+                      {sortedClasses
+                        .filter(item => !form.gradeId || item.grade === form.gradeId)
+                        .map(item => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-muted-foreground text-right">אם תוגדר כיתה, הרכז/ת יקבל/תקבל גם אזור “הכיתה שלי”.</p>
+                  <p className="text-xs text-muted-foreground text-right">רכז/ת שכבה מקבל/ת גם הרשאת שכבה וגם הרשאת כיתת חינוך.</p>
                 </div>
               </div>
             )}

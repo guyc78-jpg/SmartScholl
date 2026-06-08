@@ -57,7 +57,7 @@ async function writeLog(base44, { eventType, actorEmail, targetEmail, targetName
 
 function validateScope(role, scope = {}) {
   if (role === 'homeroom_teacher') return !!scope.classId;
-  if (role === 'grade_coordinator') return !!scope.gradeId;
+  if (role === 'grade_coordinator') return !!scope.gradeId && !!scope.homeroomClassId;
   if (role === 'division_manager') return VALID_DIVISIONS.includes(scope.divisionType);
   if (role === 'system_admin') return true;
   return false;
@@ -184,7 +184,7 @@ async function getAccess(base44, user) {
       roles,
       scope: primaryItem.scope,
       scopes_by_role: scopesByRole,
-      profile_class_id: homeroomItem?.scope?.classId || '',
+      profile_class_id: homeroomItem?.scope?.classId || coordinatorItem?.scope?.homeroomClassId || '',
       profile_homeroom_class_id: homeroomItem?.scope?.classId || coordinatorItem?.scope?.homeroomClassId || '',
       homeroomClassId: homeroomItem?.scope?.classId || coordinatorItem?.scope?.homeroomClassId || '',
       profile_grade_managed: coordinatorItem ? normalizeGrade(coordinatorItem.scope?.gradeId || '') : '',
