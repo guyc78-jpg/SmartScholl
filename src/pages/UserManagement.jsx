@@ -65,11 +65,11 @@ function scopeLabel(user, classNameById = {}) {
   }
   if (user.role === 'division_manager') return `מנהל/ת ${DIVISIONS[scope.divisionType]?.label || 'חטיבה לא הוגדרה'}`;
   if (user.role === 'system_admin') {
-    const extras = ['מנהל/ת מערכת'];
+    const extras = [];
     const homeroomLabel = className(user.homeroomClassId || scope.homeroomClassId || scope.classId);
     if (homeroomLabel) extras.push(`מחנך/ת כיתה ${homeroomLabel}`);
     if (user.gradeId) extras.push(`רכז/ת שכבה ${formatGrade(user.gradeId)}`);
-    return extras.join(' · ');
+    return extras.length ? extras.join(' · ') : 'גישה מלאה';
   }
   return ROLE_LABELS[user.role] || 'הרשאה מלאה';
 }
