@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { AlertCircle, ChevronLeft, Zap, TrendingDown, Clock } from 'lucide-react';
+import { Eye, ChevronLeft, Zap, TrendingDown, Clock } from 'lucide-react';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 
 const THRESHOLDS = {
@@ -62,7 +62,7 @@ export default function WatchStudentsSection({
     <Card className="border-amber-200/40 dark:border-amber-800/30">
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
         <div className="flex items-center gap-2">
-          <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+          <Eye className="w-4 h-4 text-primary" />
           <CardTitle className="text-base font-semibold">תלמידים דורשים תשומת לב</CardTitle>
           <span className="text-xs font-medium text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 px-2 py-0.5 rounded-full">
             {watchList.length}
