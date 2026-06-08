@@ -117,27 +117,30 @@ export default function Dashboard({ user, role }) {
             : await base44.entities[entityName].list();
           return filterByClass(records);
         }
-        // Sequential fetch to avoid rate limiting
         const results = [];
         for (const classId of classIds) {
           const scopedQuery = query ? { ...query, class_id: classId } : { class_id: classId };
           const classRecords = await base44.entities[entityName].filter(scopedQuery);
           results.push(...classRecords);
-          // Small delay between requests
-          await new Promise(resolve => setTimeout(resolve, 50));
+          await new Promise(resolve => setTimeout(resolve, 100));
         }
         return results;
       };
 
-      const [att, allAtt, exs, tks, dis, ann, perf] = await Promise.all([
-        fetchForScope('AttendanceRecord', { date: attendanceDate }),
-        fetchForScope('AttendanceRecord'),
-        fetchForScope('Exam'),
-        fetchForScope('Task'),
-        fetchForScope('DisciplineEvent'),
-        fetchForScope('Announcement'),
-        fetchForScope('PerformanceReview'),
-      ]);
+      // Fetch sequentially (no Promise.all) to avoid rate limiting
+      const att = await fetchForScope('AttendanceRecord', { date: attendanceDate });
+      await new Promise(resolve => setTimeout(resolve, 150));
+      const allAtt = await fetchForScope('AttendanceRecord');
+      await new Promise(resolve => setTimeout(resolve, 150));
+      const exs = await fetchForScope('Exam');
+      await new Promise(resolve => setTimeout(resolve, 150));
+      const tks = await fetchForScope('Task');
+      await new Promise(resolve => setTimeout(resolve, 150));
+      const dis = await fetchForScope('DisciplineEvent');
+      await new Promise(resolve => setTimeout(resolve, 150));
+      const ann = await fetchForScope('Announcement');
+      await new Promise(resolve => setTimeout(resolve, 150));
+      const perf = await fetchForScope('PerformanceReview');
 
       setStudents(scopedStudents);
       setTodayAttendance(filterScopedAttendance(att, scopedStudents));
