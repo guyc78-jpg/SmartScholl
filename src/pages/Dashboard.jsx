@@ -114,36 +114,50 @@ export default function Dashboard({ user, role }) {
       const scopedIds = new Set(scopedStudents.map(student => student.id));
       const shouldFetchAll = isActiveAdmin || classIds.length > 3;
       const filterByClass = records => (records || []).filter(record => classIdSet.has(record.class_id));
+      
+      const retryFetch = async (fn, retries = 2) => {
+        for (let i = 0; i < retries; i++) {
+          try {
+            return await fn();
+          } catch (err) {
+            if (i === retries - 1) throw err;
+            await new Promise(resolve => setTimeout(resolve, 500 * (i + 1)));
+          }
+        }
+      };
+
       const fetchForScope = async (entityName, query = null) => {
         if (shouldFetchAll) {
-          const records = query
-            ? await base44.entities[entityName].filter(query)
-            : await base44.entities[entityName].list();
+          const records = await retryFetch(() =>
+            query
+              ? base44.entities[entityName].filter(query)
+              : base44.entities[entityName].list()
+          );
           return filterByClass(records);
         }
         const results = [];
         for (const classId of classIds) {
           const scopedQuery = query ? { ...query, class_id: classId } : { class_id: classId };
-          const classRecords = await base44.entities[entityName].filter(scopedQuery);
+          const classRecords = await retryFetch(() => base44.entities[entityName].filter(scopedQuery));
           results.push(...classRecords);
-          await new Promise(resolve => setTimeout(resolve, 200));
+          await new Promise(resolve => setTimeout(resolve, 250));
         }
         return results;
       };
 
-      // Fetch sequentially (no Promise.all) to avoid rate limiting
+      // Fetch sequentially with longer delays to avoid rate limiting
       const att = await fetchForScope('AttendanceRecord', { date: attendanceDate });
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise(resolve => setTimeout(resolve, 400));
       const allAtt = await fetchForScope('AttendanceRecord');
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise(resolve => setTimeout(resolve, 400));
       const exs = await fetchForScope('Exam');
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise(resolve => setTimeout(resolve, 400));
       const tks = await fetchForScope('Task');
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise(resolve => setTimeout(resolve, 400));
       const dis = await fetchForScope('DisciplineEvent');
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise(resolve => setTimeout(resolve, 400));
       const ann = await fetchForScope('Announcement');
-      await new Promise(resolve => setTimeout(resolve, 300));
+      await new Promise(resolve => setTimeout(resolve, 400));
       const perf = await fetchForScope('PerformanceReview');
 
       setStudents(scopedStudents);
@@ -155,6 +169,9 @@ export default function Dashboard({ user, role }) {
       setAnnouncements(ann);
       setPerformanceReviews(perf.filter(record => scopedIds.has(record.student_id)));
       lastLoadAtRef.current = Date.now();
+    } catch (err) {
+      console.error('Dashboard load error:', err);
+      setLoading(false);
     } finally {
       setLoading(false);
       isLoadingDataRef.current = false;
