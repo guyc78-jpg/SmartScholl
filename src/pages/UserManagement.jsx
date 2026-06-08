@@ -209,32 +209,55 @@ export default function UserManagement() {
           </div>
 
           <div className="hidden md:block rounded-2xl border bg-card overflow-hidden" dir="rtl">
-            <div className="grid grid-cols-[2fr_2fr_1.4fr_1.4fr_1fr_auto] gap-3 px-4 py-3 bg-muted/50 border-b text-xs font-semibold text-muted-foreground text-right">
-              <div className="text-right">שם מלא</div>
-              <div className="text-right">מייל</div>
-              <div className="text-right">תפקיד</div>
-              <div className="text-right">שיוך הרשאה</div>
-              <div className="text-right">סטטוס</div>
-              <div className="text-right">פעולות</div>
-            </div>
-
-            {users.map(user => (
-              <div key={user.id} className="grid grid-cols-[2fr_2fr_1.4fr_1.4fr_1fr_auto] gap-3 items-center px-4 py-3 border-b last:border-b-0" dir="rtl">
-                <p className="font-semibold text-sm truncate text-right">{user.fullName}</p>
-                <p className="text-sm text-muted-foreground force-ltr truncate text-right">{user.email}</p>
-                <p className="text-sm font-medium text-right">{ROLE_LABELS[user.role] || 'משתמש/ת'}</p>
-                <p className="text-sm text-muted-foreground leading-5 text-right">{scopeLabel(user, classNameById)}</p>
-                <div className="text-right">
-                  <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${user.isActive !== false ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-destructive/10 text-destructive'}`}>
-                    {user.isActive !== false ? 'פעיל' : 'לא פעיל'}
-                  </span>
-                </div>
-                <div className="flex justify-end gap-1">
-                  <Button size="icon" variant="ghost" onClick={() => openEdit(user)} aria-label="עריכה"><Pencil className="w-4 h-4" /></Button>
-                  <Button size="icon" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setDeleteTarget(user)} aria-label="מחיקה"><Trash2 className="w-4 h-4" /></Button>
-                </div>
-              </div>
-            ))}
+            <table className="w-full table-fixed border-collapse text-right" dir="rtl">
+              <colgroup>
+                <col className="w-[20%]" />
+                <col className="w-[25%]" />
+                <col className="w-[14%]" />
+                <col className="w-[24%]" />
+                <col className="w-[9%]" />
+                <col className="w-[88px]" />
+              </colgroup>
+              <thead className="bg-muted/50 border-b text-xs font-semibold text-muted-foreground">
+                <tr>
+                  <th className="px-4 py-3 text-right align-middle">שם מלא</th>
+                  <th className="px-4 py-3 text-right align-middle">מייל</th>
+                  <th className="px-4 py-3 text-right align-middle">תפקיד</th>
+                  <th className="px-4 py-3 text-right align-middle">שיוך הרשאה</th>
+                  <th className="px-4 py-3 text-right align-middle">סטטוס</th>
+                  <th className="px-4 py-3 text-right align-middle">פעולות</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map(user => (
+                  <tr key={user.id} className="border-b last:border-b-0">
+                    <td className="px-4 py-3 align-middle text-right">
+                      <p className="font-semibold text-sm truncate">{user.fullName}</p>
+                    </td>
+                    <td className="px-4 py-3 align-middle text-right">
+                      <p className="text-sm text-muted-foreground force-ltr truncate text-right">{user.email}</p>
+                    </td>
+                    <td className="px-4 py-3 align-middle text-right">
+                      <p className="text-sm font-medium truncate">{ROLE_LABELS[user.role] || 'משתמש/ת'}</p>
+                    </td>
+                    <td className="px-4 py-3 align-middle text-right">
+                      <p className="text-sm text-muted-foreground leading-5 truncate">{scopeLabel(user, classNameById)}</p>
+                    </td>
+                    <td className="px-4 py-3 align-middle text-right">
+                      <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${user.isActive !== false ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-destructive/10 text-destructive'}`}>
+                        {user.isActive !== false ? 'פעיל' : 'לא פעיל'}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3 align-middle text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button size="icon" variant="ghost" onClick={() => openEdit(user)} aria-label="עריכה"><Pencil className="w-4 h-4" /></Button>
+                        <Button size="icon" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setDeleteTarget(user)} aria-label="מחיקה"><Trash2 className="w-4 h-4" /></Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </>
       )}
