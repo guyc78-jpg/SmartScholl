@@ -15,8 +15,6 @@ export default function ProfileAvatarPicker({ value, onChange }) {
   const [uploading, setUploading] = useState(false);
   const mode = value.profile_image_mode || (value.profile_photo_url ? 'photo' : 'avatar');
   const selectedAvatar = value.profile_avatar || 'male_teacher';
-  const photoPosition = Number(value.profile_photo_position ?? 20);
-  const photoZoom = Number(value.profile_photo_zoom ?? 1);
 
   const update = (patch) => onChange({ ...value, ...patch });
 
@@ -25,7 +23,7 @@ export default function ProfileAvatarPicker({ value, onChange }) {
     if (!file) return;
     setUploading(true);
     const result = await base44.integrations.Core.UploadFile({ file });
-    update({ profile_photo_url: result.file_url, profile_image_mode: 'photo', profile_photo_position: 20, profile_photo_zoom: 1 });
+    update({ profile_photo_url: result.file_url, profile_image_mode: 'photo' });
     toast.success('התמונה הועלתה לפרופיל');
     setUploading(false);
     event.target.value = '';
@@ -44,7 +42,7 @@ export default function ProfileAvatarPicker({ value, onChange }) {
               src={value.profile_photo_url}
               alt="תמונת פרופיל"
               className="w-full h-full object-cover"
-              style={{ objectPosition: `center ${photoPosition}%`, transform: `scale(${photoZoom})`, transformOrigin: `center ${photoPosition}%` }}
+              style={{ objectPosition: 'center 22%' }}
             />
           ) : (
             <span className="text-3xl" aria-hidden="true">
@@ -74,58 +72,6 @@ export default function ProfileAvatarPicker({ value, onChange }) {
         })}
       </div>
 
-      {value.profile_photo_url && mode === 'photo' && (
-        <div className="space-y-3 rounded-lg bg-card/70 border p-3 text-right" dir="rtl">
-          <div className="text-right">
-            <Label className="text-xs font-semibold">עריכת תצוגת התמונה לפני שמירה</Label>
-            <p className="text-xs text-muted-foreground mt-1">כוונו את התמונה כאן, ורק לאחר מכן לחצו על שמירה.</p>
-          </div>
-
-          <div className="mx-auto w-28 h-28 rounded-2xl border bg-muted overflow-hidden">
-            <img
-              src={value.profile_photo_url}
-              alt="תצוגה מקדימה לתמונת פרופיל"
-              className="w-full h-full object-cover"
-              style={{ objectPosition: `center ${photoPosition}%`, transform: `scale(${photoZoom})`, transformOrigin: `center ${photoPosition}%` }}
-            />
-          </div>
-
-          <div className="space-y-1.5" dir="rtl">
-            <div className="flex items-center justify-between gap-3" dir="rtl">
-              <span className="text-xs text-muted-foreground">למטה</span>
-              <Label className="text-xs font-semibold">מיקום הראש</Label>
-              <span className="text-xs text-muted-foreground">למעלה</span>
-            </div>
-            <input
-              type="range"
-              min="0"
-              max="45"
-              value={photoPosition}
-              onChange={(event) => update({ profile_photo_position: Number(event.target.value), profile_image_mode: 'photo' })}
-              className="w-full accent-primary"
-              dir="ltr"
-            />
-          </div>
-
-          <div className="space-y-1.5" dir="rtl">
-            <div className="flex items-center justify-between gap-3" dir="rtl">
-              <span className="text-xs text-muted-foreground">רחוק</span>
-              <Label className="text-xs font-semibold">זום עדין</Label>
-              <span className="text-xs text-muted-foreground">קרוב</span>
-            </div>
-            <input
-              type="range"
-              min="1"
-              max="1.18"
-              step="0.01"
-              value={photoZoom}
-              onChange={(event) => update({ profile_photo_zoom: Number(event.target.value), profile_image_mode: 'photo' })}
-              className="w-full accent-primary"
-              dir="ltr"
-            />
-          </div>
-        </div>
-      )}
 
       <div className="flex flex-col sm:flex-row justify-end gap-2" dir="rtl">
         <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={handleUpload} />
