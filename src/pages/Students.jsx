@@ -87,7 +87,6 @@ export default function Students({ role }) {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [showAdd, setShowAdd] = useState(false);
   const [showImport, setShowImport] = useState(false);
-  const [showAccommodationImport, setShowAccommodationImport] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedConversationStudent, setSelectedConversationStudent] = useState(null);
   const [accommodationRecords, setAccommodationRecords] = useState({});
@@ -201,10 +200,6 @@ export default function Students({ role }) {
           <Button variant="outline" size="sm" className="h-9 gap-2" onClick={() => setShowImport(true)}>
             <Upload className="w-4 h-4" />
             <span className="hidden sm:inline">ייבוא מאקסל</span>
-          </Button>
-          <Button variant="outline" size="sm" className="h-9 gap-2" onClick={() => setShowAccommodationImport(true)}>
-            <Upload className="w-4 h-4" />
-            <span className="hidden sm:inline">ייבוא התאמות</span>
           </Button>
           <Button size="sm" className="h-9 gap-2" onClick={() => setShowAdd(true)}>
             <Plus className="w-4 h-4" />
@@ -374,7 +369,6 @@ export default function Students({ role }) {
 
       {showAdd && <AddStudentModal classId={classId} onClose={() => setShowAdd(false)} onSuccess={() => { setShowAdd(false); loadStudents(); }} />}
       {showImport && <ImportStudentsModal classId={classId} onClose={() => setShowImport(false)} onSuccess={() => { setShowImport(false); loadStudents(); }} />}
-      {showAccommodationImport && <ImportAccommodationsModal onClose={() => setShowAccommodationImport(false)} onSuccess={() => { setShowAccommodationImport(false); loadStudents(); }} />}
       <ParentConversationDialog
         open={!!selectedConversationStudent}
         onOpenChange={(open) => !open && setSelectedConversationStudent(null)}
