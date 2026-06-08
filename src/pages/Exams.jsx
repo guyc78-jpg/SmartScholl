@@ -50,21 +50,27 @@ export default function Exams({ role, user }) {
   const classId = isStudent ? getStudentClassId(user, CLASS_ID) : getUserApprovedClassId(user, CLASS_ID);
   const todayIso = new Date().toISOString().split('T')[0];
 
-  useEffect(() => { loadData(); }, [classId]);
+  useEffect(() => { loadData(); }, [classId, role]);
 
   async function loadData() {
     setLoading(true);
-    const [eventData, studentData, completionData, reportData] = await Promise.all([
+    const [eventData, studentData] = await Promise.all([
       base44.entities.Exam.filter({ class_id: classId }),
       base44.entities.Student.filter({ class_id: classId }),
-      base44.entities.ExamCompletion.list(),
-      base44.entities.ExamGradeReport.list('-updated_action_at', 300)
     ]);
+    const nextStudents = studentData || [];
     setEvents((eventData || []).sort((a, b) => (a.date || '').localeCompare(b.date || '')));
-    setStudents(studentData || []);
-    setCompletions(completionData || []);
-    setGradeReports(reportData || []);
+    setStudents(nextStudents);
     setLoading(false);
+
+    const current = isStudent ? nextStudents.find(s => s.email === user?.email || s.user_email === user?.email) : null;
+    Promise.all([
+      current ? base44.entities.ExamCompletion.filter({ student_id: current.id }) : Promise.resolve([]),
+      canTrack ? base44.entities.ExamGradeReport.list('-updated_action_at', 300) : Promise.resolve([]),
+    ]).then(([completionData, reportData]) => {
+      setCompletions(completionData || []);
+      setGradeReports(reportData || []);
+    }).catch(() => {});
   }
 
   const currentStudent = useMemo(() => {

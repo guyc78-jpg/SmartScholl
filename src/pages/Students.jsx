@@ -131,12 +131,13 @@ export default function Students({ role }) {
       const divisionGrades = role === 'division_manager' ? getDivisionGrades(user) : [];
       const nextStudents = divisionGrades.length ? allStudents.filter(student => divisionGrades.includes(normalizeGrade(student.grade))) : allStudents;
       setStudents(nextStudents);
-      await loadAccommodationSummaries(nextStudents);
+      setLoading(false);
+      loadAccommodationSummaries(nextStudents);
     } catch (e) {
       setError(e.message === 'timeout' ? 'הטעינה ארכה זמן רב מדי. נסה שוב.' : 'אירעה שגיאה בטעינת התלמידים.');
       setStudents([]);
+      setLoading(false);
     }
-    setLoading(false);
   }, [user, role, scopeMode, loadAccommodationSummaries]);
 
   useEffect(() => { loadStudents(); }, [loadStudents]);
@@ -261,7 +262,7 @@ export default function Students({ role }) {
 
       {loading ? (
         <div className="flex justify-center py-12">
-          <div className="w-7 h-7 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+          <div className="w-6 h-6 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
         </div>
       ) : error ? (
         <div className="rounded-xl border border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-900/40 p-6 text-center space-y-3">

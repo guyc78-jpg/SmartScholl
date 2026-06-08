@@ -88,12 +88,17 @@ export default function ClassAttendance({ role }) {
     setLoading(true);
     const scopedStudents = await getAttendanceScopedStudents(user, role);
     const classIds = getScopedClassIds(scopedStudents);
-    const recsArrays = await Promise.all(classIds.map(cid => base44.entities.AttendanceRecord.filter({ class_id: cid })));
-    const recs = recsArrays.flat();
 
     setStudents([...scopedStudents].sort(compareStudentsByLastName));
-    setAllRecords(filterScopedAttendance(recs, scopedStudents));
     setLoading(false);
+
+    if (classIds.length > 0) {
+      Promise.all(classIds.map(cid => base44.entities.AttendanceRecord.filter({ class_id: cid })))
+        .then(recsArrays => setAllRecords(filterScopedAttendance(recsArrays.flat(), scopedStudents)))
+        .catch(() => setAllRecords([]));
+    } else {
+      setAllRecords([]);
+    }
   }
 
   async function loadDay() {

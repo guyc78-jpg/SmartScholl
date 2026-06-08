@@ -92,12 +92,27 @@ const AuthenticatedApp = () => {
     if (realUser) setWorkRole(getInitialWorkRole(realUser));
   }, [realUser]);
 
+  useEffect(() => {
+    if (!user) return;
+    const userRoles = getAvailableRoles(user);
+    const preload = () => {
+      import('./pages/Students');
+      import('./pages/ClassAttendance');
+      import('./pages/Schedule');
+      import('./pages/Exams');
+      import('./pages/Profile');
+      if (userRoles.includes('system_admin') || userRoles.includes('admin')) import('./pages/UserManagement');
+    };
+    const id = window.requestIdleCallback ? window.requestIdleCallback(preload, { timeout: 2000 }) : setTimeout(preload, 800);
+    return () => window.cancelIdleCallback ? window.cancelIdleCallback(id) : clearTimeout(id);
+  }, [user?.id]);
+
   if (isLoadingPublicSettings || isLoadingAuth) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-background" dir="rtl">
         <div className="text-center">
-          <div className="w-10 h-10 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground text-sm">טוען כיתה חכמה...</p>
+          <div className="w-6 h-6 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-muted-foreground text-sm">טוען...</p>
         </div>
       </div>
     );
@@ -142,8 +157,8 @@ const AuthenticatedApp = () => {
   const pageRole = role === 'system_admin' ? 'admin' : role === 'grade_coordinator' ? 'coordinator' : role;
 
   const LoadingFallback = () => (
-    <div className="flex items-center justify-center h-96">
-      <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+    <div className="flex items-center justify-center h-24" dir="rtl">
+      <div className="w-6 h-6 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
     </div>
   );
 

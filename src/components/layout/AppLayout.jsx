@@ -257,13 +257,8 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
   const secondaryContextLabel = roleDisplayLines.slice(1).join(' · ');
 
   useEffect(() => {
-    if (!['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'].includes(activeRole)) {
-      setPendingCount(0);
-      return;
-    }
-    base44.functions.invoke('handleApprovalRequest', { action: 'get_pending' })
-      .then(res => setPendingCount((res.data.pending || []).filter(r => r.status === 'pending').length))
-      .catch(() => {});
+    // Avoid an extra backend call on every navigation; no visible menu item currently uses this badge.
+    setPendingCount(0);
   }, [activeRole]);
 
   const SidebarContent = () => (

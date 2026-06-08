@@ -64,7 +64,7 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
     return () => clearInterval(t);
   }, [periods]);
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => { load(); }, [classId]);
 
   async function load() {
     setLoading(true);

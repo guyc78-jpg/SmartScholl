@@ -121,53 +121,51 @@ export default function Dashboard({ user, role }) {
             return await fn();
           } catch (err) {
             if (i === retries - 1) throw err;
-            await new Promise(resolve => setTimeout(resolve, 500 * (i + 1)));
+            await new Promise(resolve => setTimeout(resolve, 350 * (i + 1)));
           }
         }
       };
 
-      const fetchForScope = async (entityName, query = null) => {
+      const fetchForScope = async (entityName, query = null, limit = 500) => {
+        if (classIds.length === 0) return [];
         if (shouldFetchAll) {
           const records = await retryFetch(() =>
             query
-              ? base44.entities[entityName].filter(query)
-              : base44.entities[entityName].list()
+              ? base44.entities[entityName].filter(query, '-updated_date', limit)
+              : base44.entities[entityName].list('-updated_date', limit)
           );
           return filterByClass(records);
         }
-        const results = [];
-        for (const classId of classIds) {
-          const scopedQuery = query ? { ...query, class_id: classId } : { class_id: classId };
-          const classRecords = await retryFetch(() => base44.entities[entityName].filter(scopedQuery));
-          results.push(...classRecords);
-          await new Promise(resolve => setTimeout(resolve, 250));
-        }
-        return results;
+        const results = await Promise.all(classIds.map(currentClassId => {
+          const scopedQuery = query ? { ...query, class_id: currentClassId } : { class_id: currentClassId };
+          return retryFetch(() => base44.entities[entityName].filter(scopedQuery, '-updated_date', limit));
+        }));
+        return results.flat();
       };
 
-      // Fetch sequentially with longer delays to avoid rate limiting
-      const att = await fetchForScope('AttendanceRecord', { date: attendanceDate });
-      await new Promise(resolve => setTimeout(resolve, 400));
-      const allAtt = await fetchForScope('AttendanceRecord');
-      await new Promise(resolve => setTimeout(resolve, 400));
-      const exs = await fetchForScope('Exam');
-      await new Promise(resolve => setTimeout(resolve, 400));
-      const tks = await fetchForScope('Task');
-      await new Promise(resolve => setTimeout(resolve, 400));
-      const dis = await fetchForScope('DisciplineEvent');
-      await new Promise(resolve => setTimeout(resolve, 400));
-      const ann = await fetchForScope('Announcement');
-      await new Promise(resolve => setTimeout(resolve, 400));
-      const perf = await fetchForScope('PerformanceReview');
+      const [att, exs, tks, dis, ann] = await Promise.all([
+        fetchForScope('AttendanceRecord', { date: attendanceDate }, 300),
+        fetchForScope('Exam', null, 250),
+        fetchForScope('Task', null, 250),
+        fetchForScope('DisciplineEvent', null, 250),
+        fetchForScope('Announcement', null, 100),
+      ]);
 
       setStudents(scopedStudents);
       setTodayAttendance(filterScopedAttendance(att, scopedStudents));
-      setAllAttRecords(filterScopedAttendance(allAtt, scopedStudents));
       setDiscipline(dis.filter(record => scopedIds.has(record.student_id)));
       setTasks(tks.filter(task => !task.student_id || scopedIds.has(task.student_id)));
       setExams(exs);
       setAnnouncements(ann);
-      setPerformanceReviews(perf.filter(record => scopedIds.has(record.student_id)));
+      setLoading(false);
+
+      Promise.all([
+        fetchForScope('AttendanceRecord', null, 800),
+        fetchForScope('PerformanceReview', null, 300),
+      ]).then(([allAtt, perf]) => {
+        setAllAttRecords(filterScopedAttendance(allAtt, scopedStudents));
+        setPerformanceReviews(perf.filter(record => scopedIds.has(record.student_id)));
+      }).catch(() => {});
       lastLoadAtRef.current = Date.now();
     } catch (err) {
       console.error('Dashboard load error:', err);
@@ -261,7 +259,7 @@ export default function Dashboard({ user, role }) {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+        <div className="w-6 h-6 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
       </div>
     );
   }

@@ -1,6 +1,13 @@
 import { base44 } from '@/api/base44Client';
 import { compareStudentsByLastName } from '@/lib/studentName';
-import { isStudentInApprovedScope } from '@/lib/schoolStructure';
+import {
+  isStudentInApprovedScope,
+  getUserApprovedClass,
+  getUserApprovedGrade,
+  getUserHomeroomClassId,
+  getActiveScopeMode,
+  normalizeGrade,
+} from '@/lib/schoolStructure';
 
 export const ATTENDANCE_STATUSES = ['נוכח/ת', 'מאחר/ת', 'נעדר/ת', 'שוחרר/ת'];
 export const PRESENT_STATUS = 'נוכח/ת';
@@ -22,10 +29,31 @@ export function saveSelectedAttendanceDate(date) {
 }
 
 export async function getAttendanceScopedStudents(user, role) {
-  const allStudents = await base44.entities.Student.list();
-  const activeStudents = allStudents.filter(s => s.status === 'פעיל' || s.status === 'דורש מעקב');
+  let rows = [];
+
+  if (role === 'homeroom_teacher') {
+    const classId = user?.profile_class_id || getUserHomeroomClassId(user, '');
+    const className = getUserApprovedClass(user);
+    rows = classId
+      ? await base44.entities.Student.filter({ class_id: classId }, 'lastName', 300)
+      : className
+        ? await base44.entities.Student.filter({ class_name: className }, 'lastName', 300)
+        : [];
+  } else if (role === 'coordinator' || role === 'grade_coordinator') {
+    if (getActiveScopeMode() === 'class') {
+      const classId = getUserHomeroomClassId(user, '');
+      rows = classId ? await base44.entities.Student.filter({ class_id: classId }, 'lastName', 300) : [];
+    } else {
+      const grade = normalizeGrade(getUserApprovedGrade(user));
+      rows = grade ? await base44.entities.Student.filter({ grade }, 'lastName', 600) : [];
+    }
+  } else {
+    rows = await base44.entities.Student.list('-updated_date', 1000);
+  }
+
+  const activeStudents = (rows || []).filter(s => s.status === 'פעיל' || s.status === 'דורש מעקב');
   let scopedStudents = activeStudents.filter(s => isStudentInApprovedScope(s, user, role));
-  if (scopedStudents.length === 0 && role === 'admin') scopedStudents = activeStudents;
+  if (scopedStudents.length === 0 && (role === 'admin' || role === 'system_admin')) scopedStudents = activeStudents;
   return scopedStudents.sort(compareStudentsByLastName);
 }
 

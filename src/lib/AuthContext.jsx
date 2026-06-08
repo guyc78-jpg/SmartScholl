@@ -4,6 +4,27 @@ import { appParams } from '@/lib/app-params';
 import { createAxiosClient } from '@base44/sdk/dist/utils/axios-client';
 
 const AuthContext = createContext();
+const ACCESS_CACHE_TTL = 10 * 60 * 1000;
+
+const getAccessCacheKey = (email) => email ? `approvedAccess:${email}` : '';
+
+const readCachedAccess = (email) => {
+  const key = getAccessCacheKey(email);
+  if (!key) return null;
+  try {
+    const cached = JSON.parse(sessionStorage.getItem(key) || 'null');
+    if (!cached?.user || Date.now() - cached.savedAt > ACCESS_CACHE_TTL) return null;
+    return cached.user;
+  } catch {
+    return null;
+  }
+};
+
+const writeCachedAccess = (email, accessUser) => {
+  const key = getAccessCacheKey(email);
+  if (!key || !accessUser) return;
+  sessionStorage.setItem(key, JSON.stringify({ user: accessUser, savedAt: Date.now() }));
+};
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -91,39 +112,50 @@ export const AuthProvider = ({ children }) => {
 
   const checkUserAuth = async () => {
     try {
-      // Now check if the user is authenticated
       setIsLoadingAuth(true);
       const currentUser = await base44.auth.me();
-      let accessUser = null;
 
-      try {
-        const accessRes = await Promise.race([
-          base44.functions.invoke('authorizeAccess', { action: 'getAccess' }),
-          new Promise((_, reject) => setTimeout(() => reject(new Error('authorizeAccess timeout')), 3500))
-        ]);
-        accessUser = accessRes.data.user;
-      } catch (accessError) {
-        throw accessError;
+      const applyAccessUser = (accessUser) => {
+        setBase44AccessClaims(accessUser);
+        const mergedRoles = accessUser.roles || [];
+        const approvedPrimaryRole = accessUser.profile_display_primary_role || accessUser.role;
+        setUser({
+          ...currentUser,
+          ...accessUser,
+          role: accessUser.role,
+          roles: mergedRoles,
+          available_roles: mergedRoles,
+          active_work_role: mergedRoles.includes(currentUser.active_work_role) ? currentUser.active_work_role : accessUser.role,
+          profile_display_primary_role: approvedPrimaryRole,
+          profile_display_additional_roles: [],
+          profile_extra_roles: currentUser.profile_extra_roles || '',
+          authorization: accessUser,
+        });
+        setIsAuthenticated(true);
+        setIsLoadingAuth(false);
+        setAuthChecked(true);
+      };
+
+      const cachedAccess = readCachedAccess(currentUser.email);
+      if (cachedAccess) {
+        applyAccessUser(cachedAccess);
+        base44.functions.invoke('authorizeAccess', { action: 'getAccess' })
+          .then((accessRes) => {
+            const freshAccess = accessRes.data.user;
+            writeCachedAccess(currentUser.email, freshAccess);
+            if (JSON.stringify(freshAccess) !== JSON.stringify(cachedAccess)) applyAccessUser(freshAccess);
+          })
+          .catch(() => {});
+        return;
       }
 
-      setBase44AccessClaims(accessUser);
-      const mergedRoles = accessUser.roles || [];
-      const approvedPrimaryRole = accessUser.profile_display_primary_role || accessUser.role;
-      setUser({
-        ...currentUser,
-        ...accessUser,
-        role: accessUser.role,
-        roles: mergedRoles,
-        available_roles: mergedRoles,
-        active_work_role: mergedRoles.includes(currentUser.active_work_role) ? currentUser.active_work_role : accessUser.role,
-        profile_display_primary_role: approvedPrimaryRole,
-        profile_display_additional_roles: [],
-        profile_extra_roles: currentUser.profile_extra_roles || '',
-        authorization: accessUser,
-      });
-      setIsAuthenticated(true);
-      setIsLoadingAuth(false);
-      setAuthChecked(true);
+      const accessRes = await Promise.race([
+        base44.functions.invoke('authorizeAccess', { action: 'getAccess' }),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('authorizeAccess timeout')), 3500))
+      ]);
+      const accessUser = accessRes.data.user;
+      writeCachedAccess(currentUser.email, accessUser);
+      applyAccessUser(accessUser);
     } catch (error) {
       clearBase44AccessClaims();
       console.error('User auth check failed:', error);

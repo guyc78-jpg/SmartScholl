@@ -164,7 +164,7 @@ export default function UserManagement() {
   };
 
   if (loading) {
-    return <div className="flex justify-center p-12" dir="rtl"><div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" /></div>;
+    return <div className="flex justify-center p-8" dir="rtl"><div className="w-6 h-6 border-4 border-primary/20 border-t-primary rounded-full animate-spin" /></div>;
   }
 
   return (
