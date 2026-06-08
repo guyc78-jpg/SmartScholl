@@ -86,6 +86,7 @@ export default function AttendanceExceptionsDialog({ open, onOpenChange, records
               WebkitOverflowScrolling: 'touch',
               touchAction: 'pan-y',
               maxHeight: 'calc(min(85dvh, 720px) - 73px)',
+              paddingBottom: 'max(1rem, calc(env(safe-area-inset-bottom) + 80px))',
             }}
           >
             {sortedRecords.map(record => {
