@@ -366,13 +366,73 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
           }}
         >
           {action === 'positive_reinforcement' ? (
-            <PositiveReinforcementDialog
-              student={getSelectedStudent()}
-              classId={resolvedClassId}
-              user={user}
-              onClose={onClose}
-              onSuccess={onSuccess}
-            />
+            <div className="space-y-4">
+              {/* Student picker */}
+              <div className="space-y-1">
+                <Label>תלמיד</Label>
+                {loadingStudents ? (
+                  <p className="text-sm text-muted-foreground">טוען תלמידים...</p>
+                ) : students.length === 0 ? (
+                  <div className="rounded-lg border border-dashed border-border p-3 text-center">
+                    <p className="text-sm text-muted-foreground">לא נמצאו תלמידים המשויכים לכיתה שלך</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2" dir="rtl">
+                    <div className="flex items-center gap-2" dir="rtl">
+                      <Input
+                        placeholder="חיפוש תלמיד/ה..."
+                        value={studentListOpen ? searchQuery : (form.selectedStudentName || form.student_name || searchQuery || '')}
+                        onChange={e => setSearchQuery(e.target.value)}
+                        onFocus={() => {
+                          setSearchQuery(form.selectedStudentName || form.student_name || searchQuery || '');
+                          setStudentListOpen(true);
+                        }}
+                        className="text-sm flex-1 text-right"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setStudentListOpen(open => !open)}
+                        aria-expanded={studentListOpen}
+                        aria-label={studentListOpen ? 'סגור רשימת תלמידים' : 'פתח רשימת תלמידים'}
+                        className="h-9 w-9 flex-shrink-0 rounded-md border border-input bg-background inline-flex items-center justify-center text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                      >
+                        <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${studentListOpen ? 'rotate-180' : ''}`} />
+                      </button>
+                    </div>
+                    <div className={`overflow-hidden transition-[max-height,opacity] duration-300 ease-out ${studentListOpen ? 'max-h-48 opacity-100' : 'max-h-0 opacity-0'}`}>
+                      <div className="max-h-48 overflow-y-auto rounded-lg border border-border divide-y divide-border" style={{ WebkitOverflowScrolling: 'touch' }} dir="rtl">
+                        {filteredStudents.length === 0 ? (
+                          <div className="px-3 py-3 text-sm text-muted-foreground text-right">לא נמצאו תלמידים תואמים</div>
+                        ) : filteredStudents.map(s => {
+                          const selected = (form.selectedStudentId || form.student_id) === s.id;
+                          return (
+                            <button
+                              key={s.id}
+                              type="button"
+                              onClick={() => handleStudentSelect(s)}
+                              className={`w-full flex items-center justify-between gap-2 text-right px-3 py-2.5 text-sm transition-colors ${selected ? 'bg-primary text-primary-foreground font-medium' : 'hover:bg-muted'}`}
+                              dir="rtl"
+                            >
+                              <span>{getStudentDisplayName(s)}</span>
+                              {selected && <Check size={16} className="flex-shrink-0" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+              {getSelectedStudent() && (
+                <PositiveReinforcementDialog
+                  student={getSelectedStudent()}
+                  classId={resolvedClassId}
+                  user={user}
+                  onClose={onClose}
+                  onSuccess={onSuccess}
+                />
+              )}
+            </div>
           ) : action === 'community' ? (
             <CommunityExceptionsQuickAction students={students} loading={loadingStudents} user={user} role={activeRole} />
           ) : (
