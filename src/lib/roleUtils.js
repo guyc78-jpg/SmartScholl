@@ -138,7 +138,7 @@ export function getInitialWorkRole(user) {
   if (isAdmin && (roles.includes('grade_coordinator') || roles.includes('coordinator')) && (!preferred || preferred === 'admin' || preferred === 'system_admin')) {
     return roles.includes('grade_coordinator') ? 'grade_coordinator' : 'coordinator';
   }
-  if (roles.includes(preferred)) return preferred;
+  if (roles.includes(preferred) && !(isAdmin && preferred === 'system_admin' && roles.includes('homeroom_teacher'))) return preferred;
   if (roles.includes('homeroom_teacher')) return 'homeroom_teacher';
   if (roles.includes('grade_coordinator')) return 'grade_coordinator';
   if (roles.includes('coordinator')) return 'coordinator';
@@ -155,9 +155,9 @@ export function getUserFirstName(user) {
 
 export function getDefaultDisplayRole(user, activeRole) {
   const roles = getAvailableRoles(user);
+  if (roles.includes(activeRole)) return activeRole;
   const approvedPrimary = user?.authorization?.role || user?.role;
   if (roles.includes(approvedPrimary)) return approvedPrimary;
-  if (roles.includes(activeRole)) return activeRole;
   return getSystemRole(user);
 }
 
