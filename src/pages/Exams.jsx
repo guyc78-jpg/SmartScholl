@@ -4,6 +4,7 @@ import { CLASS_ID } from '@/lib/demoData';
 import { getStudentClassId } from '@/lib/studentProfile';
 import { getUserApprovedClassId } from '@/lib/schoolStructure';
 import PageHeader from '@/components/ui/PageHeader';
+import RtlActionBar from '@/components/ui/RtlActionBar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { CalendarDays, FileUp, LayoutGrid, List, Plus, Users, Trash2, MoreVertical, Settings } from 'lucide-react';
@@ -147,14 +148,18 @@ export default function Exams({ role, user }) {
         title="לוח שנה שכבתי חכם"
         subtitle="כל אירועי השכבה במקום אחד — מבחנים, בגרויות, חזרות, טקסים, חגים, צילומים ופעילויות"
         actions={
-          <>
-            {canEdit && <Button size="lg" onClick={() => { setEditingEvent(null); setShowForm(true); }} className="font-bold shadow-sm"><Plus className="w-4 h-4" />הוסף אירוע</Button>}
-            {(canTrack || canImport) && (
+          <RtlActionBar
+            primary={canEdit ? (
+              <Button size="lg" onClick={() => { setEditingEvent(null); setShowForm(true); }} className="font-bold shadow-sm">
+                <Plus className="w-4 h-4" />הוסף אירוע
+              </Button>
+            ) : null}
+            more={(canTrack || canImport) ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="icon" aria-label="תפריט אפשרויות"><MoreVertical className="w-4 h-4" /></Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuContent align="start" className="w-52">
                   {canTrack && (
                     <>
                       <DropdownMenuItem onClick={() => setShowTracking(v => !v)} className={showTracking ? 'bg-primary/10' : ''}>
@@ -181,8 +186,8 @@ export default function Exams({ role, user }) {
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
-            )}
-          </>
+            ) : null}
+          />
         }
       />
 

@@ -335,7 +335,7 @@ export default function Dashboard({ user, role }) {
                 const commonContent = (
                   <>
                     {btn.badge > 0 && (
-                      <span className="absolute top-1.5 left-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-destructive text-white text-[10px] font-bold flex items-center justify-center leading-none">
+                      <span className="absolute top-1.5 end-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-destructive text-white text-[10px] font-bold flex items-center justify-center leading-none">
                         {btn.badge > 99 ? '99+' : btn.badge}
                       </span>
                     )}

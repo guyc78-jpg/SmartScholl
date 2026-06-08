@@ -199,7 +199,7 @@ function AccordionGroup({ group, role, pendingCount, location, onNavigate }) {
                     )}
                   >
                     {isActive && (
-                      <span className="absolute right-0 top-1.5 bottom-1.5 w-[3px] bg-sidebar-primary rounded-l-full" />
+                      <span className="absolute start-0 top-1.5 bottom-1.5 w-[3px] bg-sidebar-primary rounded-e-full" />
                     )}
                     <item.icon className={cn('w-3.5 h-3.5 flex-shrink-0', isActive && 'text-sidebar-primary')} />
                     <span className="text-[12.5px] flex-1 text-right">{itemLabel}</span>
@@ -329,8 +329,8 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
                className={cn(
                  'absolute top-0.5 w-5 h-5 rounded-full transition-transform',
                  darkMode 
-                   ? 'bg-slate-100 right-0.5 shadow-md' 
-                   : 'bg-white border border-slate-300 right-[18px] shadow-[0_1px_3px_rgba(0,0,0,0.25)]'
+                   ? 'bg-slate-100 start-0.5 shadow-md' 
+                   : 'bg-white border border-slate-300 start-[18px] shadow-[0_1px_3px_rgba(0,0,0,0.25)]'
                )}
              />
            </button>
@@ -375,7 +375,7 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
             onClick={() => setSidebarOpen(false)}
           />
           <aside className={cn(
-            'fixed right-0 top-0 h-full w-72 z-50 lg:hidden border-s',
+            'fixed inset-y-0 start-0 w-72 z-50 lg:hidden border-s',
             darkMode
               ? 'bg-slate-700 border-slate-600/40 shadow-[0_0_40px_rgba(0,0,0,0.5)]'
               : 'bg-sidebar border-sidebar-border shadow-2xl'
@@ -432,8 +432,7 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
             gridTemplateColumns: `repeat(${bottomNavItems.length}, minmax(0, 1fr))`,
             paddingBottom: 'env(safe-area-inset-bottom)',
             paddingTop: '8px',
-            paddingLeft: '12px',
-            paddingRight: '12px',
+            paddingInline: '12px',
             minHeight: 'calc(72px + env(safe-area-inset-bottom))',
           }}>
           {bottomNavItems.map((item) => {

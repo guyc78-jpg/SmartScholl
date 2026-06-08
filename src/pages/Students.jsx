@@ -1,15 +1,15 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { CLASS_ID } from '@/lib/demoData';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card } from '@/components/ui/card';
-import StatusBadge from '@/components/ui/StatusBadge';
 import EmptyState from '@/components/ui/EmptyState';
 import PageHeader from '@/components/ui/PageHeader';
-import { Search, Plus, Upload, Users, ChevronLeft, Phone, Trash2, AlertTriangle, RefreshCw, MoreVertical, MessageSquare } from 'lucide-react';
+import RtlActionBar from '@/components/ui/RtlActionBar';
+import RtlFilterGrid from '@/components/ui/RtlFilterGrid';
+import RtlSearchField from '@/components/ui/RtlSearchField';
+import StudentCard from '@/components/students/StudentCard';
+import { Plus, Upload, Users, Trash2, AlertTriangle, RefreshCw, MoreVertical } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -33,7 +33,6 @@ import {
 } from '@/lib/schoolStructure';
 import AddStudentModal from '@/components/students/AddStudentModal';
 import ImportStudentsModal from '@/components/students/ImportStudentsModal';
-import ImportAccommodationsModal from '@/components/students/ImportAccommodationsModal';
 import ParentConversationDialog from '@/components/student/ParentConversationDialog';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 import { ACCOMMODATION_TYPES, activeAccommodationLabels } from '@/lib/accommodations';
@@ -196,49 +195,47 @@ export default function Students({ role }) {
       />
 
       <div className="space-y-3" dir="rtl">
-        <div className="flex w-full flex-wrap items-center justify-start gap-2" dir="rtl">
-          <Button size="sm" className="h-9 gap-2" onClick={() => setShowAdd(true)}>
-            <Plus className="w-4 h-4" />
-            תלמיד חדש
-          </Button>
-          <Button variant="outline" size="sm" className="h-9 gap-2" onClick={() => setShowImport(true)}>
-            <Upload className="w-4 h-4" />
-            <span className="hidden sm:inline">ייבוא מאקסל</span>
-          </Button>
-          {canDeleteAllStudents && (
-            <div className="ms-auto">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-9 w-9">
-                    <MoreVertical className="w-4 h-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  <DropdownMenuItem
-                    onClick={() => setShowDeleteConfirm(true)}
-                    disabled={students.length === 0 || deleting}
-                    className="text-destructive focus:text-destructive"
-                  >
-                    <Trash2 className="w-4 h-4 ms-2" />
-                    מחיקת הכל
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+        <RtlActionBar
+          primary={(
+            <Button size="sm" className="h-9 gap-2" onClick={() => setShowAdd(true)}>
+              <Plus className="w-4 h-4" />
+              תלמיד חדש
+            </Button>
           )}
-        </div>
+          secondary={(
+            <Button variant="outline" size="sm" className="h-9 gap-2" onClick={() => setShowImport(true)}>
+              <Upload className="w-4 h-4" />
+              <span className="hidden sm:inline">ייבוא מאקסל</span>
+            </Button>
+          )}
+          more={canDeleteAllStudents ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-9 w-9">
+                  <MoreVertical className="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem
+                  onClick={() => setShowDeleteConfirm(true)}
+                  disabled={students.length === 0 || deleting}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="w-4 h-4 ms-2" />
+                  מחיקת הכל
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : null}
+        />
 
-        <div className="relative w-full">
-          <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="חיפוש לפי שם או מספר..."
-            className="h-10 ps-9 pe-3 text-right"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-        </div>
+        <RtlSearchField
+          placeholder="חיפוש לפי שם או מספר..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
 
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2" dir="rtl">
+        <RtlFilterGrid>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="h-10 w-full">
               <SelectValue />
@@ -265,7 +262,7 @@ export default function Students({ role }) {
               נקה סינון
             </Button>
           )}
-        </div>
+        </RtlFilterGrid>
       </div>
 
       {loading ? (
@@ -298,64 +295,11 @@ export default function Students({ role }) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: Math.min(i, 10) * 0.03 }}
               >
-                <Link to={`/students/${student.id}`}>
-                  <Card className="p-4 hover:shadow-md transition-all cursor-pointer border hover:border-primary/30 text-right">
-                    <div className="grid grid-cols-[auto,1fr,auto] items-start gap-3" dir="rtl">
-                      <div className={`w-11 h-11 rounded-full flex items-center justify-center font-bold text-base flex-shrink-0
-                        ${student.status === 'דורש מעקב' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
-                          student.gender === 'נקבה' ? 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400' :
-                          'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'}`}>
-                        {formatStudentName(student).charAt(0)}
-                      </div>
-                      <div className="min-w-0 text-right">
-                        <div className="flex items-center gap-2 mb-1 flex-row-reverse justify-end">
-                          <h3 className="font-semibold text-foreground text-sm leading-tight">{formatStudentName(student)}</h3>
-                          {student.status && student.status !== 'פעיל' && <StatusBadge status={student.status} />}
-                        </div>
-                        <p className="text-xs text-muted-foreground">{student.class_name || 'כיתה י׳1'} · {student.grade || 'י'}</p>
-                        <div className="flex gap-3 mt-1.5 flex-wrap flex-row-reverse justify-end">
-                         {student.phone && (
-                            <a href={`tel:${student.phone}`} className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors">
-                              <Phone className="w-3 h-3 text-primary" />{student.phone}
-                            </a>
-                          )}
-                          {student.parent1_phone && !student.phone && (
-                            <a href={`tel:${student.parent1_phone}`} className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors">
-                              <Phone className="w-3 h-3 text-primary" />{student.parent1_phone}
-                            </a>
-                          )}
-                          <button
-                            type="button"
-                            onClick={(event) => {
-                              event.preventDefault();
-                              event.stopPropagation();
-                              setSelectedConversationStudent(student);
-                            }}
-                            className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
-                          >
-                            <MessageSquare className="w-3 h-3 text-primary" />
-                            הוסף שיחת הורה
-                          </button>
-                        </div>
-                        {/* Community progress */}
-                        <div className="mt-3">
-                          <div className="flex items-center justify-between text-xs mb-1" dir="rtl">
-                            <span className="text-muted-foreground">מעורבות חברתית</span>
-                            <span className="font-medium">{student.community_service_done || 0}/{student.community_service_goal || 60} שע׳</span>
-                          </div>
-                          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-                            <div
-                              className={`h-full rounded-full transition-all ${communityPct(student) >= 100 ? 'bg-emerald-500' : communityPct(student) >= 50 ? 'bg-blue-500' : 'bg-red-400'}`}
-                              style={{ width: `${Math.min(communityPct(student), 100)}%` }}
-                            />
-                          </div>
-                        </div>
-
-                      </div>
-                      <ChevronLeft className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-1 justify-self-end" />
-                    </div>
-                  </Card>
-                </Link>
+                <StudentCard
+                  student={student}
+                  communityPct={communityPct}
+                  onParentConversation={setSelectedConversationStudent}
+                />
               </motion.div>
             ))}
           </div>

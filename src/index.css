@@ -192,25 +192,25 @@
 
   /* Radix Select trigger icon should sit on the left side in RTL */
   [dir="rtl"] [data-radix-select-trigger] > svg:last-child {
-    margin-right: auto;
-    margin-left: 0;
+    margin-inline-start: auto;
+    margin-inline-end: 0;
   }
 
   /* Select item checkmark indicator moves to the left in RTL */
   [dir="rtl"] [data-radix-select-item] {
-    padding-left: 2rem;
-    padding-right: 0.5rem;
+    padding-inline-end: 2rem;
+    padding-inline-start: 0.5rem;
   }
   [dir="rtl"] [data-radix-select-item] > span:first-child {
-    left: 0.5rem;
-    right: auto;
+    inset-inline-end: 0.5rem;
+    inset-inline-start: auto;
   }
 
   /* Dialog close button - move to the start (right side in RTL) */
   [dir="rtl"] [role="dialog"] > button[type="button"][aria-label],
   [dir="rtl"] [role="dialog"] > .absolute.right-4 {
-    right: auto;
-    left: 1rem;
+    inset-inline-start: auto;
+    inset-inline-end: 1rem;
   }
 
   /* DropdownMenu / ContextMenu item indicator side */
@@ -226,8 +226,8 @@
     text-align: right;
   }
   [dir="rtl"] [data-sonner-toast] [data-icon] {
-    margin-left: 0.5rem;
-    margin-right: 0;
+    margin-inline-end: 0.5rem;
+    margin-inline-start: 0;
   }
 
   /* Tabs underline / triggers */

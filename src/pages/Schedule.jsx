@@ -9,6 +9,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from '@/components/ui/alert-dialog';
 import PageHeader from '@/components/ui/PageHeader';
+import RtlActionBar from '@/components/ui/RtlActionBar';
 import { toast } from 'sonner';
 import { FileUp, Trash2 } from 'lucide-react';
 import ImportScheduleDialog from '@/components/schedule/ImportScheduleDialog';
@@ -132,14 +133,18 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
         title="מערכת שעות"
         subtitle="לוח שבועי לפי הצלצולים — ימים א׳–ה׳"
         actions={canEdit ? (
-          <>
-            <Button size="sm" variant="outline" className="gap-2" onClick={() => setShowImport(true)}>
-              <FileUp className="w-4 h-4" /> ייבוא קובץ
-            </Button>
-            <Button size="sm" variant="outline" className="gap-2 text-destructive hover:text-destructive" onClick={() => setConfirmDeleteAll(true)}>
-              <Trash2 className="w-4 h-4" /> מחק מערכת
-            </Button>
-          </>
+          <RtlActionBar
+            primary={(
+              <Button size="sm" variant="outline" className="h-9 gap-2" onClick={() => setShowImport(true)}>
+                <FileUp className="w-4 h-4" /> ייבוא קובץ
+              </Button>
+            )}
+            secondary={(
+              <Button size="sm" variant="outline" className="h-9 gap-2 text-destructive hover:text-destructive" onClick={() => setConfirmDeleteAll(true)}>
+                <Trash2 className="w-4 h-4" /> מחק מערכת
+              </Button>
+            )}
+          />
         ) : null}
       />
 

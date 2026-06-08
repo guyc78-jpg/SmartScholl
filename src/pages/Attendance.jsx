@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import StatusBadge from '@/components/ui/StatusBadge';
 import PageHeader from '@/components/ui/PageHeader';
+import RtlActionBar from '@/components/ui/RtlActionBar';
 import { toast } from 'sonner';
 import { Save, CheckCircle2 } from 'lucide-react';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
@@ -91,18 +92,20 @@ export default function Attendance() {
         title="נוכחות"
         subtitle="סימון נוכחות יומי"
         actions={
-          <div className="flex items-center gap-2">
-            {lastSaved && (
-              <span className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+          <RtlActionBar
+            primary={(
+              <Button onClick={handleSave} disabled={saving} size="sm" className="h-9 gap-2">
+                <Save className="w-4 h-4" />
+                {saving ? 'שומר...' : 'שמור'}
+              </Button>
+            )}
+            secondary={lastSaved ? (
+              <span className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400" dir="rtl">
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 נשמר ב-{lastSaved}
               </span>
-            )}
-            <Button onClick={handleSave} disabled={saving} size="sm" className="gap-2">
-              <Save className="w-4 h-4" />
-              {saving ? 'שומר...' : 'שמור'}
-            </Button>
-          </div>
+            ) : null}
+          />
         }
       />
 
@@ -150,7 +153,7 @@ export default function Attendance() {
                     </div>
                     <div className="min-w-0 text-right">
                       <p className="font-medium text-sm truncate">{formatStudentName(student)}</p>
-                      {student.status === 'דורש מעקב' && <StatusBadge status="דורש מעקב" className="mt-0.5 scale-90 origin-right" />}
+                      {student.status === 'דורש מעקב' && <StatusBadge status="דורש מעקב" className="mt-0.5 scale-90 origin-center" />}
                     </div>
                     {/* Status buttons */}
                     <div className="flex gap-1 flex-wrap justify-center sm:justify-start min-w-0">
