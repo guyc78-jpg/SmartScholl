@@ -184,14 +184,13 @@ export default function UserManagement() {
           <div className="md:hidden rounded-2xl border bg-card overflow-hidden" dir="rtl">
             {users.map(user => (
               <div key={user.id} className="grid grid-cols-[1fr_auto] gap-2 px-3 py-2.5 border-b last:border-b-0 text-right items-center min-h-[76px]" dir="rtl">
-                <div className="min-w-0 space-y-1">
+                <div className="min-w-0 space-y-0.5">
                   <div className="flex items-center gap-2 justify-start flex-wrap">
                     <p className="font-semibold text-sm leading-5 break-words">{user.fullName}</p>
                     <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold shrink-0 ${user.isActive !== false ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-destructive/10 text-destructive'}`}>
                       {user.isActive !== false ? 'פעיל' : 'לא פעיל'}
                     </span>
                   </div>
-                  <p className="text-[11px] text-muted-foreground force-ltr break-all text-right leading-4">{user.email}</p>
                   <p className="text-xs leading-5 text-foreground break-words">
                     <span className="font-medium">{ROLE_LABELS[user.role] || 'משתמש/ת'}</span>
                     <span className="text-muted-foreground"> · {scopeLabel(user, classNameById)}</span>
