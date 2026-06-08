@@ -225,7 +225,7 @@ export default function UserManagement() {
                   <th className="px-4 py-3 text-right align-middle">תפקיד</th>
                   <th className="px-4 py-3 text-right align-middle">שיוך הרשאה</th>
                   <th className="px-4 py-3 text-right align-middle">סטטוס</th>
-                  <th className="px-4 py-3 text-right align-middle">פעולות</th>
+                  <th className="px-4 py-3 text-center align-middle">פעולות</th>
                 </tr>
               </thead>
               <tbody>
@@ -249,7 +249,7 @@ export default function UserManagement() {
                       </span>
                     </td>
                     <td className="px-3 py-3 align-middle text-right">
-                      <div className="flex justify-end gap-1">
+                      <div className="flex justify-center gap-1">
                         <Button size="icon" variant="ghost" onClick={() => openEdit(user)} aria-label="עריכה"><Pencil className="w-4 h-4" /></Button>
                         <Button size="icon" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setDeleteTarget(user)} aria-label="מחיקה"><Trash2 className="w-4 h-4" /></Button>
                       </div>
