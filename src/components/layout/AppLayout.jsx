@@ -85,6 +85,7 @@ const sidebarGroups = [
     adminOnly: true,
     items: [
       { path: '/users', icon: ShieldCheck, label: 'משתמשים מאושרים', roles: ['system_admin', 'admin'] },
+      { path: '/classrooms', icon: School, label: 'ניהול כיתות', roles: ['system_admin', 'admin'] },
       { path: '/permissions-tester', icon: Eye, label: 'בדיקת הרשאות', roles: ['system_admin', 'admin'] },
       { path: '/bell-schedule', icon: Bell, label: 'צלצולים והפסקות', roles: ['system_admin', 'admin'] },
     ],

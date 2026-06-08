@@ -62,6 +62,7 @@ function scopeLabel(user) {
     return (user.homeroomClassId || scope.homeroomClassId) ? `${gradeLabel} · כיתת חינוך משויכת` : gradeLabel;
   }
   if (user.role === 'division_manager') return DIVISIONS[scope.divisionType]?.label || 'לא הוגדרה חטיבה';
+  if (user.role === 'system_admin') return user.homeroomClassId ? 'גישה מלאה · כיתת חינוך משויכת' : 'גישה מלאה';
   return 'גישה מלאה';
 }
 
@@ -119,13 +120,13 @@ export default function UserManagement() {
       await base44.functions.invoke('authorizeAccess', {
         action: 'saveAuthorizedUser',
         user: {
-          id: form.id,
-          fullName: form.fullName.trim(),
-          email: form.email.trim(),
-          role: form.role,
-          scope,
-          homeroomClassId: form.role === 'grade_coordinator' ? form.homeroomClassId : '',
-          isActive: form.isActive,
+        id: form.id,
+        fullName: form.fullName.trim(),
+        email: form.email.trim(),
+        role: form.role,
+        scope,
+        homeroomClassId: ['grade_coordinator', 'system_admin'].includes(form.role) ? form.homeroomClassId : '',
+        isActive: form.isActive,
         },
       });
       toast.success('המשתמש המאושר נשמר');
@@ -255,6 +256,20 @@ export default function UserManagement() {
                   </Select>
                   <p className="text-xs text-muted-foreground text-right">רכז/ת שכבה מקבל/ת גם הרשאת שכבה וגם הרשאת כיתת חינוך.</p>
                 </div>
+              </div>
+            )}
+
+            {form.role === 'system_admin' && (
+              <div className="space-y-2" dir="rtl">
+                <Label>כיתת חינוך נוספת</Label>
+                <Select value={form.homeroomClassId || 'none'} onValueChange={(value) => setForm(prev => ({ ...prev, homeroomClassId: value === 'none' ? '' : value }))}>
+                  <SelectTrigger><SelectValue placeholder="בחר/י כיתת חינוך" /></SelectTrigger>
+                  <SelectContent dir="rtl">
+                    <SelectItem value="none">ללא כיתת חינוך</SelectItem>
+                    {sortedClasses.map(item => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground text-right">מנהל/ת מערכת ישמור/תשמור גישה מלאה וגם אזור “הכיתה שלי”.</p>
               </div>
             )}
 
