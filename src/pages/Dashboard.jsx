@@ -186,7 +186,8 @@ export default function Dashboard({ user, role }) {
   const absentToday  = todayAttendance.filter(a => ['נעדר', 'נעדר/ת'].includes(a.status)).length;
   const lateToday    = todayAttendance.filter(a => ['מאחר', 'מאחר/ת'].includes(a.status)).length;
   const releasedToday = todayAttendance.filter(a => ['שוחרר', 'שוחרר/ת'].includes(a.status)).length;
-  const attendanceExceptionsToday = absentToday + lateToday + releasedToday;
+  const attendanceExceptionRecords = todayAttendance.filter(a => ['נעדר', 'נעדר/ת', 'מאחר', 'מאחר/ת'].includes(a.status));
+  const attendanceExceptionsToday = attendanceExceptionRecords.length;
   const openTasks = tasks.filter(t => t.status !== 'בוצע').length;
 
   const MONTH_SHORT = ['ינו', 'פבר', 'מרץ', 'אפר', 'מאי', 'יונ', 'יול', 'אוג', 'ספט', 'אוק', 'נוב', 'דצמ'];
@@ -290,6 +291,16 @@ export default function Dashboard({ user, role }) {
         <NowNextCard classId={classId} showEmpty />
       )}
 
+      {(isActiveHomeroom || isActiveAdmin || isActiveCoordinator) && (
+        <AttendanceExceptionsCard
+          exceptionsCount={attendanceExceptionsToday}
+          totalStudents={students.length}
+          exceptions={attendanceExceptionRecords}
+          date={attendanceDate !== today ? attendanceDate : 'היום'}
+          onClick={() => attendanceExceptionsToday > 0 && setAttendanceFilterOpen(true)}
+        />
+      )}
+
       {/* Urgent Flags — dynamic items needing immediate attention (staff only) */}
       {(isActiveHomeroom || isActiveCoordinator || isActiveAdmin) && classId && (
         <UrgentFlagsSection
@@ -329,17 +340,6 @@ export default function Dashboard({ user, role }) {
       )}
 
 
-
-      {/* Attendance Exceptions Card */}
-      {attendanceExceptionsToday > 0 && (
-        <AttendanceExceptionsCard
-          exceptionsCount={attendanceExceptionsToday}
-          totalStudents={students.length}
-          exceptions={todayAttendance.filter(a => ['נעדר', 'נעדר/ת', 'מאחר', 'מאחר/ת', 'שוחרר', 'שוחרר/ת'].includes(a.status))}
-          date={attendanceDate !== today ? attendanceDate : 'היום'}
-          onClick={() => setAttendanceFilterOpen(true)}
-        />
-      )}
 
       {/* Tasks Card */}
       {openTasks > 0 && (
@@ -523,8 +523,7 @@ export default function Dashboard({ user, role }) {
 
             {/* Content */}
             <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-4 space-y-2">
-              {todayAttendance
-                .filter(a => ['נעדר', 'נעדר/ת', 'מאחר', 'מאחר/ת', 'שוחרר', 'שוחרר/ת'].includes(a.status))
+              {attendanceExceptionRecords
                 .sort((a, b) => a.student_name.localeCompare(b.student_name))
                 .map(record => {
                   const statusLabels = {
@@ -562,7 +561,7 @@ export default function Dashboard({ user, role }) {
                     </div>
                   );
                 })}
-              {todayAttendance.filter(a => ['נעדר', 'נעדר/ת', 'מאחר', 'מאחר/ת', 'שוחרר', 'שוחרר/ת'].includes(a.status)).length === 0 && (
+              {attendanceExceptionRecords.length === 0 && (
                 <div className="text-center py-8">
                   <p className="text-sm text-muted-foreground">אין חריגי נוכחות</p>
                 </div>
