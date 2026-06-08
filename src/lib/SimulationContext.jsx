@@ -4,11 +4,8 @@ import { ROLE_LABELS } from '@/lib/roleUtils';
 
 const SimulationContext = createContext(null);
 
-// תפקידים שניתן לדמות (כולל מנהל/ת מערכת לבדיקה)
-export const SIM_ROLES = [
-  ...SIMULATABLE_ROLES,
-  { value: 'admin', label: 'מנהל/ת מערכת' },
-];
+// תפקידים שניתן לדמות
+export const SIM_ROLES = SIMULATABLE_ROLES;
 
 export function getSimRoleLabel(role) {
   return SIM_ROLES.find(r => r.value === role)?.label || ROLE_LABELS[role] || role;

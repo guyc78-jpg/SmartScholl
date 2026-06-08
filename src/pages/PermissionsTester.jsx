@@ -9,10 +9,7 @@ const ROLE_ICONS = {
   homeroom_teacher: UserCheck,
   coordinator: Users,
   division_manager: Building2,
-  admin: Settings,
 };
-
-const ADMIN_SCOPE = 'גישה מלאה לכל המסכים, ההגדרות וניהול המערכת.';
 
 export default function PermissionsTester() {
   const { startSimulation } = useSimulation();
@@ -34,8 +31,8 @@ export default function PermissionsTester() {
 
       <div className="grid sm:grid-cols-2 gap-2.5" dir="rtl">
         {SIM_ROLES.map(role => {
-          const Icon = ROLE_ICONS[role.value] || Eye;
-          const scope = role.value === 'admin' ? ADMIN_SCOPE : ROLE_SCOPE[role.value];
+           const Icon = ROLE_ICONS[role.value] || Eye;
+           const scope = ROLE_SCOPE[role.value];
           return (
             <button
               key={role.value}
