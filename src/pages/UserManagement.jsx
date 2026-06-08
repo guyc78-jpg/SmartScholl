@@ -267,28 +267,34 @@ export default function UserManagement() {
             )}
 
             {form.role === 'system_admin' && (
-              <div className="space-y-3" dir="rtl">
+              <div className="space-y-4 rounded-xl border p-3 bg-muted/20 text-right" dir="rtl">
+                <div>
+                  <p className="text-sm font-semibold">הרשאות נוספות למנהל/ת מערכת</p>
+                  <p className="text-xs text-muted-foreground">אפשר להשאיר גישה מלאה בלבד, או להוסיף גם מחנך/ת ורכז/ת שכבה.</p>
+                </div>
                 <div className="space-y-2">
-                  <Label>כיתת חינוך נוספת</Label>
+                  <Label>גם מחנך/ת — בחירת כיתת חינוך</Label>
                   <Select value={form.homeroomClassId || 'none'} onValueChange={(value) => setForm(prev => ({ ...prev, homeroomClassId: value === 'none' ? '' : value }))}>
                     <SelectTrigger><SelectValue placeholder="בחר/י כיתת חינוך" /></SelectTrigger>
                     <SelectContent dir="rtl">
-                      <SelectItem value="none">ללא כיתת חינוך</SelectItem>
-                      {sortedClasses.map(item => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}
+                      <SelectItem value="none">ללא הרשאת מחנך/ת</SelectItem>
+                      {sortedClasses
+                        .filter(item => !form.gradeId || item.grade === form.gradeId)
+                        .map(item => <SelectItem key={item.id} value={item.id}>{item.name}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>רכז/ת שכבה בנוסף</Label>
-                  <Select value={form.gradeId || 'none'} onValueChange={(value) => setForm(prev => ({ ...prev, gradeId: value === 'none' ? '' : value }))}>
+                  <Label>גם רכז/ת שכבה — בחירת שכבה</Label>
+                  <Select value={form.gradeId || 'none'} onValueChange={(value) => setForm(prev => ({ ...prev, gradeId: value === 'none' ? '' : value, homeroomClassId: '' }))}>
                     <SelectTrigger><SelectValue placeholder="בחר/י שכבה" /></SelectTrigger>
                     <SelectContent dir="rtl">
-                      <SelectItem value="none">ללא ריכוז שכבה</SelectItem>
+                      <SelectItem value="none">ללא הרשאת רכז/ת שכבה</SelectItem>
                       {GRADES.map(grade => <SelectItem key={grade} value={grade}>{formatGrade(grade)}</SelectItem>)}
                     </SelectContent>
                   </Select>
                 </div>
-                <p className="text-xs text-muted-foreground text-right">מנהל/ת מערכת יכול/ה לקבל גם הרשאת מחנך/ת וגם הרשאת רכז/ת שכבה.</p>
+                <p className="text-xs text-muted-foreground text-right">אם בוחרים רכז/ת שכבה, צריך לבחור גם כיתת חינוך מתוך אותה שכבה.</p>
               </div>
             )}
 
