@@ -8,17 +8,18 @@ const toList = value => String(value || '').split(',').map(v => v.trim()).filter
 const norm = value => String(value || '').trim().toLowerCase();
 const hasAny = (list, values) => (list || []).map(norm).some(item => values.map(norm).includes(item));
 
-export default function AudienceEditor({ value, onChange }) {
-  const scope = value.audience_scope || 'grade';
+export default function AudienceEditor({ value, onChange, allowedScopes }) {
+  const availableScopes = allowedScopes?.length ? AUDIENCE_SCOPES.filter(scope => allowedScopes.includes(scope.value)) : AUDIENCE_SCOPES;
+  const scope = availableScopes.some(item => item.value === value.audience_scope) ? value.audience_scope : 'grade';
   const update = patch => onChange({ ...value, ...patch });
 
   return (
-    <div className="space-y-3">
-      <div className="space-y-1">
-        <Label className="text-xs">רלוונטיות</Label>
+    <div className="space-y-3" dir="rtl">
+      <div className="space-y-1" dir="rtl">
+        <Label className="text-xs text-right block">רלוונטיות</Label>
         <Select value={scope} onValueChange={audience_scope => update({ audience_scope })}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent collisionPadding={16} className="max-w-[calc(100vw-2rem)]">{AUDIENCE_SCOPES.map(scope => <SelectItem key={scope.value} value={scope.value}>{scope.label}</SelectItem>)}</SelectContent>
+          <SelectTrigger className="text-right"><SelectValue /></SelectTrigger>
+          <SelectContent dir="rtl" align="end" collisionPadding={16} className="max-w-[calc(100vw-2rem)] text-right">{availableScopes.map(scope => <SelectItem key={scope.value} value={scope.value}>{scope.label}</SelectItem>)}</SelectContent>
         </Select>
       </div>
 
@@ -33,9 +34,9 @@ export default function AudienceEditor({ value, onChange }) {
 
 function Field({ label, value, onChange, placeholder }) {
   return (
-    <div className="space-y-1">
-      <Label className="text-xs">{label}</Label>
-      <Input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} />
+    <div className="space-y-1" dir="rtl">
+      <Label className="text-xs text-right block">{label}</Label>
+      <Input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className="text-right" />
     </div>
   );
 }
