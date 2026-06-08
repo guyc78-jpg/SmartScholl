@@ -54,21 +54,24 @@ function formFromUser(user) {
   };
 }
 
-function scopeLabel(user) {
+function scopeLabel(user, classNameById = {}) {
   const scope = user.scope || {};
-  if (user.role === 'homeroom_teacher') return scope.classId || 'לא הוגדרה כיתה';
+  const className = (id) => classNameById[id] || '';
+  if (user.role === 'homeroom_teacher') return `מחנך/ת כיתה ${className(scope.classId) || 'לא הוגדרה'}`;
   if (user.role === 'grade_coordinator') {
-    const gradeLabel = scope.gradeId ? `שכבה ${formatGrade(scope.gradeId)}` : 'לא הוגדרה שכבה';
-    return (user.homeroomClassId || scope.homeroomClassId) ? `${gradeLabel} · כיתת חינוך משויכת` : gradeLabel;
+    const gradeLabel = scope.gradeId ? formatGrade(scope.gradeId) : 'לא הוגדרה';
+    const homeroomLabel = className(user.homeroomClassId || scope.homeroomClassId);
+    return homeroomLabel ? `רכז/ת שכבה ${gradeLabel} · כיתת חינוך ${homeroomLabel}` : `רכז/ת שכבה ${gradeLabel}`;
   }
-  if (user.role === 'division_manager') return DIVISIONS[scope.divisionType]?.label || 'לא הוגדרה חטיבה';
+  if (user.role === 'division_manager') return `מנהל/ת ${DIVISIONS[scope.divisionType]?.label || 'חטיבה לא הוגדרה'}`;
   if (user.role === 'system_admin') {
-    const extras = [];
-    if (user.homeroomClassId) extras.push('מחנך/ת');
+    const extras = ['מנהל/ת מערכת'];
+    const homeroomLabel = className(user.homeroomClassId || scope.homeroomClassId || scope.classId);
+    if (homeroomLabel) extras.push(`מחנך/ת כיתה ${homeroomLabel}`);
     if (user.gradeId) extras.push(`רכז/ת שכבה ${formatGrade(user.gradeId)}`);
-    return extras.length ? `גישה מלאה · ${extras.join(' · ')}` : 'גישה מלאה';
+    return extras.join(' · ');
   }
-  return 'גישה מלאה';
+  return ROLE_LABELS[user.role] || 'הרשאה מלאה';
 }
 
 export default function UserManagement() {
@@ -100,6 +103,8 @@ export default function UserManagement() {
       return gradeDiff !== 0 ? gradeDiff : String(a.name || '').localeCompare(String(b.name || ''), 'he');
     });
   }, [classes]);
+
+  const classNameById = useMemo(() => Object.fromEntries(classes.map(item => [item.id, item.name])), [classes]);
 
   const openNew = () => {
     setForm(emptyForm);
@@ -170,39 +175,82 @@ export default function UserManagement() {
         actions={<Button onClick={openNew} className="gap-2"><Plus className="w-4 h-4" />הוסף משתמש</Button>}
       />
 
-      <div className="rounded-2xl border bg-card overflow-hidden" dir="rtl">
-        <div className="hidden md:grid grid-cols-[2fr_2fr_1.4fr_1.4fr_1fr_auto] gap-3 px-4 py-3 bg-muted/50 border-b text-xs font-semibold text-muted-foreground text-right">
-          <div>שם מלא</div>
-          <div>מייל</div>
-          <div>תפקיד</div>
-          <div>Scope</div>
-          <div>סטטוס</div>
-          <div>פעולות</div>
+      {users.length === 0 ? (
+        <div className="rounded-2xl border bg-card p-8" dir="rtl">
+          <EmptyState icon={Users} title="אין משתמשים מאושרים" description="הוסף משתמשים מורשים כדי לאפשר כניסה למערכת" />
         </div>
+      ) : (
+        <>
+          <div className="grid gap-3 md:hidden" dir="rtl">
+            {users.map(user => (
+              <div key={user.id} className="rounded-2xl border bg-card p-4 text-right shadow-sm min-h-[210px] flex flex-col justify-between" dir="rtl">
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1 text-right">
+                        <p className="font-semibold text-base leading-6 break-words">{user.fullName}</p>
+                        <p className="text-xs text-muted-foreground force-ltr break-all text-right">{user.email}</p>
+                      </div>
+                      <span className={`shrink-0 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${user.isActive !== false ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-destructive/10 text-destructive'}`}>
+                        {user.isActive !== false ? 'פעיל' : 'לא פעיל'}
+                      </span>
+                    </div>
+                  </div>
 
-        {users.length === 0 ? (
-          <div className="p-8"><EmptyState icon={Users} title="אין משתמשים מאושרים" description="הוסף משתמשים מורשים כדי לאפשר כניסה למערכת" /></div>
-        ) : users.map(user => (
-          <div key={user.id} className="grid grid-cols-[1fr_auto] md:grid-cols-[2fr_2fr_1.4fr_1.4fr_1fr_auto] gap-3 items-center px-4 py-3 border-b last:border-b-0 text-right" dir="rtl">
-            <div className="min-w-0">
-              <p className="font-semibold text-sm truncate">{user.fullName}</p>
-              <p className="md:hidden text-xs text-muted-foreground force-ltr truncate">{user.email}</p>
-            </div>
-            <div className="hidden md:block text-sm text-muted-foreground force-ltr truncate text-right">{user.email}</div>
-            <div className="text-sm font-medium">{ROLE_LABELS[user.role] || user.role}</div>
-            <div className="text-sm text-muted-foreground">{scopeLabel(user)}</div>
-            <div>
-              <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${user.isActive !== false ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-destructive/10 text-destructive'}`}>
-                {user.isActive !== false ? 'פעיל' : 'חסום'}
-              </span>
-            </div>
-            <div className="flex justify-end gap-1">
-              <Button size="icon" variant="ghost" onClick={() => openEdit(user)} aria-label="עריכה"><Pencil className="w-4 h-4" /></Button>
-              <Button size="icon" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setDeleteTarget(user)} aria-label="מחיקה"><Trash2 className="w-4 h-4" /></Button>
-            </div>
+                  <div className="grid gap-2 text-sm">
+                    <div className="rounded-xl bg-muted/50 px-3 py-2 text-right">
+                      <p className="text-xs text-muted-foreground">תפקיד ראשי</p>
+                      <p className="font-medium text-foreground">{ROLE_LABELS[user.role] || 'משתמש/ת'}</p>
+                    </div>
+                    <div className="rounded-xl bg-muted/50 px-3 py-2 text-right">
+                      <p className="text-xs text-muted-foreground">שיוך הרשאה</p>
+                      <p className="font-medium text-foreground leading-6 break-words">{scopeLabel(user, classNameById)}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex items-center justify-end gap-2 border-t pt-3">
+                  <Button size="sm" variant="outline" onClick={() => openEdit(user)} className="gap-1.5">
+                    <Pencil className="w-3.5 h-3.5" />עריכה
+                  </Button>
+                  <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive gap-1.5" onClick={() => setDeleteTarget(user)}>
+                    <Trash2 className="w-3.5 h-3.5" />מחיקה
+                  </Button>
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+
+          <div className="hidden md:block rounded-2xl border bg-card overflow-hidden" dir="rtl">
+            <div className="grid grid-cols-[2fr_2fr_1.4fr_1.4fr_1fr_auto] gap-3 px-4 py-3 bg-muted/50 border-b text-xs font-semibold text-muted-foreground text-right">
+              <div>שם מלא</div>
+              <div>מייל</div>
+              <div>תפקיד</div>
+              <div>שיוך הרשאה</div>
+              <div>סטטוס</div>
+              <div>פעולות</div>
+            </div>
+
+            {users.map(user => (
+              <div key={user.id} className="grid grid-cols-[2fr_2fr_1.4fr_1.4fr_1fr_auto] gap-3 items-center px-4 py-3 border-b last:border-b-0 text-right" dir="rtl">
+                <div className="min-w-0"><p className="font-semibold text-sm truncate">{user.fullName}</p></div>
+                <div className="text-sm text-muted-foreground force-ltr truncate text-right">{user.email}</div>
+                <div className="text-sm font-medium">{ROLE_LABELS[user.role] || 'משתמש/ת'}</div>
+                <div className="text-sm text-muted-foreground leading-5">{scopeLabel(user, classNameById)}</div>
+                <div>
+                  <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${user.isActive !== false ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-destructive/10 text-destructive'}`}>
+                    {user.isActive !== false ? 'פעיל' : 'לא פעיל'}
+                  </span>
+                </div>
+                <div className="flex justify-end gap-1">
+                  <Button size="icon" variant="ghost" onClick={() => openEdit(user)} aria-label="עריכה"><Pencil className="w-4 h-4" /></Button>
+                  <Button size="icon" variant="ghost" className="text-destructive hover:text-destructive" onClick={() => setDeleteTarget(user)} aria-label="מחיקה"><Trash2 className="w-4 h-4" /></Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent dir="rtl" className="text-right sm:max-w-lg">
