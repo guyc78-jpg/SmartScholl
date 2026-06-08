@@ -181,40 +181,28 @@ export default function UserManagement() {
         </div>
       ) : (
         <>
-          <div className="grid gap-3 md:hidden" dir="rtl">
+          <div className="md:hidden rounded-2xl border bg-card overflow-hidden" dir="rtl">
             {users.map(user => (
-              <div key={user.id} className="rounded-2xl border bg-card p-4 text-right shadow-sm min-h-[210px] flex flex-col justify-between" dir="rtl">
-                <div className="space-y-3">
-                  <div className="space-y-1">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0 flex-1 text-right">
-                        <p className="font-semibold text-base leading-6 break-words">{user.fullName}</p>
-                        <p className="text-xs text-muted-foreground force-ltr break-all text-right">{user.email}</p>
-                      </div>
-                      <span className={`shrink-0 inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${user.isActive !== false ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-destructive/10 text-destructive'}`}>
-                        {user.isActive !== false ? 'פעיל' : 'לא פעיל'}
-                      </span>
-                    </div>
+              <div key={user.id} className="grid grid-cols-[1fr_auto] gap-2 px-3 py-2.5 border-b last:border-b-0 text-right items-center min-h-[76px]" dir="rtl">
+                <div className="min-w-0 space-y-1">
+                  <div className="flex items-center gap-2 justify-start flex-wrap">
+                    <p className="font-semibold text-sm leading-5 break-words">{user.fullName}</p>
+                    <span className={`inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold shrink-0 ${user.isActive !== false ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-destructive/10 text-destructive'}`}>
+                      {user.isActive !== false ? 'פעיל' : 'לא פעיל'}
+                    </span>
                   </div>
-
-                  <div className="grid gap-2 text-sm">
-                    <div className="rounded-xl bg-muted/50 px-3 py-2 text-right">
-                      <p className="text-xs text-muted-foreground">תפקיד ראשי</p>
-                      <p className="font-medium text-foreground">{ROLE_LABELS[user.role] || 'משתמש/ת'}</p>
-                    </div>
-                    <div className="rounded-xl bg-muted/50 px-3 py-2 text-right">
-                      <p className="text-xs text-muted-foreground">שיוך הרשאה</p>
-                      <p className="font-medium text-foreground leading-6 break-words">{scopeLabel(user, classNameById)}</p>
-                    </div>
-                  </div>
+                  <p className="text-[11px] text-muted-foreground force-ltr break-all text-right leading-4">{user.email}</p>
+                  <p className="text-xs leading-5 text-foreground break-words">
+                    <span className="font-medium">{ROLE_LABELS[user.role] || 'משתמש/ת'}</span>
+                    <span className="text-muted-foreground"> · {scopeLabel(user, classNameById)}</span>
+                  </p>
                 </div>
-
-                <div className="mt-4 flex items-center justify-end gap-2 border-t pt-3">
-                  <Button size="sm" variant="outline" onClick={() => openEdit(user)} className="gap-1.5">
-                    <Pencil className="w-3.5 h-3.5" />עריכה
+                <div className="flex items-center justify-end gap-1 self-stretch">
+                  <Button size="icon" variant="ghost" onClick={() => openEdit(user)} aria-label="עריכה" className="h-8 w-8">
+                    <Pencil className="w-3.5 h-3.5" />
                   </Button>
-                  <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive gap-1.5" onClick={() => setDeleteTarget(user)}>
-                    <Trash2 className="w-3.5 h-3.5" />מחיקה
+                  <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteTarget(user)} aria-label="מחיקה">
+                    <Trash2 className="w-3.5 h-3.5" />
                   </Button>
                 </div>
               </div>
