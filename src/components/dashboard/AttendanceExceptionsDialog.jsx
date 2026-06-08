@@ -25,10 +25,18 @@ const STATUS_BADGE_STYLES = {
 export default function AttendanceExceptionsDialog({ open, onOpenChange, records = [], dateLabel }) {
   useEffect(() => {
     if (!open) return;
-    const previousOverflow = document.body.style.overflow;
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    const previousHtmlOverscroll = document.documentElement.style.overscrollBehavior;
+
     document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    document.documentElement.style.overscrollBehavior = 'contain';
+
     return () => {
-      document.body.style.overflow = previousOverflow;
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+      document.documentElement.style.overscrollBehavior = previousHtmlOverscroll;
     };
   }, [open]);
 
@@ -47,8 +55,13 @@ export default function AttendanceExceptionsDialog({ open, onOpenChange, records
 
       <div className="absolute inset-x-0 bottom-0 flex justify-center px-0 sm:px-4 pointer-events-none">
         <div
-          className="pointer-events-auto w-full sm:max-w-2xl max-h-[85vh] flex flex-col rounded-t-3xl sm:rounded-3xl bg-card border border-border shadow-2xl text-right overflow-hidden"
+          className="pointer-events-auto w-full sm:max-w-2xl flex flex-col rounded-t-3xl sm:rounded-3xl bg-card border border-border shadow-2xl text-right overflow-hidden"
           dir="rtl"
+          style={{
+            height: 'min(85dvh, 720px)',
+            maxHeight: 'calc(100dvh - env(safe-area-inset-top) - 16px)',
+            overscrollBehavior: 'contain',
+          }}
         >
           <div className="flex items-center justify-between gap-3 px-4 lg:px-6 py-4 border-b border-border bg-card flex-shrink-0">
             <div className="min-w-0 text-right">
@@ -65,7 +78,16 @@ export default function AttendanceExceptionsDialog({ open, onOpenChange, records
             </button>
           </div>
 
-          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 lg:px-6 py-4 space-y-2">
+          <div
+            className="flex-1 min-h-0 px-4 lg:px-6 py-4 space-y-2"
+            style={{
+              overflowY: 'auto',
+              overscrollBehaviorY: 'contain',
+              WebkitOverflowScrolling: 'touch',
+              touchAction: 'pan-y',
+              maxHeight: 'calc(min(85dvh, 720px) - 73px)',
+            }}
+          >
             {sortedRecords.map(record => {
               const statusLabel = STATUS_LABELS[record.status] || record.status;
               const colorClass = STATUS_CARD_STYLES[statusLabel] || 'bg-muted/40 border-border';
