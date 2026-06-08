@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Calendar, Clock, MapPin, User, Users } from 'lucide-react';
+import { Calendar, Clock, MapPin, Pencil, Trash2, User, Users, X } from 'lucide-react';
 import EventTypeBadge from './EventTypeBadge';
 
 const STATUS_OPTIONS = [
@@ -28,21 +28,28 @@ export default function EventDetailsDialog({ event, open, onClose, canEdit, isSt
   if (!event) return null;
 
   const audience = SCOPE_LABEL[event.audience_scope || 'grade'] || 'שכבה';
+  const timeRange = event.time ? (event.end_time ? `${event.time}–${event.end_time}` : event.time) : '';
   const saveStudent = async (nextStatus = status) => onStudentUpdate?.({ status: nextStatus, personal_note: note });
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent dir="rtl" className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 flex-row-reverse justify-end"><span>{event.title}</span><EventTypeBadge type={event.type} /></DialogTitle>
+      <DialogContent dir="rtl" className="w-auto max-w-[calc(100vw-2rem)] sm:max-w-md gap-3 rounded-2xl p-4 pb-4 overflow-x-hidden">
+        <DialogHeader className="space-y-2 pe-8">
+          <div className="flex items-center gap-2 flex-wrap justify-start">
+            <DialogTitle className="text-xl font-bold leading-snug text-right text-foreground break-words">
+              {event.title}
+            </DialogTitle>
+            <EventTypeBadge type={event.type} />
+          </div>
         </DialogHeader>
-        <div className="space-y-4 text-right">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-muted-foreground">
-            <span className="flex items-center gap-2"><Calendar className="w-4 h-4" />{event.date}</span>
-            {event.time && <span className="flex items-center gap-2"><Clock className="w-4 h-4" />{event.time}{event.end_time ? `–${event.end_time}` : ''}</span>}
-            {event.class_or_grade && <span className="flex items-center gap-2"><MapPin className="w-4 h-4" />{event.class_or_grade}</span>}
-            {event.teacher && <span className="flex items-center gap-2"><User className="w-4 h-4" />{event.teacher}</span>}
-            <span className="flex items-center gap-2 sm:col-span-2"><Users className="w-4 h-4" />{audience}</span>
+
+        <div className="space-y-3 text-right">
+          <div className="rounded-xl border bg-muted/20 p-3 space-y-2">
+            <DetailRow icon={Calendar} label="תאריך" value={event.date} />
+            {timeRange && <DetailRow icon={Clock} label="שעה" value={timeRange} />}
+            {event.class_or_grade && <DetailRow icon={MapPin} label="שכבה" value={event.class_or_grade} />}
+            {event.teacher && <DetailRow icon={User} label="אחראי" value={event.teacher} />}
+            <DetailRow icon={Users} label="רלוונטיות" value={audience} />
           </div>
 
           {event.material && <Info title="חומר / הכנה" text={event.material} />}
@@ -50,7 +57,7 @@ export default function EventDetailsDialog({ event, open, onClose, canEdit, isSt
           {extraContent}
 
           {isStudent && (
-            <div className="border-t pt-4 space-y-3">
+            <div className="border-t pt-3 space-y-3">
               <Label>הסטטוס שלי</Label>
               <div className="grid grid-cols-2 gap-2">
                 {STATUS_OPTIONS.map(option => (
@@ -63,13 +70,37 @@ export default function EventDetailsDialog({ event, open, onClose, canEdit, isSt
             </div>
           )}
 
-          <div className="flex justify-between gap-2 pt-2">
-            {canEdit ? <div className="flex gap-2"><Button variant="outline" onClick={() => onEdit(event)}>ערוך</Button><Button variant="destructive" onClick={() => onDelete(event.id)}>מחק</Button></div> : <span />}
-            <Button variant="outline" onClick={onClose}>סגור</Button>
+          <div className={canEdit ? "grid grid-cols-3 gap-2 pt-1" : "grid grid-cols-1 gap-2 pt-1"}>
+            {canEdit ? (
+              <>
+                <Button variant="outline" onClick={() => onEdit(event)} className="h-10 rounded-xl gap-1.5">
+                  <Pencil className="w-4 h-4" />
+                  ערוך
+                </Button>
+                <Button variant="destructive" onClick={() => onDelete(event.id)} className="h-10 rounded-xl gap-1.5">
+                  <Trash2 className="w-4 h-4" />
+                  מחק
+                </Button>
+              </>
+            ) : null}
+            <Button variant="outline" onClick={onClose} className="h-10 rounded-xl gap-1.5">
+              <X className="w-4 h-4" />
+              סגור
+            </Button>
           </div>
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function DetailRow({ icon: Icon, label, value }) {
+  return (
+    <div className="flex items-center gap-2 text-sm text-right min-w-0" dir="rtl">
+      <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
+      <span className="text-muted-foreground shrink-0">{label}</span>
+      <span className="font-medium text-foreground truncate">{value}</span>
+    </div>
   );
 }
 
