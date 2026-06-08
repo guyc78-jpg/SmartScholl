@@ -9,7 +9,7 @@ import RtlActionBar from '@/components/ui/RtlActionBar';
 import RtlFilterGrid from '@/components/ui/RtlFilterGrid';
 import RtlSearchField from '@/components/ui/RtlSearchField';
 import StudentCard from '@/components/students/StudentCard';
-import { Plus, Upload, Users, Trash2, AlertTriangle, RefreshCw, MoreVertical } from 'lucide-react';
+import { Plus, Upload, Users, Trash2, AlertTriangle, RefreshCw } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -18,7 +18,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/lib/AuthContext';
@@ -203,30 +202,25 @@ export default function Students({ role }) {
             </Button>
           )}
           secondary={(
-            <Button variant="outline" size="sm" className="h-9 gap-2" onClick={() => setShowImport(true)}>
-              <Upload className="w-4 h-4" />
-              <span className="hidden sm:inline">ייבוא מאקסל</span>
-            </Button>
-          )}
-          more={canDeleteAllStudents ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-9 w-9">
-                  <MoreVertical className="w-4 h-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start">
-                <DropdownMenuItem
+            <>
+              <Button variant="outline" size="sm" className="h-9 gap-2" onClick={() => setShowImport(true)}>
+                <Upload className="w-4 h-4" />
+                <span className="hidden sm:inline">ייבוא מאקסל</span>
+              </Button>
+              {canDeleteAllStudents && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-9 w-9 text-destructive hover:text-destructive"
                   onClick={() => setShowDeleteConfirm(true)}
                   disabled={students.length === 0 || deleting}
-                  className="text-destructive focus:text-destructive"
+                  aria-label="מחיקת כל התלמידים"
                 >
-                  <Trash2 className="w-4 h-4 ms-2" />
-                  מחיקת הכל
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : null}
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              )}
+            </>
+          )}
         />
 
         <RtlSearchField
@@ -324,9 +318,9 @@ export default function Students({ role }) {
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent dir="rtl" className="text-right">
           <AlertDialogHeader>
-            <AlertDialogTitle>מחיקת כל התלמידים</AlertDialogTitle>
+            <AlertDialogTitle>האם למחוק את כל התלמידים?</AlertDialogTitle>
             <AlertDialogDescription>
-              פעולה זו תמחק את כל התלמידים ולא ניתן לשחזר אותה
+              פעולה זו לא ניתנת לשחזור.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2 sm:justify-end">
@@ -334,7 +328,7 @@ export default function Students({ role }) {
               ביטול
             </Button>
             <Button variant="destructive" onClick={deleteAllStudents} disabled={deleting}>
-              {deleting ? 'מוחק...' : 'מחק הכל'}
+              {deleting ? 'מוחק...' : 'מחיקה'}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
