@@ -1,9 +1,10 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CalendarDays, Clock, ChevronLeft } from 'lucide-react';
+import { CalendarDays, Clock, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
 import { TYPE_STYLES, getDisplayEventType } from './eventConstants';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const HEB_DAYS = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳'];
 
@@ -33,35 +34,40 @@ const SIDE_COLORS = {
   'חג': 'bg-emerald-400', 'אירוע שכבתי': 'bg-primary', 'אחר': 'bg-slate-400'
 };
 
-function EventCard({ event, onClick, canEdit }) {
+function EventCard({ event, onClick, onEdit, onDelete, canEdit }) {
   const sideColor = SIDE_COLORS[event.type] || SIDE_COLORS['אחר'];
   const displayType = getDisplayEventType(event);
   const tagStyle = TYPE_STYLES[event.type] || TYPE_STYLES['אחר'];
 
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={() => onClick(event)}
-      className="group w-full text-right rounded-lg bg-card hover:bg-accent/40 border border-border/60 hover:border-border transition-colors overflow-hidden flex h-[56px]"
+      className="group w-full text-right rounded-lg bg-card hover:bg-accent/40 border border-border/60 hover:border-border transition-colors overflow-hidden flex h-[56px] cursor-pointer"
     >
       <div className={`w-1 shrink-0 ${sideColor}`} />
       <div className="flex-1 min-w-0 px-2 py-1.5 flex flex-col justify-between">
         <div className="flex items-start justify-between gap-2">
-          <h4 className="font-semibold text-[13px] text-foreground truncate leading-tight">{event.title}</h4>
-          <span className={`text-[10px] px-1.5 py-0.5 rounded border shrink-0 leading-none ${tagStyle}`}>{displayType}</span>
+          <div className="flex items-center gap-1.5 min-w-0 flex-1 justify-start">
+            <h4 className="font-semibold text-[13px] text-foreground truncate leading-tight">{event.title}</h4>
+            <span className={`text-[10px] px-1.5 py-0.5 rounded border shrink-0 leading-none ${tagStyle}`}>{displayType}</span>
+          </div>
+          <EventActionsMenu event={event} onEdit={onEdit} onDelete={onDelete} canEdit={canEdit} />
         </div>
         <div className="flex items-center justify-between gap-2">
           <p className="text-[11px] text-muted-foreground truncate flex items-center gap-1">
             <span>{formatHebDate(event.date)}</span>
             {event.time && <><span className="opacity-50">·</span><Clock className="w-2.5 h-2.5" />{event.end_time ? `${event.time}–${event.end_time}` : event.time}</>}
           </p>
-          {canEdit && <ChevronLeft className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />}
+
         </div>
       </div>
-    </button>
+    </div>
   );
 }
 
-export default function UpcomingEventsPanel({ events, todayIso, onEventClick, canEdit = true }) {
+export default function UpcomingEventsPanel({ events, todayIso, onEventClick, onEdit, onDelete, canEdit = true }) {
   const tomorrowIso = addDays(todayIso, 1);
   const weekEndIso = addDays(todayIso, 7);
 
@@ -111,7 +117,7 @@ export default function UpcomingEventsPanel({ events, todayIso, onEventClick, ca
             ) : (
               <div className="space-y-1 max-h-[300px] overflow-y-auto pe-1 -me-1 scroll-smooth">
                 {bucket.events.map(event => (
-                  <EventCard key={event.id} event={event} onClick={onEventClick} canEdit={canEdit} />
+                  <EventCard key={event.id} event={event} onClick={onEventClick} onEdit={onEdit} onDelete={onDelete} canEdit={canEdit} />
                 ))}
               </div>
             )}
@@ -119,5 +125,29 @@ export default function UpcomingEventsPanel({ events, todayIso, onEventClick, ca
         ))}
       </div>
     </Card>
+  );
+}
+
+function EventActionsMenu({ event, onEdit, onDelete, canEdit }) {
+  if (!canEdit) return <span className="w-8 shrink-0" />;
+
+  return (
+    <DropdownMenu dir="rtl">
+      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 rounded-full" aria-label="פעולות אירוע">
+          <MoreVertical className="w-4 h-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" sideOffset={6} collisionPadding={16} className="w-32 text-right z-[10000]">
+        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit?.(event); }} className="justify-start gap-2 cursor-pointer">
+          <Pencil className="w-4 h-4" />
+          ערוך
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDelete?.(event.id); }} className="justify-start gap-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10">
+          <Trash2 className="w-4 h-4" />
+          מחק
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

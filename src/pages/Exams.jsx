@@ -230,7 +230,7 @@ export default function Exams({ role, user }) {
         </div>
       </div>
 
-      {visibleEvents.length > 0 && <UpcomingEventsPanel events={visibleEvents} todayIso={todayIso} onEventClick={setSelectedEvent} />}
+      {visibleEvents.length > 0 && <UpcomingEventsPanel events={visibleEvents} todayIso={todayIso} onEventClick={canEdit ? openEdit : setSelectedEvent} onEdit={openEdit} onDelete={deleteEvent} canEdit={canEdit} />}
 
       {showTracking && canTrack && <ClassTrackingPanel events={visibleEvents} classId={classId} todayIso={todayIso} />}
       {canTrack && <ExamGradeReportsPanel reports={gradeReports} user={user} onChanged={loadData} readOnly={!['admin','system_admin','homeroom_teacher','coordinator','grade_coordinator'].includes(role)} />}
@@ -246,13 +246,13 @@ export default function Exams({ role, user }) {
           onDemo={() => setShowDemo(true)}
         />
       ) : view === 'month' ? (
-        <MonthView events={visibleEvents} offset={offset} onOffsetChange={setOffset} onEventClick={setSelectedEvent} todayIso={todayIso} />
+        <MonthView events={visibleEvents} offset={offset} onOffsetChange={setOffset} onEventClick={canEdit ? openEdit : setSelectedEvent} onEdit={openEdit} onDelete={deleteEvent} canEdit={canEdit} todayIso={todayIso} />
       ) : view === 'week' ? (
-        <WeekView events={visibleEvents} offset={offset} onOffsetChange={setOffset} onEventClick={setSelectedEvent} todayIso={todayIso} />
+        <WeekView events={visibleEvents} offset={offset} onOffsetChange={setOffset} onEventClick={canEdit ? openEdit : setSelectedEvent} onEdit={openEdit} onDelete={deleteEvent} canEdit={canEdit} todayIso={todayIso} />
       ) : view === 'day' ? (
-        <DayView events={visibleEvents} offset={offset} onOffsetChange={setOffset} onEventClick={setSelectedEvent} />
+        <DayView events={visibleEvents} offset={offset} onOffsetChange={setOffset} onEventClick={canEdit ? openEdit : setSelectedEvent} onEdit={openEdit} onDelete={deleteEvent} canEdit={canEdit} />
       ) : (
-        <EventListView events={visibleEvents} onEventClick={setSelectedEvent} todayIso={todayIso} />
+        <EventListView events={visibleEvents} onEventClick={canEdit ? openEdit : setSelectedEvent} onEdit={openEdit} onDelete={deleteEvent} canEdit={canEdit} todayIso={todayIso} />
       )}
 
       {canImport && <SmartCalendarImportDialog open={showImport} onOpenChange={setShowImport} classId={activeClassId || classId} onImported={loadData} />}

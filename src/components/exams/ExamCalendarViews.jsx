@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Clock, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import EventTypeBadge from './EventTypeBadge';
 import { getDisplayEventType } from './eventConstants';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const DAYS = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳'];
 const MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
@@ -16,7 +17,7 @@ function groupByDate(events) {
   }, {});
 }
 
-export function MonthView({ events, offset, onOffsetChange, onEventClick, todayIso }) {
+export function MonthView({ events, offset, onOffsetChange, onEventClick, onEdit, onDelete, canEdit = true, todayIso }) {
    const base = useMemo(() => {
      const today = new Date();
      return new Date(today.getFullYear(), today.getMonth() + offset, 1);
@@ -46,7 +47,7 @@ export function MonthView({ events, offset, onOffsetChange, onEventClick, todayI
              <div key={dayIso} className={`min-h-[92px] bg-card p-1.5 transition-all ${isOtherMonth ? 'opacity-35' : ''} ${isToday ? 'ring-1 ring-inset ring-primary/40 bg-primary/4' : ''}`}>
                <div className={`text-xs font-semibold mb-1 ${isToday ? 'text-primary' : ''}`}>{day.getDate()}</div>
                <div className="space-y-1">
-                 {dayEvents.slice(0, 3).map(event => <MiniEvent key={event.id} event={event} onClick={onEventClick} />)}
+                 {dayEvents.slice(0, 3).map(event => <MiniEvent key={event.id} event={event} onClick={onEventClick} onEdit={onEdit} onDelete={onDelete} canEdit={canEdit} />)}
                  {dayEvents.length > 3 && <div className="text-[10px] text-muted-foreground/70 text-center">+{dayEvents.length - 3}</div>}
                </div>
              </div>
@@ -57,7 +58,7 @@ export function MonthView({ events, offset, onOffsetChange, onEventClick, todayI
    );
  }
 
-export function WeekView({ events, offset, onOffsetChange, onEventClick, todayIso }) {
+export function WeekView({ events, offset, onOffsetChange, onEventClick, onEdit, onDelete, canEdit = true, todayIso }) {
    const start = useMemo(() => {
      const d = new Date();
      d.setDate(d.getDate() - d.getDay() + offset * 7);
@@ -97,7 +98,7 @@ export function WeekView({ events, offset, onOffsetChange, onEventClick, todayIs
                </div>
                {!isEmpty && (
                  <div className="space-y-1">
-                   {dayEvents.map(event => <MiniEvent key={event.id} event={event} onClick={onEventClick} />)}
+                   {dayEvents.map(event => <MiniEvent key={event.id} event={event} onClick={onEventClick} onEdit={onEdit} onDelete={onDelete} canEdit={canEdit} />)}
                  </div>
                )}
              </div>
@@ -108,7 +109,7 @@ export function WeekView({ events, offset, onOffsetChange, onEventClick, todayIs
    );
  }
 
-export function DayView({ events, offset, onOffsetChange, onEventClick }) {
+export function DayView({ events, offset, onOffsetChange, onEventClick, onEdit, onDelete, canEdit = true }) {
    const day = useMemo(() => {
      const d = new Date();
      d.setDate(d.getDate() + offset);
@@ -121,7 +122,7 @@ export function DayView({ events, offset, onOffsetChange, onEventClick }) {
      <Card className="overflow-hidden rounded-xl border">
        <CalendarHeader title={`${day.getDate()} ${MONTHS[day.getMonth()]} ${day.getFullYear()}`} prev="יום קודם" next="יום הבא" offset={offset} onOffsetChange={onOffsetChange} />
        <div className="p-4 space-y-2 min-h-[240px] pb-24 sm:pb-4">
-         {dayEvents.length ? dayEvents.map(event => <EventRow key={event.id} event={event} onClick={onEventClick} />) : <p className="text-center text-sm text-muted-foreground py-16">אין אירועים ביום זה</p>}
+         {dayEvents.length ? dayEvents.map(event => <EventRow key={event.id} event={event} onClick={onEventClick} onEdit={onEdit} onDelete={onDelete} canEdit={canEdit} />) : <p className="text-center text-sm text-muted-foreground py-16">אין אירועים ביום זה</p>}
        </div>
      </Card>
    );
@@ -135,9 +136,34 @@ function CalendarHeader({ title, prev, next, offset, onOffsetChange }) {
        <div className="flex gap-1">{offset !== 0 && <Button variant="outline" size="sm" onClick={() => onOffsetChange(0)} className="h-8">היום</Button>}<Button variant="ghost" size="sm" onClick={() => onOffsetChange(offset + 1)} className="h-8">{next}<ChevronLeft className="w-4 h-4" /></Button></div>
      </div>
    );
- }
+   }
 
-function MiniEvent({ event, onClick }) {
+   function EventActionsMenu({ event, onEdit, onDelete, canEdit, compact = false }) {
+   if (!canEdit) return null;
+   const sizeClass = compact ? 'h-5 w-5' : 'h-8 w-8';
+
+   return (
+   <DropdownMenu dir="rtl">
+     <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+       <Button variant="ghost" size="icon" className={`${sizeClass} shrink-0 rounded-full`} aria-label="פעולות אירוע">
+         <MoreVertical className={compact ? 'w-3 h-3' : 'w-4 h-4'} />
+       </Button>
+     </DropdownMenuTrigger>
+     <DropdownMenuContent align="start" sideOffset={6} collisionPadding={16} className="w-32 text-right z-[10000]">
+       <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit?.(event); }} className="justify-start gap-2 cursor-pointer">
+         <Pencil className="w-4 h-4" />
+         ערוך
+       </DropdownMenuItem>
+       <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDelete?.(event.id); }} className="justify-start gap-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10">
+         <Trash2 className="w-4 h-4" />
+         מחק
+       </DropdownMenuItem>
+     </DropdownMenuContent>
+   </DropdownMenu>
+   );
+   }
+
+function MiniEvent({ event, onClick, onEdit, onDelete, canEdit }) {
    const typeColors = {
      'מבחן': 'bg-purple-200 dark:bg-purple-900/40',
      'בחן': 'bg-purple-200 dark:bg-purple-900/40',
@@ -150,17 +176,20 @@ function MiniEvent({ event, onClick }) {
    };
    const color = typeColors[event.type] || typeColors['אחר'];
    return (
-     <button onClick={() => onClick(event)} className={`w-full text-right text-[10px] px-1.5 py-1 rounded-md border border-border/50 ${color} hover:shadow-sm transition-shadow group flex items-start gap-1.5`}>
+     <div role="button" tabIndex={0} onClick={() => onClick(event)} className={`w-full text-right text-[10px] px-1.5 py-1 rounded-md border border-border/50 ${color} hover:shadow-sm transition-shadow group flex items-start gap-1.5 cursor-pointer`}>
        <div className="w-1 h-4 rounded-full shrink-0 opacity-70" style={{ backgroundColor: 'currentColor' }} />
        <div className="flex-1 min-w-0">
-         <span className="font-medium truncate block text-foreground/90">{event.title}</span>
+         <div className="flex items-start justify-between gap-1">
+           <span className="font-medium truncate block text-foreground/90 flex-1 text-right">{event.title}</span>
+           <EventActionsMenu event={event} onEdit={onEdit} onDelete={onDelete} canEdit={canEdit} compact />
+         </div>
          {event.time && <span className="opacity-70 flex items-center gap-0.5 text-[9px]"><Clock className="w-2.5 h-2.5" />{event.end_time ? `${event.time}–${event.end_time}` : event.time}</span>}
        </div>
-     </button>
+     </div>
    );
  }
 
-function EventRow({ event, onClick }) {
+function EventRow({ event, onClick, onEdit, onDelete, canEdit }) {
    const displayType = getDisplayEventType(event);
    const sideColors = {
      'מבחן': 'bg-purple-400/60',
@@ -174,12 +203,15 @@ function EventRow({ event, onClick }) {
    };
    const sideColor = sideColors[event.type] || sideColors['אחר'];
    return (
-     <button onClick={() => onClick(event)} className="w-full text-right rounded-lg border border-border bg-card p-3 hover:shadow-sm transition-all group flex overflow-hidden">
+     <div role="button" tabIndex={0} onClick={() => onClick(event)} className="w-full text-right rounded-lg border border-border bg-card p-3 hover:shadow-sm transition-all group flex overflow-hidden cursor-pointer">
        <div className={`w-0.5 shrink-0 ${sideColor}`} />
        <div className="flex-1 min-w-0 px-3">
-         <div className="flex items-center gap-2 flex-wrap justify-start"><h3 className="font-semibold text-foreground">{event.title}</h3><EventTypeBadge type={displayType} /></div>
+         <div className="flex items-start justify-between gap-2">
+           <div className="flex items-center gap-2 flex-wrap justify-start min-w-0 flex-1"><h3 className="font-semibold text-foreground truncate">{event.title}</h3><EventTypeBadge type={displayType} /></div>
+           <EventActionsMenu event={event} onEdit={onEdit} onDelete={onDelete} canEdit={canEdit} />
+         </div>
          <div className="text-xs text-muted-foreground mt-1">{event.date}{event.time ? ` · ${event.end_time ? `${event.time}–${event.end_time}` : event.time}` : ''}{event.class_or_grade ? ` · ${event.class_or_grade}` : ''}</div>
        </div>
-     </button>
+     </div>
    );
  }

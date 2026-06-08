@@ -1,8 +1,10 @@
 import { useMemo } from 'react';
 import { Card } from '@/components/ui/card';
-import { Clock, CalendarDays, Sun } from 'lucide-react';
+import { Clock, CalendarDays, MoreVertical, Pencil, Sun, Trash2 } from 'lucide-react';
 import EventTypeBadge from './EventTypeBadge';
 import { getDisplayEventType } from './eventConstants';
+import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const DAY_NAMES = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 const MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
@@ -33,7 +35,7 @@ function formatDateHeader(iso) {
   return `יום ${dayName}, ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-export default function EventListView({ events, onEventClick, todayIso }) {
+export default function EventListView({ events, onEventClick, onEdit, onDelete, canEdit = true, todayIso }) {
   const grouped = useMemo(() => {
     const sorted = [...events].sort((a, b) => {
       const dateCmp = (a.date || '').localeCompare(b.date || '');
@@ -77,16 +79,21 @@ export default function EventListView({ events, onEventClick, todayIso }) {
                 const sideColor = SIDE_COLORS[event.type] || SIDE_COLORS['אחר'];
                 const displayType = getDisplayEventType(event);
                 return (
-                  <button
+                  <div
                     key={event.id}
+                    role="button"
+                    tabIndex={0}
                     onClick={() => onEventClick(event)}
-                    className={`w-full text-right rounded-lg border bg-card hover:shadow-sm transition-all flex overflow-hidden ${isPast ? 'opacity-70' : ''}`}
+                    className={`w-full text-right rounded-lg border bg-card hover:shadow-sm transition-all flex overflow-hidden cursor-pointer ${isPast ? 'opacity-70' : ''}`}
                   >
                     <div className={`w-1 shrink-0 ${sideColor}`} />
                     <div className="flex-1 min-w-0 p-3">
-                      <div className="flex items-center gap-2 flex-wrap justify-start">
-                        <h3 className="font-semibold text-foreground">{event.title}</h3>
-                        <EventTypeBadge type={displayType} />
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2 flex-wrap justify-start min-w-0 flex-1">
+                          <h3 className="font-semibold text-foreground truncate">{event.title}</h3>
+                          <EventTypeBadge type={displayType} />
+                        </div>
+                        <EventActionsMenu event={event} onEdit={onEdit} onDelete={onDelete} canEdit={canEdit} />
                       </div>
                       <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2 flex-wrap">
                         {event.time ? (
@@ -103,7 +110,7 @@ export default function EventListView({ events, onEventClick, todayIso }) {
                         {event.audience_group_label && <span>· {event.audience_group_label}</span>}
                       </div>
                     </div>
-                  </button>
+                  </div>
                 );
               })}
             </div>
@@ -111,5 +118,29 @@ export default function EventListView({ events, onEventClick, todayIso }) {
         );
       })}
     </div>
+  );
+}
+
+function EventActionsMenu({ event, onEdit, onDelete, canEdit }) {
+  if (!canEdit) return <span className="w-8 shrink-0" />;
+
+  return (
+    <DropdownMenu dir="rtl">
+      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+        <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 rounded-full" aria-label="פעולות אירוע">
+          <MoreVertical className="w-4 h-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" sideOffset={6} collisionPadding={16} className="w-32 text-right z-[10000]">
+        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit?.(event); }} className="justify-start gap-2 cursor-pointer">
+          <Pencil className="w-4 h-4" />
+          ערוך
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDelete?.(event.id); }} className="justify-start gap-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10">
+          <Trash2 className="w-4 h-4" />
+          מחק
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
