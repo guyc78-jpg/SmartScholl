@@ -4,26 +4,9 @@ import { setBase44AccessClaims, clearBase44AccessClaims } from '@/lib/accessGuar
 
 const { appId, token, functionsVersion, appBaseUrl, serverUrl } = appParams;
 
-const APP_LOG_CLAIMS_KEY = '__approved_user_claims';
 const isUserInAppLogUrl = (url = '') => String(url).includes('/api/app-logs/') && String(url).includes('/log-user-in-app/');
-const isMutedScreenLogUrl = (url = '') => {
-  const value = String(url);
-  return isUserInAppLogUrl(value) && (value.includes('/log-user-in-app/users') || value.includes('/log-user-in-app/home'));
-};
 
-const hasAuthorizedLogUser = () => {
-  if (typeof window === 'undefined') return false;
-  const rawClaims = window.sessionStorage.getItem(APP_LOG_CLAIMS_KEY);
-  if (!rawClaims) return false;
-  try {
-    const claims = JSON.parse(rawClaims);
-    return claims?.authorized === true && claims?.isActive !== false;
-  } catch {
-    return false;
-  }
-};
-
-const shouldMuteAppLogRequest = (url = '') => isMutedScreenLogUrl(url) || (isUserInAppLogUrl(url) && !hasAuthorizedLogUser());
+const silentAppLogResponse = () => new Response(null, { status: 204 });
 
 if (typeof window !== 'undefined' && !window.__base44AppLogGuardInstalled) {
   window.__base44AppLogGuardInstalled = true;
@@ -38,23 +21,24 @@ if (typeof window !== 'undefined' && !window.__base44AppLogGuardInstalled) {
   const originalFetch = window.fetch.bind(window);
   window.fetch = async (input, init) => {
     const url = typeof input === 'string' ? input : input?.url;
-    if (shouldMuteAppLogRequest(url)) {
-      return new Response(null, { status: 204 });
-    }
-    const response = await originalFetch(input, init);
-    if (isUserInAppLogUrl(url) && response.status === 403) {
-      return new Response(null, { status: 204 });
-    }
-    return response;
+    if (isUserInAppLogUrl(url)) return silentAppLogResponse();
+    return originalFetch(input, init);
   };
+
+  const originalSendBeacon = window.navigator?.sendBeacon?.bind(window.navigator);
+  if (originalSendBeacon) {
+    window.navigator.sendBeacon = (url, data) => {
+      if (isUserInAppLogUrl(url)) return true;
+      return originalSendBeacon(url, data);
+    };
+  }
 
   const originalXhrOpen = window.XMLHttpRequest?.prototype.open;
   const originalXhrSend = window.XMLHttpRequest?.prototype.send;
   if (originalXhrOpen && originalXhrSend) {
     window.XMLHttpRequest.prototype.open = function(method, url, ...rest) {
-      this.__base44AppLogUrl = typeof url === 'string' ? url : url?.toString?.() || '';
-      this.__base44MuteAppLog = shouldMuteAppLogRequest(this.__base44AppLogUrl);
-      if (this.__base44MuteAppLog) return originalXhrOpen.call(this, method, 'data:application/json,{}', ...rest);
+      this.__base44MuteAppLog = isUserInAppLogUrl(typeof url === 'string' ? url : url?.toString?.() || '');
+      if (this.__base44MuteAppLog) return;
       return originalXhrOpen.call(this, method, url, ...rest);
     };
 
