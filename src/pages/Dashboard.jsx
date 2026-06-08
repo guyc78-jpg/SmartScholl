@@ -80,11 +80,13 @@ export default function Dashboard({ user, role }) {
     loadData(true);
     const scheduleReload = () => {
       clearTimeout(loadTimerRef.current);
-      loadTimerRef.current = setTimeout(() => loadData(false), 1200);
+      loadTimerRef.current = setTimeout(() => loadData(false), 500);
     };
     const unsubscribe = base44.entities.AttendanceRecord.subscribe(scheduleReload);
     const handleFocus = () => {
-      if (Date.now() - lastLoadAtRef.current > 60_000) scheduleReload();
+      // Always reload on focus with shorter debounce
+      clearTimeout(loadTimerRef.current);
+      loadTimerRef.current = setTimeout(() => loadData(false), 300);
     };
     window.addEventListener('focus', handleFocus);
     return () => {
