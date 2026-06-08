@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { CLASS_ID } from '@/lib/demoData';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,8 +10,8 @@ import StatusBadge from '@/components/ui/StatusBadge';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { FileBarChart, Download } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
-import { isStudentInApprovedScope } from '@/lib/schoolStructure';
 import { formatStudentName, compareStudentsByLastName, getLastName } from '@/lib/studentName';
+import { getAttendanceScopedStudents, getScopedClassIds, filterScopedAttendance } from '@/lib/attendanceScope';
 
 export default function Reports({ role }) {
   const { user } = useAuth();
@@ -28,18 +27,20 @@ export default function Reports({ role }) {
   useEffect(() => { loadData(); }, []);
   async function loadData() {
     setLoading(true);
-    const [sts, att, dis, exs] = await Promise.all([
-      base44.entities.Student.filter({ class_id: CLASS_ID }),
-      base44.entities.AttendanceRecord.filter({ class_id: CLASS_ID }),
-      base44.entities.DisciplineEvent.filter({ class_id: CLASS_ID }),
-      base44.entities.Exam.filter({ class_id: CLASS_ID }),
-    ]);
-    const scopedStudents = sts.filter(student => isStudentInApprovedScope(student, user, role));
+    const scopedStudents = await getAttendanceScopedStudents(user, role);
+    const classIds = getScopedClassIds(scopedStudents);
     const scopedIds = new Set(scopedStudents.map(student => student.id));
+
+    const [attArrays, disArrays, exsArrays] = await Promise.all([
+      Promise.all(classIds.map(classId => base44.entities.AttendanceRecord.filter({ class_id: classId }))),
+      Promise.all(classIds.map(classId => base44.entities.DisciplineEvent.filter({ class_id: classId }))),
+      Promise.all(classIds.map(classId => base44.entities.Exam.filter({ class_id: classId }))),
+    ]);
+
     setStudents(scopedStudents);
-    setAttendance(att.filter(record => scopedIds.has(record.student_id)));
-    setDiscipline(dis.filter(record => scopedIds.has(record.student_id)));
-    setExams(exs);
+    setAttendance(filterScopedAttendance(attArrays.flat(), scopedStudents));
+    setDiscipline(disArrays.flat().filter(record => scopedIds.has(record.student_id)));
+    setExams(exsArrays.flat());
     setLoading(false);
   }
 
@@ -65,7 +66,7 @@ export default function Reports({ role }) {
     'נעדר': countStatuses(filteredAtt, ['נעדר', 'נעדר/ת']),
     'מאחר': countStatuses(filteredAtt, ['מאחר', 'מאחר/ת']),
     'מוצדק': countStatuses(filteredAtt, ['מוצדק']),
-    'שוחרר': countStatuses(filteredAtt, ['שוחרר', 'שוחרר/ה']),
+    'שוחרר': countStatuses(filteredAtt, ['שוחרר', 'שוחרר/ת', 'שוחרר/ה']),
   };
 
   const attChartData = Object.entries(attStats).map(([name, value]) => ({ name, value }));

@@ -1,19 +1,21 @@
 import { CheckCircle2, ChevronLeft, UserX } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const ABSENCE_STATUSES = ['נעדר', 'נעדר/ת'];
-const LATE_STATUSES = ['מאחר', 'מאחר/ת'];
+const STATUS_GROUPS = {
+  late: ['מאחר', 'מאחר/ת'],
+  absent: ['נעדר', 'נעדר/ת'],
+  released: ['שוחרר', 'שוחרר/ת'],
+};
 
 export default function AttendanceExceptionsCard({
   exceptionsCount,
   totalStudents = 0,
   exceptions = [],
   onClick,
-  date,
 }) {
-  const absences = exceptions.filter(item => ABSENCE_STATUSES.includes(item.status));
-  const lates = exceptions.filter(item => LATE_STATUSES.includes(item.status));
-  const previewStudents = exceptions.slice(0, 3).map(item => item.student_name).filter(Boolean);
+  const lates = exceptions.filter(item => STATUS_GROUPS.late.includes(item.status)).length;
+  const absences = exceptions.filter(item => STATUS_GROUPS.absent.includes(item.status)).length;
+  const released = exceptions.filter(item => STATUS_GROUPS.released.includes(item.status)).length;
 
   if (exceptionsCount === 0) {
     return (
@@ -22,10 +24,7 @@ export default function AttendanceExceptionsCard({
           <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
             <CheckCircle2 className="w-4 h-4 text-primary" strokeWidth={2.2} />
           </div>
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-foreground">אין חריגי נוכחות לטיפול</p>
-            <p className="text-xs text-muted-foreground">{date || 'היום'} · כל התלמידים ללא איחור או היעדרות חריגה</p>
-          </div>
+          <p className="text-sm font-semibold text-foreground">אין חריגי נוכחות היום</p>
         </div>
       </div>
     );
@@ -46,17 +45,14 @@ export default function AttendanceExceptionsCard({
             <UserX className="w-5 h-5 text-destructive" strokeWidth={2.2} />
           </div>
           <div className="min-w-0 text-right">
-            <div className="flex flex-wrap items-center justify-start gap-x-2 gap-y-1">
-              <p className="text-sm font-bold text-foreground">חריגי נוכחות</p>
-              <span className="text-xs font-semibold text-destructive tabular-nums">{exceptionsCount} לטיפול</span>
-              <span className="text-xs text-muted-foreground tabular-nums">מתוך {totalStudents}</span>
+            <p className="text-sm font-bold text-foreground">חריגי נוכחות</p>
+            <div className="mt-1 flex flex-wrap items-center justify-start gap-x-3 gap-y-1 text-xs text-muted-foreground">
+              <span className="tabular-nums">מאחרים: <strong className="text-foreground">{lates}</strong></span>
+              <span className="tabular-nums">נעדרים: <strong className="text-foreground">{absences}</strong></span>
+              <span className="tabular-nums">משוחררים: <strong className="text-foreground">{released}</strong></span>
+              <span className="tabular-nums text-destructive font-semibold">סה״כ חריגים: {exceptionsCount}</span>
+              <span className="tabular-nums">מתוך {totalStudents}</span>
             </div>
-            <p className="text-xs text-muted-foreground mt-1 truncate">
-              {absences.length > 0 && `${absences.length} היעדרויות`}
-              {absences.length > 0 && lates.length > 0 && ' · '}
-              {lates.length > 0 && `${lates.length} איחורים`}
-              {previewStudents.length > 0 && ` · ${previewStudents.join(', ')}`}
-            </p>
           </div>
         </div>
         <ChevronLeft className="w-4 h-4 text-muted-foreground flex-shrink-0" strokeWidth={2.5} />

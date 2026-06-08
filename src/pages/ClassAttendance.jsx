@@ -32,7 +32,7 @@ import ExceptionRow from '@/components/attendance/ExceptionRow';
 import { getUserApprovedClass } from '@/lib/schoolStructure';
 import { useAuth } from '@/lib/AuthContext';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
-import { ATTENDANCE_STATUSES, PRESENT_STATUS, getAttendanceScopedStudents, getLocalDateString, getScopedClassIds, filterScopedAttendance, getSelectedAttendanceDate, saveSelectedAttendanceDate } from '@/lib/attendanceScope';
+import { ATTENDANCE_STATUSES, PRESENT_STATUS, getAttendanceScopedStudents, getLocalDateString, getScopedClassIds, filterScopedAttendance, getSelectedAttendanceDate, saveSelectedAttendanceDate, loadScopedAttendanceForDate } from '@/lib/attendanceScope';
 
 const STATUSES = ATTENDANCE_STATUSES;
 const PRESENT = PRESENT_STATUS;
@@ -104,9 +104,7 @@ export default function ClassAttendance({ role }) {
   async function loadDay() {
     const classIds = getScopedClassIds(students);
     if (classIds.length === 0) { setAttendanceMap({}); setExistingIds({}); setConfirmed(false); return; }
-    const attArrays = await Promise.all(classIds.map(cid => base44.entities.AttendanceRecord.filter({ class_id: cid, date })));
-    const att = attArrays.flat();
-    const scopedAtt = filterScopedAttendance(att, students);
+    const scopedAtt = await loadScopedAttendanceForDate(students, date);
     const map = {}, ids = {};
     scopedAtt.forEach(a => {
       map[a.student_id] = { status: a.status, note: a.note || '' };

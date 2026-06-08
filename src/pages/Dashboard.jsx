@@ -9,6 +9,7 @@ import UrgentFlagsSection from '@/components/urgent/UrgentFlagsSection';
 import DailySmartCard from '@/components/dashboard/DailySmartCard';
 import WatchStudentsSection from '@/components/dashboard/WatchStudentsSection';
 import AttendanceExceptionsCard from '@/components/dashboard/AttendanceExceptionsCard';
+import AttendanceExceptionsDialog from '@/components/dashboard/AttendanceExceptionsDialog';
 import ClassAssignmentAlert from '@/components/students/ClassAssignmentAlert';
 
 import {
@@ -30,7 +31,7 @@ import NowNextCard from '@/components/schedule/NowNextCard';
 import { getUserApprovedClass, getUserApprovedClassId, getUserApprovedGrade } from '@/lib/schoolStructure';
 import { getAvailableRoles, getUserFirstName, hasApprovedRole, getRoleDisplayLines, getRoleShort } from '@/lib/roleUtils';
 import useReadNotifications from '@/hooks/useReadNotifications';
-import { getAttendanceScopedStudents, getScopedClassIds, filterScopedAttendance, getSelectedAttendanceDate, getLocalDateString } from '@/lib/attendanceScope.js';
+import { ATTENDANCE_EXCEPTION_STATUSES, getAttendanceScopedStudents, getScopedClassIds, filterScopedAttendance, getSelectedAttendanceDate, getLocalDateString, loadScopedAttendanceForDate } from '@/lib/attendanceScope.js';
 
 const HEBREW_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 const HEBREW_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
@@ -81,7 +82,7 @@ export default function Dashboard({ user, role }) {
     loadData(true);
     const scheduleReload = () => {
       clearTimeout(loadTimerRef.current);
-      loadTimerRef.current = setTimeout(() => loadData(false), 2000);
+      loadTimerRef.current = setTimeout(() => loadData(false), 150);
     };
     const unsubscribe = base44.entities.AttendanceRecord.subscribe(scheduleReload);
     const handleFocus = () => {
@@ -145,7 +146,7 @@ export default function Dashboard({ user, role }) {
       };
 
       const [att, exs, tks, dis, ann] = await Promise.all([
-        fetchForScope('AttendanceRecord', { date: attendanceDate }, 300),
+        loadScopedAttendanceForDate(scopedStudents, attendanceDate),
         fetchForScope('Exam', null, 250),
         fetchForScope('Task', null, 250),
         fetchForScope('DisciplineEvent', null, 250),
@@ -153,7 +154,7 @@ export default function Dashboard({ user, role }) {
       ]);
 
       setStudents(scopedStudents);
-      setTodayAttendance(filterScopedAttendance(att, scopedStudents));
+      setTodayAttendance(att);
       setDiscipline(dis.filter(record => scopedIds.has(record.student_id)));
       setTasks(tks.filter(task => !task.student_id || scopedIds.has(task.student_id)));
       setExams(exs);
@@ -186,7 +187,7 @@ export default function Dashboard({ user, role }) {
   const absentToday  = todayAttendance.filter(a => ['נעדר', 'נעדר/ת'].includes(a.status)).length;
   const lateToday    = todayAttendance.filter(a => ['מאחר', 'מאחר/ת'].includes(a.status)).length;
   const releasedToday = todayAttendance.filter(a => ['שוחרר', 'שוחרר/ת'].includes(a.status)).length;
-  const attendanceExceptionRecords = todayAttendance.filter(a => ['נעדר', 'נעדר/ת', 'מאחר', 'מאחר/ת'].includes(a.status));
+  const attendanceExceptionRecords = todayAttendance.filter(a => ATTENDANCE_EXCEPTION_STATUSES.includes(a.status));
   const attendanceExceptionsToday = attendanceExceptionRecords.length;
   const openTasks = tasks.filter(t => t.status !== 'בוצע').length;
 
@@ -497,79 +498,12 @@ export default function Dashboard({ user, role }) {
         />
       )}
 
-      {/* Attendance Exceptions Bottom Sheet */}
-      {attendanceFilterOpen && (
-        <>
-          <div
-            className="fixed inset-0 z-40 bg-black/50"
-            onClick={() => setAttendanceFilterOpen(false)}
-          />
-          <div
-            className="fixed inset-x-0 bottom-0 z-50 flex flex-col max-h-[85vh] rounded-t-3xl bg-card border-t border-border shadow-2xl"
-            dir="rtl"
-            style={{ paddingBottom: 'calc(76px + env(safe-area-inset-bottom))' }}
-          >
-            {/* Header */}
-            <div className="sticky top-0 flex items-center justify-between px-4 lg:px-6 py-4 border-b border-border bg-card rounded-t-3xl flex-shrink-0">
-              <h2 className="text-lg font-bold text-foreground">חריגי נוכחות - {attendanceDate !== today ? attendanceDate : 'היום'}</h2>
-              <button
-                onClick={() => setAttendanceFilterOpen(false)}
-                className="w-9 h-9 flex items-center justify-center text-muted-foreground hover:bg-muted rounded-lg transition flex-shrink-0"
-                type="button"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto px-4 lg:px-6 py-4 space-y-2">
-              {attendanceExceptionRecords
-                .sort((a, b) => a.student_name.localeCompare(b.student_name))
-                .map(record => {
-                  const statusLabels = {
-                    'נעדר': 'היעדר',
-                    'נעדר/ת': 'היעדר',
-                    'מאחר': 'איחור',
-                    'מאחר/ת': 'איחור',
-                    'שוחרר': 'שחרור',
-                    'שוחרר/ת': 'שחרור',
-                  };
-                  const statusColors = {
-                    'היעדר': 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800/30',
-                    'איחור': 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/30',
-                    'שחרור': 'bg-slate-50 dark:bg-slate-900/20 border-slate-200 dark:border-slate-800/30',
-                  };
-                  const statusBgColors = {
-                    'היעדר': 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
-                    'איחור': 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300',
-                    'שחרור': 'bg-slate-100 dark:bg-slate-900/30 text-slate-700 dark:text-slate-300',
-                  };
-                  const statusLabel = statusLabels[record.status];
-                  const colorClass = statusColors[statusLabel];
-                  const bgColorClass = statusBgColors[statusLabel];
-                  return (
-                    <div key={record.id} className={`p-3 rounded-lg border ${colorClass}`}>
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex-1 min-w-0 text-right">
-                          <p className="text-sm font-semibold text-foreground truncate">{record.student_name}</p>
-                          {record.note && <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{record.note}</p>}
-                        </div>
-                        <span className={`text-xs font-bold px-2 py-1 rounded ${bgColorClass} flex-shrink-0`}>
-                          {statusLabel}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              {attendanceExceptionRecords.length === 0 && (
-                <div className="text-center py-8">
-                  <p className="text-sm text-muted-foreground">אין חריגי נוכחות</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </>
-      )}
+      <AttendanceExceptionsDialog
+        open={attendanceFilterOpen}
+        onOpenChange={setAttendanceFilterOpen}
+        records={attendanceExceptionRecords}
+        dateLabel={attendanceDate !== today ? attendanceDate : 'היום'}
+      />
     </div>
   );
 }

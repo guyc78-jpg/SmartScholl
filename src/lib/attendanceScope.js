@@ -10,6 +10,7 @@ import {
 } from '@/lib/schoolStructure';
 
 export const ATTENDANCE_STATUSES = ['נוכח/ת', 'מאחר/ת', 'נעדר/ת', 'שוחרר/ת'];
+export const ATTENDANCE_EXCEPTION_STATUSES = ['מאחר', 'מאחר/ת', 'נעדר', 'נעדר/ת', 'שוחרר', 'שוחרר/ת'];
 export const PRESENT_STATUS = 'נוכח/ת';
 export const ATTENDANCE_DATE_KEY = 'attendance:selectedDate';
 
@@ -64,4 +65,13 @@ export function getScopedClassIds(students) {
 export function filterScopedAttendance(records, students) {
   const scopedIds = new Set(students.map(student => student.id));
   return records.filter(record => ATTENDANCE_STATUSES.includes(record.status) && scopedIds.has(record.student_id));
+}
+
+export async function loadScopedAttendanceForDate(students, date) {
+  const classIds = getScopedClassIds(students);
+  if (classIds.length === 0) return [];
+  const attendanceByClass = await Promise.all(
+    classIds.map(classId => base44.entities.AttendanceRecord.filter({ class_id: classId, date }))
+  );
+  return filterScopedAttendance(attendanceByClass.flat(), students);
 }
