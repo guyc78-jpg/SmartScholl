@@ -43,9 +43,10 @@ export default function PositiveReinforcementDialog({
     setSaving(true);
     try {
       // Save as TeacherNote under "צמיחה"
+      const studentName = student.full_name || student.firstName + ' ' + student.lastName;
       const noteData = {
         student_id: student.id,
-        student_name: student.full_name || student.firstName + ' ' + student.lastName,
+        student_name: studentName,
         class_id: classId,
         date: today,
         content: `[חיזוק חיובי - ${reinforcementType}] ${note}`,
@@ -53,6 +54,19 @@ export default function PositiveReinforcementDialog({
         is_private: false
       };
       await base44.entities.TeacherNote.create(noteData);
+
+      // Create SmartAlert for student
+      const alertData = {
+        student_id: student.id,
+        student_name: studentName,
+        class_id: classId,
+        alert_type: 'positive_reinforcement',
+        severity: 'high',
+        message: `חיזוק חיובי: ${reinforcementType}`,
+        details: { note, type: reinforcementType, by: user.full_name },
+        is_active: true
+      };
+      await base44.entities.SmartAlert.create(alertData);
 
       // If parent contact enabled and available, prepare WhatsApp message
       if (sendToParent && hasParentContact) {
