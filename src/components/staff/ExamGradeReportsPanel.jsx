@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { formatStudentName } from '@/lib/studentName';
 
 const statuses = ['דיווח תלמיד', 'אושר', 'דורש תיקון', 'נדחה'];
 
@@ -45,7 +46,7 @@ export default function ExamGradeReportsPanel({ reports, user, onChanged, readOn
             <div key={report.id} className="rounded-xl border p-3 space-y-2">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 {!readOnly && <div className="flex gap-2 flex-wrap"><Button size="sm" onClick={() => save(report, { status: 'אושר' })}>אשר</Button><Button size="sm" variant="outline" onClick={() => save(report, { status: 'דורש תיקון' })}>דורש תיקון</Button><Button size="sm" variant="destructive" onClick={() => save(report, { status: 'נדחה' })}>דחה</Button></div>}
-                <div className="text-right"><p className="font-semibold text-sm">{report.student_name} · {report.exam_title}</p><p className="text-xs text-muted-foreground">{report.subject} · {report.exam_date} · סטטוס: {report.status}</p></div>
+                <div className="text-right"><p className="font-semibold text-sm">{formatStudentName(report.student_name)} · {report.exam_title}</p><p className="text-xs text-muted-foreground">{report.subject} · {report.exam_date} · סטטוס: {report.status}</p></div>
               </div>
               {!readOnly && (
                 <div className="grid gap-2 sm:grid-cols-[120px_160px_1fr_auto] items-start">

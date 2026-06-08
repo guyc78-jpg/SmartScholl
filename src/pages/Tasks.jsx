@@ -47,7 +47,7 @@ export default function Tasks({ role = 'homeroom_teacher', user }) {
   async function handleSave() {
     if (!form.title) { toast.error('כותרת היא שדה חובה'); return; }
     const student = form.student_id !== 'none' ? students.find(s => s.id === form.student_id) : null;
-    const data = { ...form, student_id: student?.id || '', student_name: student?.full_name || '', class_id: classId };
+    const data = { ...form, student_id: student?.id || '', student_name: student ? formatStudentName(student) : '', class_id: classId };
     try {
       if (editTask) { await base44.entities.Task.update(editTask.id, data); toast.success('עודכן'); }
       else { await base44.entities.Task.create(data); toast.success('משימה נוספה!'); }
@@ -133,7 +133,7 @@ export default function Tasks({ role = 'homeroom_teacher', user }) {
                   <SelectTrigger><SelectValue placeholder="בחר תלמיד"/></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">כיתה – כללי</SelectItem>
-                    {[...students].sort(compareStudentsByLastName).map(s => <SelectItem key={s.id} value={s.id}>{formatStudentName(s.full_name)}</SelectItem>)}
+                    {[...students].sort(compareStudentsByLastName).map(s => <SelectItem key={s.id} value={s.id}>{formatStudentName(s)}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>

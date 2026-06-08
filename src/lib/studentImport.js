@@ -1,3 +1,5 @@
+import { splitLegacyFullName } from '@/lib/studentName';
+
 export function normalizeImportText(value = '') {
   return String(value)
     .replace(/[״"׳']/g, '')
@@ -43,7 +45,7 @@ function findColumn(headers, options) {
 export function parseStudentsWorksheetRows(rows, { classId, classRoom } = {}) {
   const headerIndex = rows.findIndex(row => {
     const normalized = row.map(normalizeImportText).join('|');
-    return normalized.includes('שםפרטי') && normalized.includes('שםמשפחה');
+    return (normalized.includes('שםפרטי') && normalized.includes('שםמשפחה')) || normalized.includes('שםמלא');
   });
 
   if (headerIndex === -1) return [];
@@ -62,14 +64,21 @@ export function parseStudentsWorksheetRows(rows, { classId, classRoom } = {}) {
   };
 
   return rows.slice(headerIndex + 1).map(row => {
-    const firstName = cleanValue(row[indexes.firstName]);
-    const lastName = cleanValue(row[indexes.lastName]);
-    const fullName = cleanValue(row[indexes.fullName]) || [firstName, lastName].filter(Boolean).join(' ');
+    const rawFirstName = cleanValue(row[indexes.firstName]);
+    const rawLastName = cleanValue(row[indexes.lastName]);
+    const rawFullName = cleanValue(row[indexes.fullName]);
+    const legacyName = (!rawFirstName || !rawLastName) && rawFullName ? splitLegacyFullName(rawFullName) : null;
+    const firstName = rawFirstName || legacyName?.first || '';
+    const lastName = rawLastName || legacyName?.last || '';
+    const fullName = [firstName, lastName].filter(Boolean).join(' ');
     const fileClassName = normalizeClassName(row[indexes.className]);
     const finalClassName = classRoom?.name || fileClassName;
 
     return {
+      fullName,
       full_name: fullName,
+      firstName,
+      lastName,
       first_name: firstName,
       last_name: lastName,
       student_number: cleanValue(row[indexes.id]),
@@ -85,5 +94,5 @@ export function parseStudentsWorksheetRows(rows, { classId, classRoom } = {}) {
       community_service_done: 0,
       community_service_status: 'לא התחיל'
     };
-  }).filter(student => student.full_name && student.student_number);
+  }).filter(student => student.firstName && student.lastName && student.student_number);
 }

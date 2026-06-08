@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
-import { getLastName, getFirstNames } from '@/lib/studentName';
+import { normalizeStudentNameFields } from '@/lib/studentName';
 
 export default function AddStudentModal({ classId, editData, onClose, onSuccess }) {
   const [form, setForm] = useState(() => {
@@ -18,10 +18,10 @@ export default function AddStudentModal({ classId, editData, onClose, onSuccess 
       community_service_goal: 60, community_service_done: 0,
       community_service_status: 'לא התחיל', status: 'פעיל'
     };
+    const nameFields = normalizeStudentNameFields(base);
     return {
       ...base,
-      last_name: base.last_name ?? getLastName(base.full_name || ''),
-      first_name: base.first_name ?? getFirstNames(base.full_name || ''),
+      ...nameFields,
     };
   });
   const [saving, setSaving] = useState(false);
@@ -38,8 +38,8 @@ export default function AddStudentModal({ classId, editData, onClose, onSuccess 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
   async function handleSave() {
-    const firstName = (form.first_name || '').trim();
-    const lastName = (form.last_name || '').trim();
+    const firstName = (form.firstName || form.first_name || '').trim();
+    const lastName = (form.lastName || form.last_name || '').trim();
     if (!firstName || !lastName) {
       toast.error('שם פרטי ושם משפחה הם שדות חובה');
       return;
@@ -53,8 +53,11 @@ export default function AddStudentModal({ classId, editData, onClose, onSuccess 
       };
       const payload = {
         ...form,
+        firstName,
+        lastName,
         first_name: firstName,
         last_name: lastName,
+        fullName: `${firstName} ${lastName}`,
         full_name: `${firstName} ${lastName}`,
         ...classData,
       };
@@ -91,8 +94,8 @@ export default function AddStudentModal({ classId, editData, onClose, onSuccess 
               <Label className="text-xs font-medium">שם משפחה *</Label>
               <Input
                 className="h-9"
-                value={form.last_name || ''}
-                onChange={e => set('last_name', e.target.value)}
+                value={form.lastName || form.last_name || ''}
+                onChange={e => setForm(p => ({ ...p, lastName: e.target.value, last_name: e.target.value }))}
                 placeholder="כהן"
               />
             </div>
@@ -100,8 +103,8 @@ export default function AddStudentModal({ classId, editData, onClose, onSuccess 
               <Label className="text-xs font-medium">שם פרטי *</Label>
               <Input
                 className="h-9"
-                value={form.first_name || ''}
-                onChange={e => set('first_name', e.target.value)}
+                value={form.firstName || form.first_name || ''}
+                onChange={e => setForm(p => ({ ...p, firstName: e.target.value, first_name: e.target.value }))}
                 placeholder="דניאל"
               />
             </div>

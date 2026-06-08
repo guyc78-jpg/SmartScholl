@@ -63,7 +63,7 @@ export default function Attendance() {
       for (const student of students) {
         const a = attendanceMap[student.id];
         if (!a?.status) continue;
-        const data = { student_id: student.id, student_name: student.full_name, class_id: CLASS_ID, date, status: a.status, note: a.note || '' };
+        const data = { student_id: student.id, student_name: formatStudentName(student), class_id: CLASS_ID, date, status: a.status, note: a.note || '' };
         if (existingIds[student.id]) {
           await base44.entities.AttendanceRecord.update(existingIds[student.id], data);
         } else {
@@ -146,10 +146,10 @@ export default function Attendance() {
                   <div className="grid grid-cols-[auto,minmax(7rem,10rem),1fr] items-center gap-3" dir="rtl">
                     <div className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0
                       ${student.gender === 'נקבה' ? 'bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-400' : 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'}`}>
-                      {student.full_name.charAt(0)}
+                      {formatStudentName(student).charAt(0)}
                     </div>
                     <div className="min-w-0 text-right">
-                      <p className="font-medium text-sm truncate">{formatStudentName(student.full_name)}</p>
+                      <p className="font-medium text-sm truncate">{formatStudentName(student)}</p>
                       {student.status === 'דורש מעקב' && <StatusBadge status="דורש מעקב" className="mt-0.5 scale-90 origin-right" />}
                     </div>
                     {/* Status buttons */}

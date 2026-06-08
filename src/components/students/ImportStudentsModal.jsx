@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { Upload, FileText, Check, AlertCircle } from 'lucide-react';
 import SelectedFileNotice from '@/components/import/SelectedFileNotice';
 import { parseStudentsWorksheetRows } from '@/lib/studentImport';
+import { formatStudentName } from '@/lib/studentName';
 
 function parseGradeFromClassName(className = '') {
   const clean = String(className).replace(/[\s״"׳']/g, '');
@@ -149,10 +150,10 @@ export default function ImportStudentsModal({ classId, onClose, onSuccess }) {
               {preview.slice(0, 20).map((s, i) => (
                 <div key={i} className="flex items-center gap-3 px-4 py-2.5">
                   <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold text-sm">
-                    {s.full_name.charAt(0)}
+                    {formatStudentName(s).charAt(0)}
                   </div>
                   <div>
-                    <p className="text-sm font-medium">{s.full_name}</p>
+                    <p className="text-sm font-medium">{formatStudentName(s)}</p>
                     <p className="text-xs text-muted-foreground">{s.student_number} · {s.phone}</p>
                   </div>
                 </div>

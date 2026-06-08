@@ -1,30 +1,52 @@
-// Centralized utility for displaying student names consistently across the app.
-// Display format: "שם משפחה שם פרטי" (last name first).
-// Sort: by last name, then by the remaining first/middle names.
-//
-// Each function accepts EITHER a student object (preferred — uses the separate
-// last_name / first_name fields, so compound last names like "מור יוסף" stay
-// intact). If only legacy full_name exists, it is converted from old
-// "שם פרטי שם משפחה" storage to "שם משפחה שם פרטי" display. Plain strings
-// such as saved student_name values are returned as-is to avoid double flipping.
+// Centralized utility for storing, displaying and sorting student names.
+// Storage: firstName / lastName (plus legacy first_name / last_name for compatibility).
+// Display: "שם משפחה שם פרטי".
 
-function splitLegacyFullName(fullName) {
-  const parts = (fullName || '').trim().split(/\s+/).filter(Boolean);
-  if (parts.length < 2) return { last: fullName || '', first: '' };
-  const last = parts.pop();
-  return { last, first: parts.join(' ') };
+function cleanName(value = '') {
+  return String(value || '').trim().replace(/\s+/g, ' ');
+}
+
+export function splitLegacyFullName(fullName) {
+  const parts = cleanName(fullName).split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return { first: '', last: '' };
+  if (parts.length === 1) return { first: parts[0], last: '' };
+  return { first: parts[0], last: parts.slice(1).join(' ') };
+}
+
+function looksDuplicatedFullName(first, last, fullName) {
+  const full = cleanName(fullName);
+  return full && cleanName(first) === full && cleanName(last) === full;
 }
 
 function fieldsFrom(input) {
   if (input && typeof input === 'object') {
-    const last = (input.last_name || '').trim();
-    const first = (input.first_name || '').trim();
-    if (last || first) return { last, first, displayName: '' };
-    if (input.student_name) return { last: '', first: '', displayName: input.student_name.trim() };
-    const legacy = splitLegacyFullName(input.full_name || '');
-    return { ...legacy, displayName: '' };
+    const fullName = cleanName(input.fullName || input.full_name || '');
+    const storedFirst = cleanName(input.firstName ?? input.first_name ?? '');
+    const storedLast = cleanName(input.lastName ?? input.last_name ?? '');
+
+    if (looksDuplicatedFullName(storedFirst, storedLast, fullName)) {
+      const legacy = splitLegacyFullName(fullName);
+      return { ...legacy, displayName: '' };
+    }
+
+    if (storedFirst || storedLast) return { first: storedFirst, last: storedLast, displayName: '' };
+    if (fullName) return { ...splitLegacyFullName(fullName), displayName: '' };
+    if (input.student_name) return { first: '', last: '', displayName: cleanName(input.student_name) };
   }
-  return { last: '', first: '', displayName: (input || '').toString().trim() };
+  return { first: '', last: '', displayName: cleanName(input || '') };
+}
+
+export function normalizeStudentNameFields(input) {
+  const { first, last } = fieldsFrom(input);
+  const fullName = [first, last].filter(Boolean).join(' ');
+  return {
+    firstName: first,
+    lastName: last,
+    first_name: first,
+    last_name: last,
+    fullName,
+    full_name: fullName,
+  };
 }
 
 export function formatStudentName(input) {
@@ -35,21 +57,16 @@ export function formatStudentName(input) {
 
 export function getLastName(input) {
   const { last, displayName } = fieldsFrom(input);
-  if (last) return last;
-  return displayName || '';
+  return last || displayName || '';
 }
 
 export function getFirstNames(input) {
   const { first, displayName } = fieldsFrom(input);
-  if (first) return first;
-  return displayName || '';
+  return first || displayName || '';
 }
 
-// Comparator for Array.sort — sorts students by last name, then first names.
 export function compareStudentsByLastName(a, b) {
-  const lastA = getLastName(a);
-  const lastB = getLastName(b);
-  const cmp = lastA.localeCompare(lastB, 'he');
-  if (cmp !== 0) return cmp;
+  const lastCmp = getLastName(a).localeCompare(getLastName(b), 'he');
+  if (lastCmp !== 0) return lastCmp;
   return getFirstNames(a).localeCompare(getFirstNames(b), 'he');
 }

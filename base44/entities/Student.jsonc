@@ -4,15 +4,27 @@
   "properties": {
     "full_name": {
       "type": "string",
-      "description": "\u05e9\u05dd \u05de\u05dc\u05d0"
+      "description": "\u05e9\u05dd \u05de\u05dc\u05d0 \u05d9\u05e9\u05df \u05dc\u05ea\u05d0\u05d9\u05de\u05d5\u05ea \u05d1\u05dc\u05d1\u05d3"
+    },
+    "fullName": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05de\u05dc\u05d0 \u05d9\u05e9\u05df \u05dc\u05ea\u05d0\u05d9\u05de\u05d5\u05ea \u05d1\u05dc\u05d1\u05d3"
+    },
+    "firstName": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05e4\u05e8\u05d8\u05d9"
+    },
+    "lastName": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05de\u05e9\u05e4\u05d7\u05d4"
     },
     "first_name": {
       "type": "string",
-      "description": "\u05e9\u05dd \u05e4\u05e8\u05d8\u05d9 (\u05e9\u05d3\u05d4 \u05e0\u05e4\u05e8\u05d3)"
+      "description": "\u05e9\u05dd \u05e4\u05e8\u05d8\u05d9 (\u05e9\u05d3\u05d4 \u05ea\u05d0\u05d9\u05de\u05d5\u05ea \u05d9\u05e9\u05df)"
     },
     "last_name": {
       "type": "string",
-      "description": "\u05e9\u05dd \u05de\u05e9\u05e4\u05d7\u05d4 (\u05e9\u05d3\u05d4 \u05e0\u05e4\u05e8\u05d3, \u05d9\u05db\u05d5\u05dc \u05dc\u05db\u05dc\u05d5\u05dc \u05db\u05de\u05d4 \u05de\u05d9\u05dc\u05d9\u05dd)"
+      "description": "\u05e9\u05dd \u05de\u05e9\u05e4\u05d7\u05d4 (\u05e9\u05d3\u05d4 \u05ea\u05d0\u05d9\u05de\u05d5\u05ea \u05d9\u05e9\u05df)"
     },
     "class_id": {
       "type": "string",
@@ -29,6 +41,9 @@
     "grade": {
       "type": "string",
       "enum": [
+        "\u05d6",
+        "\u05d7",
+        "\u05d8",
         "\u05d9",
         "\u05d9\u05d0",
         "\u05d9\u05d1"
@@ -138,7 +153,8 @@
     }
   },
   "required": [
-    "full_name",
+    "firstName",
+    "lastName",
     "class_id",
     "grade"
   ]

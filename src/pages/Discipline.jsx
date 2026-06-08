@@ -50,7 +50,7 @@ export default function Discipline({ role = 'homeroom_teacher' }) {
   async function handleSave() {
     if (!form.student_id || !form.description) { toast.error('יש למלא תלמיד ותיאור'); return; }
     const student = students.find(s => s.id === form.student_id);
-    const data = { ...form, student_name: student?.full_name, class_id: classId };
+    const data = { ...form, student_name: student ? formatStudentName(student) : '', class_id: classId };
     try {
       if (editEvent) { await base44.entities.DisciplineEvent.update(editEvent.id, data); toast.success('עודכן'); }
       else { await base44.entities.DisciplineEvent.create(data); toast.success('אירוע תועד!'); }
@@ -142,7 +142,7 @@ export default function Discipline({ role = 'homeroom_teacher' }) {
                 <Label>תלמיד *</Label>
                 <Select value={form.student_id} onValueChange={v => set('student_id', v)}>
                   <SelectTrigger><SelectValue placeholder="בחר תלמיד"/></SelectTrigger>
-                  <SelectContent>{[...students].sort(compareStudentsByLastName).map(s => <SelectItem key={s.id} value={s.id}>{formatStudentName(s.full_name)}</SelectItem>)}</SelectContent>
+                  <SelectContent>{[...students].sort(compareStudentsByLastName).map(s => <SelectItem key={s.id} value={s.id}>{formatStudentName(s)}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="grid grid-cols-2 gap-3">

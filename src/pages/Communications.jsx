@@ -49,7 +49,7 @@ export default function Communications({ role = 'homeroom_teacher' }) {
   async function handleSave() {
     if (!form.student_id || !form.summary) { toast.error('יש לבחור תלמיד ולמלא סיכום'); return; }
     const student = students.find(s => s.id === form.student_id);
-    const data = { ...form, student_name: student?.full_name, class_id: classId };
+    const data = { ...form, student_name: student ? formatStudentName(student) : '', class_id: classId };
     try {
       if (editComm) { await base44.entities.Communication.update(editComm.id, data); toast.success('עודכן'); }
       else { await base44.entities.Communication.create(data); toast.success('שיחה תועדה!'); }
@@ -120,7 +120,7 @@ export default function Communications({ role = 'homeroom_teacher' }) {
                 <Label>תלמיד *</Label>
                 <Select value={form.student_id} onValueChange={v => set('student_id', v)}>
                   <SelectTrigger><SelectValue placeholder="בחר תלמיד"/></SelectTrigger>
-                  <SelectContent>{[...students].sort(compareStudentsByLastName).map(s => <SelectItem key={s.id} value={s.id}>{formatStudentName(s.full_name)}</SelectItem>)}</SelectContent>
+                  <SelectContent>{[...students].sort(compareStudentsByLastName).map(s => <SelectItem key={s.id} value={s.id}>{formatStudentName(s)}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="grid grid-cols-2 gap-3">
