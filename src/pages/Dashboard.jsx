@@ -333,6 +333,7 @@ export default function Dashboard({ user, role }) {
       {attendanceExceptionsToday > 0 && (
         <AttendanceExceptionsCard
           exceptionsCount={attendanceExceptionsToday}
+          totalStudents={students.length}
           exceptions={todayAttendance.filter(a => ['נעדר', 'נעדר/ת', 'מאחר', 'מאחר/ת', 'שוחרר', 'שוחרר/ת'].includes(a.status))}
           date={attendanceDate !== today ? attendanceDate : 'היום'}
           onClick={() => setAttendanceFilterOpen(true)}
