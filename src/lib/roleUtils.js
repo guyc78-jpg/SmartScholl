@@ -82,6 +82,7 @@ export function getRoleShort(role, user) {
 
 export const VALID_ROLES = ['system_admin', 'admin', 'division_manager', 'homeroom_teacher', 'grade_coordinator', 'coordinator', 'student', 'parent'];
 export const SYSTEM_ROLE_PRIORITY = ['system_admin', 'admin', 'division_manager', 'grade_coordinator', 'coordinator', 'homeroom_teacher', 'student', 'parent'];
+export const WORK_MODE_ROLES = ['system_admin', 'admin', 'division_manager', 'grade_coordinator', 'coordinator', 'homeroom_teacher', 'student'];
 
 export function parseRoles(value) {
   if (Array.isArray(value)) return value;
@@ -117,6 +118,16 @@ export function getAvailableRoles(user) {
 
 export function hasApprovedRole(user, role) {
   return getAvailableRoles(user).includes(role);
+}
+
+export function getWorkModeRoles(user) {
+  const roles = getAvailableRoles(user).filter(role => WORK_MODE_ROLES.includes(role));
+  const withoutDuplicates = roles.filter((role, index, list) => {
+    if (role === 'admin' && list.includes('system_admin')) return false;
+    if (role === 'coordinator' && list.includes('grade_coordinator')) return false;
+    return list.indexOf(role) === index;
+  });
+  return withoutDuplicates.length ? withoutDuplicates : ['student'];
 }
 
 export function getSystemRole(user) {

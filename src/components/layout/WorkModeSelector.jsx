@@ -1,15 +1,12 @@
 import { useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { getAvailableRoles, getRoleLabel } from '@/lib/roleUtils';
+import { getRoleLabel, getWorkModeRoles } from '@/lib/roleUtils';
 import { logActivity } from '@/lib/activityLogger';
 
 export default function WorkModeSelector({ user, activeRole, onRoleChange }) {
   const [saving, setSaving] = useState(false);
-  const allRoles = getAvailableRoles(user);
-  const STAFF_ROLES = ['admin', 'homeroom_teacher', 'coordinator'];
-  const isStudentOnly = allRoles.includes('student') && !allRoles.some(r => STAFF_ROLES.includes(r));
-  const roles = isStudentOnly ? allRoles.filter(r => r === 'student') : allRoles;
+  const roles = getWorkModeRoles(user);
 
   if (roles.length <= 1) return null;
 
@@ -30,7 +27,7 @@ export default function WorkModeSelector({ user, activeRole, onRoleChange }) {
   return (
     <div className="mt-2 space-y-1" dir="rtl">
       <p className="text-[11px] text-sidebar-foreground/50 text-right">מצב עבודה</p>
-      <Select value={activeRole} onValueChange={handleChange} disabled={saving}>
+      <Select value={roles.includes(activeRole) ? activeRole : roles[0]} onValueChange={handleChange} disabled={saving}>
         <SelectTrigger className="h-8 bg-sidebar-accent border-sidebar-border text-sidebar-foreground text-xs w-full px-2 [&>span]:flex-1 [&>span]:text-right [&_svg]:ms-2 [&_svg]:me-0">
           <SelectValue />
         </SelectTrigger>

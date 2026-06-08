@@ -10,7 +10,7 @@ import WorkModeSelector from '@/components/layout/WorkModeSelector';
 import ThemePreferenceCard from '@/components/profile/ThemePreferenceCard';
 import ProfileAvatarPicker from '@/components/profile/ProfileAvatarPicker';
 import { invalidateSchoolNameCache } from '@/components/layout/SchoolNameBanner';
-import { getAvailableRoles, getUserDisplayName, GENDER_OPTIONS, getDefaultDisplayRole, getRoleContextLabel } from '@/lib/roleUtils';
+import { getAvailableRoles, getWorkModeRoles, getUserDisplayName, GENDER_OPTIONS, getDefaultDisplayRole, getRoleContextLabel } from '@/lib/roleUtils';
 import { logActivity } from '@/lib/activityLogger';
 import { useAuth } from '@/lib/AuthContext';
 
@@ -19,7 +19,7 @@ export default function Profile({ user, role, onRoleChange, themePreference, onT
   const approvedRoles = getAvailableRoles(user);
   const primaryDisplayRole = getDefaultDisplayRole(user, role);
   const isAdmin = approvedRoles.includes('admin') || approvedRoles.includes('system_admin');
-  const hasMultipleRoles = approvedRoles.length > 1;
+  const hasMultipleRoles = getWorkModeRoles(user).length > 1;
   const hasTeachingRole = approvedRoles.some(item => ['division_manager', 'grade_coordinator', 'coordinator', 'homeroom_teacher'].includes(item));
   const canSetSubjectArea = hasTeachingRole;
   const [saving, setSaving] = useState(false);
@@ -226,7 +226,7 @@ export default function Profile({ user, role, onRoleChange, themePreference, onT
                 <Briefcase className="w-4 h-4 text-primary" />
                 <CardTitle className="text-base">מצב עבודה</CardTitle>
               </div>
-              <CardDescription className="text-xs text-right">בחירה זו זמינה רק למנהל מערכת עם כמה תפקידים אמיתיים.</CardDescription>
+              <CardDescription className="text-xs text-right">מוצגים כאן רק תפקידים שמשנים בפועל הרשאות ותצוגה באפליקציה.</CardDescription>
             </CardHeader>
             <CardContent className="pb-4">
               <WorkModeSelector user={user} activeRole={role} onRoleChange={onRoleChange} />
