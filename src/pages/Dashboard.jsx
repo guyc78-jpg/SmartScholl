@@ -305,46 +305,14 @@ export default function Dashboard({ user, role }) {
 
 
 
-      {/* Stat Cards — interactive action cards for students & attendance */}
-      {students.length > 0 && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-          {/* Students Card — navigate based on role */}
-          <motion.button
-            whileHover={{ scale: 1.01 }}
-            whileTap={{ scale: 0.99 }}
-            onClick={() => navigate('/students')}
-            className="text-right rounded-2xl border border-border bg-card p-4 hover:shadow-md hover:border-primary/60 transition-all cursor-pointer"
-            type="button"
-            dir="rtl"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-foreground/80 leading-tight">תלמידים</p>
-                <p className="text-2xl lg:text-3xl font-bold text-primary mt-1.5 tabular-nums">{students.length}</p>
-                <p className="text-xs text-muted-foreground mt-1 truncate">
-                  {isActiveHomeroom ? 'בכיתה שלי' : isActiveCoordinator ? 'בשכבה שלי' : 'במערכת'}
-                </p>
-              </div>
-              <div className="w-10 h-10 lg:w-11 lg:h-11 rounded-xl flex items-center justify-center flex-shrink-0 bg-primary/10 text-primary">
-                <Users className="w-5 h-5" strokeWidth={2} />
-              </div>
-            </div>
-            <div className="flex justify-start mt-3">
-              <span className="text-[11px] font-semibold text-primary flex items-center gap-1 px-2 py-1 bg-primary/10 rounded-lg">
-                צפה בתלמידים
-                <ChevronLeft className="w-3 h-3" />
-              </span>
-            </div>
-          </motion.button>
-
-          {/* Attendance Exceptions Card */}
-          <AttendanceExceptionsCard
-            exceptionsCount={attendanceExceptionsToday}
-            exceptions={todayAttendance.filter(a => ['נעדר', 'נעדר/ת', 'מאחר', 'מאחר/ת', 'שוחרר', 'שוחרר/ת'].includes(a.status))}
-            date={attendanceDate !== today ? attendanceDate : 'היום'}
-            onClick={() => setAttendanceFilterOpen(true)}
-          />
-        </div>
+      {/* Attendance Exceptions Card */}
+      {attendanceExceptionsToday > 0 && (
+        <AttendanceExceptionsCard
+          exceptionsCount={attendanceExceptionsToday}
+          exceptions={todayAttendance.filter(a => ['נעדר', 'נעדר/ת', 'מאחר', 'מאחר/ת', 'שוחרר', 'שוחרר/ת'].includes(a.status))}
+          date={attendanceDate !== today ? attendanceDate : 'היום'}
+          onClick={() => setAttendanceFilterOpen(true)}
+        />
       )}
 
       {/* Tasks Card */}
