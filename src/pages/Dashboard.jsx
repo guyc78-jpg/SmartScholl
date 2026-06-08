@@ -55,7 +55,7 @@ export default function Dashboard({ user, role }) {
   const today = getLocalDateString();
   const attendanceDate = getSelectedAttendanceDate();
   const approvedRoles = getAvailableRoles(user);
-  const isAdmin = approvedRoles.includes('admin');
+  const isAdmin = approvedRoles.includes('admin') || approvedRoles.includes('system_admin');
   const hasClassRole = approvedRoles.includes('homeroom_teacher');
   const hasCoordinatorRole = approvedRoles.includes('coordinator');
   const isActiveHomeroom = role === 'homeroom_teacher';
@@ -327,7 +327,7 @@ export default function Dashboard({ user, role }) {
           { icon: MessageSquare, label: 'הורים', action: 'communication', roles: ['admin', 'homeroom_teacher'], badge: pendingParentTasks },
           { icon: CheckSquare, label: 'משימה', action: 'task', roles: ['admin', 'coordinator', 'homeroom_teacher'], badge: pendingTasksCount },
           { icon: Heart, label: 'מעורבות', action: 'community', roles: ['admin', 'division_manager', 'coordinator', 'homeroom_teacher'], badge: communityBehindCount },
-        ].filter(btn => btn.roles.some(itemRole => approvedRoles.includes(itemRole)));
+        ].filter(btn => btn.roles.some(itemRole => approvedRoles.includes(itemRole) || (itemRole === 'admin' && approvedRoles.includes('system_admin'))));
         if (!quickActions.length) return null;
         return (
           <section>

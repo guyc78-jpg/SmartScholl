@@ -1,16 +1,18 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 const ROLE_LABELS = {
+  system_admin: 'מנהל/ת מערכת',
   admin: 'מנהל/ת מערכת',
   division_manager: 'מנהל/ת חטיבה',
   homeroom_teacher: 'מורה / מחנך/ת',
+  grade_coordinator: 'רכז/ת שכבה',
   coordinator: 'רכז/ת שכבה',
   student: 'תלמיד/ה',
   parent: 'הורה',
 };
 
-const VALID_ROLES = ['admin', 'division_manager', 'homeroom_teacher', 'coordinator', 'student', 'parent'];
-const SYSTEM_ROLE_PRIORITY = ['admin', 'division_manager', 'coordinator', 'homeroom_teacher', 'student', 'parent'];
+const VALID_ROLES = ['system_admin', 'admin', 'division_manager', 'homeroom_teacher', 'grade_coordinator', 'coordinator', 'student', 'parent'];
+const SYSTEM_ROLE_PRIORITY = ['system_admin', 'admin', 'division_manager', 'grade_coordinator', 'coordinator', 'homeroom_teacher', 'student', 'parent'];
 
 function parseRoles(value) {
   if (Array.isArray(value)) return value;
@@ -42,11 +44,12 @@ function getSystemRole(roles) {
 }
 
 function requireAdmin(user) {
-  return getApprovedRoles(user).includes('admin');
+  const roles = getApprovedRoles(user);
+  return roles.includes('admin') || roles.includes('system_admin');
 }
 
 function requireApprover(user) {
-  return getApprovedRoles(user).some(role => ['admin', 'homeroom_teacher', 'coordinator'].includes(role));
+  return getApprovedRoles(user).some(role => ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'].includes(role));
 }
 
 function normalizeEmail(email) {
@@ -472,6 +475,13 @@ ${suspicionNote}
 
       const targetUsers = await base44.asServiceRole.entities.User.filter({ id: target_user_id });
       const target = targetUsers[0] || {};
+      if (target_user_id === user.id) {
+        const currentRoles = getApprovedRoles(target);
+        const addsNewRole = approvedRoles.some(role => !currentRoles.includes(role));
+        if (addsNewRole) {
+          return Response.json({ error: 'לא ניתן להוסיף לעצמך תפקיד חדש' }, { status: 400 });
+        }
+      }
 
       const cleanName = String(profile_full_name || '').trim();
       const cleanProfileEmail = normalizeEmail(profile_email || target.profile_email || target.email || '');

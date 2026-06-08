@@ -117,13 +117,22 @@ export const AuthProvider = ({ children }) => {
       }
 
       setBase44AccessClaims(accessUser);
+      const mergedRoles = accessUser.roles || [];
+      const savedDisplayRole = mergedRoles.includes(currentUser.profile_display_primary_role)
+        ? currentUser.profile_display_primary_role
+        : accessUser.profile_display_primary_role;
+      const savedAdditionalRoles = Array.isArray(currentUser.profile_display_additional_roles)
+        ? currentUser.profile_display_additional_roles
+        : (Array.isArray(accessUser.profile_display_additional_roles) ? accessUser.profile_display_additional_roles : []);
       setUser({
         ...currentUser,
         ...accessUser,
         role: accessUser.role,
-        roles: accessUser.roles,
-        available_roles: accessUser.roles,
-        active_work_role: (accessUser.roles || []).includes(currentUser.active_work_role) ? currentUser.active_work_role : accessUser.role,
+        roles: mergedRoles,
+        available_roles: mergedRoles,
+        active_work_role: mergedRoles.includes(currentUser.active_work_role) ? currentUser.active_work_role : accessUser.role,
+        profile_display_primary_role: savedDisplayRole,
+        profile_display_additional_roles: savedAdditionalRoles.filter(role => mergedRoles.includes(role) && role !== savedDisplayRole),
         authorization: accessUser,
       });
       setIsAuthenticated(true);

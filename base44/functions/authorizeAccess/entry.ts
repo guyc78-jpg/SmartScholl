@@ -11,6 +11,35 @@ function normalizeGrade(value = '') {
   return String(value).replace(/[׳״'"\s]/g, '').trim();
 }
 
+function parseRoles(value) {
+  if (Array.isArray(value)) return value;
+  if (typeof value !== 'string') return [];
+  const trimmed = value.trim();
+  if (!trimmed) return [];
+  if (trimmed.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return trimmed.split(',').map(role => role.trim());
+}
+
+function getRecordRoles(record) {
+  const roles = [...parseRoles(record.roles), record.role].filter(role => VALID_STAFF_ROLES.includes(role));
+  return [...new Set(roles)];
+}
+
+function getScopeForRole(record, role) {
+  const scope = record.scope || {};
+  if (role === 'homeroom_teacher') return { ...scope, classId: scope.classId || record.homeroomClassId || '' };
+  if (role === 'grade_coordinator') return { ...scope, gradeId: scope.gradeId || record.gradeId || '', homeroomClassId: scope.homeroomClassId || record.homeroomClassId || '' };
+  if (role === 'division_manager') return { ...scope, divisionType: scope.divisionType || record.divisionType || '' };
+  return scope;
+}
+
 async function writeLog(base44, { eventType, actorEmail, targetEmail, targetName, actionName, role, details, metadata = {}, severity = 'info' }) {
   await base44.asServiceRole.entities.ActivityLog.create({
     event_type: eventType,
@@ -34,11 +63,7 @@ function validateScope(role, scope = {}) {
   return false;
 }
 
-function buildClaimsFromApprovedUser(record) {
-  const role = record.role;
-  const scope = role === 'grade_coordinator'
-    ? { ...(record.scope || {}), homeroomClassId: record.homeroomClassId || record.scope?.homeroomClassId || '' }
-    : (record.scope || {});
+function buildClaimsFromApprovedUser(record, role = record.role, scope = getScopeForRole(record, role)) {
   return {
     authorized: true,
     source: 'approved_user',
@@ -50,10 +75,13 @@ function buildClaimsFromApprovedUser(record) {
     isActive: record.isActive !== false,
     profile_full_name: record.fullName,
     profile_class_id: role === 'homeroom_teacher' ? scope.classId || '' : '',
-    profile_homeroom_class_id: role === 'grade_coordinator' ? scope.homeroomClassId || '' : '',
-    homeroomClassId: role === 'grade_coordinator' ? scope.homeroomClassId || '' : '',
+    profile_homeroom_class_id: ['homeroom_teacher', 'grade_coordinator'].includes(role) ? scope.homeroomClassId || scope.classId || '' : '',
+    homeroomClassId: ['homeroom_teacher', 'grade_coordinator'].includes(role) ? scope.homeroomClassId || scope.classId || '' : '',
     profile_grade_managed: role === 'grade_coordinator' ? normalizeGrade(scope.gradeId || '') : '',
     profile_division: role === 'division_manager' ? scope.divisionType || '' : '',
+    profile_subject_area: record.teachingSubject || '',
+    profile_subject: record.teachingSubject || '',
+    profile_display_primary_role: record.primaryDisplayRole || '',
     onboarding_status: 'approved',
     onboardingCompleted: true,
   };
@@ -91,7 +119,13 @@ async function getAccess(base44, user) {
         fullName: user.full_name || user.email,
         email,
         role: 'system_admin',
+        roles: ['system_admin'],
+        primaryDisplayRole: 'system_admin',
         scope: null,
+        homeroomClassId: '',
+        gradeId: '',
+        divisionType: '',
+        teachingSubject: '',
         isActive: true,
       });
       approvedRecords = [approvedRecord];
@@ -109,15 +143,19 @@ async function getAccess(base44, user) {
   }
 
   if (approvedRecords.length) {
-    const validRecords = approvedRecords.filter(record => record.isActive !== false && validateScope(record.role, record.scope || {}));
-    if (!validRecords.length) {
+    const roleRecords = approvedRecords
+      .filter(record => record.isActive !== false)
+      .flatMap(record => getRecordRoles(record).map(role => ({ record, role, scope: getScopeForRole(record, role) })))
+      .filter(item => validateScope(item.role, item.scope));
+
+    if (!roleRecords.length) {
       await writeLog(base44, {
         eventType: 'login_blocked',
         actorEmail: email,
         targetEmail: email,
         targetName: approvedRecords[0]?.fullName || '',
         actionName: 'blocked_login',
-        role: approvedRecords.map(record => record.role).join(','),
+        role: approvedRecords.flatMap(record => getRecordRoles(record)).join(','),
         details: 'ניסיון כניסה נחסם: אין תפקיד מאושר פעיל עם scope תקין',
         severity: 'warning',
       });
@@ -125,33 +163,40 @@ async function getAccess(base44, user) {
     }
 
     const priority = ['system_admin', 'division_manager', 'grade_coordinator', 'homeroom_teacher'];
-    const roles = [...new Set(validRecords.map(record => record.role))];
+    const roles = [...new Set(roleRecords.map(item => item.role))];
+    const displayDefault = approvedRecords.find(record => roles.includes(record.primaryDisplayRole))?.primaryDisplayRole;
     const primaryRole = priority.find(role => roles.includes(role)) || roles[0];
-    const primaryRecord = validRecords.find(record => record.role === primaryRole) || validRecords[0];
-    const homeroomRecord = validRecords.find(record => record.role === 'homeroom_teacher');
-    const coordinatorRecord = validRecords.find(record => record.role === 'grade_coordinator');
-    const divisionRecord = validRecords.find(record => record.role === 'division_manager');
+    const displayPrimaryRole = displayDefault || (roles.includes('system_admin') && roles.includes('homeroom_teacher') ? 'homeroom_teacher' : primaryRole);
+    const primaryItem = roleRecords.find(item => item.role === primaryRole) || roleRecords[0];
+    const homeroomItem = roleRecords.find(item => item.role === 'homeroom_teacher');
+    const coordinatorItem = roleRecords.find(item => item.role === 'grade_coordinator');
+    const divisionItem = roleRecords.find(item => item.role === 'division_manager');
+    const subjectItem = roleRecords.find(item => item.record.teachingSubject);
     const scopesByRole = {};
-    for (const record of validRecords) scopesByRole[record.role] = record.scope || {};
+    for (const item of roleRecords) scopesByRole[item.role] = item.scope;
 
     const claims = {
-      ...buildClaimsFromApprovedUser(primaryRecord),
+      ...buildClaimsFromApprovedUser(primaryItem.record, primaryRole, primaryItem.scope),
       role: primaryRole,
       roles,
-      scope: primaryRecord.scope || {},
+      scope: primaryItem.scope,
       scopes_by_role: scopesByRole,
-      profile_class_id: homeroomRecord?.scope?.classId || '',
-      profile_homeroom_class_id: coordinatorRecord?.homeroomClassId || coordinatorRecord?.scope?.homeroomClassId || '',
-      homeroomClassId: coordinatorRecord?.homeroomClassId || coordinatorRecord?.scope?.homeroomClassId || '',
-      profile_grade_managed: coordinatorRecord ? normalizeGrade(coordinatorRecord.scope?.gradeId || '') : '',
-      profile_division: divisionRecord?.scope?.divisionType || '',
+      profile_class_id: homeroomItem?.scope?.classId || '',
+      profile_homeroom_class_id: homeroomItem?.scope?.classId || coordinatorItem?.scope?.homeroomClassId || '',
+      homeroomClassId: homeroomItem?.scope?.classId || coordinatorItem?.scope?.homeroomClassId || '',
+      profile_grade_managed: coordinatorItem ? normalizeGrade(coordinatorItem.scope?.gradeId || '') : '',
+      profile_division: divisionItem?.scope?.divisionType || '',
+      profile_subject_area: subjectItem?.record?.teachingSubject || '',
+      profile_subject: subjectItem?.record?.teachingSubject || '',
+      profile_display_primary_role: displayPrimaryRole,
+      profile_display_additional_roles: roles.filter(role => role !== displayPrimaryRole),
     };
 
     await writeLog(base44, {
       eventType: 'login_success',
       actorEmail: email,
       targetEmail: email,
-      targetName: primaryRecord.fullName,
+      targetName: primaryItem.record.fullName,
       actionName: 'login_success',
       role: primaryRole,
       details: 'כניסה מוצלחת למערכת',
@@ -251,7 +296,7 @@ Deno.serve(async (req) => {
       const email = normalizeEmail(record.email);
       const role = record.role;
       const scope = role === 'system_admin' ? null : (record.scope || {});
-      const homeroomClassId = role === 'grade_coordinator' ? (record.homeroomClassId || scope?.homeroomClassId || '') : '';
+      const homeroomClassId = ['homeroom_teacher', 'grade_coordinator'].includes(role) ? (record.homeroomClassId || scope?.homeroomClassId || scope?.classId || '') : '';
       if (!email || !record.fullName || !VALID_STAFF_ROLES.includes(role) || !validateScope(role, scope || {})) {
         return Response.json({ error: 'Invalid approved user details' }, { status: 400 });
       }
@@ -260,8 +305,13 @@ Deno.serve(async (req) => {
         fullName: String(record.fullName).trim(),
         email,
         role,
+        roles: [role],
+        primaryDisplayRole: record.primaryDisplayRole && [role].includes(record.primaryDisplayRole) ? record.primaryDisplayRole : role,
         scope: role === 'grade_coordinator' ? { ...scope, homeroomClassId } : scope,
-        homeroomClassId,
+        homeroomClassId: role === 'homeroom_teacher' ? scope?.classId || '' : homeroomClassId,
+        gradeId: role === 'grade_coordinator' ? scope?.gradeId || '' : '',
+        divisionType: role === 'division_manager' ? scope?.divisionType || '' : '',
+        teachingSubject: record.teachingSubject || '',
         isActive: record.isActive !== false,
       };
 
@@ -290,7 +340,7 @@ Deno.serve(async (req) => {
       }
 
       const existing = await base44.asServiceRole.entities.ApprovedUser.filter({ email });
-      if (existing.some(item => item.role === role)) return Response.json({ error: 'למשתמש כבר קיימת הרשאה לתפקיד זה' }, { status: 400 });
+      if (existing.some(item => item.role === role || parseRoles(item.roles).includes(role))) return Response.json({ error: 'למשתמש כבר קיימת הרשאה לתפקיד זה' }, { status: 400 });
       const created = await base44.asServiceRole.entities.ApprovedUser.create(data);
       await writeLog(base44, {
         eventType: 'approved_user_created',

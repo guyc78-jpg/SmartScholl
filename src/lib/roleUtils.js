@@ -178,12 +178,12 @@ export function getRoleContextLabel(user, role) {
   const roles = getAvailableRoles(user);
 
   if (role === 'homeroom_teacher' && roles.includes('homeroom_teacher')) {
-    const klass = user?.profile_homeroom_class || user?.profile_class || '';
+    const klass = user?.profile_homeroom_class || user?.profile_class || user?.profile_homeroom_class_id || user?.profile_class_id || user?.homeroomClassId || '';
     return `${getRoleShort('homeroom_teacher', user)} ${klass}`.trim();
   }
 
   if ((role === 'grade_coordinator' || role === 'coordinator') && (roles.includes('grade_coordinator') || roles.includes('coordinator'))) {
-    const grade = user?.profile_grade_managed || user?.authorization?.scope?.gradeId || '';
+    const grade = user?.profile_grade_managed || user?.authorization?.scopes_by_role?.grade_coordinator?.gradeId || user?.authorization?.scope?.gradeId || '';
     return `${getRoleShort('grade_coordinator', user)} ${grade}`.trim();
   }
 
