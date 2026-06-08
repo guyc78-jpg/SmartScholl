@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
 import { CLASS_ID } from '@/lib/demoData';
 import { getStudentClassId } from '@/lib/studentProfile';
-import { getUserApprovedClassId } from '@/lib/schoolStructure';
+import { getUserApprovedClass, getUserApprovedClassId } from '@/lib/schoolStructure';
+import { findClassRoomByName } from '@/lib/classAssignment';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -40,6 +41,7 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
   const [slots, setSlots] = useState([]);
   const [periods, setPeriods] = useState([]);
   const [className, setClassName] = useState('');
+  const [activeClassId, setActiveClassId] = useState('');
   const [loading, setLoading] = useState(true);
 
   const [showImport, setShowImport] = useState(false);
@@ -49,6 +51,7 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
 
   const canEdit = role === 'homeroom_teacher' || role === 'admin';
   const classId = role === 'student' ? getStudentClassId(user, CLASS_ID) : getUserApprovedClassId(user, CLASS_ID);
+  const fallbackClassName = getUserApprovedClass(user);
   const todayDayName = HEBREW_DAY_NAMES[new Date().getDay()];
 
   // Update current-period highlight every 30s
@@ -69,14 +72,17 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
   async function load() {
     setLoading(true);
     const dayType = getTodayDayType();
-    const [data, bellPeriods, classRoom] = await Promise.all([
-      base44.entities.ScheduleSlot.filter({ class_id: classId }),
+    const [bellPeriods, classRooms] = await Promise.all([
       loadBellSchedule(dayType === 'fri' ? 'sun_thu' : dayType), // weekly view shows Sun–Thu
-      classId ? base44.entities.ClassRoom.get(classId).catch(() => null) : Promise.resolve(null),
+      base44.entities.ClassRoom.list('-updated_date', 200),
     ]);
+    const classRoom = classRooms.find(room => room.id === classId) || findClassRoomByName(classRooms, fallbackClassName);
+    const resolvedClassId = classRoom?.id || classId;
+    const data = await base44.entities.ScheduleSlot.filter({ class_id: resolvedClassId });
+    setActiveClassId(resolvedClassId);
     setSlots(data);
     setPeriods(buildPeriodRows(bellPeriods));
-    setClassName(classRoom?.name || '');
+    setClassName(classRoom?.name || fallbackClassName || '');
     setLoading(false);
   }
 
@@ -94,7 +100,7 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
   const handleSaveCell = useCallback(async (payload) => {
     const { day, period, slot, periodRow } = editor;
     const base = {
-      class_id: classId,
+      class_id: activeClassId || classId,
       day,
       period: Number(period),
       start_time: periodRow?.start_time || '',
@@ -110,7 +116,7 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
     }
     setEditor(null);
     load();
-  }, [editor]);
+  }, [editor, activeClassId, classId]);
 
   const handleDeleteCell = useCallback(async (id) => {
     await base44.entities.ScheduleSlot.delete(id);
@@ -120,12 +126,12 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
   }, []);
 
   const handleDeleteAll = useCallback(async () => {
-    const all = await base44.entities.ScheduleSlot.filter({ class_id: classId });
+    const all = await base44.entities.ScheduleSlot.filter({ class_id: activeClassId || classId });
     await Promise.all(all.map(s => base44.entities.ScheduleSlot.delete(s.id)));
     toast.success('המערכת נמחקה');
     setConfirmDeleteAll(false);
     load();
-  }, []);
+  }, [activeClassId, classId]);
 
   return (
     <div className="p-4 lg:p-6 pb-24 lg:pb-6 space-y-4" dir="rtl">
@@ -149,7 +155,7 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
       />
 
       {/* Smart card synced with bells */}
-      <NowNextCard classId={classId} />
+      <NowNextCard classId={activeClassId || classId} />
 
       {loading ? (
         <div className="flex justify-center py-12">
@@ -171,7 +177,7 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
           open={showImport}
           onOpenChange={setShowImport}
           onImported={load}
-          classId={classId}
+          classId={activeClassId || classId}
           className={className}
         />
       )}

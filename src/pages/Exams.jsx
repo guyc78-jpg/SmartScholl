@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { base44 } from '@/api/base44Client';
 import { CLASS_ID } from '@/lib/demoData';
 import { getStudentClassId } from '@/lib/studentProfile';
-import { getUserApprovedClassId } from '@/lib/schoolStructure';
+import { getUserApprovedClass, getUserApprovedClassId } from '@/lib/schoolStructure';
+import { findClassRoomByName } from '@/lib/classAssignment';
 import PageHeader from '@/components/ui/PageHeader';
 import RtlActionBar from '@/components/ui/RtlActionBar';
 import { Button } from '@/components/ui/button';
@@ -41,6 +42,7 @@ export default function Exams({ role, user }) {
   const [showForm, setShowForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
+  const [activeClassId, setActiveClassId] = useState('');
 
   const approvedRoles = getAvailableRoles(user);
   const canImport = approvedRoles.includes('admin') || approvedRoles.includes('coordinator');
@@ -48,15 +50,20 @@ export default function Exams({ role, user }) {
   const canTrack = role !== 'student' && (approvedRoles.includes('coordinator') || approvedRoles.includes('grade_coordinator') || approvedRoles.includes('homeroom_teacher'));
   const isStudent = role === 'student';
   const classId = isStudent ? getStudentClassId(user, CLASS_ID) : getUserApprovedClassId(user, CLASS_ID);
+  const fallbackClassName = getUserApprovedClass(user);
   const todayIso = new Date().toISOString().split('T')[0];
 
   useEffect(() => { loadData(); }, [classId, role]);
 
   async function loadData() {
     setLoading(true);
+    const classRooms = await base44.entities.ClassRoom.list('-updated_date', 200);
+    const classRoom = classRooms.find(room => room.id === classId) || findClassRoomByName(classRooms, fallbackClassName);
+    const resolvedClassId = classRoom?.id || classId;
+    setActiveClassId(resolvedClassId);
     const [eventData, studentData] = await Promise.all([
-      base44.entities.Exam.filter({ class_id: classId }),
-      base44.entities.Student.filter({ class_id: classId }),
+      base44.entities.Exam.filter({ class_id: resolvedClassId }),
+      base44.entities.Student.filter({ class_id: resolvedClassId }),
     ]);
     const nextStudents = studentData || [];
     setEvents((eventData || []).sort((a, b) => (a.date || '').localeCompare(b.date || '')));
@@ -105,8 +112,9 @@ export default function Exams({ role, user }) {
   async function saveEvent(form) {
     if (!form.title || !form.date) return;
     if (editingEvent?.id?.startsWith('demo_')) return;
-    if (editingEvent) await base44.entities.Exam.update(editingEvent.id, { ...form, class_id: classId });
-    else await base44.entities.Exam.create({ ...form, class_id: classId });
+    const resolvedClassId = activeClassId || classId;
+    if (editingEvent) await base44.entities.Exam.update(editingEvent.id, { ...form, class_id: resolvedClassId });
+    else await base44.entities.Exam.create({ ...form, class_id: resolvedClassId });
     toast.success(editingEvent ? 'האירוע עודכן' : 'האירוע נוסף');
     setShowForm(false);
     setEditingEvent(null);
@@ -247,7 +255,7 @@ export default function Exams({ role, user }) {
         <EventListView events={visibleEvents} onEventClick={setSelectedEvent} todayIso={todayIso} />
       )}
 
-      {canImport && <SmartCalendarImportDialog open={showImport} onOpenChange={setShowImport} classId={classId} onImported={loadData} />}
+      {canImport && <SmartCalendarImportDialog open={showImport} onOpenChange={setShowImport} classId={activeClassId || classId} onImported={loadData} />}
       <EventFormDialog open={showForm} onOpenChange={setShowForm} event={editingEvent} onSave={saveEvent} />
       <EventDetailsDialog
         event={selectedEvent}
