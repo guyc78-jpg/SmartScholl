@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { normalizeAccommodationList } from '@/lib/accommodations';
-import { Shield, Save, Pencil, Eye, History } from 'lucide-react';
+import { Shield, Save, Pencil, Eye, History, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 
 const GROUPS = [
@@ -14,8 +14,6 @@ const GROUPS = [
   { title: 'כתיבה/הקלדה', keys: ['typing', 'computer_recording', 'ignore_errors'] },
   { title: 'התאמות תוכן', keys: ['extended_formula_sheet'] },
 ];
-
-const chipClass = 'inline-flex h-7 items-center rounded-full border border-amber-200/80 bg-amber-50 px-3 text-xs font-medium leading-none text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100';
 
 function formatDateTime(value) {
   if (!value) return '—';
@@ -47,12 +45,9 @@ function MiniToggle({ checked, onChange }) {
   );
 }
 
-function AccommodationChip({ children }) {
-  return <span className={chipClass}>{children}</span>;
-}
-
 export default function LearningAccommodationsCard({ studentId, studentName, readOnly = false }) {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -62,6 +57,7 @@ export default function LearningAccommodationsCard({ studentId, studentName, rea
   const [canViewHistory, setCanViewHistory] = useState(false);
 
   useEffect(() => {
+    setExpanded(false);
     loadAccommodations();
   }, [studentId]);
 
@@ -111,8 +107,6 @@ export default function LearningAccommodationsCard({ studentId, studentName, rea
 
   const normalized = useMemo(() => normalizeAccommodationList(draft), [draft]);
   const active = normalized.filter(item => item.enabled);
-  const preview = active.slice(0, 3);
-  const extraCount = Math.max(active.length - preview.length, 0);
   const history = record?.history || [];
   const editable = canEdit && !readOnly;
   const activeGroups = groupItems(normalized, true);
@@ -121,35 +115,80 @@ export default function LearningAccommodationsCard({ studentId, studentName, rea
   return (
     <>
       <Card className="border-amber-200/60 bg-amber-50/25 text-right transition-colors hover:bg-amber-50/45 dark:border-amber-900/40 dark:bg-amber-950/10 dark:hover:bg-amber-950/20" dir="rtl">
-        <button type="button" onClick={() => setDialogOpen(true)} className="w-full p-4 text-right">
-          <div className="flex items-start justify-between gap-4" dir="rtl">
-            <div className="flex min-w-0 flex-1 items-start gap-3">
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => setExpanded(prev => !prev)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              setExpanded(prev => !prev);
+            }
+          }}
+          className="w-full cursor-pointer p-4 text-right focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+          aria-expanded={expanded}
+        >
+          <div className="flex items-start justify-between gap-3" dir="rtl">
+            <div className="flex min-w-0 flex-1 items-start gap-3 text-right">
               <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-900/35 dark:text-amber-200">
                 <Shield className="h-4 w-4" />
               </div>
-              <div className="min-w-0 flex-1 space-y-2 text-right">
-                <div>
-                  <h3 className="text-sm font-semibold text-foreground">התאמות לימודיות</h3>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {loading ? 'טוען התאמות...' : error ? error : active.length ? `${active.length} התאמות פעילות` : 'אין התאמות פעילות'}
-                  </p>
-                </div>
-                {!loading && !error && (
-                  <div className="flex flex-wrap justify-start gap-2" dir="rtl">
-                    {preview.length > 0 ? preview.map(item => (
-                      <AccommodationChip key={item.key}>{item.label}</AccommodationChip>
-                    )) : <span className="text-xs text-muted-foreground">לא הוגדרו התאמות עבור {studentName}</span>}
-                    {extraCount > 0 && <AccommodationChip><span className="force-ltr">+{extraCount}</span></AccommodationChip>}
-                  </div>
-                )}
+              <div className="min-w-0 flex-1 text-right">
+                <h3 className="text-sm font-semibold text-foreground">התאמות לימודיות</h3>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {loading ? 'טוען התאמות...' : error ? error : active.length ? `${active.length} התאמות פעילות` : `אין התאמות פעילות${studentName ? ` עבור ${studentName}` : ''}`}
+                </p>
               </div>
             </div>
-            <span className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-border bg-background px-3 text-xs font-medium text-foreground">
-              {editable ? <Pencil className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
-              {editable ? 'ערוך התאמות' : 'הצג הכל'}
-            </span>
+            <ChevronDown className={`mt-1 h-5 w-5 shrink-0 text-muted-foreground transition-transform ${expanded ? 'rotate-180' : ''}`} />
           </div>
-        </button>
+        </div>
+
+        {expanded && (
+          <div className="border-t border-amber-200/60 px-4 pb-4 pt-3 text-right dark:border-amber-900/40" dir="rtl">
+            {loading ? (
+              <p className="rounded-xl bg-background/70 px-3 py-2.5 text-sm text-muted-foreground">טוען התאמות...</p>
+            ) : error ? (
+              <p className="rounded-xl bg-background/70 px-3 py-2.5 text-sm text-muted-foreground">{error}</p>
+            ) : activeGroups.length === 0 ? (
+              <p className="rounded-xl bg-background/70 px-3 py-2.5 text-sm text-muted-foreground">לא הוגדרו התאמות לימודיות פעילות.</p>
+            ) : (
+              <div className="space-y-3">
+                {activeGroups.map(group => (
+                  <section key={group.title} className="space-y-2" dir="rtl">
+                    <h4 className="text-xs font-semibold text-muted-foreground">{group.title}</h4>
+                    <div className="space-y-2">
+                      {group.items.map(item => (
+                        <div key={item.key} className="rounded-xl border border-border/60 bg-background px-3 py-2.5 text-right">
+                          <div className="text-sm font-medium text-foreground">{item.label}</div>
+                          {item.detail && <div className="mt-1 text-xs leading-relaxed text-muted-foreground">{item.detail}</div>}
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                ))}
+              </div>
+            )}
+
+            {!loading && !error && (
+              <div className="mt-3 flex justify-start" dir="rtl">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setDialogOpen(true);
+                  }}
+                  className="gap-1.5"
+                >
+                  {editable ? <Pencil className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                  {editable ? 'ערוך התאמות' : 'הצג פרטים'}
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
