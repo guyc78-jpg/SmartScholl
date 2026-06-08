@@ -10,19 +10,7 @@ export default function AttendanceExceptionsCard({
   date,
 }) {
   if (exceptionsCount === 0) {
-    return (
-      <Card className="border-border bg-card">
-        <CardContent className="p-6 flex flex-col items-center justify-center text-center gap-3 py-8" dir="rtl">
-          <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-            <AlertTriangle className="w-5 h-5 text-primary" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-foreground">אין חריגי נוכחות</p>
-            <p className="text-xs text-muted-foreground mt-1">כל התלמידים נוכחים או מוצדקים</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return null;
   }
 
   return (
@@ -30,31 +18,28 @@ export default function AttendanceExceptionsCard({
       whileHover={{ scale: 1.01 }}
       whileTap={{ scale: 0.99 }}
       onClick={onClick}
-      className="w-full text-right rounded-2xl border border-border bg-card p-4 hover:shadow-md hover:border-amber-300/60 transition-all cursor-pointer"
+      className="w-full text-right rounded-xl border border-amber-200 dark:border-amber-800/30 bg-amber-50 dark:bg-amber-950/20 p-3 hover:shadow-sm hover:border-amber-300 dark:hover:border-amber-700/50 transition-all cursor-pointer"
       type="button"
       dir="rtl"
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-foreground/80 leading-tight">חריגי נוכחות</p>
-          <p className="text-2xl lg:text-3xl font-bold text-amber-600 dark:text-amber-400 mt-1.5 tabular-nums">
-            {exceptionsCount}
-          </p>
-          <p className="text-xs text-muted-foreground mt-1 truncate">
-            {exceptionsCount === 1 ? 'תלמיד אחד' : `${exceptionsCount} תלמידים`}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline gap-1.5">
+            <p className="text-sm font-bold text-amber-700 dark:text-amber-300 tabular-nums">{exceptionsCount}</p>
+            <p className="text-xs text-amber-600 dark:text-amber-400 leading-tight truncate">
+              {exceptionsCount === 1 ? 'חריגת נוכחות' : 'חריגי נוכחות'}
+            </p>
+          </div>
+          <p className="text-xs text-amber-600/70 dark:text-amber-400/70 mt-0.5">
+            {exceptionsCount} {exceptionsCount === 1 ? 'תלמיד' : 'תלמידים'}
           </p>
         </div>
-        <div className={cn('w-10 h-10 lg:w-11 lg:h-11 rounded-xl flex items-center justify-center flex-shrink-0', 'bg-amber-500/15 text-amber-700 dark:text-amber-400')}>
-          <AlertTriangle className="w-5 h-5" strokeWidth={2} />
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="w-8 h-8 rounded-lg bg-amber-200/40 dark:bg-amber-900/40 flex items-center justify-center">
+            <AlertTriangle className="w-4 h-4 text-amber-700 dark:text-amber-300" strokeWidth={2.2} />
+          </div>
+          <ChevronLeft className="w-4 h-4 text-amber-700 dark:text-amber-300" strokeWidth={2.5} />
         </div>
-      </div>
-      
-      {/* Chevron indicator */}
-      <div className="flex justify-start mt-3">
-        <span className="text-[11px] font-semibold text-primary flex items-center gap-1 px-2 py-1 bg-primary/10 rounded-lg">
-          צפה בחריגים
-          <ChevronLeft className="w-3 h-3" />
-        </span>
       </div>
     </motion.button>
   );
