@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { Save, UserRound, School, Palette, Briefcase } from 'lucide-react';
 import WorkModeSelector from '@/components/layout/WorkModeSelector';
 import ThemePreferenceCard from '@/components/profile/ThemePreferenceCard';
+import ProfileAvatarPicker from '@/components/profile/ProfileAvatarPicker';
 import { invalidateSchoolNameCache } from '@/components/layout/SchoolNameBanner';
 import { getAvailableRoles, getUserDisplayName, GENDER_OPTIONS, getDefaultDisplayRole, getRoleContextLabel } from '@/lib/roleUtils';
 import { logActivity } from '@/lib/activityLogger';
@@ -28,6 +29,9 @@ export default function Profile({ user, role, onRoleChange, themePreference, onT
     profile_email: user?.profile_email || user?.email || '',
     profile_address: user?.profile_address || '',
     profile_gender: user?.profile_gender || '',
+    profile_image_mode: user?.profile_image_mode || (user?.profile_photo_url ? 'photo' : 'avatar'),
+    profile_photo_url: user?.profile_photo_url || '',
+    profile_avatar: user?.profile_avatar || (user?.profile_gender === 'female' ? 'female_teacher' : 'male_teacher'),
     school_name: user?.school_name || '',
     profile_extra_roles: user?.profile_extra_roles || '',
     profile_subject_area: user?.profile_subject_area || user?.profile_subject || '',
@@ -48,6 +52,9 @@ export default function Profile({ user, role, onRoleChange, themePreference, onT
       profile_email: form.profile_email,
       profile_address: form.profile_address,
       profile_gender: form.profile_gender,
+      profile_image_mode: form.profile_image_mode || 'avatar',
+      profile_photo_url: form.profile_photo_url || '',
+      profile_avatar: form.profile_avatar || (form.profile_gender === 'female' ? 'female_teacher' : 'male_teacher'),
       profile_extra_roles: form.profile_extra_roles?.trim() || '',
       profile_display_primary_role: primaryDisplayRole,
       profile_display_additional_roles: [],
@@ -150,6 +157,8 @@ export default function Profile({ user, role, onRoleChange, themePreference, onT
                 </div>
                 <p className="text-xs text-muted-foreground">משפיע על ניסוחי תפקיד בלבד.</p>
               </div>
+
+              <ProfileAvatarPicker value={form} onChange={setForm} />
 
               {/* תצוגת תפקיד — לתצוגה בלבד, לא משנה הרשאות */}
               <div className="space-y-3 md:col-span-2 pt-1 border-t border-border text-right" dir="rtl">
