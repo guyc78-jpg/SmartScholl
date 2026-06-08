@@ -8,12 +8,14 @@ import StatCard from '@/components/ui/StatCard';
 import UrgentFlagsSection from '@/components/urgent/UrgentFlagsSection';
 import DailySmartCard from '@/components/dashboard/DailySmartCard';
 import WatchStudentsSection from '@/components/dashboard/WatchStudentsSection';
+import AttendanceExceptionsCard from '@/components/dashboard/AttendanceExceptionsCard';
 
 import {
   Users, Clock, AlertTriangle, BookOpen, CheckSquare,
   Shield, Heart, UserCheck, Calendar, MessageSquare,
   Megaphone, Star, ChevronLeft, TrendingUp, CalendarDays
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { TYPE_STYLES } from '@/components/exams/eventConstants';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,16 +39,18 @@ function hebrewDate() {
 }
 
 export default function Dashboard({ user, role }) {
-  const [students, setStudents] = useState([]);
-  const [todayAttendance, setTodayAttendance] = useState([]);
-  const [exams, setExams] = useState([]);
-  const [tasks, setTasks] = useState([]);
-  const [discipline, setDiscipline] = useState([]);
-  const [announcements, setAnnouncements] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [quickAction, setQuickAction] = useState(null);
-  const [tasksDialogOpen, setTasksDialogOpen] = useState(false);
-  const [selectedDisciplineEvent, setSelectedDisciplineEvent] = useState(null);
+   const navigate = useNavigate();
+   const [students, setStudents] = useState([]);
+   const [todayAttendance, setTodayAttendance] = useState([]);
+   const [exams, setExams] = useState([]);
+   const [tasks, setTasks] = useState([]);
+   const [discipline, setDiscipline] = useState([]);
+   const [announcements, setAnnouncements] = useState([]);
+   const [loading, setLoading] = useState(true);
+   const [quickAction, setQuickAction] = useState(null);
+   const [tasksDialogOpen, setTasksDialogOpen] = useState(false);
+   const [selectedDisciplineEvent, setSelectedDisciplineEvent] = useState(null);
+   const [attendanceFilterOpen, setAttendanceFilterOpen] = useState(false);
   const loadTimerRef = useRef(null);
   const isLoadingDataRef = useRef(false);
   const pendingReloadRef = useRef(false);
@@ -301,20 +305,54 @@ export default function Dashboard({ user, role }) {
 
 
 
-      {/* Stat Cards — show only non-zero KPIs to avoid empty look */}
-      {(() => {
-        const kpis = [
-          students.length > 0 && { icon: Users, title: 'תלמידים', value: students.length, subtitle: 'בכיתה', color: 'blue' },
-          attendanceExceptionsToday > 0 && { icon: AlertTriangle, title: 'חריגי נוכחות', value: attendanceExceptionsToday, subtitle: `${attendanceDate !== today ? attendanceDate : 'היום'}`, color: 'amber' },
-          openTasks > 0 && { icon: CheckSquare, title: 'משימות פתוחות', value: openTasks, subtitle: 'לטיפול', color: openTasks > 3 ? 'amber' : 'slate', onClick: () => setTasksDialogOpen(true) },
-        ].filter(Boolean);
-        if (kpis.length === 0) return null;
-        return (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {kpis.map(k => <StatCard key={k.title} {...k} />)}
-          </div>
-        );
-      })()}
+      {/* Stat Cards — interactive action cards for students & attendance */}
+      {students.length > 0 && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          {/* Students Card — navigate based on role */}
+          <motion.button
+            whileHover={{ scale: 1.01 }}
+            whileTap={{ scale: 0.99 }}
+            onClick={() => navigate('/students')}
+            className="text-right rounded-2xl border border-border bg-card p-4 hover:shadow-md hover:border-primary/60 transition-all cursor-pointer"
+            type="button"
+            dir="rtl"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-foreground/80 leading-tight">תלמידים</p>
+                <p className="text-2xl lg:text-3xl font-bold text-primary mt-1.5 tabular-nums">{students.length}</p>
+                <p className="text-xs text-muted-foreground mt-1 truncate">
+                  {isActiveHomeroom ? 'בכיתה שלי' : isActiveCoordinator ? 'בשכבה שלי' : 'במערכת'}
+                </p>
+              </div>
+              <div className="w-10 h-10 lg:w-11 lg:h-11 rounded-xl flex items-center justify-center flex-shrink-0 bg-primary/10 text-primary">
+                <Users className="w-5 h-5" strokeWidth={2} />
+              </div>
+            </div>
+            <div className="flex justify-start mt-3">
+              <span className="text-[11px] font-semibold text-primary flex items-center gap-1 px-2 py-1 bg-primary/10 rounded-lg">
+                צפה בתלמידים
+                <ChevronLeft className="w-3 h-3" />
+              </span>
+            </div>
+          </motion.button>
+
+          {/* Attendance Exceptions Card */}
+          <AttendanceExceptionsCard
+            exceptionsCount={attendanceExceptionsToday}
+            exceptions={todayAttendance.filter(a => ['נעדר', 'נעדר/ת', 'מאחר', 'מאחר/ת', 'שוחרר', 'שוחרר/ת'].includes(a.status))}
+            date={attendanceDate !== today ? attendanceDate : 'היום'}
+            onClick={() => setAttendanceFilterOpen(true)}
+          />
+        </div>
+      )}
+
+      {/* Tasks Card */}
+      {openTasks > 0 && (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <StatCard icon={CheckSquare} title="משימות פתוחות" value={openTasks} subtitle="לטיפול" color={openTasks > 3 ? 'amber' : 'slate'} onClick={() => setTasksDialogOpen(true)} />
+        </div>
+      )}
 
       {/* Quick Actions — compact 4-col grid */}
       {(isActiveHomeroom || isActiveCoordinator || isActiveAdmin) && (() => {
@@ -463,6 +501,71 @@ export default function Dashboard({ user, role }) {
           initialStudents={students}
           onSuccess={() => { setQuickAction(null); loadData(); }}
         />
+      )}
+
+      {/* Attendance Exceptions Filter Dialog */}
+      {attendanceFilterOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-end lg:items-center justify-center p-4">
+          <div className="bg-card rounded-2xl lg:rounded-3xl w-full lg:max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl" dir="rtl">
+            <div className="sticky top-0 bg-card border-b border-border p-4 lg:p-6 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-foreground">חריגי נוכחות - {attendanceDate !== today ? attendanceDate : 'היום'}</h2>
+              <button
+                onClick={() => setAttendanceFilterOpen(false)}
+                className="w-9 h-9 flex items-center justify-center text-muted-foreground hover:bg-muted rounded-lg transition"
+                type="button"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-4 lg:p-6 space-y-2">
+              {todayAttendance
+                .filter(a => ['נעדר', 'נעדר/ת', 'מאחר', 'מאחר/ת', 'שוחרר', 'שוחרר/ת'].includes(a.status))
+                .sort((a, b) => a.student_name.localeCompare(b.student_name))
+                .map(record => {
+                  const student = students.find(s => s.id === record.student_id);
+                  const statusLabels = {
+                    'נעדר': 'היעדר',
+                    'נעדר/ת': 'היעדר',
+                    'מאחר': 'איחור',
+                    'מאחר/ת': 'איחור',
+                    'שוחרר': 'שחרור',
+                    'שוחרר/ת': 'שחרור',
+                  };
+                  const statusColors = {
+                    'היעדר': 'bg-red-50 dark:bg-red-950/20 border-red-200 dark:border-red-800/30',
+                    'איחור': 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800/30',
+                    'שחרור': 'bg-slate-50 dark:bg-slate-900/20 border-slate-200 dark:border-slate-800/30',
+                  };
+                  const statusBgColors = {
+                    'היעדר': 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
+                    'איחור': 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300',
+                    'שחרור': 'bg-slate-100 dark:bg-slate-900/30 text-slate-700 dark:text-slate-300',
+                  };
+                  const statusLabel = statusLabels[record.status];
+                  const colorClass = statusColors[statusLabel];
+                  const bgColorClass = statusBgColors[statusLabel];
+                  return (
+                    <div key={record.id} className={`p-3 rounded-lg border ${colorClass}`}>
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <p className="text-sm font-semibold text-foreground">{record.student_name}</p>
+                          {record.note && <p className="text-xs text-muted-foreground mt-1">{record.note}</p>}
+                        </div>
+                        <span className={`text-xs font-bold px-2 py-1 rounded ${bgColorClass} flex-shrink-0`}>
+                          {statusLabel}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              {todayAttendance.filter(a => ['נעדר', 'נעדר/ת', 'מאחר', 'מאחר/ת', 'שוחרר', 'שוחרר/ת'].includes(a.status)).length === 0 && (
+                <div className="text-center py-8">
+                  <p className="text-sm text-muted-foreground">אין חריגי נוכחות</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
