@@ -31,8 +31,8 @@ export default function AttendanceExceptionsCard({
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <div className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center">
-            <AlertTriangle className="w-4 h-4 text-destructive" strokeWidth={2.2} />
+          <div className="w-9 h-9 rounded-lg bg-destructive/10 flex items-center justify-center">
+            <AlertTriangle className="w-5 h-5 text-destructive" strokeWidth={2.2} />
           </div>
           <ChevronLeft className="w-4 h-4 text-muted-foreground" strokeWidth={2.5} />
         </div>
