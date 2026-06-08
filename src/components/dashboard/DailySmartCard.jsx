@@ -100,25 +100,7 @@ export default function DailySmartCard({ classId, students, todayAttendance, exa
     const insights = [];
     const today = new Date().toISOString().split('T')[0];
 
-    // 1. נוכחות היום — נעדרים ומאחרים
-    const absentNames = todayAttendance.filter(a => ['נעדר', 'נעדר/ת'].includes(a.status)).map(a => formatStudentName(a.student_name)).slice(0, 3);
-    const lateNames = todayAttendance.filter(a => ['מאחר', 'מאחר/ת'].includes(a.status)).map(a => formatStudentName(a.student_name)).slice(0, 3);
-    if (absentNames.length || lateNames.length) {
-      insights.push({
-        id: 'presence',
-        priority: 'urgent',
-        type: 'נוכחות',
-        title: 'בעיות נוכחות היום',
-        icon: AlertTriangle,
-        meta: [
-          absentNames.length ? `${absentNames.length} נעדרים` : null,
-          lateNames.length ? `${lateNames.length} מאחרים` : null,
-        ].filter(Boolean).join(' · '),
-        names: [...absentNames, ...lateNames].slice(0, 4),
-        date: today,
-        link: '/class-attendance',
-      });
-    }
+
 
     // 2. מבחנים ואירועים היום בלבד — הפרדה לפי סוג
     const EXAM_TYPES = ['מבחן', 'מתכונת', 'בגרות'];

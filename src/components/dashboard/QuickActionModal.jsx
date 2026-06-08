@@ -11,13 +11,13 @@ import { toast } from 'sonner';
 import { logActivity } from '@/lib/activityLogger';
 import { getUserApprovedGrade, getUserDivisionGrades } from '@/lib/schoolStructure';
 import { getAvailableRoles, hasApprovedRole } from '@/lib/roleUtils';
-import QuickAttendanceForm from '@/components/dashboard/QuickAttendanceForm';
 import CommunityExceptionsQuickAction from '@/components/dashboard/CommunityExceptionsQuickAction';
+import PositiveReinforcementDialog from '@/components/dashboard/PositiveReinforcementDialog';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 import { getLocalDateString } from '@/lib/attendanceScope';
 
 const titles = {
-  attendance: 'סימון נוכחות',
+  positive_reinforcement: 'חיזוק חיובי',
   discipline: 'אירוע משמעת חדש',
   exam: 'הוספת מבחן',
   announcement: 'הודעה לכיתה',
@@ -93,7 +93,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
     }, 360);
   }
 
-  const needsStudentPicker = ['discipline', 'note', 'communication'].includes(action);
+  const needsStudentPicker = ['discipline', 'note', 'communication', 'positive_reinforcement'].includes(action);
   const usesStudentData = needsStudentPicker || action === 'community';
   const today = getLocalDateString();
 
@@ -278,6 +278,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
     note: saveNoteAction,
     communication: saveCommunicationAction,
     task: saveTaskAction,
+    positive_reinforcement: () => false, // Handled by PositiveReinforcementDialog
   };
 
   async function handleSave() {
@@ -364,10 +365,13 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
             WebkitOverflowScrolling: 'touch'
           }}
         >
-          {action === 'attendance' ? (
-            <QuickAttendanceForm
+          {action === 'positive_reinforcement' ? (
+            <PositiveReinforcementDialog
+              student={getSelectedStudent()}
               classId={resolvedClassId}
-              onSaved={onSuccess}
+              user={user}
+              onClose={onClose}
+              onSuccess={onSuccess}
             />
           ) : action === 'community' ? (
             <CommunityExceptionsQuickAction students={students} loading={loadingStudents} user={user} role={activeRole} />

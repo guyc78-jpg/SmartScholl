@@ -331,11 +331,11 @@ export default function Dashboard({ user, role }) {
         const communityBehindCount = communityBehind.length;
 
         const quickActions = [
-          { icon: Clock, label: 'נוכחות', action: 'attendance', roles: ['admin', 'homeroom_teacher'], badge: attendanceExceptionsCount },
+          { icon: Star, label: 'חיזוק חיובי', action: 'positive_reinforcement', roles: ['admin', 'homeroom_teacher'], badge: 0 },
           { icon: Shield, label: 'משמעת', action: 'discipline', roles: ['admin', 'homeroom_teacher'], badge: 0 },
           { icon: BookOpen, label: 'מבחן', action: 'exam', roles: ['admin', 'coordinator', 'homeroom_teacher'], badge: 0 },
           { icon: Megaphone, label: 'הודעה', action: 'announcement', roles: ['admin', 'coordinator', 'homeroom_teacher'], badge: 0 },
-          { icon: Star, label: 'הערה', action: 'note', roles: ['admin', 'homeroom_teacher'], badge: 0 },
+
           { icon: MessageSquare, label: 'הורים', action: 'communication', roles: ['admin', 'homeroom_teacher'], badge: pendingParentTasks },
           { icon: CheckSquare, label: 'משימה', action: 'task', roles: ['admin', 'coordinator', 'homeroom_teacher'], badge: pendingTasksCount },
           { icon: Heart, label: 'מעורבות', action: 'community', roles: ['admin', 'division_manager', 'coordinator', 'homeroom_teacher'], badge: communityBehindCount },
