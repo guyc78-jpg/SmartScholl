@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { CalendarDays, Clock, ChevronLeft } from 'lucide-react';
 import { format } from 'date-fns';
 import { he } from 'date-fns/locale';
-import { TYPE_STYLES } from './eventConstants';
+import { TYPE_STYLES, getDisplayEventType } from './eventConstants';
 
 const HEB_DAYS = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳'];
 
@@ -28,13 +28,14 @@ const SIDE_COLORS = {
   'מבחן': 'bg-purple-400', 'בחן': 'bg-violet-400',
   'עבודה': 'bg-blue-400', 'פרויקט': 'bg-sky-400', 'הגשה': 'bg-cyan-400',
   'בגרות': 'bg-red-400', 'מתכונת': 'bg-orange-400', 'מועד ב׳': 'bg-amber-400',
-  'חזרה': 'bg-pink-400', 'ריקודים': 'bg-fuchsia-400', 'משחק': 'bg-lime-400',
+  'חזרה': 'bg-pink-400', 'חזרות למסיבת סיום': 'bg-rose-400', 'ריקודים': 'bg-fuchsia-400', 'משחק': 'bg-lime-400',
   'טקס': 'bg-indigo-400', 'צילומים': 'bg-teal-400', 'ועדה': 'bg-stone-400',
   'חג': 'bg-emerald-400', 'אירוע שכבתי': 'bg-primary', 'אחר': 'bg-slate-400'
 };
 
 function EventCard({ event, onClick, canEdit }) {
   const sideColor = SIDE_COLORS[event.type] || SIDE_COLORS['אחר'];
+  const displayType = getDisplayEventType(event);
   const tagStyle = TYPE_STYLES[event.type] || TYPE_STYLES['אחר'];
 
   return (
@@ -46,7 +47,7 @@ function EventCard({ event, onClick, canEdit }) {
       <div className="flex-1 min-w-0 px-2 py-1.5 flex flex-col justify-between">
         <div className="flex items-start justify-between gap-2">
           <h4 className="font-semibold text-[13px] text-foreground truncate leading-tight">{event.title}</h4>
-          <span className={`text-[10px] px-1.5 py-0.5 rounded border shrink-0 leading-none ${tagStyle}`}>{event.type}</span>
+          <span className={`text-[10px] px-1.5 py-0.5 rounded border shrink-0 leading-none ${tagStyle}`}>{displayType}</span>
         </div>
         <div className="flex items-center justify-between gap-2">
           <p className="text-[11px] text-muted-foreground truncate flex items-center gap-1">

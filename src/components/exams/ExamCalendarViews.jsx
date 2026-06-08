@@ -3,6 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import EventTypeBadge from './EventTypeBadge';
+import { getDisplayEventType } from './eventConstants';
 
 const DAYS = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳'];
 const MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
@@ -144,6 +145,7 @@ function MiniEvent({ event, onClick }) {
      'פרויקט': 'bg-blue-200 dark:bg-blue-900/40',
      'הגשה': 'bg-pink-200 dark:bg-pink-900/40',
      'חזרה': 'bg-emerald-200 dark:bg-emerald-900/40',
+      'חזרות למסיבת סיום': 'bg-rose-200 dark:bg-rose-900/40',
      'אחר': 'bg-gray-200 dark:bg-gray-900/40'
    };
    const color = typeColors[event.type] || typeColors['אחר'];
@@ -159,6 +161,7 @@ function MiniEvent({ event, onClick }) {
  }
 
 function EventRow({ event, onClick }) {
+   const displayType = getDisplayEventType(event);
    const sideColors = {
      'מבחן': 'bg-purple-400/60',
      'בחן': 'bg-purple-400/60',
@@ -166,6 +169,7 @@ function EventRow({ event, onClick }) {
      'פרויקט': 'bg-blue-400/60',
      'הגשה': 'bg-pink-400/60',
      'חזרה': 'bg-emerald-400/60',
+     'חזרות למסיבת סיום': 'bg-rose-400/60',
      'אחר': 'bg-gray-400/40'
    };
    const sideColor = sideColors[event.type] || sideColors['אחר'];
@@ -173,7 +177,7 @@ function EventRow({ event, onClick }) {
      <button onClick={() => onClick(event)} className="w-full text-right rounded-lg border border-border bg-card p-3 hover:shadow-sm transition-all group flex overflow-hidden">
        <div className={`w-0.5 shrink-0 ${sideColor}`} />
        <div className="flex-1 min-w-0 px-3">
-         <div className="flex items-center gap-2 flex-wrap justify-end flex-row-reverse"><h3 className="font-semibold text-foreground">{event.title}</h3><EventTypeBadge type={event.type} /></div>
+         <div className="flex items-center gap-2 flex-wrap justify-start"><h3 className="font-semibold text-foreground">{event.title}</h3><EventTypeBadge type={displayType} /></div>
          <div className="text-xs text-muted-foreground mt-1">{event.date}{event.time ? ` · ${event.end_time ? `${event.time}–${event.end_time}` : event.time}` : ''}{event.class_or_grade ? ` · ${event.class_or_grade}` : ''}</div>
        </div>
      </button>

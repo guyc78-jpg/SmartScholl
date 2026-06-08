@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Clock, CalendarDays, Sun } from 'lucide-react';
 import EventTypeBadge from './EventTypeBadge';
+import { getDisplayEventType } from './eventConstants';
 
 const DAY_NAMES = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 const MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
@@ -16,6 +17,7 @@ const SIDE_COLORS = {
   'פרויקט': 'bg-blue-400/60',
   'הגשה': 'bg-pink-400/60',
   'חזרה': 'bg-emerald-400/60',
+  'חזרות למסיבת סיום': 'bg-rose-400/60',
   'טקס': 'bg-amber-400/60',
   'צילומים': 'bg-pink-400/60',
   'טיול': 'bg-emerald-400/60',
@@ -73,6 +75,7 @@ export default function EventListView({ events, onEventClick, todayIso }) {
             <div className="space-y-2">
               {dayEvents.map(event => {
                 const sideColor = SIDE_COLORS[event.type] || SIDE_COLORS['אחר'];
+                const displayType = getDisplayEventType(event);
                 return (
                   <button
                     key={event.id}
@@ -81,9 +84,9 @@ export default function EventListView({ events, onEventClick, todayIso }) {
                   >
                     <div className={`w-1 shrink-0 ${sideColor}`} />
                     <div className="flex-1 min-w-0 p-3">
-                      <div className="flex items-center gap-2 flex-wrap justify-end flex-row-reverse">
+                      <div className="flex items-center gap-2 flex-wrap justify-start">
                         <h3 className="font-semibold text-foreground">{event.title}</h3>
-                        <EventTypeBadge type={event.type} />
+                        <EventTypeBadge type={displayType} />
                       </div>
                       <div className="text-xs text-muted-foreground mt-1 flex items-center gap-2 flex-wrap">
                         {event.time ? (

@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { BookOpen, Calendar, Clock, User, MapPin, Users } from 'lucide-react';
 import EventTypeBadge from './EventTypeBadge';
+import { getDisplayEventType } from './eventConstants';
 
 const STATUS_OPTIONS = [
   { value: 'not_started',  label: 'צריך להתכונן', emoji: '⚪', color: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200' },
@@ -50,6 +51,8 @@ export default function ExamDetailsDialog({ exam, open, onClose, isStudentView, 
 
   if (!exam) return null;
 
+  const displayType = getDisplayEventType(exam);
+
   const handleSave = async (newStatus) => {
     setStatus(newStatus);
     await onStatusChange?.({ status: newStatus, personal_note: note });
@@ -66,7 +69,7 @@ export default function ExamDetailsDialog({ exam, open, onClose, isStudentView, 
       <DialogContent dir="rtl" className="max-w-md text-right">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 flex-row-reverse">
-            <EventTypeBadge type={exam.type} />
+            <EventTypeBadge type={displayType} />
             <span>{exam.title}</span>
           </DialogTitle>
         </DialogHeader>

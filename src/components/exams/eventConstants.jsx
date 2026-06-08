@@ -1,13 +1,13 @@
 export const EVENT_TYPES = [
   'מבחן', 'בחן', 'עבודה', 'פרויקט', 'הגשה',
   'בגרות', 'מתכונת', 'מועד ב׳',
-  'חזרה', 'ריקודים', 'משחק', 'טקס', 'צילומים', 'ועדה', 'חג', 'אירוע שכבתי', 'אחר'
+  'חזרה', 'חזרות למסיבת סיום', 'ריקודים', 'משחק', 'טקס', 'צילומים', 'ועדה', 'חג', 'אירוע שכבתי', 'אחר'
 ];
 
 export const EVENT_GROUPS = [
   { key: 'academic', label: 'מבחנים ובגרויות', types: ['מבחן', 'בחן', 'בגרות', 'מתכונת', 'מועד ב׳'] },
   { key: 'tasks', label: 'מטלות והגשות', types: ['עבודה', 'פרויקט', 'הגשה'] },
-  { key: 'activities', label: 'פעילויות שכבתיות', types: ['חזרה', 'ריקודים', 'משחק', 'טקס', 'צילומים', 'ועדה', 'אירוע שכבתי'] },
+  { key: 'activities', label: 'פעילויות שכבתיות', types: ['חזרה', 'חזרות למסיבת סיום', 'ריקודים', 'משחק', 'טקס', 'צילומים', 'ועדה', 'אירוע שכבתי'] },
   { key: 'holidays', label: 'חגים', types: ['חג'] }
 ];
 
@@ -21,6 +21,7 @@ export const TYPE_STYLES = {
   'מתכונת': 'bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/40 dark:text-orange-200 dark:border-orange-900/60',
   'מועד ב׳': 'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/40 dark:text-amber-200 dark:border-amber-900/60',
   'חזרה': 'bg-pink-100 text-pink-700 border-pink-200 dark:bg-pink-900/40 dark:text-pink-200 dark:border-pink-900/60',
+  'חזרות למסיבת סיום': 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/40 dark:text-rose-200 dark:border-rose-900/60',
   'ריקודים': 'bg-fuchsia-100 text-fuchsia-700 border-fuchsia-200 dark:bg-fuchsia-900/40 dark:text-fuchsia-200 dark:border-fuchsia-900/60',
   'משחק': 'bg-lime-100 text-lime-700 border-lime-200 dark:bg-lime-900/40 dark:text-lime-200 dark:border-lime-900/60',
   'טקס': 'bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/40 dark:text-indigo-200 dark:border-indigo-900/60',
@@ -42,6 +43,7 @@ export const normalizeEventType = (value = '') => {
   if (/עבודה/.test(text)) return 'עבודה';
   if (/פרויקט/.test(text)) return 'פרויקט';
   if (/הגשה|מטלה/.test(text)) return 'הגשה';
+  if (/חזרות למסיבת סיום|מסיבת סיום/.test(text)) return 'חזרות למסיבת סיום';
   if (/חזרה|תרגול/.test(text)) return 'חזרה';
   if (/ריקוד|ריקודים/.test(text)) return 'ריקודים';
   if (/משחק|טורניר/.test(text)) return 'משחק';
@@ -51,6 +53,14 @@ export const normalizeEventType = (value = '') => {
   if (/חג|חופשה|זיכרון|עצמאות|ל״ג|ל"ג/.test(text)) return 'חג';
   if (/שכב|סיור|יום שיא|מסיבה|פעילות/.test(text)) return 'אירוע שכבתי';
   return 'אחר';
+};
+
+export const getDisplayEventType = (eventOrType) => {
+  if (eventOrType && typeof eventOrType === 'object') {
+    const customType = String(eventOrType.custom_event_type || '').trim();
+    return eventOrType.type === 'אחר' && customType ? customType : (eventOrType.type || 'אחר');
+  }
+  return eventOrType || 'אחר';
 };
 
 export const AUDIENCE_SCOPES = [

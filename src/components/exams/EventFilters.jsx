@@ -56,7 +56,7 @@ export const filterBySearch = (events, search) => {
   const query = (search || '').trim().toLowerCase();
   if (!query) return events;
   return events.filter(event =>
-    [event.title, event.subject, event.teacher, event.class_or_grade, event.notes, event.audience_group_label]
+    [event.title, event.subject, event.custom_event_type, event.teacher, event.class_or_grade, event.notes, event.audience_group_label]
       .some(value => String(value || '').toLowerCase().includes(query))
   );
 };

@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Calendar, Clock, MapPin, Pencil, Trash2, User, Users, X } from 'lucide-react';
 import EventTypeBadge from './EventTypeBadge';
+import { getDisplayEventType } from './eventConstants';
 
 const STATUS_OPTIONS = [
   { value: 'not_started', label: 'לא התחלתי' },
@@ -28,6 +29,7 @@ export default function EventDetailsDialog({ event, open, onClose, canEdit, isSt
   if (!event) return null;
 
   const audience = SCOPE_LABEL[event.audience_scope || 'grade'] || 'שכבה';
+  const displayType = getDisplayEventType(event);
   const timeRange = event.time ? (event.end_time ? `${event.time}–${event.end_time}` : event.time) : '';
   const saveStudent = async (nextStatus = status) => onStudentUpdate?.({ status: nextStatus, personal_note: note });
 
@@ -39,7 +41,7 @@ export default function EventDetailsDialog({ event, open, onClose, canEdit, isSt
             <DialogTitle className="text-xl font-bold leading-snug text-right text-foreground break-words">
               {event.title}
             </DialogTitle>
-            <EventTypeBadge type={event.type} />
+            <EventTypeBadge type={displayType} />
           </div>
         </DialogHeader>
 

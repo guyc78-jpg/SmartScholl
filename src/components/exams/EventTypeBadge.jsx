@@ -4,7 +4,7 @@ export const getEventTypeClasses = (type) => TYPE_STYLES[type] || TYPE_STYLES['�
 
 export default function EventTypeBadge({ type = 'אחר', className = '' }) {
   return (
-    <span className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-medium border ${getEventTypeClasses(type)} ${className}`}>
+    <span dir="rtl" className={`inline-flex items-center max-w-full px-2 py-0.5 rounded-md text-[10px] font-medium border text-right truncate ${getEventTypeClasses(type)} ${className}`}>
       {type}
     </span>
   );
