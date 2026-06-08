@@ -210,21 +210,21 @@ export default function UserManagement() {
 
           <div className="hidden md:block rounded-2xl border bg-card overflow-hidden" dir="rtl">
             <div className="grid grid-cols-[2fr_2fr_1.4fr_1.4fr_1fr_auto] gap-3 px-4 py-3 bg-muted/50 border-b text-xs font-semibold text-muted-foreground text-right">
-              <div>שם מלא</div>
-              <div>מייל</div>
-              <div>תפקיד</div>
-              <div>שיוך הרשאה</div>
-              <div>סטטוס</div>
-              <div>פעולות</div>
+              <div className="text-right">שם מלא</div>
+              <div className="text-right">מייל</div>
+              <div className="text-right">תפקיד</div>
+              <div className="text-right">שיוך הרשאה</div>
+              <div className="text-right">סטטוס</div>
+              <div className="text-right">פעולות</div>
             </div>
 
             {users.map(user => (
-              <div key={user.id} className="grid grid-cols-[2fr_2fr_1.4fr_1.4fr_1fr_auto] gap-3 items-center px-4 py-3 border-b last:border-b-0 text-right" dir="rtl">
-                <div className="min-w-0"><p className="font-semibold text-sm truncate">{user.fullName}</p></div>
-                <div className="text-sm text-muted-foreground force-ltr truncate text-right">{user.email}</div>
-                <div className="text-sm font-medium">{ROLE_LABELS[user.role] || 'משתמש/ת'}</div>
-                <div className="text-sm text-muted-foreground leading-5">{scopeLabel(user, classNameById)}</div>
-                <div>
+              <div key={user.id} className="grid grid-cols-[2fr_2fr_1.4fr_1.4fr_1fr_auto] gap-3 items-center px-4 py-3 border-b last:border-b-0" dir="rtl">
+                <p className="font-semibold text-sm truncate text-right">{user.fullName}</p>
+                <p className="text-sm text-muted-foreground force-ltr truncate text-right">{user.email}</p>
+                <p className="text-sm font-medium text-right">{ROLE_LABELS[user.role] || 'משתמש/ת'}</p>
+                <p className="text-sm text-muted-foreground leading-5 text-right">{scopeLabel(user, classNameById)}</p>
+                <div className="text-right">
                   <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${user.isActive !== false ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300' : 'bg-destructive/10 text-destructive'}`}>
                     {user.isActive !== false ? 'פעיל' : 'לא פעיל'}
                   </span>
