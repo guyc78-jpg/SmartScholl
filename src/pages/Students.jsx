@@ -9,7 +9,7 @@ import { Card } from '@/components/ui/card';
 import StatusBadge from '@/components/ui/StatusBadge';
 import EmptyState from '@/components/ui/EmptyState';
 import PageHeader from '@/components/ui/PageHeader';
-import { Search, Plus, Upload, Users, ChevronLeft, Phone, Trash2, AlertTriangle, RefreshCw, MoreVertical, MessageSquare } from 'lucide-react';
+import { Search, Plus, Upload, Users, ChevronLeft, Phone, Trash2, AlertTriangle, RefreshCw, MoreVertical, MessageSquare, Shield } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -160,6 +160,8 @@ export default function Students({ role }) {
 
   const communityPct = (s) => s.community_service_goal > 0
     ? Math.round((s.community_service_done / s.community_service_goal) * 100) : 0;
+
+  const canShowAccommodationMarker = ['homeroom_teacher', 'coordinator', 'division_manager'].includes(role);
 
   async function deleteAllStudents() {
     setDeleting(true);
@@ -340,20 +342,9 @@ export default function Students({ role }) {
                             />
                           </div>
                         </div>
-                        {/* Learning accommodations */}
-                        {activeAccommodationLabels(accommodationRecords[student.id]?.accommodations || []).length > 0 && (
-                          <div className="flex gap-1 flex-wrap mt-2 flex-row-reverse justify-end">
-                            {activeAccommodationLabels(accommodationRecords[student.id]?.accommodations || []).slice(0, 3).map(label => (
-                              <span key={label} className="text-[10px] bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-900/40 px-2 py-0.5 rounded-full">{label}</span>
-                            ))}
-                          </div>
-                        )}
-                        {/* Tags */}
-                        {student.tags?.length > 0 && (
-                          <div className="flex gap-1 flex-wrap mt-2 flex-row-reverse justify-end">
-                            {student.tags.map(tag => (
-                              <span key={tag} className="text-[10px] bg-muted text-muted-foreground px-2 py-0.5 rounded-full">{tag}</span>
-                            ))}
+                        {canShowAccommodationMarker && activeAccommodationLabels(accommodationRecords[student.id]?.accommodations || []).length > 0 && (
+                          <div className="mt-2 flex justify-end" dir="rtl">
+                            <Shield className="h-3.5 w-3.5 text-amber-500/70" aria-label="קיימות התאמות לימודיות" />
                           </div>
                         )}
                       </div>
