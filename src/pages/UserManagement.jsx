@@ -354,10 +354,10 @@ export default function UserManagement() {
               <Switch checked={form.isActive} onCheckedChange={(value) => setForm(prev => ({ ...prev, isActive: value }))} />
             </div>
           </div>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setFormOpen(false)} disabled={saving}>ביטול</Button>
-            <Button onClick={save} disabled={saving}>{saving ? 'שומר...' : 'שמור'}</Button>
-          </DialogFooter>
+          <div className="flex gap-3" dir="rtl">
+            <Button variant="outline" onClick={() => setFormOpen(false)} disabled={saving} className="flex-1">ביטול</Button>
+            <Button onClick={save} disabled={saving} className="flex-1">{saving ? 'שומר...' : 'שמור'}</Button>
+          </div>
         </DialogContent>
       </Dialog>
 
