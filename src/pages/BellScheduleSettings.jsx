@@ -209,7 +209,7 @@ function DayPanel({ periods, onChange, onSave, onReset, onDuplicate, saving, isC
 }
 
 export default function BellScheduleSettings({ user, role }) {
-  const isAdmin = role === 'admin' || hasApprovedRole(user, 'admin');
+  const isAdmin = role === 'admin' || hasApprovedRole(user, 'admin') || hasApprovedRole(user, 'system_admin');
   const [sunThu, setSunThu] = useState([]);
   const [fri, setFri] = useState([]);
   const [tab, setTab] = useState('sun_thu'); // Default to sun_thu
