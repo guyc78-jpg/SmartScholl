@@ -118,7 +118,7 @@ const studentBottomNav = [
   { path: '/student-schedule', icon: Calendar, label: 'מערכת', roles: ['student'] },
   { path: '/student-exams', icon: BookOpen, label: 'מבחנים', roles: ['student'] },
   { path: '/student-attendance', icon: CalendarCheck, label: 'נוכחות', roles: ['student'] },
-  { path: '/student-more', icon: UserRound, label: 'עוד', roles: ['student'] },
+  { path: '/student-more', icon: UserRound, label: 'פרופיל', roles: ['student'] },
 ];
 
 const divisionBottomNav = [

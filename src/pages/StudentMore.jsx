@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button';
 import ProfileAvatar from '@/components/profile/ProfileAvatar';
 import StudentCommunityService from '@/components/student/StudentCommunityService';
 import LearningAccommodationsCard from '@/components/student/LearningAccommodationsCard';
+import StudentProfileEditCard from '@/components/student/StudentProfileEditCard';
+import ClassChangeRequestCard from '@/components/profile/ClassChangeRequestCard';
 import { getUserDisplayName } from '@/lib/roleUtils';
 import { LogOut } from 'lucide-react';
 
@@ -48,6 +50,16 @@ export default function StudentMore({ user }) {
           </div>
         </CardContent>
       </Card>
+
+      {/* עריכת פרטים אישיים */}
+      {data.student && (
+        <StudentProfileEditCard student={data.student} user={user} onSaved={loadData} />
+      )}
+
+      {/* בקשת שינוי כיתה — באישור מחנך/ת בלבד */}
+      {data.student && (
+        <ClassChangeRequestCard user={user} displayName={getUserDisplayName(user)} />
+      )}
 
       {/* מעורבות חברתית — התקדמות ודיווח */}
       {data.student && (

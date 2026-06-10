@@ -3,6 +3,8 @@ import { UserRound } from 'lucide-react';
 const AVATAR_ICONS = {
   male_teacher: '👨‍🏫',
   female_teacher: '👩‍🏫',
+  male_student: '👨‍🎓',
+  female_student: '👩‍🎓',
 };
 
 export default function ProfileAvatar({ user, fallback = '?', className = '' }) {
