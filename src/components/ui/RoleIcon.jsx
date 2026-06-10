@@ -1,4 +1,4 @@
-import { GraduationCap, BookOpen, UsersRound, ShieldCheck, Settings } from 'lucide-react';
+import { GraduationCap, BookOpen, UsersRound, ShieldCheck, Settings, UserCog } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // אייקון מותאם לפי תפקיד — מוצג מימין לשם התפקיד (RTL)
@@ -12,8 +12,11 @@ const ROLE_ICONS = {
   admin: Settings,
 };
 
-export default function RoleIcon({ role, className }) {
-  const Icon = ROLE_ICONS[role];
+export default function RoleIcon({ role, roles = [], className }) {
+  const isAdmin = roles.includes('system_admin') || roles.includes('admin');
+  const isHomeroom = roles.includes('homeroom_teacher');
+  // אייקון מיוחד: גם מחנך/ת וגם מנהל/ת מערכת
+  const Icon = isAdmin && isHomeroom ? UserCog : ROLE_ICONS[role];
   if (!Icon) return null;
   return (
     <Icon

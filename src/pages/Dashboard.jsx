@@ -278,7 +278,7 @@ export default function Dashboard({ user, role }) {
             <NotificationsDropdown notifications={notifications} onRead={handleNotificationRead} />
           </div>
           <p className="text-sm font-medium text-foreground/70 mt-0.5 flex items-center gap-1.5" dir="rtl">
-            <RoleIcon role={role} />
+            <RoleIcon role={role} roles={approvedRoles} />
             <span>{dashboardTitle}</span>
           </p>
           {dashboardSecondaryTitle && <p className="text-xs text-muted-foreground/80 mt-0.5">{dashboardSecondaryTitle}</p>}
