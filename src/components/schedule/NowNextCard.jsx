@@ -106,7 +106,7 @@ function LessonBlock({ title, slot, emptyText, remainingMins, timeToNext, muted 
         ? `בעוד ${formatRemaining(timeToNext)}`
         : muted
           ? 'מתחיל בקרוב'
-          : 'מתקיים כעת'
+          : slot.kind === 'break' ? 'הפסקה פעילה עכשיו' : 'מתקיים כעת'
     : muted
       ? 'אין שיעור נוסף היום'
       : 'אין שיעור פעיל כרגע';
@@ -119,14 +119,14 @@ function LessonBlock({ title, slot, emptyText, remainingMins, timeToNext, muted 
     <div
       className={cn(
         'grid h-[90px] min-w-0 grid-rows-[14px_24px_14px_14px] items-start rounded-xl border px-2.5 py-2 text-right',
-        muted ? 'border-border/70 bg-muted/20' : 'border-emerald-200/70 bg-emerald-50/40 dark:border-emerald-800/70 dark:bg-emerald-900/15'
+        muted ? 'border-border/70 bg-muted/20' : slot?.kind === 'break' ? 'border-amber-200/70 bg-amber-50/40 dark:border-amber-800/70 dark:bg-amber-900/15' : 'border-emerald-200/70 bg-emerald-50/40 dark:border-emerald-800/70 dark:bg-emerald-900/15'
       )}
       dir="rtl"
     >
       <div className="flex items-center justify-between gap-1.5" dir="rtl">
         <span className={cn(
           'rounded-full px-1 py-0.5 text-[8px] font-semibold leading-none',
-          muted ? 'bg-muted text-muted-foreground' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300'
+          muted ? 'bg-muted text-muted-foreground' : slot?.kind === 'break' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300'
         )}>
           {title}
         </span>
@@ -142,7 +142,7 @@ function LessonBlock({ title, slot, emptyText, remainingMins, timeToNext, muted 
 
       <p className={cn(
         'w-full truncate text-[9px] font-medium',
-        slot && remainingMins != null ? 'text-emerald-700 dark:text-emerald-300' : 'text-muted-foreground'
+        slot && remainingMins != null ? slot.kind === 'break' ? 'text-amber-700 dark:text-amber-300' : 'text-emerald-700 dark:text-emerald-300' : 'text-muted-foreground'
       )}>
         {statusText}
       </p>

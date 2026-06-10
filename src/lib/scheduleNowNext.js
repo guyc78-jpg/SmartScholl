@@ -2,15 +2,18 @@ import { base44 } from '@/api/base44Client';
 import { findSlotForPeriod, getTodayDayType, getTodayHebrewName, loadBellSchedule, timeToMinutes } from '@/lib/bellSchedule';
 
 function lessonsFromScheduleSlots(slots, periods) {
-  const lessons = (periods || []).filter(period => period.kind === 'lesson');
-  return lessons
+  const items = (periods || []).filter(period => ['lesson', 'break'].includes(period.kind));
+  return items
     .map(period => {
       const slot = findSlotForPeriod(slots, period.period);
-      if (!slot?.subject) return null;
+      const isBreak = period.kind === 'break';
+      if (!isBreak && !slot?.subject) return null;
       return {
         ...slot,
-        start_time: slot.start_time || period.start_time || '',
-        end_time: slot.end_time || period.end_time || '',
+        subject: isBreak ? '🔔 הפסקה' : slot?.subject,
+        start_time: slot?.start_time || period.start_time || '',
+        end_time: slot?.end_time || period.end_time || '',
+        kind: period.kind,
       };
     })
     .filter(slot => slot?.start_time)
