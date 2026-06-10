@@ -24,6 +24,7 @@ import UpcomingEventsPanel from '@/components/exams/UpcomingEventsPanel';
 import SmartCalendarEmptyState from '@/components/exams/SmartCalendarEmptyState';
 import { isEventRelevantForStudent } from '@/components/exams/AudienceEditor';
 import { getAvailableRoles } from '@/lib/roleUtils';
+import { getLocalDateString } from '@/lib/attendanceScope.js';
 
 export default function Exams({ role, user }) {
   const [events, setEvents] = useState([]);
@@ -51,7 +52,7 @@ export default function Exams({ role, user }) {
   const isStudent = role === 'student';
   const classId = isStudent ? getStudentClassId(user, CLASS_ID) : getUserApprovedClassId(user, CLASS_ID);
   const fallbackClassName = getUserApprovedClass(user);
-  const todayIso = new Date().toISOString().split('T')[0];
+  const todayIso = getLocalDateString();
 
   useEffect(() => { loadData(); }, [classId, role]);
 

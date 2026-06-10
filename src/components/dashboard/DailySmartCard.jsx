@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { AlertTriangle, TrendingUp, Users, CheckSquare, Megaphone, ChevronLeft, BookOpen, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatStudentName } from '@/lib/studentName';
+import { getLocalDateString } from '@/lib/attendanceScope.js';
 
 /**
  * "מה חשוב היום" — clean, scannable card.
@@ -98,7 +99,7 @@ export default function DailySmartCard({ classId, students, todayAttendance, exa
   function loadInsights() {
     setLoading(true);
     const insights = [];
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateString();
 
 
 
@@ -228,7 +229,7 @@ export default function DailySmartCard({ classId, students, todayAttendance, exa
 
       {insights.length === 0 && (
         <div className="flex items-center justify-center py-6 text-sm text-muted-foreground">
-          אין משהו חשוב היום 🎉
+          אין משהו מיוחד היום 🎉
         </div>
       )}
 
