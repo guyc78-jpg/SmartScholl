@@ -44,39 +44,39 @@ function formatShortDate(dateStr) {
 function InsightCard({ insight, accent, Icon }) {
   const content = (
     <>
-      <span className={cn('absolute top-0 bottom-0 right-0 w-1 rounded-l-full', accent.dot)} aria-hidden />
+      <span className={cn('absolute top-3 bottom-3 right-0 w-[3px] rounded-l-full', accent.dot)} aria-hidden />
 
-      <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ring-1', accent.icon)}>
-        <Icon className="w-4 h-4" strokeWidth={2} />
+      <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ms-1 ring-1', accent.icon)}>
+        <Icon className="w-[18px] h-[18px]" strokeWidth={2.1} />
       </div>
 
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-foreground leading-tight truncate">{insight.title}</p>
-        <div className="flex items-center gap-1.5 mt-1 justify-end flex-wrap" dir="rtl">
-          <span className="text-[10px] font-medium px-1.5 py-0.5 h-6 rounded-md bg-muted text-muted-foreground ring-1 ring-border inline-flex items-center whitespace-nowrap">
+      <div className="flex-1 min-w-0 text-right">
+        <p className="text-[13px] font-semibold text-foreground leading-tight truncate">{insight.title}</p>
+        <div className="flex flex-wrap items-center gap-1.5 mt-1.5 justify-end" dir="rtl">
+          <span className="text-[10.5px] font-medium px-1.5 py-0.5 rounded-md bg-muted/80 text-muted-foreground ring-1 ring-border">
             {insight.type}
           </span>
           {insight.date && (
-            <span className="text-[10px] text-muted-foreground inline-flex items-center gap-0.5 h-6 force-ltr">
-              <Calendar className="w-3 h-3 flex-shrink-0" /><span className="whitespace-nowrap">{formatShortDate(insight.date)}</span>
+            <span className="text-[10.5px] text-muted-foreground inline-flex items-center gap-1 force-ltr">
+              <Calendar className="w-3 h-3" />{formatShortDate(insight.date)}
             </span>
           )}
         </div>
         {insight.names && insight.names.length > 0 && (
-          <p className="text-[11px] text-muted-foreground mt-1 truncate">
+          <p className="text-[11.5px] text-muted-foreground mt-1.5 truncate">
             {insight.names.slice(0, 3).join(' · ')}
             {insight.names.length > 3 ? ` +${insight.names.length - 3}` : ''}
           </p>
         )}
       </div>
 
-      <ChevronLeft className="w-4 h-4 text-muted-foreground/50 group-hover:text-foreground/70 transition-colors flex-shrink-0 flex-grow-0" />
+      <ChevronLeft className="w-4 h-4 text-muted-foreground/60 group-hover:text-foreground/80 transition-colors flex-shrink-0 mt-1" />
     </>
   );
 
   const className = cn(
-    'group relative flex items-center gap-2.5 px-3.5 py-3 rounded-lg bg-background/50 border border-border/60 ring-1 ring-transparent transition-all text-right h-16',
-    'hover:bg-background hover:border-border/80 cursor-pointer',
+    'group relative flex items-start gap-3 p-3 rounded-xl bg-background/60 border border-border/70 ring-1 ring-transparent transition-all text-right',
+    'hover:bg-background hover:border-border cursor-pointer',
     accent.ring
   );
 
@@ -232,7 +232,7 @@ export default function DailySmartCard({ classId, students, todayAttendance, exa
         </div>
       )}
 
-      <div className="space-y-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
         {insights.map(insight => {
           const accent = PRIORITY_ACCENT[insight.priority] || PRIORITY_ACCENT.medium;
           const Icon = insight.icon;

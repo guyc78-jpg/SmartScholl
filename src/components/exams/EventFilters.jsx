@@ -1,5 +1,6 @@
 import RtlChipButton from '@/components/ui/RtlChipButton';
 import RtlSearchField from '@/components/ui/RtlSearchField';
+import { cn } from '@/lib/utils';
 import { EVENT_GROUPS } from './eventConstants';
 
 const GROUP_STYLES = {
@@ -12,9 +13,7 @@ const GROUP_STYLES = {
 
 export default function EventFilters({ activeGroup, onGroupChange, search, onSearchChange }) {
   const groups = [{ key: 'all', label: 'הכל' }, ...EVENT_GROUPS];
-  const chipCount = groups.length;
-  const chipsPerRow = Math.ceil(chipCount / 2);
-  
+
   return (
     <div className="rounded-2xl border bg-card p-3 space-y-3" dir="rtl">
       {/* Search field — full width */}
@@ -24,9 +23,9 @@ export default function EventFilters({ activeGroup, onGroupChange, search, onSea
         placeholder="חיפוש לפי שם, מקצוע, כיתה או קבוצה..."
         inputClassName="h-9"
       />
-      
-      {/* Chips grid — 2 balanced rows */}
-      <div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${chipsPerRow}, minmax(0, 1fr))` }}>
+
+      {/* Chips — uniform size, symmetric flex rows that always fill the full width */}
+      <div className="flex flex-wrap gap-2" dir="rtl">
         {groups.map(group => {
           const active = activeGroup === group.key;
           return (
@@ -34,7 +33,10 @@ export default function EventFilters({ activeGroup, onGroupChange, search, onSea
               key={group.key}
               active={active}
               onClick={() => onGroupChange(group.key)}
-              className={active ? GROUP_STYLES[group.key] : 'bg-muted/50 text-foreground hover:bg-muted/80 border-border/60'}
+              className={cn(
+                'h-9 flex-1 basis-[30%] min-w-[30%] justify-center px-2 text-[13px] whitespace-nowrap',
+                active ? GROUP_STYLES[group.key] : 'bg-muted/50 text-foreground hover:bg-muted/80 border-border/60'
+              )}
             >
               {group.label}
             </RtlChipButton>
