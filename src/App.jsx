@@ -28,6 +28,10 @@ const Tasks = lazy(() => import('./pages/Tasks'));
 const Announcements = lazy(() => import('./pages/Announcements'));
 const Reports = lazy(() => import('./pages/Reports'));
 const StudentHome = lazy(() => import('./pages/StudentHome'));
+const StudentSchedule = lazy(() => import('./pages/StudentSchedule'));
+const StudentExams = lazy(() => import('./pages/StudentExams'));
+const StudentAttendance = lazy(() => import('./pages/StudentAttendance'));
+const StudentMore = lazy(() => import('./pages/StudentMore'));
 const ClassAttendance = lazy(() => import('./pages/ClassAttendance'));
 const GradeMonitor = lazy(() => import('./pages/GradeMonitor'));
 import Onboarding from './pages/Onboarding';
@@ -214,6 +218,10 @@ const AuthenticatedApp = () => {
         {/* Student routes */}
         {studentRole && <>
           <Route path="/student-home" element={<StudentHome user={user} />} />
+          <Route path="/student-schedule" element={<StudentSchedule user={user} />} />
+          <Route path="/student-exams" element={<StudentExams user={user} />} />
+          <Route path="/student-attendance" element={<StudentAttendance user={user} />} />
+          <Route path="/student-more" element={<StudentMore user={user} />} />
         </>}
 
         {/* Block students from any staff route — redirect to their home */}

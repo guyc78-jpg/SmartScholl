@@ -30,12 +30,23 @@ const sidebarGroups = [
     ],
   },
   {
+    key: 'studentZone',
+    title: 'האזור שלי',
+    icon: GraduationCap,
+    items: [
+      { path: '/student-home', icon: LayoutDashboard, label: 'היום שלי', roles: ['student'] },
+      { path: '/student-schedule', icon: Calendar, label: 'מערכת שעות', roles: ['student'] },
+      { path: '/student-exams', icon: BookOpen, label: 'לוח מבחנים', roles: ['student'] },
+      { path: '/student-attendance', icon: CalendarCheck, label: 'הנוכחות שלי', roles: ['student'] },
+      { path: '/student-more', icon: UserRound, label: 'הפרופיל שלי', roles: ['student'] },
+    ],
+  },
+  {
     key: 'daily',
     title: 'ניהול יומי',
     icon: LayoutDashboard,
     items: [
       { path: '/', icon: LayoutDashboard, label: 'דשבורד', dynamicLabel: true, roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'] },
-      { path: '/student-home', icon: LayoutDashboard, label: 'היום שלי', roles: ['student'] },
       { path: '/schedule', icon: Calendar, label: 'מערכת שעות', roles: ['homeroom_teacher', 'grade_coordinator', 'coordinator', 'system_admin', 'admin'] },
       { path: '/tasks', icon: ClipboardList, label: 'משימות', roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'] },
     ],
@@ -103,7 +114,11 @@ const teacherBottomNav = [
 ];
 
 const studentBottomNav = [
-  { path: '/student-home', icon: LayoutDashboard, label: 'היום שלי', dynamicLabel: true, roles: ['student'] },
+  { path: '/student-home', icon: LayoutDashboard, label: 'היום שלי', roles: ['student'] },
+  { path: '/student-schedule', icon: Calendar, label: 'מערכת', roles: ['student'] },
+  { path: '/student-exams', icon: BookOpen, label: 'מבחנים', roles: ['student'] },
+  { path: '/student-attendance', icon: CalendarCheck, label: 'נוכחות', roles: ['student'] },
+  { path: '/student-more', icon: UserRound, label: 'עוד', roles: ['student'] },
 ];
 
 const divisionBottomNav = [
