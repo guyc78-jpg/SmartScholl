@@ -6,18 +6,32 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 // Slim, professional, mobile-friendly. Highlights today + current period.
 const DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי'];
 
-const subjectColors = {
-  'מתמטיקה': 'text-blue-700 dark:text-blue-300',
-  'עברית': 'text-emerald-700 dark:text-emerald-300',
-  'ספרות': 'text-purple-700 dark:text-purple-300',
-  'אנגלית': 'text-amber-700 dark:text-amber-300',
-  'היסטוריה': 'text-orange-700 dark:text-orange-300',
-  'פיזיקה': 'text-cyan-700 dark:text-cyan-300',
-  'כימיה': 'text-pink-700 dark:text-pink-300',
-  'ביולוגיה': 'text-green-700 dark:text-green-300',
-  'שעת חינוך': 'text-indigo-700 dark:text-indigo-300',
-  'תנ"ך': 'text-rose-700 dark:text-rose-300',
-};
+// פלטת צבעים — כל מקצוע מקבל צבע קבוע וייחודי (טקסט + רקע עדין) לפי שם המקצוע
+const SUBJECT_PALETTE = [
+  { text: 'text-blue-700 dark:text-blue-300', bg: 'bg-blue-500/10' },
+  { text: 'text-emerald-700 dark:text-emerald-300', bg: 'bg-emerald-500/10' },
+  { text: 'text-purple-700 dark:text-purple-300', bg: 'bg-purple-500/10' },
+  { text: 'text-amber-700 dark:text-amber-300', bg: 'bg-amber-500/10' },
+  { text: 'text-orange-700 dark:text-orange-300', bg: 'bg-orange-500/10' },
+  { text: 'text-cyan-700 dark:text-cyan-300', bg: 'bg-cyan-500/10' },
+  { text: 'text-pink-700 dark:text-pink-300', bg: 'bg-pink-500/10' },
+  { text: 'text-green-700 dark:text-green-300', bg: 'bg-green-500/10' },
+  { text: 'text-indigo-700 dark:text-indigo-300', bg: 'bg-indigo-500/10' },
+  { text: 'text-rose-700 dark:text-rose-300', bg: 'bg-rose-500/10' },
+  { text: 'text-teal-700 dark:text-teal-300', bg: 'bg-teal-500/10' },
+  { text: 'text-violet-700 dark:text-violet-300', bg: 'bg-violet-500/10' },
+  { text: 'text-red-700 dark:text-red-300', bg: 'bg-red-500/10' },
+  { text: 'text-sky-700 dark:text-sky-300', bg: 'bg-sky-500/10' },
+  { text: 'text-lime-700 dark:text-lime-300', bg: 'bg-lime-500/10' },
+  { text: 'text-fuchsia-700 dark:text-fuchsia-300', bg: 'bg-fuchsia-500/10' },
+];
+
+function getSubjectColor(subject) {
+  if (!subject) return { text: 'text-foreground', bg: '' };
+  let hash = 0;
+  for (let i = 0; i < subject.length; i++) hash = (hash * 31 + subject.charCodeAt(i)) >>> 0;
+  return SUBJECT_PALETTE[hash % SUBJECT_PALETTE.length];
+}
 
 export default function WeeklyScheduleGrid({ periods, slotsByKey, todayDayName, currentPeriod, canEdit, onCellClick }) {
   // todayDayName might be 'שישי' or 'שבת' — only highlight if it's in DAYS list
@@ -130,15 +144,15 @@ function CornerHeader() {
 }
 
 function Cell({ slot, isToday, isNow, canEdit, onClick }) {
-  const color = slot ? (subjectColors[slot.subject] || 'text-foreground') : '';
+  const { text: color, bg: subjectBg } = getSubjectColor(slot?.subject);
   const group = slot?.notes?.match(/^\[קבוצה: ([^\]]+)\]/)?.[1];
 
   return (
     <td
       className={cn(
         'border-b border-l last:border-l-0 border-border align-middle p-0 transition-colors relative',
-        isNow ? 'bg-primary/15 dark:bg-primary/20 ring-1 ring-inset ring-primary/40'
-              : isToday ? 'bg-primary/[0.05]' : '',
+        isNow && 'ring-1 ring-inset ring-primary/40',
+        slot ? subjectBg : (isNow ? 'bg-primary/15 dark:bg-primary/20' : isToday ? 'bg-primary/[0.05]' : ''),
         canEdit ? 'cursor-pointer hover:bg-accent/60' : (slot ? 'cursor-pointer hover:bg-accent/40' : 'cursor-default'),
       )}
       onClick={canEdit || slot ? onClick : undefined}
