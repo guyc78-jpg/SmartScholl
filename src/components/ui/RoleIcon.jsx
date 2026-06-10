@@ -19,7 +19,7 @@ export default function RoleIcon({ role, roles = [], className }) {
   if (!emoji) return null;
   return (
     <span
-      className={cn('text-base leading-none flex-shrink-0', className)}
+      className={cn('text-sm leading-none flex-shrink-0', className)}
       role="img"
       aria-hidden="true"
     >
