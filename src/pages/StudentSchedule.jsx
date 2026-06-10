@@ -1,67 +1,103 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { base44 } from '@/api/base44Client';
 import { CLASS_ID } from '@/lib/demoData';
 import { getStudentClassId, getStudentClassName } from '@/lib/studentProfile';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { findClassRoomByName } from '@/lib/classAssignment';
+import PageHeader from '@/components/ui/PageHeader';
 import NowNextCard from '@/components/schedule/NowNextCard';
-import { Calendar } from 'lucide-react';
+import WeeklyScheduleGrid from '@/components/schedule/WeeklyScheduleGrid';
+import { loadBellSchedule, getTodayDayType, HEBREW_DAY_NAMES, getNowAndNext } from '@/lib/bellSchedule';
 
-const WEEK_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי'];
-const dayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
+// בניית שורות שיעורים מתוך לוח הצלצולים — זהה לעמוד מערכת השעות של הצוות
+function buildPeriodRows(bellPeriods) {
+  const lessons = (bellPeriods || []).filter(p => p.kind === 'lesson').sort((a, b) => a.period - b.period);
+  if (lessons.length === 0) {
+    return Array.from({ length: 12 }, (_, i) => ({ period: i + 1, start_time: '', end_time: '', label: `שיעור ${i + 1}` }));
+  }
+  const max = Math.max(12, lessons[lessons.length - 1].period);
+  const map = new Map(lessons.map(l => [l.period, l]));
+  return Array.from({ length: max }, (_, i) => {
+    const n = i + 1;
+    const found = map.get(n);
+    return found
+      ? { period: n, start_time: found.start_time, end_time: found.end_time, label: found.label || `שיעור ${n}` }
+      : { period: n, start_time: '', end_time: '', label: `שיעור ${n}` };
+  });
+}
 
 export default function StudentSchedule({ user }) {
   const classId = getStudentClassId(user, CLASS_ID);
-  const className = getStudentClassName(user);
-  const [slots, setSlots] = useState(null);
-  const todayName = dayNames[new Date().getDay()];
+  const fallbackClassName = getStudentClassName(user);
+  const [slots, setSlots] = useState([]);
+  const [periods, setPeriods] = useState([]);
+  const [activeClassId, setActiveClassId] = useState('');
+  const [className, setClassName] = useState('');
+  const [currentPeriod, setCurrentPeriod] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const todayDayName = HEBREW_DAY_NAMES[new Date().getDay()];
 
+  // הדגשת השיעור הנוכחי — מתעדכן כל 30 שניות
   useEffect(() => {
-    base44.entities.ScheduleSlot.filter({ class_id: classId }).then(setSlots);
-  }, [classId]);
+    if (periods.length === 0) return;
+    const fullPeriods = periods.filter(p => p.start_time).map(p => ({ ...p, kind: 'lesson' }));
+    const tick = () => {
+      const { current } = getNowAndNext(fullPeriods);
+      setCurrentPeriod(current?.period || null);
+    };
+    tick();
+    const t = setInterval(tick, 30_000);
+    return () => clearInterval(t);
+  }, [periods]);
 
-  if (!slots) return <div className="flex justify-center py-16"><div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin" /></div>;
+  useEffect(() => { load(); }, [classId]);
 
-  const byDay = WEEK_DAYS
-    .map(day => ({ day, items: slots.filter(s => s.day === day).sort((a, b) => a.period - b.period) }))
-    .filter(d => d.items.length > 0);
+  async function load() {
+    setLoading(true);
+    const dayType = getTodayDayType();
+    const [bellPeriods, classRooms] = await Promise.all([
+      loadBellSchedule(dayType === 'fri' ? 'sun_thu' : dayType),
+      base44.entities.ClassRoom.list('-updated_date', 200),
+    ]);
+    const classRoom = classRooms.find(room => room.id === classId) || findClassRoomByName(classRooms, fallbackClassName);
+    const resolvedClassId = classRoom?.id || classId;
+    const data = await base44.entities.ScheduleSlot.filter({ class_id: resolvedClassId });
+    setActiveClassId(resolvedClassId);
+    setSlots(data);
+    setPeriods(buildPeriodRows(bellPeriods));
+    setClassName(classRoom?.name || fallbackClassName || '');
+    setLoading(false);
+  }
+
+  const slotsByKey = useMemo(() => {
+    const map = {};
+    slots.forEach(s => { map[`${s.day}|${Number(s.period)}`] = s; });
+    return map;
+  }, [slots]);
 
   return (
-    <div className="p-4 lg:p-6 space-y-4 text-right max-w-3xl mx-auto" dir="rtl">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">מערכת שעות</h1>
-        <p className="text-sm text-muted-foreground mt-0.5">{className ? `כיתה ${className}` : 'המערכת השבועית שלי'}</p>
-      </div>
+    <div className="p-4 lg:p-6 pb-24 lg:pb-6 space-y-4" dir="rtl">
+      <PageHeader
+        title="מערכת שעות"
+        subtitle={`לוח שבועי לפי הצלצולים — ימים א׳–ה׳${className ? ` · כיתה ${className}` : ''}`}
+      />
 
-      <NowNextCard classId={classId} />
+      {/* כרטיס חכם מסונכרן עם הצלצולים */}
+      <NowNextCard classId={activeClassId || classId} />
 
-      {byDay.length === 0 && (
-        <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">עדיין לא הוזנה מערכת שעות לכיתה.</CardContent></Card>
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <div className="w-7 h-7 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+        </div>
+      ) : (
+        <WeeklyScheduleGrid
+          periods={periods}
+          slotsByKey={slotsByKey}
+          todayDayName={todayDayName}
+          currentPeriod={currentPeriod}
+          canEdit={false}
+          onCellClick={() => {}}
+        />
       )}
-
-      {byDay.map(({ day, items }) => (
-        <Card key={day} className={day === todayName ? 'border-primary/50' : ''}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-blue-500" />
-              יום {day}
-              {day === todayName && <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold">היום</span>}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-1.5">
-              {items.map(slot => (
-                <div key={slot.id} className="flex items-center gap-3 py-1.5">
-                  <span className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-muted-foreground flex-shrink-0">{slot.period}</span>
-                  <span className="text-xs text-muted-foreground w-24 flex-shrink-0">{slot.start_time}–{slot.end_time}</span>
-                  <span className="text-sm font-medium">{slot.subject}</span>
-                  {slot.teacher && <span className="text-xs text-muted-foreground">· {slot.teacher}</span>}
-                  {slot.room && <span className="text-xs text-muted-foreground">חדר {slot.room}</span>}
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
     </div>
   );
 }
