@@ -128,7 +128,7 @@ const AuthenticatedApp = () => {
   const onboardingStatus = user?.onboarding_status;
   const userIsAdmin = user ? (getAvailableRoles(user).includes('system_admin') || getAvailableRoles(user).includes('admin')) : false;
   const onboardingDone = user?.onboardingCompleted || onboardingStatus === 'approved';
-  if (user && !userIsAdmin && !onboardingDone) {
+  if (user && !userIsAdmin && !onboardingDone && !user.__simulated) {
     if (!onboardingStatus || onboardingStatus === 'pending') {
       return <Onboarding user={user} onComplete={async (updatedUser) => {
         if (updatedUser) updateCurrentUser(updatedUser);

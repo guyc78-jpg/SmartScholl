@@ -20,6 +20,12 @@ function buildSimulatedUser(realUser, simRole) {
     available_roles: [simRole],
     role: simRole,
     active_work_role: simRole,
+    // חשוב: דריסת authorization — אחרת getAvailableRoles ממשיך להחזיר את תפקידי המנהל האמיתיים
+    authorization: {
+      ...(realUser.authorization || {}),
+      roles: [simRole],
+      role: simRole,
+    },
     __simulated: true,
     __realUser: realUser,
   };
