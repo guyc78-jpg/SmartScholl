@@ -32,7 +32,7 @@ import ExceptionRow from '@/components/attendance/ExceptionRow';
 import { getUserApprovedClass } from '@/lib/schoolStructure';
 import { useAuth } from '@/lib/AuthContext';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
-import { ATTENDANCE_STATUSES, PRESENT_STATUS, getAttendanceScopedStudents, getLocalDateString, getScopedClassIds, filterScopedAttendance, getSelectedAttendanceDate, saveSelectedAttendanceDate, loadScopedAttendanceForDate } from '@/lib/attendanceScope';
+import { ATTENDANCE_STATUSES, PRESENT_STATUS, getAttendanceScopedStudents, getLocalDateString, getScopedClassIds, filterScopedAttendance, getSelectedAttendanceDate, saveSelectedAttendanceDate, loadScopedAttendanceForDate, toStoredAttendanceStatus } from '@/lib/attendanceScope';
 
 const STATUSES = ATTENDANCE_STATUSES;
 const PRESENT = PRESENT_STATUS;
@@ -140,7 +140,7 @@ export default function ClassAttendance({ role }) {
       student_name: formatStudentName(student),
       class_id: student.class_id,
       date,
-      status: statusOrNull,
+      status: toStoredAttendanceStatus(statusOrNull),
       note,
       period: new Date().toTimeString().slice(0, 5),
     };
@@ -158,12 +158,12 @@ export default function ClassAttendance({ role }) {
       // ביטול סימון — הסרה מהמפה והמסד
       setAttendanceMap(p => { const n = { ...p }; delete n[student.id]; return n; });
       try { await persistOne(student, null); }
-      catch (e) { console.error(e); toast.error('ביטול נכשל'); }
+      catch (e) { console.error(e); toast.error(`ביטול נכשל: ${e?.message || 'אין הרשאה או שהחיבור למסד נכשל'}`); }
       return;
     }
     setAttendanceMap(p => ({ ...p, [student.id]: { status, note } }));
     try { await persistOne(student, status, note); }
-    catch (e) { console.error(e); toast.error('שמירה נכשלה'); }
+    catch (e) { console.error(e); toast.error(`שמירה נכשלה: ${e?.message || 'אין הרשאה או שהחיבור למסד נכשל'}`); }
   }
 
   // Confirm: mark all unmarked as נוכח/ת
@@ -182,7 +182,7 @@ export default function ClassAttendance({ role }) {
       setConfirmedAt(new Date().toISOString());
       toast.success('נוכחות אושרה — כל התלמידים סומנו כנוכחים');
     } catch (e) {
-      console.error(e); toast.error('שמירה חלקית — נסה שוב');
+      console.error(e); toast.error(`השמירה נכשלה: ${e?.message || 'אין הרשאה או שהחיבור למסד נכשל'}`);
     }
     setSaving(false);
   }

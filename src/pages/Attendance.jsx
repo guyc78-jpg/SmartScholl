@@ -74,9 +74,9 @@ export default function Attendance() {
       const now = new Date();
       setLastSaved(`${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`);
       toast.success('נוכחות נשמרה בהצלחה!');
-      await loadData();
-    } catch {
-      toast.error('שגיאה בשמירה');
+      loadData().catch(() => {});
+    } catch (e) {
+      toast.error(`שמירת הנוכחות נכשלה: ${e?.message || 'אין הרשאה או שהחיבור למסד נכשל'}`);
     }
     setSaving(false);
   }

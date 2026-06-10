@@ -12,6 +12,36 @@ import {
 export const ATTENDANCE_STATUSES = ['נוכח/ת', 'מאחר/ת', 'נעדר/ת', 'שוחרר/ת'];
 export const ATTENDANCE_EXCEPTION_STATUSES = ['מאחר', 'מאחר/ת', 'נעדר', 'נעדר/ת', 'שוחרר', 'שוחרר/ת'];
 export const PRESENT_STATUS = 'נוכח/ת';
+
+const DB_TO_UI_STATUS = {
+  'נוכח': 'נוכח/ת',
+  'מאחר': 'מאחר/ת',
+  'נעדר': 'נעדר/ת',
+  'שוחרר': 'שוחרר/ת',
+  'נוכח/ת': 'נוכח/ת',
+  'מאחר/ת': 'מאחר/ת',
+  'נעדר/ת': 'נעדר/ת',
+  'שוחרר/ת': 'שוחרר/ת',
+};
+
+const UI_TO_DB_STATUS = {
+  'נוכח/ת': 'נוכח',
+  'מאחר/ת': 'מאחר',
+  'נעדר/ת': 'נעדר',
+  'שוחרר/ת': 'שוחרר',
+  'נוכח': 'נוכח',
+  'מאחר': 'מאחר',
+  'נעדר': 'נעדר',
+  'שוחרר': 'שוחרר',
+};
+
+export function toUiAttendanceStatus(status) {
+  return DB_TO_UI_STATUS[status] || status;
+}
+
+export function toStoredAttendanceStatus(status) {
+  return UI_TO_DB_STATUS[status] || status;
+}
 export const ATTENDANCE_DATE_KEY = 'attendance:selectedDate';
 
 export function getLocalDateString(date = new Date()) {
@@ -64,7 +94,9 @@ export function getScopedClassIds(students) {
 
 export function filterScopedAttendance(records, students) {
   const scopedIds = new Set(students.map(student => student.id));
-  return records.filter(record => ATTENDANCE_STATUSES.includes(record.status) && scopedIds.has(record.student_id));
+  return records
+    .map(record => ({ ...record, status: toUiAttendanceStatus(record.status) }))
+    .filter(record => ATTENDANCE_STATUSES.includes(record.status) && scopedIds.has(record.student_id));
 }
 
 export async function loadScopedAttendanceForDate(students, date) {

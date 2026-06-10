@@ -9,7 +9,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
 } from '@/components/ui/alert-dialog';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
-import { getSelectedAttendanceDate } from '@/lib/attendanceScope';
+import { getSelectedAttendanceDate, toStoredAttendanceStatus, toUiAttendanceStatus } from '@/lib/attendanceScope';
 
 const PRESENT = 'נוכח/ת';
 const LATE = 'מאחר/ת';
@@ -51,7 +51,7 @@ export default function QuickAttendanceForm({ classId, onSaved }) {
       att.forEach(r => {
         existingMap[r.student_id] = r;
         // Normalize status (some records may be 'נוכח' / 'נעדר' / 'מאחר' without /ת)
-        const status = r.status;
+        const status = toUiAttendanceStatus(r.status);
         if (status === PRESENT || status === 'נוכח') {
           hasPresent = true;
         } else {
@@ -114,32 +114,37 @@ export default function QuickAttendanceForm({ classId, onSaved }) {
 
   const handleSave = async () => {
     setSaving(true);
-    const ops = [];
-    for (const s of students) {
-      const status = marks[s.id] || PRESENT;
-      const note = notes[s.id] || '';
-      const prev = existing[s.id];
-      const payload = {
-        student_id: s.id,
-        student_name: s.full_name,
-        class_id: classId,
-        date: today,
-        status,
-        note,
-      };
-      if (prev) {
-        if (prev.status !== status || (prev.note || '') !== note) {
-          ops.push(base44.entities.AttendanceRecord.update(prev.id, { status, note }));
+    try {
+      const ops = [];
+      for (const s of students) {
+        const status = marks[s.id] || PRESENT;
+        const note = notes[s.id] || '';
+        const prev = existing[s.id];
+        const storedStatus = toStoredAttendanceStatus(status);
+        const payload = {
+          student_id: s.id,
+          student_name: formatStudentName(s),
+          class_id: classId,
+          date: today,
+          status: storedStatus,
+          note,
+        };
+        if (prev) {
+          if (toStoredAttendanceStatus(prev.status) !== storedStatus || (prev.note || '') !== note) {
+            ops.push(base44.entities.AttendanceRecord.update(prev.id, { status: storedStatus, note }));
+          }
+        } else {
+          ops.push(base44.entities.AttendanceRecord.create(payload));
         }
-      } else {
-        ops.push(base44.entities.AttendanceRecord.create(payload));
       }
+      await Promise.all(ops);
+      toast.success('הנוכחות נשמרה בהצלחה');
+      onSaved?.();
+    } catch (e) {
+      toast.error(`שמירת הנוכחות נכשלה: ${e?.message || 'אין הרשאה או שהחיבור למסד נכשל'}`);
+    } finally {
+      setSaving(false);
     }
-    await Promise.all(ops);
-
-    toast.success('הנוכחות נשמרה בהצלחה');
-    setSaving(false);
-    onSaved?.();
   };
 
   if (loading) {

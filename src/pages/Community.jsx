@@ -58,12 +58,22 @@ export default function Community({ role = 'homeroom_teacher', user }) {
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
   async function handleSave() {
+    const payload = {
+      community_service_goal: Number(form.community_service_goal || 0),
+      community_service_done: Number(form.community_service_done || 0),
+      community_service_place: form.community_service_place || '',
+      community_service_contact: form.community_service_contact || '',
+      community_service_status: form.community_service_status || 'לא התחיל',
+    };
+
     try {
-      await base44.entities.Student.update(editStudent.id, form);
-      toast.success('עודכן בהצלחה!');
+      await base44.entities.Student.update(editStudent.id, payload);
       setEditStudent(null);
-      loadStudents();
-    } catch { toast.error('שגיאה'); }
+      toast.success('המעורבות עודכנה');
+      loadStudents().catch(() => {});
+    } catch (e) {
+      toast.error(`שמירת המעורבות נכשלה: ${e?.message || 'אין הרשאה או שהחיבור למסד נכשל'}`);
+    }
   }
 
   const pct = (s) => Number(s.community_service_goal) > 0 ? Math.round((Number(s.community_service_done || 0) / Number(s.community_service_goal)) * 100) : 0;
