@@ -21,7 +21,21 @@ export default function UrgentFlagsSection({ classId, user, canManage, maxItems 
 
   async function load() {
     setLoading(true);
-    const data = await base44.entities.UrgentFlag.filter({ class_id: classId });
+    // ניסיון חוזר עם השהיה גוברת — מונע קריסה כשמגבלת הקצב נחצית בעומס הדשבורד
+    let data = [];
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        data = await base44.entities.UrgentFlag.filter({ class_id: classId });
+        break;
+      } catch (err) {
+        const isRateLimit = /rate limit/i.test(err?.message || '');
+        if (!isRateLimit || attempt === 2) {
+          console.error('UrgentFlags load error:', err);
+          break;
+        }
+        await new Promise(resolve => setTimeout(resolve, 1200 * (attempt + 1)));
+      }
+    }
     setFlags(sortFlags(data || []));
     setLoading(false);
   }
