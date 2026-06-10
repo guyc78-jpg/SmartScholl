@@ -27,6 +27,7 @@ import OpenTasksDialog from '@/components/dashboard/OpenTasksDialog';
 import DisciplineEventDialog from '@/components/dashboard/DisciplineEventDialog';
 import NotificationsDropdown from '@/components/dashboard/NotificationsDropdown';
 import SchoolNameBanner from '@/components/layout/SchoolNameBanner';
+import RoleIcon from '@/components/ui/RoleIcon';
 import NowNextCard from '@/components/schedule/NowNextCard';
 import { getUserApprovedClass, getUserApprovedClassId, getUserApprovedGrade } from '@/lib/schoolStructure';
 import { getAvailableRoles, getUserFirstName, hasApprovedRole, getRoleDisplayLines, getRoleShort } from '@/lib/roleUtils';
@@ -276,7 +277,10 @@ export default function Dashboard({ user, role }) {
             <h1 className="text-xl lg:text-2xl font-bold text-foreground leading-tight">שלום, {getUserFirstName(user)} 👋</h1>
             <NotificationsDropdown notifications={notifications} onRead={handleNotificationRead} />
           </div>
-          <p className="text-sm font-medium text-foreground/70 mt-0.5">{dashboardTitle}</p>
+          <p className="text-sm font-medium text-foreground/70 mt-0.5 flex items-center gap-1.5" dir="rtl">
+            <RoleIcon role={role} />
+            <span>{dashboardTitle}</span>
+          </p>
           {dashboardSecondaryTitle && <p className="text-xs text-muted-foreground/80 mt-0.5">{dashboardSecondaryTitle}</p>}
           <p className="text-xs text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-1.5">
             <SchoolNameBanner inline />

@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { getAvailableRoles, getRoleDisplayLines, getUserDisplayName } from '@/lib/roleUtils';
 import ProfileAvatar from '@/components/profile/ProfileAvatar';
 import { getDashboardLabel } from '@/lib/dashboardLabels';
+import RoleIcon from '@/components/ui/RoleIcon';
 import { coordinatorHasHomeroom } from '@/lib/schoolStructure';
 
 // ── Accordion nav groups ──────────────────────────────────────────────────────
@@ -269,7 +270,10 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
           <ProfileAvatar user={user} fallback={displayName?.charAt(0) || '?'} className="w-9 h-9 text-sm flex-shrink-0" />
           <div className="flex-1 min-w-0 text-right">
             <p className="font-semibold text-sm text-sidebar-foreground truncate">{displayName}</p>
-            <p className="text-[11px] text-sidebar-foreground/70 truncate">{contextLabel}</p>
+            <p className="text-[11px] text-sidebar-foreground/70 truncate flex items-center gap-1.5" dir="rtl">
+              <RoleIcon role={activeRole || role} className="w-[18px] h-[18px] text-sidebar-foreground/60" />
+              <span className="truncate">{contextLabel}</span>
+            </p>
             {secondaryContextLabel && <p className="text-[10px] text-sidebar-foreground/45 truncate">{secondaryContextLabel}</p>}
           </div>
         </div>
