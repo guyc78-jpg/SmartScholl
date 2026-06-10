@@ -60,6 +60,14 @@ export default function Community({ role = 'homeroom_teacher', user }) {
   async function handleSave() {
     const payload = {
       community_service_goal: Number(form.community_service_goal || 0),
+      // השלמת שדות חובה לרשומות ישנות שחסרים בהן שם פרטי/משפחה
+      ...(!editStudent.firstName || !editStudent.lastName ? (() => {
+        const parts = (editStudent.full_name || editStudent.fullName || formatStudentName(editStudent) || '').trim().split(/\s+/);
+        return {
+          firstName: editStudent.firstName || parts[0] || '-',
+          lastName: editStudent.lastName || parts.slice(1).join(' ') || '-',
+        };
+      })() : {}),
       community_service_done: Number(form.community_service_done || 0),
       community_service_place: form.community_service_place || '',
       community_service_contact: form.community_service_contact || '',
