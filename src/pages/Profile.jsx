@@ -10,7 +10,7 @@ import WorkModeSelector from '@/components/layout/WorkModeSelector';
 import ThemePreferenceCard from '@/components/profile/ThemePreferenceCard';
 import ProfileAvatarPicker from '@/components/profile/ProfileAvatarPicker';
 import { invalidateSchoolNameCache } from '@/components/layout/SchoolNameBanner';
-import { getAvailableRoles, getWorkModeRoles, getUserDisplayName, GENDER_OPTIONS, getDefaultDisplayRole, getRoleContextLabel } from '@/lib/roleUtils';
+import { getAvailableRoles, getWorkModeRoles, getUserDisplayName, GENDER_OPTIONS, getDefaultDisplayRole, getRoleContextLabel, getFullRoleDisplay } from '@/lib/roleUtils';
 import { logActivity } from '@/lib/activityLogger';
 import { useAuth } from '@/lib/AuthContext';
 
@@ -164,7 +164,7 @@ export default function Profile({ user, role, onRoleChange, themePreference, onT
               <div className="space-y-3 md:col-span-2 pt-1 border-t border-border text-right" dir="rtl">
                 <div className="rounded-xl border bg-muted/30 p-3 text-right" dir="rtl">
                   <Label className="text-xs text-muted-foreground">תפקיד ראשי</Label>
-                  <p className="mt-1 text-sm font-semibold text-foreground">{getRoleContextLabel(user, primaryDisplayRole)}</p>
+                  <p className="mt-1 text-sm font-semibold text-foreground">{getFullRoleDisplay(user) || getRoleContextLabel(user, primaryDisplayRole)}</p>
                   <p className="mt-1 text-xs text-muted-foreground">התפקיד הראשי נקבע על ידי מנהל מערכת בלבד.</p>
                 </div>
 

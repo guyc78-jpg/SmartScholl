@@ -1,3 +1,5 @@
+import { formatGrade, extractGradeFromClass, buildClassName, normalizeClassName, getDivisionLabel } from '@/lib/schoolStructure';
+
 export const ROLE_LABELS = {
   system_admin: 'מנהל/ת מערכת',
   admin: 'מנהל/ת מערכת',
@@ -201,9 +203,58 @@ export function getRoleHomeLabel(user, activeRole) {
   return getUserContextLabel(user, activeRole);
 }
 
+// עיצוב שם כיתה לתצוגה: "יב1" → "י״ב1". מחזיר '' אם הערך אינו שם כיתה (למשל מזהה)
+function formatClassDisplay(value) {
+  const clean = normalizeClassName(String(value || ''));
+  const grade = extractGradeFromClass(clean);
+  const num = (clean.match(/\d+$/) || [''])[0];
+  if (grade && num) return buildClassName(grade, num);
+  return grade ? formatGrade(grade) : '';
+}
+
+// בונה רשימת תוויות תפקיד מלאות לפי השיוכים בפועל (gradeId/classId), לא לפי טקסט ידני
+export function getAssignedRoleLabels(user) {
+  const roles = getAvailableRoles(user);
+  const labels = [];
+
+  if (roles.includes('system_admin') || roles.includes('admin')) {
+    labels.push(ROLE_LABELS.system_admin);
+  }
+
+  if (roles.includes('division_manager')) {
+    const division = getDivisionLabel(user?.profile_division || user?.authorization?.scope?.divisionType || user?.divisionType);
+    labels.push(division ? `מנהל/ת ${division}` : ROLE_LABELS.division_manager);
+  }
+
+  if (roles.includes('grade_coordinator') || roles.includes('coordinator')) {
+    const grade = user?.profile_grade_managed
+      || user?.authorization?.scopes_by_role?.grade_coordinator?.gradeId
+      || user?.authorization?.scope?.gradeId
+      || user?.gradeId || '';
+    labels.push(grade ? `רכז/ת שכבה ${formatGrade(grade)}` : ROLE_LABELS.grade_coordinator);
+  }
+
+  if (roles.includes('homeroom_teacher')) {
+    const klass = formatClassDisplay(user?.profile_homeroom_class || user?.profile_class || '');
+    labels.push(klass ? `מחנך/ת ${klass}` : ROLE_LABELS.homeroom_teacher);
+  }
+
+  if (roles.includes('student')) {
+    const klass = formatClassDisplay(user?.profile_class || '');
+    labels.push(klass ? `תלמיד/ה ${klass}` : ROLE_LABELS.student);
+  }
+
+  return labels;
+}
+
+// תווית תפקיד מלאה ומחוברת, למשל: "רכז/ת שכבה י״ב · מחנך/ת י״ב1"
+export function getFullRoleDisplay(user) {
+  return getAssignedRoleLabels(user).join(' · ');
+}
+
 export function getRoleDisplayLines(user, activeRole) {
   const primaryRole = getDefaultDisplayRole(user, activeRole);
-  const primary = getRoleContextLabel(user, primaryRole);
+  const primary = getFullRoleDisplay(user) || getRoleContextLabel(user, primaryRole);
   const additionalRoles = getDisplayAdditionalRoles(user, primaryRole);
   
   // סנן תפקידים נוספים: הצג רק אלה שמשנים בפועל הרשאות ותצוגה
