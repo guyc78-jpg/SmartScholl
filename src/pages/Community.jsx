@@ -173,8 +173,28 @@ export default function Community({ role = 'homeroom_teacher', user }) {
               <div className="space-y-1">
                 <Label>סטטוס</Label>
                 <Select value={form.community_service_status} onValueChange={v => set('community_service_status', v)}>
-                  <SelectTrigger><SelectValue/></SelectTrigger>
-                  <SelectContent>{['לא התחיל', 'בתהליך', 'הושלם'].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                  <SelectTrigger className="h-10 w-full justify-between text-right" dir="rtl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent
+                    dir="rtl"
+                    position="popper"
+                    side="bottom"
+                    align="start"
+                    sideOffset={6}
+                    collisionPadding={12}
+                    className="z-[10001] max-h-64 w-[var(--radix-select-trigger-width)] min-w-[var(--radix-select-trigger-width)] max-w-[var(--radix-select-trigger-width)] overflow-x-hidden overflow-y-auto text-right"
+                  >
+                    {['לא התחיל', 'בתהליך', 'הושלם'].map(s => (
+                      <SelectItem
+                        key={s}
+                        value={s}
+                        className="min-h-10 whitespace-normal break-words py-2.5 pe-8 ps-3 text-right leading-relaxed"
+                      >
+                        <span className="block w-full text-right">{s}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
               </div>
               <div className="flex gap-2 pt-1">
