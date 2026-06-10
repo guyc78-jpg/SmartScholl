@@ -271,7 +271,7 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
           <div className="flex-1 min-w-0 text-right">
             <p className="font-semibold text-sm text-sidebar-foreground truncate">{displayName}</p>
             <p className="text-[11px] text-sidebar-foreground/70 truncate flex items-center gap-1.5" dir="rtl">
-              <RoleIcon role={activeRole || role} roles={approvedRoles} className="w-[18px] h-[18px] text-sidebar-foreground/60" />
+              <RoleIcon role={activeRole || role} roles={approvedRoles} />
               <span className="truncate">{contextLabel}</span>
             </p>
             {secondaryContextLabel && <p className="text-[10px] text-sidebar-foreground/45 truncate">{secondaryContextLabel}</p>}
