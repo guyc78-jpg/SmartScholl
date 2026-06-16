@@ -10,7 +10,7 @@ function urlBase64ToUint8Array(value) {
   return Uint8Array.from([...raw].map(char => char.charCodeAt(0)));
 }
 
-export default function PushNotificationToggle({ compact = false }) {
+export default function PushNotificationToggle({ compact = false, iconOnly = false }) {
   const [supported, setSupported] = useState(false);
   const [enabled, setEnabled] = useState(false);
   const [endpoint, setEndpoint] = useState('');
@@ -88,6 +88,23 @@ export default function PushNotificationToggle({ compact = false }) {
   };
 
   if (!supported) return null;
+
+  if (iconOnly) {
+    return (
+      <button
+        type="button"
+        onClick={enabled ? disable : enable}
+        disabled={busy}
+        aria-label={enabled ? 'התראות פעילות' : 'הפעל התראות'}
+        className={cn(
+          'w-11 h-11 flex items-center justify-center rounded-lg transition-colors disabled:opacity-60',
+          enabled ? 'text-primary bg-primary/10' : 'text-foreground/70 hover:bg-muted active:bg-muted/80'
+        )}
+      >
+        <Bell className="w-5 h-5" />
+      </button>
+    );
+  }
 
   return (
     <div className={cn('w-full text-right space-y-1', compact && 'px-1')} dir="rtl">

@@ -295,6 +295,10 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
         </div>
       </div>
 
+      <div className="px-4 py-3 border-b border-sidebar-border">
+        <PushNotificationToggle />
+      </div>
+
       {/* Accordion Nav */}
       <nav className="flex-1 overflow-y-auto py-3 px-2.5 space-y-0.5">
         {navGroups.map(group => (
@@ -311,7 +315,6 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
 
       {/* Bottom actions */}
       <div className="px-3 py-3 border-t border-sidebar-border space-y-0.5">
-        <PushNotificationToggle />
         {activeRole !== 'student' && (
           <Link
             to="/profile"
@@ -430,14 +433,17 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
             </div>
             <span className="font-bold text-foreground text-[13px]">ניהול כיתת חינוך</span>
           </div>
-          <button
-            type="button"
-            onClick={toggleDark}
-            aria-label={darkMode ? 'מצב בהיר' : 'מצב כהה'}
-            className="w-11 h-11 flex items-center justify-center bg-transparent border-0 shadow-none hover:bg-transparent active:bg-transparent focus:bg-transparent text-foreground/70 dark:text-foreground/80 touch-manipulation"
-          >
-            {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-          </button>
+          <div className="flex items-center gap-1">
+            <PushNotificationToggle iconOnly />
+            <button
+              type="button"
+              onClick={toggleDark}
+              aria-label={darkMode ? 'מצב בהיר' : 'מצב כהה'}
+              className="w-11 h-11 flex items-center justify-center bg-transparent border-0 shadow-none hover:bg-transparent active:bg-transparent focus:bg-transparent text-foreground/70 dark:text-foreground/80 touch-manipulation"
+            >
+              {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
+          </div>
         </header>
 
         {/* Page Content */}
