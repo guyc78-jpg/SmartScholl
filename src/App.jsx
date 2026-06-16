@@ -45,6 +45,7 @@ const Classrooms = lazy(() => import('./pages/Classrooms'));
 const DivisionManagement = lazy(() => import('./pages/DivisionManagement'));
 const DivisionExams = lazy(() => import('./pages/DivisionExams'));
 const PermissionsTester = lazy(() => import('./pages/PermissionsTester'));
+const PushNotifications = lazy(() => import('./pages/PushNotifications'));
 import { isStaff, isStudent, defaultRoute } from './lib/permissions';
 import { getAvailableRoles, getInitialWorkRole, getSystemRole } from './lib/roleUtils';
 import { SimulationProvider, useSimulation } from '@/lib/SimulationContext';
@@ -192,6 +193,7 @@ const AuthenticatedApp = () => {
             <>
               <Route path="/users" element={<UserManagement />} />
               <Route path="/bell-schedule" element={<BellScheduleSettings user={user} role={pageRole} />} />
+              <Route path="/push-notifications" element={<PushNotifications />} />
               <Route path="/permissions-tester" element={<PermissionsTester />} />
             </>
           )}

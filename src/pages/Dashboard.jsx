@@ -26,7 +26,6 @@ import QuickActionModal from '@/components/dashboard/QuickActionModal';
 import OpenTasksDialog from '@/components/dashboard/OpenTasksDialog';
 import DisciplineEventDialog from '@/components/dashboard/DisciplineEventDialog';
 import NotificationsDropdown from '@/components/dashboard/NotificationsDropdown';
-import PushNotificationToggle from '@/components/notifications/PushNotificationToggle';
 import SchoolNameBanner from '@/components/layout/SchoolNameBanner';
 import RoleIcon from '@/components/ui/RoleIcon';
 import NowNextCard from '@/components/schedule/NowNextCard';
@@ -291,16 +290,6 @@ export default function Dashboard({ user, role }) {
       </div>
 
       <ClassAssignmentAlert enabled={isActiveAdmin} onFixed={() => loadData(false)} />
-
-      <Card className="border-primary/20 bg-primary/5" dir="rtl">
-        <CardContent className="p-4 text-right space-y-3">
-          <div className="text-right">
-            <h2 className="text-sm font-bold text-foreground">בדיקת התראות Push</h2>
-            <p className="text-xs text-muted-foreground mt-1">כאן מפעילים התראות ושולחים התראת בדיקה למכשיר הזה.</p>
-          </div>
-          <PushNotificationToggle showUnsupported />
-        </CardContent>
-      </Card>
 
       {/* Now / Next — shown first, always visible for staff with a class */}
       {(isActiveHomeroom || isActiveAdmin || isActiveCoordinator) && (
