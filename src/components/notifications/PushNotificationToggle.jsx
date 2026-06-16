@@ -4,10 +4,13 @@ import { base44 } from '@/api/base44Client';
 import { cn } from '@/lib/utils';
 
 function urlBase64ToUint8Array(value) {
-  const padding = '='.repeat((4 - value.length % 4) % 4);
-  const base64 = (value + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const cleanValue = String(value || '').trim().replace(/^['"]|['"]$/g, '').replace(/\s/g, '');
+  const padding = '='.repeat((4 - cleanValue.length % 4) % 4);
+  const base64 = (cleanValue + padding).replace(/-/g, '+').replace(/_/g, '/');
   const raw = window.atob(base64);
-  return Uint8Array.from([...raw].map(char => char.charCodeAt(0)));
+  const key = Uint8Array.from([...raw].map(char => char.charCodeAt(0)));
+  if (key.length !== 65) throw new Error('מפתח ההתראות שהוגדר במערכת אינו תקין');
+  return key;
 }
 
 function withTimeout(promise, ms, message) {
@@ -49,6 +52,7 @@ export default function PushNotificationToggle({ compact = false, iconOnly = fal
       }
 
       const { data } = await withTimeout(base44.functions.invoke('getVapidPublicKey', {}), 15000, 'לא התקבל מפתח התראות');
+      if (!data?.publicKey) throw new Error('מפתח ההתראות שהוגדר במערכת אינו תקין');
       const registration = await withTimeout(navigator.serviceWorker.register('/sw.js'), 15000, 'שירות ההתראות לא נטען');
       const subscription = await withTimeout(registration.pushManager.subscribe({
         userVisibleOnly: true,
