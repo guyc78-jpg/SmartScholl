@@ -10,7 +10,7 @@ function urlBase64ToUint8Array(value) {
   return Uint8Array.from([...raw].map(char => char.charCodeAt(0)));
 }
 
-export default function PushNotificationToggle({ compact = false, iconOnly = false }) {
+export default function PushNotificationToggle({ compact = false, iconOnly = false, showUnsupported = false }) {
   const [supported, setSupported] = useState(false);
   const [enabled, setEnabled] = useState(false);
   const [endpoint, setEndpoint] = useState('');
@@ -87,7 +87,22 @@ export default function PushNotificationToggle({ compact = false, iconOnly = fal
     setBusy(false);
   };
 
-  if (!supported) return null;
+  if (!supported) {
+    if (!showUnsupported) return null;
+    return (
+      <div className="w-full rounded-xl border border-border bg-card p-3 text-right" dir="rtl">
+        <div className="flex items-start gap-2.5 justify-start">
+          <Bell className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+          <div className="min-w-0 text-right">
+            <p className="text-sm font-semibold text-foreground">התראות Push לא זמינות בדפדפן הזה</p>
+            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+              באייפון צריך לפתוח את האפליקציה מהמסך הראשי אחרי “הוסף למסך הבית”. במחשב מומלץ לבדוק דרך Chrome או Edge.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (iconOnly) {
     return (
