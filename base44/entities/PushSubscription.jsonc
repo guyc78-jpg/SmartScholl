@@ -1,0 +1,44 @@
+{
+  "name": "PushSubscription",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "description": "\u05de\u05d6\u05d4\u05d4 \u05de\u05e9\u05ea\u05de\u05e9"
+    },
+    "user_email": {
+      "type": "string",
+      "description": "\u05d0\u05d9\u05de\u05d9\u05d9\u05dc \u05de\u05e9\u05ea\u05de\u05e9"
+    },
+    "user_name": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05de\u05e9\u05ea\u05de\u05e9"
+    },
+    "endpoint": {
+      "type": "string",
+      "description": "\u05db\u05ea\u05d5\u05d1\u05ea \u05de\u05e0\u05d5\u05d9 Push"
+    },
+    "subscription_json": {
+      "type": "string",
+      "description": "\u05e0\u05ea\u05d5\u05e0\u05d9 \u05d4\u05de\u05e0\u05d5\u05d9 \u05db-JSON"
+    },
+    "user_agent": {
+      "type": "string",
+      "description": "\u05d3\u05e4\u05d3\u05e4\u05df/\u05de\u05db\u05e9\u05d9\u05e8"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true,
+      "description": "\u05d4\u05d0\u05dd \u05d4\u05de\u05e0\u05d5\u05d9 \u05e4\u05e2\u05d9\u05dc"
+    },
+    "last_seen_at": {
+      "type": "string",
+      "description": "\u05e2\u05d3\u05db\u05d5\u05df \u05d0\u05d7\u05e8\u05d5\u05df"
+    }
+  },
+  "required": [
+    "endpoint",
+    "subscription_json",
+    "is_active"
+  ]
+}

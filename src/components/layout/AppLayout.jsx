@@ -13,6 +13,7 @@ import {
 import { cn } from '@/lib/utils';
 import { getAvailableRoles, getRoleDisplayLines, getUserDisplayName } from '@/lib/roleUtils';
 import ProfileAvatar from '@/components/profile/ProfileAvatar';
+import PushNotificationToggle from '@/components/notifications/PushNotificationToggle';
 import { getDashboardLabel } from '@/lib/dashboardLabels';
 import RoleIcon from '@/components/ui/RoleIcon';
 import { coordinatorHasHomeroom } from '@/lib/schoolStructure';
@@ -310,6 +311,7 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
 
       {/* Bottom actions */}
       <div className="px-3 py-3 border-t border-sidebar-border space-y-0.5">
+        <PushNotificationToggle />
         {activeRole !== 'student' && (
           <Link
             to="/profile"
