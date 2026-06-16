@@ -10,6 +10,13 @@ function urlBase64ToUint8Array(value) {
   return Uint8Array.from([...raw].map(char => char.charCodeAt(0)));
 }
 
+function withTimeout(promise, ms, message) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(message)), ms)),
+  ]);
+}
+
 export default function PushNotificationToggle({ compact = false, iconOnly = false, showUnsupported = false }) {
   const [supported, setSupported] = useState(false);
   const [enabled, setEnabled] = useState(false);
@@ -22,8 +29,8 @@ export default function PushNotificationToggle({ compact = false, iconOnly = fal
     setSupported(ok);
     if (!ok) return;
 
-    navigator.serviceWorker.ready
-      .then(registration => registration.pushManager.getSubscription())
+    navigator.serviceWorker.getRegistration('/sw.js')
+      .then(registration => registration?.pushManager.getSubscription())
       .then(subscription => {
         setEnabled(!!subscription);
         setEndpoint(subscription?.endpoint || '');
@@ -34,57 +41,71 @@ export default function PushNotificationToggle({ compact = false, iconOnly = fal
   const enable = async () => {
     setBusy(true);
     setMessage('');
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') {
-      setMessage('ההתראות לא אושרו בדפדפן');
+    try {
+      const permission = await withTimeout(Notification.requestPermission(), 15000, 'בקשת ההרשאה לא הושלמה');
+      if (permission !== 'granted') {
+        setMessage('ההתראות לא אושרו בדפדפן');
+        return;
+      }
+
+      const { data } = await withTimeout(base44.functions.invoke('getVapidPublicKey', {}), 15000, 'לא התקבל מפתח התראות');
+      const registration = await withTimeout(navigator.serviceWorker.register('/sw.js'), 15000, 'שירות ההתראות לא נטען');
+      const subscription = await withTimeout(registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(data.publicKey),
+      }), 20000, 'יצירת המנוי להתראות לא הושלמה');
+
+      await withTimeout(base44.functions.invoke('savePushSubscription', {
+        subscription: subscription.toJSON(),
+        enabled: true,
+        userAgent: navigator.userAgent,
+      }), 15000, 'שמירת המנוי לא הושלמה');
+
+      setEndpoint(subscription.endpoint);
+      setEnabled(true);
+      setMessage('ההתראות הופעלו');
+    } catch (error) {
+      setMessage(error?.message || 'לא ניתן להפעיל התראות בדפדפן הזה');
+    } finally {
       setBusy(false);
-      return;
     }
-
-    const { data } = await base44.functions.invoke('getVapidPublicKey', {});
-    const registration = await navigator.serviceWorker.register('/sw.js');
-    const subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(data.publicKey),
-    });
-
-    await base44.functions.invoke('savePushSubscription', {
-      subscription: subscription.toJSON(),
-      enabled: true,
-      userAgent: navigator.userAgent,
-    });
-
-    setEndpoint(subscription.endpoint);
-    setEnabled(true);
-    setMessage('ההתראות הופעלו');
-    setBusy(false);
   };
 
   const disable = async () => {
     setBusy(true);
     setMessage('');
-    const registration = await navigator.serviceWorker.ready;
-    const subscription = await registration.pushManager.getSubscription();
-    if (subscription) {
-      await base44.functions.invoke('savePushSubscription', {
-        endpoint: subscription.endpoint,
-        enabled: false,
-      });
-      await subscription.unsubscribe();
+    try {
+      const registration = await withTimeout(navigator.serviceWorker.ready, 15000, 'שירות ההתראות לא זמין');
+      const subscription = await registration.pushManager.getSubscription();
+      if (subscription) {
+        await base44.functions.invoke('savePushSubscription', {
+          endpoint: subscription.endpoint,
+          enabled: false,
+        });
+        await subscription.unsubscribe();
+      }
+      setEndpoint('');
+      setEnabled(false);
+      setMessage('ההתראות כובו');
+    } catch (error) {
+      setMessage(error?.message || 'לא ניתן לכבות התראות כרגע');
+    } finally {
+      setBusy(false);
     }
-    setEndpoint('');
-    setEnabled(false);
-    setMessage('ההתראות כובו');
-    setBusy(false);
   };
 
   const sendTest = async () => {
     if (!endpoint) return;
     setBusy(true);
     setMessage('');
-    await base44.functions.invoke('sendTestPushNotification', { endpoint });
-    setMessage('נשלחה התראת בדיקה');
-    setBusy(false);
+    try {
+      await withTimeout(base44.functions.invoke('sendTestPushNotification', { endpoint }), 15000, 'שליחת הבדיקה לא הושלמה');
+      setMessage('נשלחה התראת בדיקה');
+    } catch (error) {
+      setMessage(error?.message || 'לא ניתן לשלוח התראת בדיקה כרגע');
+    } finally {
+      setBusy(false);
+    }
   };
 
   if (!supported) {
