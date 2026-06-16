@@ -28,7 +28,12 @@ function getClaims() {
   if (typeof window === 'undefined') return null;
   const raw = sessionStorage.getItem(CLAIMS_KEY);
   if (!raw) return null;
-  claimsCache = JSON.parse(raw);
+  try {
+    claimsCache = JSON.parse(raw);
+  } catch {
+    sessionStorage.removeItem(CLAIMS_KEY);
+    return null;
+  }
   return claimsCache;
 }
 

@@ -9,8 +9,12 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await req.json();
+    const body = await req.json().catch(() => ({}));
     const { event } = body;
+
+    if (!event || !event.entity_id) {
+      return Response.json({ skipped: 'Missing event data' });
+    }
 
     // Handle only AttendanceRecord creation/update
     if (event.entity_name !== 'AttendanceRecord') {
@@ -110,6 +114,7 @@ Deno.serve(async (req) => {
       message: `התראה יצורה ל${record.student_name}: ${absenceCount} היעדרויות`,
     });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('checkAttendanceAlerts error:', error.message);
+    return Response.json({ error: 'Internal server error' }, { status: 500 });
   }
 });

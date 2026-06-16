@@ -47,36 +47,44 @@ export default function StudentProfileEditCard({ student, user, onSaved }) {
   const handleSave = async () => {
     if (!form.firstName.trim() || !form.lastName.trim()) { toast.error('יש למלא שם פרטי ושם משפחה'); return; }
     if (!form.gender) { toast.error('יש לבחור זכר או נקבה'); return; }
+    if (!emailLocked && form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+      toast.error('כתובת המייל אינה תקינה'); return;
+    }
     setSaving(true);
-    const firstName = form.firstName.trim();
-    const lastName = form.lastName.trim();
-    const fullName = `${firstName} ${lastName}`;
+    try {
+      const firstName = form.firstName.trim();
+      const lastName = form.lastName.trim();
+      const fullName = `${firstName} ${lastName}`;
 
-    const studentPatch = {
-      firstName, lastName,
-      first_name: firstName, last_name: lastName,
-      full_name: fullName, fullName,
-      phone: form.phone.trim(),
-      address: form.address.trim(),
-      gender: form.gender,
-      photo_url: form.image_mode === 'photo' ? form.photo_url : student.photo_url || '',
-      user_email: user.email,
-    };
-    if (!emailLocked && form.email.trim()) studentPatch.email = form.email.trim();
-    await base44.entities.Student.update(student.id, studentPatch);
+      const studentPatch = {
+        firstName, lastName,
+        first_name: firstName, last_name: lastName,
+        full_name: fullName, fullName,
+        phone: form.phone.trim(),
+        address: form.address.trim(),
+        gender: form.gender,
+        photo_url: form.image_mode === 'photo' ? form.photo_url : student.photo_url || '',
+        user_email: user.email,
+      };
+      if (!emailLocked && form.email.trim()) studentPatch.email = form.email.trim();
+      await base44.entities.Student.update(student.id, studentPatch);
 
-    await base44.auth.updateMe({
-      profile_full_name: fullName,
-      profile_phone: form.phone.trim(),
-      profile_gender: form.gender === 'נקבה' ? 'female' : 'male',
-      profile_avatar: activeAvatar,
-      profile_photo_url: form.photo_url || '',
-      profile_image_mode: form.image_mode,
-    });
+      await base44.auth.updateMe({
+        profile_full_name: fullName,
+        profile_phone: form.phone.trim(),
+        profile_gender: form.gender === 'נקבה' ? 'female' : 'male',
+        profile_avatar: activeAvatar,
+        profile_photo_url: form.photo_url || '',
+        profile_image_mode: form.image_mode,
+      });
 
-    toast.success('הפרופיל עודכן בהצלחה');
-    setSaving(false);
-    onSaved?.();
+      toast.success('הפרופיל עודכן בהצלחה');
+      onSaved?.();
+    } catch (err) {
+      toast.error('שגיאה בשמירת הפרופיל — נסה שוב');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (

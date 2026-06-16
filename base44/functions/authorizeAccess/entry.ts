@@ -108,7 +108,7 @@ function buildClaimsFromStudent(student, email) {
   };
 }
 
-async function getAccess(base44, user) {
+async function getAccess(base44, user, skipLog = false) {
   const email = normalizeEmail(user.email);
   let approvedRecords = await base44.asServiceRole.entities.ApprovedUser.filter({ email });
 
@@ -195,16 +195,18 @@ async function getAccess(base44, user) {
       profile_display_additional_roles: [],
     };
 
-    await writeLog(base44, {
-      eventType: 'login_success',
-      actorEmail: email,
-      targetEmail: email,
-      targetName: primaryItem.record.fullName,
-      actionName: 'login_success',
-      role: primaryRole,
-      details: 'כניסה מוצלחת למערכת',
-      metadata: { roles, scopesByRole },
-    });
+    if (!skipLog) {
+      await writeLog(base44, {
+        eventType: 'login_success',
+        actorEmail: email,
+        targetEmail: email,
+        targetName: primaryItem.record.fullName,
+        actionName: 'login_success',
+        role: primaryRole,
+        details: 'כניסה מוצלחת למערכת',
+        metadata: { roles, scopesByRole },
+      });
+    }
     return { allowed: true, claims };
   }
 
@@ -214,16 +216,18 @@ async function getAccess(base44, user) {
 
   if (student) {
     const claims = buildClaimsFromStudent(student, email);
-    await writeLog(base44, {
-      eventType: 'login_success',
-      actorEmail: email,
-      targetEmail: email,
-      targetName: claims.fullName,
-      actionName: 'student_login_success',
-      role: 'student',
-      details: 'כניסת תלמיד מוצלחת',
-      metadata: { student_id: student.id },
-    });
+    if (!skipLog) {
+      await writeLog(base44, {
+        eventType: 'login_success',
+        actorEmail: email,
+        targetEmail: email,
+        targetName: claims.fullName,
+        actionName: 'student_login_success',
+        role: 'student',
+        details: 'כניסת תלמיד מוצלחת',
+        metadata: { student_id: student.id },
+      });
+    }
     return { allowed: true, claims };
   }
 
@@ -238,8 +242,8 @@ async function getAccess(base44, user) {
   return { allowed: false };
 }
 
-async function requireSystemAdmin(base44, user) {
-  const access = await getAccess(base44, user);
+async function requireSystemAdmin(base44, user, skipLog = false) {
+  const access = await getAccess(base44, user, skipLog);
   return access.allowed && access.claims?.role === 'system_admin';
 }
 
@@ -261,7 +265,7 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'logUnauthorizedAccess') {
-      const access = await getAccess(base44, user);
+      const access = await getAccess(base44, user, true);
       await writeLog(base44, {
         eventType: 'unauthorized_access',
         actorEmail: normalizeEmail(user.email),
@@ -276,7 +280,7 @@ Deno.serve(async (req) => {
       return Response.json({ success: true });
     }
 
-    const isAdmin = await requireSystemAdmin(base44, user);
+    const isAdmin = await requireSystemAdmin(base44, user, true);
     if (!isAdmin) {
       await writeLog(base44, {
         eventType: 'unauthorized_access',
