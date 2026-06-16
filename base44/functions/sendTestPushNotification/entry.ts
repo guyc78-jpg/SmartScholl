@@ -23,9 +23,9 @@ Deno.serve(async (req) => {
 
     const subscription = JSON.parse(subscriptionRecord.subscription_json);
     await webpush.sendNotification(subscription, JSON.stringify({
-      title: 'בדיקת התראות',
-      body: 'ההתראות פעילות במכשיר הזה.',
-      url: '/',
+      title: 'פוש דמו ממערכת ניהול כיתת חינוך',
+      body: 'אם קיבלת את ההודעה הזו — ההתראות עובדות במכשיר הזה.',
+      url: '/push-notifications',
     }));
 
     return Response.json({ ok: true });

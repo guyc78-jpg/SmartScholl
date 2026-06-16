@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Bell } from 'lucide-react';
+import { Bell, Send } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { cn } from '@/lib/utils';
 
@@ -100,7 +100,7 @@ export default function PushNotificationToggle({ compact = false, iconOnly = fal
     setMessage('');
     try {
       await withTimeout(base44.functions.invoke('sendTestPushNotification', { endpoint }), 15000, 'שליחת הבדיקה לא הושלמה');
-      setMessage('נשלחה התראת בדיקה');
+      setMessage('נשלח פוש דמו למכשיר הזה');
     } catch (error) {
       setMessage(error?.message || 'לא ניתן לשלוח התראת בדיקה כרגע');
     } finally {
@@ -161,9 +161,10 @@ export default function PushNotificationToggle({ compact = false, iconOnly = fal
           type="button"
           onClick={sendTest}
           disabled={busy}
-          className="w-full text-[11px] text-right px-3 py-1 rounded-md text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/40 disabled:opacity-60"
+          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors text-right bg-secondary/15 text-secondary-foreground hover:bg-secondary/25 disabled:opacity-60"
         >
-          שלח התראת בדיקה למכשיר הזה
+          <Send className="w-4 h-4 flex-shrink-0" />
+          <span className="text-[13px] flex-1 text-right">שלח פוש דמו עכשיו</span>
         </button>
       )}
       {message && <p className="text-[11px] text-sidebar-foreground/55 px-3 text-right">{message}</p>}
