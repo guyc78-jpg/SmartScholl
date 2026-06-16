@@ -113,18 +113,32 @@ function isExamRelevantToStudent(exam, student) {
   return getExamAudienceSource(exam, student);
 }
 
-function getScopedStudents(students, user, role) {
-  if (role === 'admin') return students;
-  if (role === 'student') return students.filter(student => student.user_email === user?.email || student.email === user?.email || student.created_by_id === user?.id);
+async function getScopedStudents(base44, user, role) {
+  if (role === 'admin') return await base44.asServiceRole.entities.Student.list('-updated_date', 1000);
+
+  if (role === 'student') {
+    const queries = [
+      base44.asServiceRole.entities.Student.filter({ user_email: user?.email }, '-updated_date', 20),
+      base44.asServiceRole.entities.Student.filter({ email: user?.email }, '-updated_date', 20),
+      base44.asServiceRole.entities.Student.filter({ created_by_id: user?.id }, '-updated_date', 20),
+    ];
+    const results = await Promise.all(queries);
+    return [...new Map(results.flat().filter(Boolean).map(student => [student.id, student])).values()];
+  }
+
   if (role === 'homeroom_teacher') {
-    const classId = normalize(user?.profile_class_id);
-    const className = normalize(user?.profile_homeroom_class || user?.profile_class);
-    return students.filter(student => (!!classId && normalize(student.class_id) === classId) || (!!className && normalize(student.class_name) === className));
+    if (user?.profile_class_id) return await base44.asServiceRole.entities.Student.filter({ class_id: user.profile_class_id }, '-updated_date', 200);
+    const className = user?.profile_homeroom_class || user?.profile_class;
+    if (className) return await base44.asServiceRole.entities.Student.filter({ class_name: className }, '-updated_date', 200);
+    return [];
   }
+
   if (role === 'coordinator') {
-    const grade = normalize(user?.profile_grade_managed || user?.profile_grade);
-    return students.filter(student => !!grade && getStudentGrade(student) === grade);
+    const grade = user?.profile_grade_managed || user?.profile_grade;
+    if (!grade) return [];
+    return await base44.asServiceRole.entities.Student.filter({ grade }, '-updated_date', 1000);
   }
+
   return [];
 }
 
@@ -158,18 +172,17 @@ Deno.serve(async (req) => {
     const weekStartStr = weekStart.toISOString().split('T')[0];
     const weekEndStr = weekEnd.toISOString().split('T')[0];
 
-    const [allStudents, attendance, exams, tasks, incidents] = await Promise.all([
-      base44.asServiceRole.entities.Student.list(),
-      base44.asServiceRole.entities.AttendanceRecord.list(),
-      base44.asServiceRole.entities.Exam.list(),
-      base44.asServiceRole.entities.Task.filter({ status: 'לביצוע' }),
-      base44.asServiceRole.entities.DisciplineEvent.filter({ status: 'פתוח' }),
-    ]);
-
-    const students = getScopedStudents(allStudents || [], user, role);
+    const students = await getScopedStudents(base44, user, role);
     const scopedStudentIds = new Set(students.map(student => student.id));
     const scopedClassIds = new Set(students.map(s => s.class_id).filter(Boolean));
     const scopedGrades = new Set(students.map(s => normalize(s.grade || '')).filter(Boolean));
+
+    const [attendance, exams, tasks, incidents] = await Promise.all([
+      base44.asServiceRole.entities.AttendanceRecord.list('-date', 1000),
+      base44.asServiceRole.entities.Exam.list('date', 500),
+      base44.asServiceRole.entities.Task.filter({ status: 'לביצוע' }, 'due_date', 1000),
+      base44.asServiceRole.entities.DisciplineEvent.filter({ status: 'פתוח' }, '-date', 1000),
+    ]);
 
     const attByStudent = groupBy((attendance || []).filter(record => scopedStudentIds.has(record.student_id)), 'student_id');
     const tasksByStudent = groupBy((tasks || []).filter(record => scopedStudentIds.has(record.student_id)), 'student_id');

@@ -189,6 +189,8 @@ async function recordAllowed(rawClient, entityName, record, mode = 'read') {
     return false;
   }
 
+  if (record?.class_id && await classAllowed(rawClient, claims, record.class_id)) return true;
+
   if (record?.student_id) {
     const student = await studentById(rawClient, record.student_id);
     return studentAllowed(rawClient, claims, student);
@@ -218,10 +220,10 @@ async function filterRecords(rawClient, entityName, rows) {
   // Admins see everything — skip all per-row work entirely.
   if (isAdmin(claims)) return rows;
 
-  // Warm caches once for the whole batch to avoid N+1 network calls,
-  // then evaluate every row's permission in parallel.
-  if (entityName !== 'Student') await preloadStudents(rawClient, rows);
+  // Warm only the caches needed for this batch.
   if (!classCache.rows) await getClasses(rawClient).catch(() => {});
+  const needsStudentLookup = getRole(claims) === 'student' || rows.some(row => row?.student_id && !row?.class_id);
+  if (entityName !== 'Student' && needsStudentLookup) await preloadStudents(rawClient, rows);
 
   const decisions = await Promise.all(
     rows.map(row => recordAllowed(rawClient, entityName, row, 'read').catch(() => false))
