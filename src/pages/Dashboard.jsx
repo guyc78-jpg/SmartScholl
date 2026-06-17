@@ -41,15 +41,15 @@ function hebrewDate() {
   return `יום ${HEBREW_DAYS[d.getDay()]}, ${d.getDate()} ב${HEBREW_MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-export default function Dashboard({ user, role }) {
+export default function Dashboard({ user, role, initialData }) {
    const navigate = useNavigate();
-   const [students, setStudents] = useState([]);
-   const [todayAttendance, setTodayAttendance] = useState([]);
-   const [exams, setExams] = useState([]);
-   const [tasks, setTasks] = useState([]);
-   const [discipline, setDiscipline] = useState([]);
-   const [announcements, setAnnouncements] = useState([]);
-   const [loading, setLoading] = useState(true);
+   const [students, setStudents] = useState(initialData?.students || []);
+   const [todayAttendance, setTodayAttendance] = useState(initialData?.todayAttendance || []);
+   const [exams, setExams] = useState(initialData?.exams || []);
+   const [tasks, setTasks] = useState(initialData?.tasks || []);
+   const [discipline, setDiscipline] = useState(initialData?.discipline || []);
+   const [announcements, setAnnouncements] = useState(initialData?.announcements || []);
+   const [loading, setLoading] = useState(!initialData);
    const [quickAction, setQuickAction] = useState(null);
    const [tasksDialogOpen, setTasksDialogOpen] = useState(false);
    const [selectedDisciplineEvent, setSelectedDisciplineEvent] = useState(null);
@@ -80,7 +80,16 @@ export default function Dashboard({ user, role }) {
   ].filter(Boolean).join(' | ') || 'מערכת כללית';
 
   useEffect(() => {
-    loadData(true);
+    if (initialData) {
+      setStudents(initialData.students || []);
+      setTodayAttendance(initialData.todayAttendance || []);
+      setExams(initialData.exams || []);
+      setTasks(initialData.tasks || []);
+      setDiscipline(initialData.discipline || []);
+      setAnnouncements(initialData.announcements || []);
+      setLoading(false);
+    }
+    loadData(!initialData);
     const scheduleReload = () => {
       clearTimeout(loadTimerRef.current);
       loadTimerRef.current = setTimeout(() => loadData(false), 150);

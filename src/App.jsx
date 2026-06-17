@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import AccessDenied from '@/components/auth/AccessDenied';
 import { useState, useEffect, useRef } from 'react';
+import { base44 } from '@/api/base44Client';
 import { seedDemoData } from '@/lib/demoData';
 import AppLayout from '@/components/layout/AppLayout';
 import { Toaster as SonnerToaster } from 'sonner';
@@ -52,19 +53,85 @@ import { getAvailableRoles, getInitialWorkRole, getSystemRole } from './lib/role
 import { SimulationProvider, useSimulation } from '@/lib/SimulationContext';
 import SimulationBanner from '@/components/permissions/SimulationBanner';
 import { setSimulationGuard } from '@/lib/simulationGuard';
+import { getAttendanceScopedStudents, getScopedClassIds, loadScopedAttendanceForDate, getSelectedAttendanceDate } from '@/lib/attendanceScope.js';
+
+const validateRequiredBootstrapData = (user, role, approvedRoles) => {
+  if (!user) throw new Error('לא נמצא משתמש מחובר.');
+  if (!approvedRoles.length) throw new Error('לא נמצאו הרשאות פעילות למשתמש.');
+  if (!role || !approvedRoles.includes(role)) throw new Error('לא ניתן לקבוע תפקיד פעיל תקין.');
+  if (!user.authorization && !user.__simulated) throw new Error('נתוני ההרשאה עדיין לא נטענו.');
+
+  if (role === 'homeroom_teacher' && !(user.profile_class_id || user.profile_homeroom_class_id || user.homeroomClassId || user.profile_class || user.profile_homeroom_class || user.authorization?.scope?.homeroomClassId)) {
+    throw new Error('חסר שיוך לכיתת חינוך.');
+  }
+  if ((role === 'grade_coordinator' || role === 'coordinator') && !(user.profile_grade_managed || user.gradeId || user.authorization?.scopes_by_role?.grade_coordinator?.gradeId || user.authorization?.scope?.gradeId)) {
+    throw new Error('חסר שיוך לשכבה.');
+  }
+  if (role === 'division_manager' && !(user.profile_division || user.divisionType || user.authorization?.scope?.divisionType)) {
+    throw new Error('חסר שיוך לחטיבה.');
+  }
+  if (role === 'student' && !(user.profile_class_id || user.profile_class)) {
+    throw new Error('חסר שיוך לכיתה בפרופיל התלמיד.');
+  }
+};
+
+const loadDashboardBootstrapData = async (user, role) => {
+  const students = await getAttendanceScopedStudents(user, role);
+  const classIds = getScopedClassIds(students);
+  const classIdSet = new Set(classIds);
+  const scopedIds = new Set(students.map(student => student.id));
+  const shouldFetchAll = role === 'admin' || role === 'system_admin' || classIds.length > 3;
+  const filterByClass = records => (records || []).filter(record => classIdSet.has(record.class_id));
+
+  const fetchForScope = async (entityName, limit = 250) => {
+    if (!classIds.length) return [];
+    if (shouldFetchAll) {
+      const records = await base44.entities[entityName].list('-updated_date', limit);
+      return filterByClass(records);
+    }
+    const results = await Promise.all(classIds.map(classId => base44.entities[entityName].filter({ class_id: classId }, '-updated_date', limit)));
+    return results.flat();
+  };
+
+  const attendanceDate = getSelectedAttendanceDate();
+  const [todayAttendance, exams, tasks, discipline, announcements] = await Promise.all([
+    loadScopedAttendanceForDate(students, attendanceDate),
+    fetchForScope('Exam', 250),
+    fetchForScope('Task', 250),
+    fetchForScope('DisciplineEvent', 250),
+    fetchForScope('Announcement', 100),
+  ]);
+
+  return {
+    students,
+    todayAttendance,
+    exams,
+    tasks: tasks.filter(task => !task.student_id || scopedIds.has(task.student_id)),
+    discipline: discipline.filter(record => scopedIds.has(record.student_id)),
+    announcements,
+    attendanceDate,
+  };
+};
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user: realUser, updateCurrentUser, checkUserAuth } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user: realUser, updateCurrentUser, checkUserAuth, checkAppState } = useAuth();
   const { preference: themePreference, setPreference: setThemePreference, isDark: darkMode, toggleDark } = useThemePreference();
   const { isSimulating, simRole, buildSimulatedUser } = useSimulation();
   const navigate = useNavigate();
   const [seeded, setSeeded] = useState(false);
   const [workRole, setWorkRole] = useState(null);
   const [initialLoaderVisible, setInitialLoaderVisible] = useState(true);
+  const [bootstrapAttempt, setBootstrapAttempt] = useState(0);
+  const [bootstrap, setBootstrap] = useState({ status: 'idle', message: 'מכינים עבורך את סביבת העבודה', data: null, error: '' });
 
   // משתמש אפקטיבי — אמיתי במצב רגיל, מדומה במצב סימולציה
   const user = isSimulating ? buildSimulatedUser(realUser, simRole) : realUser;
   const effectiveWorkRole = isSimulating ? simRole : workRole;
+  const bootApprovedRoles = user ? getAvailableRoles(user) : [];
+  const bootSystemRole = user ? getSystemRole(user) : null;
+  const bootRole = effectiveWorkRole || bootSystemRole;
+  const bootPageRole = bootRole === 'system_admin' ? 'admin' : bootRole === 'grade_coordinator' ? 'coordinator' : bootRole;
+  const bootStaff = bootApprovedRoles.includes('system_admin') || bootApprovedRoles.includes('admin') || (['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'].includes(bootRole) && bootApprovedRoles.includes(bootRole));
 
   // הפעלת/כיבוי מגן הסימולציה (חוסם כתיבת נתונים אמיתיים)
   useEffect(() => {
@@ -119,14 +186,39 @@ const AuthenticatedApp = () => {
     return () => window.cancelIdleCallback ? window.cancelIdleCallback(id) : clearTimeout(id);
   }, [user?.id]);
 
-  if (isLoadingPublicSettings || isLoadingAuth || initialLoaderVisible) {
-    return <PremiumInitialLoader />;
+  useEffect(() => {
+    if (isLoadingPublicSettings || isLoadingAuth || !user || !bootRole) return;
+    if (!isSimulating && realUser && !workRole) return;
+
+    let cancelled = false;
+    const runBootstrap = async () => {
+      setBootstrap({ status: 'loading', message: 'טוענים משתמש, הרשאות ושיוכים', data: null, error: '' });
+      try {
+        validateRequiredBootstrapData(user, bootRole, bootApprovedRoles);
+        const dashboard = bootStaff ? await loadDashboardBootstrapData(user, bootPageRole) : null;
+        if (!cancelled) setBootstrap({ status: 'ready', message: 'הכול מוכן', data: { dashboard }, error: '' });
+      } catch (error) {
+        if (!cancelled) setBootstrap({ status: 'error', message: '', data: null, error: error.message || 'אירעה שגיאה בטעינת נתוני החובה.' });
+      }
+    };
+
+    runBootstrap();
+    return () => { cancelled = true; };
+  }, [isLoadingPublicSettings, isLoadingAuth, user?.id, bootRole, bootPageRole, bootStaff, workRole, isSimulating, bootstrapAttempt]);
+
+  if (isLoadingPublicSettings || isLoadingAuth || initialLoaderVisible || bootstrap.status === 'loading' || (user && bootstrap.status === 'idle' && !authError)) {
+    return <PremiumInitialLoader status={bootstrap.message} />;
   }
 
   if (authError) {
     if (authError.type === 'access_denied') return <AccessDenied />;
     if (authError.type === 'user_not_registered') return <UserNotRegisteredError />;
-    else if (authError.type === 'auth_required') { navigateToLogin(); return null; }
+    if (authError.type === 'auth_required') { navigateToLogin(); return null; }
+    return <PremiumInitialLoader error="לא הצלחנו להשלים את טעינת האפליקציה. בדקו חיבור ונסו שוב." onRetry={checkAppState} />;
+  }
+
+  if (bootstrap.status === 'error') {
+    return <PremiumInitialLoader error={bootstrap.error} onRetry={() => setBootstrapAttempt(value => value + 1)} />;
   }
 
   // Onboarding gate — admin (by any approved role) always bypasses
@@ -172,7 +264,7 @@ const AuthenticatedApp = () => {
       <Routes>
         {/* Staff routes */}
         {staff && <>
-          <Route path="/" element={<Dashboard user={user} role={pageRole} />} />
+          <Route path="/" element={<Dashboard user={user} role={pageRole} initialData={bootstrap.data?.dashboard} />} />
           <Route path="/students" element={<Students role={pageRole} />} />
           <Route path="/students/:id" element={<StudentProfile role={pageRole} />} />
           <Route path="/classrooms" element={<Classrooms user={user} role={pageRole} />} />
