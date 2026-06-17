@@ -1,0 +1,85 @@
+{
+  "name": "PushNotificationQueue",
+  "type": "object",
+  "properties": {
+    "recipient_user_id": {
+      "type": "string",
+      "description": "\u05de\u05d6\u05d4\u05d4 \u05de\u05e9\u05ea\u05de\u05e9 \u05d9\u05e2\u05d3"
+    },
+    "recipient_email": {
+      "type": "string",
+      "description": "\u05de\u05d9\u05d9\u05dc \u05de\u05e9\u05ea\u05de\u05e9 \u05d9\u05e2\u05d3"
+    },
+    "actor_user_id": {
+      "type": "string",
+      "description": "\u05de\u05d6\u05d4\u05d4 \u05d4\u05de\u05e9\u05ea\u05de\u05e9 \u05e9\u05d1\u05d9\u05e6\u05e2 \u05d0\u05ea \u05d4\u05e4\u05e2\u05d5\u05dc\u05d4"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "attendance_exception",
+        "community_exception",
+        "parent_communication",
+        "discipline_event",
+        "new_task",
+        "urgent_treatment"
+      ],
+      "description": "\u05e1\u05d5\u05d2 \u05d4\u05d0\u05d9\u05e8\u05d5\u05e2 \u05dc\u05d4\u05ea\u05e8\u05d0\u05d4"
+    },
+    "student_id": {
+      "type": "string",
+      "description": "\u05de\u05d6\u05d4\u05d4 \u05ea\u05dc\u05de\u05d9\u05d3/\u05d4 \u05e8\u05dc\u05d5\u05d5\u05e0\u05d8\u05d9"
+    },
+    "student_name": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05ea\u05dc\u05de\u05d9\u05d3/\u05d4 \u05e8\u05dc\u05d5\u05d5\u05e0\u05d8\u05d9"
+    },
+    "class_id": {
+      "type": "string",
+      "description": "\u05de\u05d6\u05d4\u05d4 \u05db\u05d9\u05ea\u05d4 \u05e8\u05dc\u05d5\u05d5\u05e0\u05d8\u05d9\u05ea"
+    },
+    "title": {
+      "type": "string",
+      "description": "\u05db\u05d5\u05ea\u05e8\u05ea \u05d4\u05d4\u05ea\u05e8\u05d0\u05d4"
+    },
+    "body": {
+      "type": "string",
+      "description": "\u05ea\u05d5\u05db\u05df \u05d4\u05d4\u05ea\u05e8\u05d0\u05d4"
+    },
+    "url": {
+      "type": "string",
+      "description": "\u05db\u05ea\u05d5\u05d1\u05ea \u05dc\u05e4\u05ea\u05d9\u05d7\u05d4 \u05d1\u05dc\u05d7\u05d9\u05e6\u05d4"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "sent",
+        "failed"
+      ],
+      "default": "pending",
+      "description": "\u05e1\u05d8\u05d8\u05d5\u05e1 \u05e9\u05dc\u05d9\u05d7\u05ea \u05d4\u05d4\u05ea\u05e8\u05d0\u05d4"
+    },
+    "queued_at": {
+      "type": "string",
+      "description": "\u05ea\u05d0\u05e8\u05d9\u05da \u05d5\u05e9\u05e2\u05ea \u05db\u05e0\u05d9\u05e1\u05d4 \u05dc\u05ea\u05d5\u05e8"
+    },
+    "sent_at": {
+      "type": "string",
+      "description": "\u05ea\u05d0\u05e8\u05d9\u05da \u05d5\u05e9\u05e2\u05ea \u05e9\u05dc\u05d9\u05d7\u05d4"
+    },
+    "error": {
+      "type": "string",
+      "description": "\u05e4\u05d9\u05e8\u05d5\u05d8 \u05e9\u05d2\u05d9\u05d0\u05d4 \u05d0\u05dd \u05d4\u05e9\u05dc\u05d9\u05d7\u05d4 \u05e0\u05db\u05e9\u05dc\u05d4"
+    }
+  },
+  "required": [
+    "recipient_user_id",
+    "event_type",
+    "title",
+    "body",
+    "url",
+    "status",
+    "queued_at"
+  ]
+}
