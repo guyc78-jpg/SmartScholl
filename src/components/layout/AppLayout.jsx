@@ -297,7 +297,7 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
       </div>
 
       <div className="px-4 py-3 border-b border-sidebar-border">
-        <PushNotificationToggle />
+        <PushNotificationToggle showUnsupported />
       </div>
 
       {/* Accordion Nav */}
@@ -435,7 +435,6 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
             <span className="font-bold text-foreground text-[13px]">ניהול כיתת חינוך</span>
           </div>
           <div className="flex items-center gap-1">
-            <PushNotificationToggle iconOnly />
             <button
               type="button"
               onClick={toggleDark}

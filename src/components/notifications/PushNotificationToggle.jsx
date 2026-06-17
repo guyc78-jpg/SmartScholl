@@ -115,15 +115,16 @@ export default function PushNotificationToggle({ compact = false, iconOnly = fal
   if (!supported) {
     if (!showUnsupported) return null;
     return (
-      <div className="w-full rounded-xl border border-border bg-card p-3 text-right" dir="rtl">
-        <div className="flex items-start gap-2.5 justify-start">
-          <Bell className="w-5 h-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-          <div className="min-w-0 text-right">
-            <p className="text-sm font-semibold text-foreground">התראות Push לא זמינות בדפדפן הזה</p>
-            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-              באייפון צריך לפתוח את האפליקציה מהמסך הראשי אחרי “הוסף למסך הבית”. במחשב מומלץ לבדוק דרך Chrome או Edge.
-            </p>
+      <div className="w-full rounded-lg px-3 py-2 text-right text-sidebar-foreground/60" dir="rtl">
+        <div className="flex items-center gap-2.5 justify-start">
+          <Bell className="w-4 h-4 flex-shrink-0" />
+          <div className="min-w-0 flex-1 text-right">
+            <p className="text-[13px] font-medium">התראות פוש</p>
+            <p className="text-[11px] mt-0.5 leading-relaxed">לא זמינות בדפדפן הזה</p>
           </div>
+          <span className="relative w-11 h-6 rounded-full bg-muted border border-border flex-shrink-0 opacity-70" aria-hidden="true">
+            <span className="absolute top-0.5 start-[18px] w-5 h-5 rounded-full bg-card border border-border" />
+          </span>
         </div>
       </div>
     );
@@ -150,6 +151,8 @@ export default function PushNotificationToggle({ compact = false, iconOnly = fal
     <div className={cn('w-full text-right space-y-1', compact && 'px-1')} dir="rtl">
       <button
         type="button"
+        role="switch"
+        aria-checked={enabled}
         onClick={enabled ? disable : enable}
         disabled={busy}
         className={cn(
@@ -158,7 +161,20 @@ export default function PushNotificationToggle({ compact = false, iconOnly = fal
         )}
       >
         <Bell className="w-4 h-4 flex-shrink-0" />
-        <span className="text-[13px] flex-1 text-right">{busy ? 'מטפל בהתראות...' : enabled ? 'התראות פעילות' : 'הפעל התראות'}</span>
+        <span className="text-[13px] flex-1 text-right font-medium">התראות פוש</span>
+        <span
+          className={cn(
+            'relative w-11 h-6 rounded-full transition-colors flex-shrink-0 border',
+            enabled ? 'bg-primary border-primary/60' : 'bg-slate-300 border-slate-400/80 dark:bg-muted dark:border-border'
+          )}
+        >
+          <span
+            className={cn(
+              'absolute top-0.5 w-5 h-5 rounded-full bg-white border border-slate-300 shadow-sm transition-transform',
+              enabled ? 'start-0.5' : 'start-[18px]'
+            )}
+          />
+        </span>
       </button>
       {enabled && (
         <button
@@ -171,7 +187,7 @@ export default function PushNotificationToggle({ compact = false, iconOnly = fal
           <span className="text-[13px] flex-1 text-right">שלח פוש דמו עכשיו</span>
         </button>
       )}
-      {message && <p className="text-[11px] text-sidebar-foreground/55 px-3 text-right">{message}</p>}
+      {message && <p className="text-[11px] text-sidebar-foreground/55 px-3 text-right">{busy ? 'מעדכן מצב...' : message}</p>}
     </div>
   );
 }
