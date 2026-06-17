@@ -1,12 +1,12 @@
 import { useRef, useState } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Sheet, SheetContent } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 
 function ReinforcementOptions({ options, value, onSelect }) {
   return (
-    <div className="max-h-[min(18rem,calc(100dvh-10rem))] overflow-y-auto overscroll-contain p-1 text-right" dir="rtl">
+    <div className="max-h-[min(17rem,calc(100dvh-8rem))] overflow-y-auto overscroll-contain p-1 text-right" dir="rtl">
       {options.map(option => {
         const selected = option === value;
         return (
@@ -78,10 +78,11 @@ export default function ReinforcementTypePicker({ value, onChange, options }) {
       </Popover>
 
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent side="bottom" className="z-[10050] rounded-t-2xl p-4 pb-[var(--app-overlay-padding-bottom)]" dir="rtl">
-          <SheetHeader className="text-right pb-2">
-            <SheetTitle className="text-right">סוג חיזוק</SheetTitle>
-          </SheetHeader>
+        <SheetContent
+          side="bottom"
+          className="z-[10050] h-auto max-h-[min(20rem,calc(100dvh-var(--app-mobile-overlay-bottom-space)-1rem))] rounded-t-2xl p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] [&>button]:hidden"
+          dir="rtl"
+        >
           <ReinforcementOptions options={options} value={value} onSelect={selectOption} />
         </SheetContent>
       </Sheet>
