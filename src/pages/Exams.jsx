@@ -156,7 +156,7 @@ export default function Exams({ role, user }) {
   return (
     <div className="p-4 lg:p-6 space-y-5 pb-28 lg:pb-10" dir="rtl">
       <PageHeader
-        title="לוח שנה שכבתי חכם"
+        title="לוח מבחנים ואירועים חכם"
         subtitle="כל אירועי השכבה במקום אחד — מבחנים, בגרויות, חזרות, טקסים, חגים, צילומים ופעילויות"
         actions={
           <RtlActionBar
