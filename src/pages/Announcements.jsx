@@ -17,6 +17,7 @@ import PageHeader from '@/components/ui/PageHeader';
 import EmptyState from '@/components/ui/EmptyState';
 import { toast } from 'sonner';
 import { Megaphone, Plus, Edit, Trash2, Eye, Check } from 'lucide-react';
+import useDeleteConfirm from '@/hooks/useDeleteConfirm';
 
 export default function Announcements({ role = 'homeroom_teacher', user }) {
   const [announcements, setAnnouncements] = useState([]);
@@ -28,6 +29,7 @@ export default function Announcements({ role = 'homeroom_teacher', user }) {
   const classId = role === 'student' ? getStudentClassId(user, CLASS_ID) : getUserApprovedClassId(user, CLASS_ID);
   const [form, setForm] = useState({ title: '', content: '', type: 'כיתתית', requires_confirmation: false });
   const [readCounts, setReadCounts] = useState({});
+  const { confirmDelete, DeleteConfirm } = useDeleteConfirm();
 
   useEffect(() => { loadData(); }, []);
   async function loadData() {
@@ -61,7 +63,11 @@ export default function Announcements({ role = 'homeroom_teacher', user }) {
   }
 
   async function handleDelete(id) {
-    if (!window.confirm('למחוק הודעה זו?')) return;
+    const approved = await confirmDelete({
+      title: 'למחוק את ההודעה?',
+      description: 'ההודעה תימחק מהרשימה ולא ניתן יהיה לשחזר אותה.',
+    });
+    if (!approved) return;
     await base44.entities.Announcement.delete(id);
     toast.success('נמחק'); loadData();
   }
@@ -150,6 +156,7 @@ export default function Announcements({ role = 'homeroom_teacher', user }) {
           </DialogContent>
         </Dialog>
       )}
+      <DeleteConfirm />
     </div>
   );
 }

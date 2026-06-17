@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import UrgentFlagItem from './UrgentFlagItem';
 import UrgentFlagDialog from './UrgentFlagDialog';
 import { sortFlags, STATUSES } from './urgentFlagUtils';
+import useDeleteConfirm from '@/hooks/useDeleteConfirm';
 
 /**
  * Full urgent-flags list — used in the class card / class dashboard.
@@ -18,6 +19,7 @@ export default function UrgentFlagsList({ classId, user, canManage }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [filter, setFilter] = useState('פתוח');
+  const { confirmDelete, DeleteConfirm } = useDeleteConfirm();
 
   async function load() {
     setLoading(true);
@@ -51,7 +53,11 @@ export default function UrgentFlagsList({ classId, user, canManage }) {
   }
 
   async function handleDelete(flag) {
-    if (!window.confirm(`למחוק את הדגש "${flag.title}"?`)) return;
+    const approved = await confirmDelete({
+      title: `למחוק את הדגש "${flag.title}"?`,
+      description: 'הדגש יימחק מרשימת הטיפול המיידי ולא ניתן יהיה לשחזר אותו.',
+    });
+    if (!approved) return;
     await base44.entities.UrgentFlag.delete(flag.id);
     toast.success('הדגש נמחק');
     load();
@@ -127,6 +133,7 @@ export default function UrgentFlagsList({ classId, user, canManage }) {
             onSaved={load}
           />
         )}
+        <DeleteConfirm />
       </CardContent>
     </Card>
   );

@@ -14,6 +14,7 @@ import PageHeader from '@/components/ui/PageHeader';
 import EmptyState from '@/components/ui/EmptyState';
 import { toast } from 'sonner';
 import { BarChart2, Plus, Edit, Trash2 } from 'lucide-react';
+import useDeleteConfirm from '@/hooks/useDeleteConfirm';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 
 const CATEGORIES = [
@@ -54,6 +55,7 @@ export default function Performance({ role = 'homeroom_teacher' }) {
   const [editReview, setEditReview] = useState(null);
   const today = new Date().toISOString().split('T')[0];
   const [form, setForm] = useState({ student_id: '', period: '', date: today, learning_habits: 3, participation: 3, responsibility: 3, behavior: 3, social_functioning: 3, emotional_state: 3, notes: '' });
+  const { confirmDelete, DeleteConfirm } = useDeleteConfirm();
 
   useEffect(() => { loadData(); }, []);
   async function loadData() {
@@ -83,7 +85,11 @@ export default function Performance({ role = 'homeroom_teacher' }) {
   }
 
   async function handleDelete(id) {
-    if (!window.confirm('למחוק?')) return;
+    const approved = await confirmDelete({
+      title: 'למחוק את הערכת התפקוד?',
+      description: 'ההערכה תימחק מתיק התלמיד ולא ניתן יהיה לשחזר אותה.',
+    });
+    if (!approved) return;
     await base44.entities.PerformanceReview.delete(id);
     loadData();
   }
@@ -186,6 +192,7 @@ export default function Performance({ role = 'homeroom_teacher' }) {
           </DialogContent>
         </Dialog>
       )}
+      <DeleteConfirm />
     </div>
   );
 }

@@ -15,6 +15,7 @@ import ImportReviewSummary from './import/ImportReviewSummary';
 import NeedsReviewPanel from './import/NeedsReviewPanel';
 import { parseWordCalendarFile, isWordFile } from '@/lib/wordCalendarParser';
 import { format } from 'date-fns';
+import useDeleteConfirm from '@/hooks/useDeleteConfirm';
 import { he } from 'date-fns/locale';
 
 const emptyRow = {
@@ -71,6 +72,7 @@ export default function SmartCalendarImportDialog({ open, onOpenChange, classId,
   const [saving, setSaving] = useState(false);
   const [replaceExisting, setReplaceExisting] = useState(false);
   const [error, setError] = useState('');
+  const { confirmDelete, DeleteConfirm } = useDeleteConfirm();
 
   const errorsCount = rows.reduce((sum, row) => sum + (getRowErrors(row).length ? 1 : 0), 0);
   const valid = rows.length > 0 && errorsCount === 0;
@@ -189,7 +191,14 @@ export default function SmartCalendarImportDialog({ open, onOpenChange, classId,
       setError('יש לתקן את השורות המסומנות לפני פרסום ללוח.');
       return;
     }
-    if (replaceExisting && !window.confirm('להחליף את הלוח הקיים? כל האירועים ונתוני המעקב הקיימים יימחקו לפני הפרסום.')) return;
+    if (replaceExisting) {
+      const approved = await confirmDelete({
+        title: 'למחוק את הלוח הקיים?',
+        description: 'כל האירועים ונתוני המעקב הקיימים יימחקו לפני פרסום הלוח החדש. פעולה זו אינה הפיכה.',
+        confirmLabel: 'מחק קיים ופרסם',
+      });
+      if (!approved) return;
+    }
     setSaving(true);
     const deletedCount = replaceExisting ? await clearExistingBoardData() : 0;
     await base44.entities.Exam.bulkCreate(rows.map(row => ({
@@ -281,6 +290,7 @@ export default function SmartCalendarImportDialog({ open, onOpenChange, classId,
             </div>
           )}
         </div>
+        <DeleteConfirm />
       </DialogContent>
     </Dialog>
   );

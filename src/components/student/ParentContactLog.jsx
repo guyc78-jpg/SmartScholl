@@ -9,6 +9,7 @@ import { Phone, MessageCircle, Plus, Trash2, AlertCircle, CheckCircle2, Calendar
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { formatStudentName } from '@/lib/studentName';
+import useDeleteConfirm from '@/hooks/useDeleteConfirm';
 
 const CONTACT_TYPES = ['טלפון', 'פנים אל פנים', 'הודעה כתובה', 'WhatsApp', 'דוא״ל'];
 const PARENT_OPTIONS = ['הורה 1', 'הורה 2', 'שני הורים'];
@@ -18,6 +19,7 @@ export default function ParentContactLog({ studentId, classId, studentName, pare
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const { confirmDelete, DeleteConfirm } = useDeleteConfirm();
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     time: new Date().toTimeString().slice(0, 5),
@@ -69,11 +71,14 @@ export default function ParentContactLog({ studentId, classId, studentName, pare
   }
 
   async function handleDelete(id) {
-    if (window.confirm('האם למחוק קשר זה?')) {
-      await base44.entities.ParentContact.delete(id);
-      toast.success('הקשר נמחק');
-      loadContacts();
-    }
+    const approved = await confirmDelete({
+      title: 'למחוק את קשר ההורים?',
+      description: 'הרישום יימחק מיומן קשר ההורים ולא ניתן יהיה לשחזר אותו.',
+    });
+    if (!approved) return;
+    await base44.entities.ParentContact.delete(id);
+    toast.success('הקשר נמחק');
+    loadContacts();
   }
 
   function resetForm() {
@@ -311,6 +316,7 @@ export default function ParentContactLog({ studentId, classId, studentName, pare
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <DeleteConfirm />
     </div>
   );
 }

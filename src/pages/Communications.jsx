@@ -16,6 +16,7 @@ import { MessageSquare, Plus, Edit, Trash2, Phone, Mail, Video } from 'lucide-re
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 import { useAuth } from '@/lib/AuthContext';
 import { getUserHomeroomClassId, getUserApprovedClassId } from '@/lib/schoolStructure';
+import useDeleteConfirm from '@/hooks/useDeleteConfirm';
 
 const typeIcons = { 'שיחה טלפונית': Phone, 'פגישה': MessageSquare, 'מייל': Mail, 'הודעה': MessageSquare, 'שיחת זום': Video };
 
@@ -29,6 +30,7 @@ export default function Communications({ role = 'homeroom_teacher' }) {
   const [editComm, setEditComm] = useState(null);
   const today = new Date().toISOString().split('T')[0];
   const [form, setForm] = useState({ student_id: '', date: today, type: 'שיחה טלפונית', with_whom: 'הורה 1', summary: '', follow_up: '', follow_up_date: '' });
+  const { confirmDelete, DeleteConfirm } = useDeleteConfirm();
 
   useEffect(() => { loadData(); }, []);
   async function loadData() {
@@ -58,7 +60,11 @@ export default function Communications({ role = 'homeroom_teacher' }) {
   }
 
   async function handleDelete(id) {
-    if (!window.confirm('למחוק?')) return;
+    const approved = await confirmDelete({
+      title: 'למחוק את תיעוד התקשורת?',
+      description: 'התיעוד יימחק מיומן התקשורת ולא ניתן יהיה לשחזר אותו.',
+    });
+    if (!approved) return;
     await base44.entities.Communication.delete(id);
     loadData();
   }
@@ -151,6 +157,7 @@ export default function Communications({ role = 'homeroom_teacher' }) {
           </DialogContent>
         </Dialog>
       )}
+      <DeleteConfirm />
     </div>
   );
 }

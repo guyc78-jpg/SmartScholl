@@ -20,6 +20,7 @@ import SmartCalendarEmptyState from '@/components/exams/SmartCalendarEmptyState'
 import { isEventRelevantForStudent } from '@/components/exams/AudienceEditor';
 import { getAvailableRoles } from '@/lib/roleUtils';
 import { getLocalDateString } from '@/lib/attendanceScope.js';
+import useDeleteConfirm from '@/hooks/useDeleteConfirm';
 
 export default function Exams({ role, user }) {
   const [events, setEvents] = useState([]);
@@ -39,6 +40,7 @@ export default function Exams({ role, user }) {
   const [editingEvent, setEditingEvent] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [activeClassId, setActiveClassId] = useState('');
+  const { confirmDelete, DeleteConfirm } = useDeleteConfirm();
 
   const approvedRoles = getAvailableRoles(user);
   const canManageBoard = role !== 'student' && (approvedRoles.includes('admin') || approvedRoles.includes('system_admin') || approvedRoles.includes('coordinator') || approvedRoles.includes('grade_coordinator') || approvedRoles.includes('homeroom_teacher'));
@@ -120,8 +122,12 @@ export default function Exams({ role, user }) {
 
   async function clearAllEvents() {
     if (!events.length) return;
-    if (!window.confirm(`למחוק את כל ${events.length} האירועים וכל נתוני המעקב שלהם? פעולה זו אינה הפיכה.`)) return;
-    if (!window.confirm('אישור סופי: כל נתוני הלוח יימחקו לצמיתות.')) return;
+    const approved = await confirmDelete({
+      title: 'למחוק את כל האירועים והנתונים?',
+      description: `יימחקו ${events.length} אירועים וכל נתוני המעקב שלהם. פעולה זו אינה הפיכה.`,
+      confirmLabel: 'מחק את הכל',
+    });
+    if (!approved) return;
     const eventIds = new Set(events.map(event => event.id));
     const [allCompletions, allReports] = await Promise.all([
       base44.entities.ExamCompletion.list('-updated_date', 1000),
@@ -138,7 +144,11 @@ export default function Exams({ role, user }) {
 
   async function deleteEvent(id) {
     if (String(id).startsWith('demo_')) return;
-    if (!window.confirm('למחוק את האירוע?')) return;
+    const approved = await confirmDelete({
+      title: 'למחוק את האירוע?',
+      description: 'האירוע יוסר מלוח המבחנים ולא ניתן יהיה לשחזר אותו.',
+    });
+    if (!approved) return;
     await base44.entities.Exam.delete(id);
     toast.success('האירוע נמחק');
     setSelectedEvent(null);
@@ -250,6 +260,7 @@ export default function Exams({ role, user }) {
         onEdit={openEdit}
         onDelete={deleteEvent}
       />
+      <DeleteConfirm />
     </div>
   );
 }

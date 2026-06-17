@@ -18,6 +18,7 @@ import { Shield, Plus, Edit, Trash2, Filter } from 'lucide-react';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 import { useAuth } from '@/lib/AuthContext';
 import { getUserHomeroomClassId, getUserApprovedClassId } from '@/lib/schoolStructure';
+import useDeleteConfirm from '@/hooks/useDeleteConfirm';
 
 export default function Discipline({ role = 'homeroom_teacher' }) {
   const { user } = useAuth();
@@ -30,6 +31,7 @@ export default function Discipline({ role = 'homeroom_teacher' }) {
   const [statusFilter, setStatusFilter] = useState('הכל');
   const today = new Date().toISOString().split('T')[0];
   const [form, setForm] = useState({ student_id: '', date: today, time: '', severity: 'קלה', category: 'התנהגות', description: '', treatment: '', parents_updated: false, follow_up_date: '', status: 'פתוח' });
+  const { confirmDelete, DeleteConfirm } = useDeleteConfirm();
 
   useEffect(() => { loadData(); }, []);
   async function loadData() {
@@ -59,7 +61,11 @@ export default function Discipline({ role = 'homeroom_teacher' }) {
   }
 
   async function handleDelete(id) {
-    if (!window.confirm('למחוק?')) return;
+    const approved = await confirmDelete({
+      title: 'למחוק את אירוע המשמעת?',
+      description: 'האירוע יימחק מתיק התלמיד ולא ניתן יהיה לשחזר אותו.',
+    });
+    if (!approved) return;
     await base44.entities.DisciplineEvent.delete(id);
     toast.success('נמחק'); loadData();
   }
@@ -189,6 +195,7 @@ export default function Discipline({ role = 'homeroom_teacher' }) {
           </DialogContent>
         </Dialog>
       )}
+      <DeleteConfirm />
     </div>
   );
 }

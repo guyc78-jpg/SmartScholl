@@ -8,6 +8,7 @@ import SelectedFileNotice from '@/components/import/SelectedFileNotice';
 import { parseStudentsWorksheetRows } from '@/lib/studentImport';
 import { formatStudentName } from '@/lib/studentName';
 import { findClassRoomByName } from '@/lib/classAssignment';
+import useDeleteConfirm from '@/hooks/useDeleteConfirm';
 
 function parseGradeFromClassName(className = '') {
   const clean = String(className).replace(/[\s״"׳']/g, '');
@@ -42,6 +43,7 @@ export default function ImportStudentsModal({ classId, onClose, onSuccess }) {
   const [fileName, setFileName] = useState('');
   const [error, setError] = useState('');
   const [classRoom, setClassRoom] = useState(null);
+  const { confirmDelete, DeleteConfirm } = useDeleteConfirm();
 
   useEffect(() => {
     async function loadClassRoom() {
@@ -81,8 +83,13 @@ export default function ImportStudentsModal({ classId, onClose, onSuccess }) {
     }
   }
 
-  function clearSelectedFile() {
-    if (!window.confirm('להסיר את הקובץ שנבחר?')) return;
+  async function clearSelectedFile() {
+    const approved = await confirmDelete({
+      title: 'להסיר את הקובץ שנבחר?',
+      description: 'הקובץ יוסר מתהליך הייבוא והתצוגה המקדימה תימחק.',
+      confirmLabel: 'הסר קובץ',
+    });
+    if (!approved) return;
     setFileName('');
     setPreview([]);
     setError('');
@@ -181,6 +188,7 @@ export default function ImportStudentsModal({ classId, onClose, onSuccess }) {
             <p className="text-muted-foreground text-sm">כל התלמידים יובאו בהצלחה</p>
           </div>
         )}
+        <DeleteConfirm />
       </DialogContent>
     </Dialog>
   );

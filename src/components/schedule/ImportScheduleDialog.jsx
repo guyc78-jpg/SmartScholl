@@ -7,6 +7,7 @@ import { AlertTriangle, FileUp, Loader2, ChevronDown } from 'lucide-react';
 import SelectedFileNotice from '@/components/import/SelectedFileNotice';
 import { base44 } from '@/api/base44Client';
 import { ensureSubjectForName, normalizeSubjectName } from '@/lib/scheduleSubjects';
+import useDeleteConfirm from '@/hooks/useDeleteConfirm';
 
 const DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי'];
 const PREVIEW_LIMIT = 10;
@@ -55,12 +56,18 @@ export default function ImportScheduleDialog({ open, onOpenChange, onImported, c
   const [isParsing, setIsParsing] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [showAll, setShowAll] = useState(false);
+  const { confirmDelete, DeleteConfirm } = useDeleteConfirm();
 
   const hasMissingRequired = rows.some(row => !row.subject || !row.day || !row.period);
   const visibleRows = showAll ? rows : rows.slice(0, PREVIEW_LIMIT);
 
-  const clearSelectedFile = () => {
-    if (!window.confirm('להסיר את הקובץ שנבחר?')) return;
+  const clearSelectedFile = async () => {
+    const approved = await confirmDelete({
+      title: 'להסיר את הקובץ שנבחר?',
+      description: 'הקובץ יוסר מתהליך הייבוא והנתונים שזוהו ממנו יימחקו מהתצוגה.',
+      confirmLabel: 'הסר קובץ',
+    });
+    if (!approved) return;
     setFileName(''); setRows([]); setError('');
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
@@ -276,6 +283,7 @@ export default function ImportScheduleDialog({ open, onOpenChange, onImported, c
             </Button>
           </div>
         )}
+        <DeleteConfirm />
       </DialogContent>
     </Dialog>
   );

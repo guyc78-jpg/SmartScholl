@@ -16,6 +16,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import { toast } from 'sonner';
 import { CheckSquare, Plus, Edit, Trash2, Check } from 'lucide-react';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
+import useDeleteConfirm from '@/hooks/useDeleteConfirm';
 
 export default function Tasks({ role = 'homeroom_teacher', user }) {
   const [tasks, setTasks] = useState([]);
@@ -27,6 +28,7 @@ export default function Tasks({ role = 'homeroom_teacher', user }) {
   const today = new Date().toISOString().split('T')[0];
   const [form, setForm] = useState({ student_id: '', student_name: '', title: '', description: '', due_date: today, priority: 'בינונית', status: 'לביצוע', category: 'כללי' });
   const classId = role === 'coordinator' ? getUserHomeroomClassId(user, CLASS_ID) : getUserApprovedClassId(user, CLASS_ID);
+  const { confirmDelete, DeleteConfirm } = useDeleteConfirm();
 
   useEffect(() => { loadData(); }, []);
   async function loadData() {
@@ -56,7 +58,11 @@ export default function Tasks({ role = 'homeroom_teacher', user }) {
   }
 
   async function handleDelete(id) {
-    if (!window.confirm('למחוק?')) return;
+    const approved = await confirmDelete({
+      title: 'למחוק את המשימה?',
+      description: 'המשימה תימחק מהרשימה ולא ניתן יהיה לשחזר אותה.',
+    });
+    if (!approved) return;
     await base44.entities.Task.delete(id);
     toast.success('נמחק'); loadData();
   }
@@ -163,6 +169,7 @@ export default function Tasks({ role = 'homeroom_teacher', user }) {
           </DialogContent>
         </Dialog>
       )}
+      <DeleteConfirm />
     </div>
   );
 }

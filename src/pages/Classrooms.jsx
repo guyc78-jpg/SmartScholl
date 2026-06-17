@@ -8,6 +8,7 @@ import GradeClassRoomSection from '@/components/classes/GradeClassRoomSection';
 import { Plus, School } from 'lucide-react';
 import { toast } from 'sonner';
 import { getAvailableRoles } from '@/lib/roleUtils';
+import useDeleteConfirm from '@/hooks/useDeleteConfirm';
 import {
   GRADES,
   extractGradeFromClass,
@@ -70,6 +71,7 @@ export default function Classrooms({ user, role }) {
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [expandedGrades, setExpandedGrades] = useState({});
+  const { confirmDelete, DeleteConfirm } = useDeleteConfirm();
 
   const roles = getAvailableRoles(user);
   const canManage = roles.includes('system_admin') || roles.includes('admin') || role === 'system_admin' || role === 'admin';
@@ -115,7 +117,12 @@ export default function Classrooms({ user, role }) {
   }
 
   async function handleDelete(classRoom) {
-    if (!canManage || !window.confirm(`למחוק את ${classRoom.name}?`)) return;
+    if (!canManage) return;
+    const approved = await confirmDelete({
+      title: `למחוק את ${classRoom.name}?`,
+      description: 'הכיתה תוסר מהרשימה הפעילה. ניתן יהיה לשחזר אותה רק דרך ניהול הנתונים.',
+    });
+    if (!approved) return;
     await base44.entities.ClassRoom.update(classRoom.id, { is_active: false });
     toast.success('הכיתה הוסרה מהרשימה');
     loadClasses();
@@ -151,6 +158,7 @@ export default function Classrooms({ user, role }) {
           ))}
         </div>
       )}
+      <DeleteConfirm />
     </div>
   );
 }
