@@ -69,6 +69,7 @@ export default function SmartCalendarImportDialog({ open, onOpenChange, classId,
   const [fileName, setFileName] = useState('');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [replaceExisting, setReplaceExisting] = useState(false);
   const [error, setError] = useState('');
 
   const errorsCount = rows.reduce((sum, row) => sum + (getRowErrors(row).length ? 1 : 0), 0);
@@ -105,6 +106,22 @@ export default function SmartCalendarImportDialog({ open, onOpenChange, classId,
     audience_tracks: row.audience_tracks || [],
     audience_subjects: row.audience_subjects || []
   });
+
+  const clearExistingBoardData = async () => {
+    const existingEvents = await base44.entities.Exam.filter({ class_id: classId });
+    if (!existingEvents.length) return 0;
+    const eventIds = new Set(existingEvents.map(event => event.id));
+    const [allCompletions, allReports] = await Promise.all([
+      base44.entities.ExamCompletion.list('-updated_date', 1000),
+      base44.entities.ExamGradeReport.list('-updated_action_at', 1000),
+    ]);
+    await Promise.all([
+      ...existingEvents.map(event => base44.entities.Exam.delete(event.id)),
+      ...(allCompletions || []).filter(item => eventIds.has(item.exam_id)).map(item => base44.entities.ExamCompletion.delete(item.id)),
+      ...(allReports || []).filter(item => eventIds.has(item.exam_id)).map(item => base44.entities.ExamGradeReport.delete(item.id)),
+    ]);
+    return existingEvents.length;
+  };
 
   const handleFile = async (file) => {
     if (!file) return;
@@ -172,7 +189,9 @@ export default function SmartCalendarImportDialog({ open, onOpenChange, classId,
       setError('יש לתקן את השורות המסומנות לפני פרסום ללוח.');
       return;
     }
+    if (replaceExisting && !window.confirm('להחליף את הלוח הקיים? כל האירועים ונתוני המעקב הקיימים יימחקו לפני הפרסום.')) return;
     setSaving(true);
+    const deletedCount = replaceExisting ? await clearExistingBoardData() : 0;
     await base44.entities.Exam.bulkCreate(rows.map(row => ({
       class_id: classId,
       title: row.title,
@@ -192,7 +211,7 @@ export default function SmartCalendarImportDialog({ open, onOpenChange, classId,
       audience_subjects: row.audience_subjects,
       audience_group_label: row.audience_group_label
     })));
-    toast.success(`${rows.length} אירועים פורסמו בלוח`);
+    toast.success(replaceExisting ? `${deletedCount} אירועים ישנים נמחקו ו-${rows.length} אירועים חדשים פורסמו בלוח` : `${rows.length} אירועים פורסמו בלוח`);
     setSaving(false);
     onImported?.();
     onOpenChange(false);
@@ -229,9 +248,18 @@ export default function SmartCalendarImportDialog({ open, onOpenChange, classId,
             <div className="space-y-4">
               <ImportReviewSummary rows={rows} errorsCount={errorsCount} />
 
-              <div className="rounded-xl border bg-card p-4">
-                <h3 className="font-semibold mb-1">2-5. תצוגה מקדימה, סיווג, תיקון ורלוונטיות</h3>
-                <p className="text-sm text-muted-foreground">עברו על השורות, תקנו שגיאות וסמנו למי כל אירוע רלוונטי. הפרסום ללוח יקרה רק לאחר אישור.</p>
+              <div className="rounded-xl border bg-card p-4 space-y-3" dir="rtl">
+                <div className="text-right">
+                  <h3 className="font-semibold mb-1">2-5. תצוגה מקדימה, סיווג, תיקון ורלוונטיות</h3>
+                  <p className="text-sm text-muted-foreground">עברו על השורות, תקנו שגיאות וסמנו למי כל אירוע רלוונטי. הפרסום ללוח יקרה רק לאחר אישור.</p>
+                </div>
+                <label className="flex items-start justify-start gap-2 rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-right text-sm cursor-pointer" dir="rtl">
+                  <input type="checkbox" checked={replaceExisting} onChange={e => setReplaceExisting(e.target.checked)} className="mt-1" />
+                  <span>
+                    <span className="font-bold text-destructive">החלף לוח קיים</span>
+                    <span className="block text-muted-foreground">מוחק את כל האירועים ונתוני המעקב הקיימים לפני פרסום הלוח החדש.</span>
+                  </span>
+                </label>
               </div>
 
               <div className="space-y-3">
@@ -246,7 +274,7 @@ export default function SmartCalendarImportDialog({ open, onOpenChange, classId,
                   <Button variant="outline" onClick={() => onOpenChange(false)}>ביטול</Button>
                   <Button onClick={save} disabled={!valid || saving}>
                     {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                    אשר פרסום ללוח
+                    {replaceExisting ? 'מחק קיים ופרסם לוח חדש' : 'אשר פרסום ללוח'}
                   </Button>
                 </div>
               </div>

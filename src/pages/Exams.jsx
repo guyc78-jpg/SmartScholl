@@ -119,10 +119,19 @@ export default function Exams({ role, user }) {
 
   async function clearAllEvents() {
     if (!events.length) return;
-    if (!window.confirm(`למחוק את כל ${events.length} האירועים בלוח? פעולה זו אינה הפיכה.`)) return;
-    if (!window.confirm('אישור סופי: כל האירועים יימחקו לצמיתות.')) return;
-    await Promise.all(events.map(e => base44.entities.Exam.delete(e.id)));
-    toast.success('הלוח נוקה');
+    if (!window.confirm(`למחוק את כל ${events.length} האירועים וכל נתוני המעקב שלהם? פעולה זו אינה הפיכה.`)) return;
+    if (!window.confirm('אישור סופי: כל נתוני הלוח יימחקו לצמיתות.')) return;
+    const eventIds = new Set(events.map(event => event.id));
+    const [allCompletions, allReports] = await Promise.all([
+      base44.entities.ExamCompletion.list('-updated_date', 1000),
+      base44.entities.ExamGradeReport.list('-updated_action_at', 1000),
+    ]);
+    await Promise.all([
+      ...events.map(event => base44.entities.Exam.delete(event.id)),
+      ...(allCompletions || []).filter(item => eventIds.has(item.exam_id)).map(item => base44.entities.ExamCompletion.delete(item.id)),
+      ...(allReports || []).filter(item => eventIds.has(item.exam_id)).map(item => base44.entities.ExamGradeReport.delete(item.id)),
+    ]);
+    toast.success('כל נתוני הלוח נמחקו');
     loadData();
   }
 
@@ -190,7 +199,7 @@ export default function Exams({ role, user }) {
                     disabled={events.length === 0}
                     className="text-destructive focus:text-destructive focus:bg-destructive/10"
                   >
-                    <Trash2 className="w-4 h-4" /> נקה את כל האירועים
+                    <Trash2 className="w-4 h-4" /> מחק את כל נתוני הלוח
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
