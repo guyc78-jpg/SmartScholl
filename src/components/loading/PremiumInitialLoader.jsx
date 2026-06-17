@@ -1,7 +1,41 @@
+import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, BookMarked, RefreshCw } from 'lucide-react';
 
-export default function PremiumInitialLoader({ status = 'מכינים עבורך את סביבת העבודה', error = '', onRetry }) {
+const STATUS_PROGRESS = {
+  'מכינים עבורך את סביבת העבודה': 18,
+  'טוענים משתמש, הרשאות ושיוכים': 48,
+  'הכול מוכן': 100,
+};
+
+export default function PremiumInitialLoader({ status = 'מכינים עבורך את סביבת העבודה', error = '', onRetry, targetProgress }) {
   const hasError = !!error;
+  const target = useMemo(() => {
+    if (hasError) return 100;
+    if (typeof targetProgress === 'number') return Math.max(0, Math.min(100, targetProgress));
+    return STATUS_PROGRESS[status] || 72;
+  }, [hasError, status, targetProgress]);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    if (hasError) return;
+    setProgress(0);
+  }, [hasError]);
+
+  useEffect(() => {
+    if (hasError) return;
+    const timer = window.setInterval(() => {
+      setProgress(current => {
+        const ceiling = target >= 100 ? 100 : Math.min(96, target + 18);
+        if (current >= ceiling) return current;
+        const gap = ceiling - current;
+        const step = Math.max(0.45, Math.min(4.8, gap * 0.12));
+        return Math.min(ceiling, current + step);
+      });
+    }, 90);
+    return () => window.clearInterval(timer);
+  }, [hasError, target]);
+
+  const displayProgress = Math.round(progress);
 
   return (
     <div
@@ -18,8 +52,9 @@ export default function PremiumInitialLoader({ status = 'מכינים עבורך
         @keyframes loaderPulse { 0%,100% { transform: scale(.96); opacity:.72 } 50% { transform: scale(1.04); opacity:1 } }
         @keyframes loaderOrbit { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
         @keyframes loaderRise { 0% { transform: translateY(10px); opacity:0 } 100% { transform: translateY(0); opacity:1 } }
+        @keyframes progressShine { 0% { transform: translateX(110%) } 100% { transform: translateX(-140%) } }
       `}</style>
-      <div className="flex w-full max-w-sm flex-col items-center justify-center gap-6 text-center" style={{ animation: 'loaderRise .55s ease-out both' }}>
+      <div className="flex min-h-[min(520px,100dvh)] w-full max-w-sm flex-col items-center justify-center gap-6 text-center" style={{ animation: 'loaderRise .55s ease-out both' }}>
         <div className="relative h-28 w-28 shrink-0">
           <div className={`absolute inset-0 rounded-[2rem] ${hasError ? 'bg-destructive/10' : 'bg-primary/10'}`} style={{ animation: hasError ? undefined : 'loaderPulse 2.4s ease-in-out infinite' }} />
           <div className={`absolute inset-3 rounded-[1.6rem] border bg-card shadow-sm ${hasError ? 'border-destructive/25' : 'border-primary/20'}`} />
@@ -38,7 +73,7 @@ export default function PremiumInitialLoader({ status = 'מכינים עבורך
 
         <div className="flex w-full flex-col items-center justify-center gap-2 text-center">
           <p className="text-center text-lg font-extrabold tracking-tight text-foreground">ניהול כיתת חינוך</p>
-          <p className="max-w-xs text-center text-sm font-medium leading-relaxed text-muted-foreground">{hasError ? 'טעינת המערכת נכשלה' : status}</p>
+          <p className="min-h-5 max-w-xs text-center text-sm font-medium leading-relaxed text-muted-foreground">{hasError ? 'טעינת המערכת נכשלה' : status}</p>
           {hasError && <p className="max-w-xs text-center text-sm leading-relaxed text-destructive">{error}</p>}
         </div>
 
@@ -52,8 +87,16 @@ export default function PremiumInitialLoader({ status = 'מכינים עבורך
             נסה שוב
           </button>
         ) : (
-          <div className="flex h-1.5 w-48 max-w-[70vw] overflow-hidden rounded-full bg-muted">
-            <div className="h-full w-1/2 rounded-full bg-primary" style={{ animation: 'loaderPulse 1.2s ease-in-out infinite' }} />
+          <div className="flex w-full max-w-[15rem] flex-col items-center justify-center gap-2 text-center" dir="rtl">
+            <div className="h-2.5 w-full overflow-hidden rounded-full bg-primary/10 ring-1 ring-primary/15">
+              <div
+                className="relative h-full overflow-hidden rounded-full bg-primary shadow-sm transition-[width] duration-300 ease-out"
+                style={{ width: `${progress}%` }}
+              >
+                <span className="absolute inset-y-0 right-0 w-2/3 bg-gradient-to-l from-transparent via-primary-foreground/35 to-transparent opacity-80" style={{ animation: 'progressShine 1.45s ease-in-out infinite' }} />
+              </div>
+            </div>
+            <p className="text-center text-[11px] font-bold tabular-nums text-primary">{displayProgress}%</p>
           </div>
         )}
       </div>

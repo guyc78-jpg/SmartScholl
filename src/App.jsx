@@ -207,7 +207,8 @@ const AuthenticatedApp = () => {
   }, [isLoadingPublicSettings, isLoadingAuth, user?.id, bootRole, bootPageRole, bootStaff, workRole, isSimulating, bootstrapAttempt]);
 
   if (isLoadingPublicSettings || isLoadingAuth || initialLoaderVisible || bootstrap.status === 'loading' || (user && bootstrap.status === 'idle' && !authError)) {
-    return <PremiumInitialLoader status={bootstrap.message} />;
+    const loaderProgress = isLoadingPublicSettings || isLoadingAuth ? 24 : initialLoaderVisible ? 42 : bootstrap.status === 'loading' ? 78 : 92;
+    return <PremiumInitialLoader status={bootstrap.message} targetProgress={loaderProgress} />;
   }
 
   if (authError) {
