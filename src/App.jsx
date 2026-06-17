@@ -11,6 +11,7 @@ import { seedDemoData } from '@/lib/demoData';
 import AppLayout from '@/components/layout/AppLayout';
 import { Toaster as SonnerToaster } from 'sonner';
 import useThemePreference from '@/hooks/useThemePreference';
+import PremiumInitialLoader from '@/components/loading/PremiumInitialLoader';
 
 import { lazy, Suspense } from 'react';
 
@@ -59,6 +60,7 @@ const AuthenticatedApp = () => {
   const navigate = useNavigate();
   const [seeded, setSeeded] = useState(false);
   const [workRole, setWorkRole] = useState(null);
+  const [initialLoaderVisible, setInitialLoaderVisible] = useState(true);
 
   // משתמש אפקטיבי — אמיתי במצב רגיל, מדומה במצב סימולציה
   const user = isSimulating ? buildSimulatedUser(realUser, simRole) : realUser;
@@ -88,6 +90,11 @@ const AuthenticatedApp = () => {
   }, [isSimulating]);
 
   useEffect(() => {
+    const timer = setTimeout(() => setInitialLoaderVisible(false), 2400);
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
     // Emergency hotfix: do not run demo seeding during normal navigation.
     // It can create unnecessary background load and make the app feel stuck.
     setSeeded(true);
@@ -112,15 +119,8 @@ const AuthenticatedApp = () => {
     return () => window.cancelIdleCallback ? window.cancelIdleCallback(id) : clearTimeout(id);
   }, [user?.id]);
 
-  if (isLoadingPublicSettings || isLoadingAuth) {
-    return (
-      <div className="fixed inset-0 flex items-center justify-center bg-background" dir="rtl">
-        <div className="text-center">
-          <div className="w-6 h-6 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-3" />
-          <p className="text-muted-foreground text-sm">טוען...</p>
-        </div>
-      </div>
-    );
+  if (isLoadingPublicSettings || isLoadingAuth || initialLoaderVisible) {
+    return <PremiumInitialLoader />;
   }
 
   if (authError) {
