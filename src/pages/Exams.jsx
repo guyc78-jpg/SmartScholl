@@ -16,8 +16,6 @@ import SmartCalendarImportDialog from '@/components/exams/SmartCalendarImportDia
 import EventFormDialog from '@/components/exams/EventFormDialog';
 import EventDetailsDialog from '@/components/exams/EventDetailsDialog';
 import ClassTrackingPanel from '@/components/exams/ClassTrackingPanel';
-import ExamGradeReportsPanel from '@/components/staff/ExamGradeReportsPanel';
-import UpcomingEventsPanel from '@/components/exams/UpcomingEventsPanel';
 import SmartCalendarEmptyState from '@/components/exams/SmartCalendarEmptyState';
 import { isEventRelevantForStudent } from '@/components/exams/AudienceEditor';
 import { getAvailableRoles } from '@/lib/roleUtils';
@@ -152,7 +150,6 @@ export default function Exams({ role, user }) {
     setShowForm(true);
   }
 
-  const upcoming = visibleEvents.filter(event => event.date >= todayIso).slice(0, 8);
   const currentOffset = viewOffsets[view] || 0;
   const setCurrentOffset = (nextOffset) => setViewOffsets(prev => ({ ...prev, [view]: nextOffset }));
 
@@ -211,10 +208,7 @@ export default function Exams({ role, user }) {
         {isStudent && <Button size="sm" variant={onlyMine ? 'default' : 'outline'} onClick={() => setOnlyMine(v => !v)}>{onlyMine ? 'הלוח שלי' : 'כל הלוח השכבתי'}</Button>}
       </div>
 
-      {visibleEvents.length > 0 && <UpcomingEventsPanel events={visibleEvents} todayIso={todayIso} onEventClick={setSelectedEvent} onEdit={openEdit} onDelete={deleteEvent} canEdit={canEdit} />}
-
       {showTracking && canTrack && <ClassTrackingPanel events={visibleEvents} classId={classId} todayIso={todayIso} />}
-      {canTrack && <ExamGradeReportsPanel reports={gradeReports} user={user} onChanged={loadData} readOnly={!['admin','system_admin','homeroom_teacher','coordinator','grade_coordinator'].includes(role)} />}
 
       {loading ? (
         <div className="flex justify-center py-16"><div className="w-8 h-8 rounded-full border-4 border-primary/20 border-t-primary animate-spin" /></div>
