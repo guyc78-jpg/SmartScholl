@@ -9,8 +9,7 @@ import { cn } from '@/lib/utils';
 const DAYS_SHORT = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 const MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
 const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-const hebrewDate = date => new Intl.DateTimeFormat('he-IL-u-ca-hebrew', { day: 'numeric', month: 'short', year: 'numeric' }).format(date);
-const dateLabel = date => `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+const dateLabel = date => `‎${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}‎`;
 
 const VIEW_META = {
   day: { label: 'יום', icon: List },
@@ -55,14 +54,14 @@ function CalendarShell({ view, onViewChange, title, subtitle, prevLabel, nextLab
   return (
     <Card className="overflow-hidden rounded-2xl border bg-card shadow-sm" dir="rtl">
       <div className="border-b bg-muted/20 p-3 sm:p-4 space-y-3 text-right">
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+        <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2">
           <Button variant="ghost" size="sm" onClick={() => onOffsetChange(offset - 1)} className="justify-start h-9 px-2 text-primary font-bold text-xs sm:text-sm">
             <ChevronRight className="w-4 h-4" />
             <span className="truncate">{prevLabel}</span>
           </Button>
-          <div className="text-center min-w-0 px-1">
-            <h2 className="font-extrabold text-base sm:text-lg text-foreground truncate">{title}</h2>
-            <p className="text-xs sm:text-sm text-muted-foreground font-semibold truncate mt-0.5">{subtitle}</p>
+          <div className="text-center min-w-0 px-2 max-w-full" dir="rtl">
+            <h2 className="font-extrabold text-sm sm:text-lg text-foreground whitespace-normal break-words leading-snug">{title}</h2>
+            {subtitle && <p className="text-xs sm:text-sm text-muted-foreground font-semibold whitespace-normal break-words leading-snug mt-0.5">{subtitle}</p>}
           </div>
           <Button variant="ghost" size="sm" onClick={() => onOffsetChange(offset + 1)} className="justify-end h-9 px-2 text-primary font-bold text-xs sm:text-sm">
             <span className="truncate">{nextLabel}</span>
@@ -191,7 +190,7 @@ export function MonthView({ events, offset, onOffsetChange, onEventClick, onEdit
   }, [base]);
   const byDate = useMemo(() => groupByDate(events), [events]);
   return (
-    <CalendarShell view={view} onViewChange={onViewChange} title={`${MONTHS[base.getMonth()]} ${base.getFullYear()}`} subtitle={hebrewDate(base)} prevLabel="חודש קודם" nextLabel="חודש הבא" offset={offset} onOffsetChange={onOffsetChange}>
+    <CalendarShell view={view} onViewChange={onViewChange} title={`${MONTHS[base.getMonth()]} ${base.getFullYear()}`} prevLabel="חודש קודם" nextLabel="חודש הבא" offset={offset} onOffsetChange={onOffsetChange}>
       <div className="overflow-x-hidden" dir="rtl">
         <div className="grid grid-cols-7 bg-muted/40 text-xs text-foreground border-b min-w-0">{DAYS_SHORT.map(d => <div key={d} className="p-2 text-center font-extrabold truncate border-s first:border-s-0">{d}</div>)}</div>
         <div className="grid grid-cols-7 gap-px bg-border">
@@ -204,7 +203,7 @@ export function MonthView({ events, offset, onOffsetChange, onEventClick, onEdit
               <div key={dayIso} className={cn('relative bg-card p-1 min-h-[94px] sm:min-h-[118px] overflow-hidden', isToday && 'ring-2 ring-inset ring-primary/60 bg-primary/[0.04]', isOtherMonth && 'opacity-60 bg-[repeating-linear-gradient(135deg,hsl(var(--muted))_0px,hsl(var(--muted))_6px,hsl(var(--card))_6px,hsl(var(--card))_12px)]')}>
                 <div className="flex items-center justify-between gap-1 mb-1 text-right">
                   <span className={cn('text-[11px] sm:text-xs font-extrabold', isToday ? 'text-primary' : 'text-foreground')}>{day.getDate()}</span>
-                  <span className="text-[9px] sm:text-[10px] text-muted-foreground font-semibold truncate">{hebrewDate(day).split(' ')[0]}</span>
+                  <span className="text-[9px] sm:text-[10px] text-muted-foreground font-semibold whitespace-normal leading-tight">{dateLabel(day)}</span>
                 </div>
                 <div className="space-y-1 overflow-hidden max-h-[68px] sm:max-h-[88px]">
                   {dayEvents.slice(0, 4).map(event => <MiniEvent key={event.id} event={event} onClick={onEventClick} onEdit={onEdit} onDelete={onDelete} canEdit={canEdit} />)}
@@ -239,7 +238,7 @@ export function WeekView({ events, offset, onOffsetChange, onEventClick, onEdit,
   const byDate = useMemo(() => groupByDate(events), [events]);
   const end = days[days.length - 1];
   return (
-    <CalendarShell view={view} onViewChange={onViewChange} title={`${dateLabel(start)} - ${dateLabel(end)}`} subtitle={`${hebrewDate(start)} - ${hebrewDate(end)}`} prevLabel="שבוע קודם" nextLabel="שבוע הבא" offset={offset} onOffsetChange={onOffsetChange}>
+    <CalendarShell view={view} onViewChange={onViewChange} title={`${dateLabel(start)} - ${dateLabel(end)}`} prevLabel="שבוע קודם" nextLabel="שבוע הבא" offset={offset} onOffsetChange={onOffsetChange}>
       <div className="overflow-x-auto" dir="rtl">
         <div className="grid gap-px bg-border min-w-[680px] lg:min-w-0" style={{ gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))`, minWidth: days.length < 7 ? '100%' : undefined }}>
           {days.map((day, index) => {
@@ -250,8 +249,7 @@ export function WeekView({ events, offset, onOffsetChange, onEventClick, onEdit,
               <div key={dayIso} className={cn('bg-card min-h-[360px] flex flex-col min-w-0', isToday && 'ring-2 ring-inset ring-primary bg-primary/[0.03]')}>
                 <div className={cn('p-2 border-b bg-muted/35 text-center', isToday && 'bg-primary/10')}>
                   <p className="font-extrabold text-sm text-foreground truncate">{DAYS_SHORT[day.getDay()]}</p>
-                  <p className="font-bold text-xs text-foreground truncate">{day.getDate()}/{day.getMonth() + 1}</p>
-                  <p className="text-[11px] text-muted-foreground font-semibold truncate">{hebrewDate(day).replace(/ תשפ.*/, '')}</p>
+                  <p className="text-xs text-muted-foreground font-semibold whitespace-normal leading-tight">{dateLabel(day)}</p>
                 </div>
                 <div className="p-1.5 space-y-1 overflow-y-auto max-h-[310px] text-right">
                   {dayEvents.length ? dayEvents.map(event => <MiniEvent key={event.id} event={event} onClick={onEventClick} onEdit={onEdit} onDelete={onDelete} canEdit={canEdit} />) : <div className="text-[11px] text-muted-foreground/60 text-center pt-8">אין אירועים</div>}
@@ -274,7 +272,7 @@ export function DayView({ events, offset, onOffsetChange, onEventClick, onEdit, 
   const dayIso = iso(day);
   const dayEvents = sortEvents(events.filter(event => event.date === dayIso));
   return (
-    <CalendarShell view={view} onViewChange={onViewChange} title={`${DAYS_SHORT[day.getDay()]}, ${day.getDate()} ${MONTHS[day.getMonth()]} ${day.getFullYear()}`} subtitle={hebrewDate(day)} prevLabel="יום קודם" nextLabel="יום הבא" offset={offset} onOffsetChange={onOffsetChange}>
+    <CalendarShell view={view} onViewChange={onViewChange} title={`${DAYS_SHORT[day.getDay()]}, ${dateLabel(day)}`} prevLabel="יום קודם" nextLabel="יום הבא" offset={offset} onOffsetChange={onOffsetChange}>
       <DayEventsList events={dayEvents} onEventClick={onEventClick} onEdit={onEdit} onDelete={onDelete} canEdit={canEdit} />
     </CalendarShell>
   );
