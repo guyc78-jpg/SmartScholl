@@ -237,7 +237,7 @@ export function WeekView({ events, offset, onOffsetChange, onEventClick, onEdit,
     });
   }, [start, offset]);
   const byDate = useMemo(() => groupByDate(events), [events]);
-  const end = days[6];
+  const end = days[days.length - 1];
   return (
     <CalendarShell view={view} onViewChange={onViewChange} title={`${dateLabel(start)} - ${dateLabel(end)}`} subtitle={`${hebrewDate(start)} - ${hebrewDate(end)}`} prevLabel="שבוע קודם" nextLabel="שבוע הבא" offset={offset} onOffsetChange={onOffsetChange}>
       <div className="overflow-x-auto" dir="rtl">
@@ -249,7 +249,7 @@ export function WeekView({ events, offset, onOffsetChange, onEventClick, onEdit,
             return (
               <div key={dayIso} className={cn('bg-card min-h-[360px] flex flex-col min-w-0', isToday && 'ring-2 ring-inset ring-primary bg-primary/[0.03]')}>
                 <div className={cn('p-2 border-b bg-muted/35 text-center', isToday && 'bg-primary/10')}>
-                  <p className="font-extrabold text-sm text-foreground truncate">{DAYS_SHORT[index]}</p>
+                  <p className="font-extrabold text-sm text-foreground truncate">{DAYS_SHORT[day.getDay()]}</p>
                   <p className="font-bold text-xs text-foreground truncate">{day.getDate()}/{day.getMonth() + 1}</p>
                   <p className="text-[11px] text-muted-foreground font-semibold truncate">{hebrewDate(day).replace(/ תשפ.*/, '')}</p>
                 </div>
