@@ -54,18 +54,18 @@ function CalendarShell({ view, onViewChange, title, subtitle, prevLabel, nextLab
   return (
     <Card className="overflow-hidden rounded-2xl border bg-card shadow-sm" dir="rtl">
       <div className="border-b bg-muted/20 p-3 sm:p-4 space-y-3 text-right">
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2" dir="rtl">
-          <Button variant="ghost" size="sm" onClick={() => onOffsetChange(offset + 1)} className="justify-start justify-self-start h-9 px-2 text-primary font-bold text-xs sm:text-sm whitespace-nowrap">
-            <span>{nextLabel}</span>
-            <ChevronLeft className="w-4 h-4" />
+        <div className="relative flex items-center justify-between h-10" dir="rtl">
+          <Button variant="ghost" size="sm" onClick={() => onOffsetChange(offset - 1)} className="absolute right-0 top-1/2 -translate-y-1/2 justify-start h-9 px-2 text-primary font-bold text-xs sm:text-sm whitespace-nowrap">
+            <ChevronRight className="w-4 h-4" />
+            <span>{prevLabel}</span>
           </Button>
-          <div className="text-center min-w-0 px-1 max-w-full" dir="rtl">
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center px-1 w-max max-w-[calc(100%-9rem)]" dir="rtl">
             <h2 className="font-extrabold text-[13px] sm:text-lg text-foreground whitespace-nowrap leading-snug">{title}</h2>
             {subtitle && <p className="text-xs sm:text-sm text-muted-foreground font-semibold whitespace-nowrap leading-snug mt-0.5">{subtitle}</p>}
           </div>
-          <Button variant="ghost" size="sm" onClick={() => onOffsetChange(offset - 1)} className="justify-end justify-self-end h-9 px-2 text-primary font-bold text-xs sm:text-sm whitespace-nowrap">
-            <ChevronRight className="w-4 h-4" />
-            <span>{prevLabel}</span>
+          <Button variant="ghost" size="sm" onClick={() => onOffsetChange(offset + 1)} className="absolute left-0 top-1/2 -translate-y-1/2 justify-end h-9 px-2 text-primary font-bold text-xs sm:text-sm whitespace-nowrap">
+            <span>{nextLabel}</span>
+            <ChevronLeft className="w-4 h-4" />
           </Button>
         </div>
 
