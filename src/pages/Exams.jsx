@@ -8,7 +8,7 @@ import PageHeader from '@/components/ui/PageHeader';
 import RtlActionBar from '@/components/ui/RtlActionBar';
 import { Button } from '@/components/ui/button';
 import { FileUp, Plus, Users, Trash2, MoreVertical } from 'lucide-react';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import EventFilters, { filterByGroup, filterBySearch } from '@/components/exams/EventFilters';
 import { MonthView, WeekView, DayView } from '@/components/exams/ExamCalendarViews';
@@ -170,8 +170,8 @@ export default function Exams({ role, user }) {
         subtitle="כל אירועי השכבה במקום אחד — מבחנים, בגרויות, חזרות, טקסים, חגים, צילומים ופעילויות"
         actions={
           <RtlActionBar
-            primary={(canEdit || canTrack) ? (
-              <div className="grid w-full grid-cols-2 gap-2 sm:w-auto sm:min-w-[320px] items-center" dir="rtl">
+            primary={(canEdit || canTrack || canManageBoard) ? (
+              <div className="grid w-full grid-cols-[minmax(0,1fr)_minmax(0,1fr)_2.5rem] items-center gap-2 sm:w-auto sm:min-w-[360px]" dir="rtl">
                 {canEdit && (
                   <Button size="lg" onClick={() => { setEditingEvent(null); setShowForm(true); }} className="h-10 w-full rounded-full font-bold shadow-sm justify-center whitespace-nowrap">
                     <Plus className="w-4 h-4" />הוסף אירוע
@@ -182,28 +182,28 @@ export default function Exams({ role, user }) {
                     <Users className="w-4 h-4" />מעקב כיתתי
                   </Button>
                 )}
+                {canManageBoard && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="icon" className="h-10 w-10 rounded-full shrink-0" aria-label="תפריט אפשרויות">
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-40">
+                      <DropdownMenuItem onClick={() => setShowImport(true)} className="justify-start gap-2 cursor-pointer">
+                        <FileUp className="w-4 h-4" /> ייבוא לוח
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={clearAllEvents}
+                        disabled={events.length === 0}
+                        className="justify-start gap-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
+                      >
+                        <Trash2 className="w-4 h-4" /> מחיקת הכל
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
               </div>
-            ) : null}
-            secondary={canManageBoard ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon" aria-label="תפריט אפשרויות"><MoreVertical className="w-4 h-4" /></Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-44">
-                  <DropdownMenuLabel>ניהול</DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => setShowImport(true)}>
-                    <FileUp className="w-4 h-4" /> ייבוא לוח
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={clearAllEvents}
-                    disabled={events.length === 0}
-                    className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                  >
-                    <Trash2 className="w-4 h-4" /> מחיקת הכל
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
             ) : null}
           />
         }
@@ -211,9 +211,11 @@ export default function Exams({ role, user }) {
 
       <EventFilters activeGroup={filterGroup} onGroupChange={setFilterGroup} search={search} onSearchChange={setSearch} />
 
-      <div className="flex flex-wrap items-center justify-start gap-3" dir="rtl">
-        {isStudent && <Button size="sm" variant={onlyMine ? 'default' : 'outline'} onClick={() => setOnlyMine(v => !v)}>{onlyMine ? 'הלוח שלי' : 'כל הלוח השכבתי'}</Button>}
-      </div>
+      {isStudent && (
+        <div className="flex flex-wrap items-center justify-start gap-3" dir="rtl">
+          <Button size="sm" variant={onlyMine ? 'default' : 'outline'} onClick={() => setOnlyMine(v => !v)}>{onlyMine ? 'הלוח שלי' : 'כל הלוח השכבתי'}</Button>
+        </div>
+      )}
 
       {showTracking && canTrack && <ClassTrackingPanel events={visibleEvents} classId={classId} todayIso={todayIso} />}
 
