@@ -160,41 +160,38 @@ export default function Exams({ role, user }) {
         subtitle="כל אירועי השכבה במקום אחד — מבחנים, בגרויות, חזרות, טקסים, חגים, צילומים ופעילויות"
         actions={
           <RtlActionBar
-            primary={canEdit ? (
-              <Button size="lg" onClick={() => { setEditingEvent(null); setShowForm(true); }} className="font-bold shadow-sm">
-                <Plus className="w-4 h-4" />הוסף אירוע
-              </Button>
+            primary={(canEdit || canTrack) ? (
+              <div className={`grid ${canEdit && canTrack ? 'grid-cols-2' : 'grid-cols-1'} w-full sm:w-auto sm:min-w-[320px] gap-2 items-center`} dir="rtl">
+                {canEdit && (
+                  <Button size="lg" onClick={() => { setEditingEvent(null); setShowForm(true); }} className="h-10 w-full rounded-full font-bold shadow-sm justify-center whitespace-nowrap">
+                    <Plus className="w-4 h-4" />הוסף אירוע
+                  </Button>
+                )}
+                {canTrack && (
+                  <Button size="lg" variant={showTracking ? 'default' : 'outline'} onClick={() => setShowTracking(v => !v)} className="h-10 w-full rounded-full font-bold justify-center whitespace-nowrap">
+                    <Users className="w-4 h-4" />מעקב כיתתי
+                  </Button>
+                )}
+              </div>
             ) : null}
-            more={(canTrack || canImport) ? (
+            more={canImport ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="icon" aria-label="תפריט אפשרויות"><MoreVertical className="w-4 h-4" /></Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-52">
-                  {canTrack && (
-                    <>
-                      <DropdownMenuItem onClick={() => setShowTracking(v => !v)} className={showTracking ? 'bg-primary/10' : ''}>
-                        <Users className="w-4 h-4" /> {showTracking ? 'סגור מעקב' : 'מעקב כיתתי'}
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                    </>
-                  )}
-                  {canImport && (
-                    <>
-                      <DropdownMenuLabel>ניהול</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => setShowImport(true)}>
-                        <FileUp className="w-4 h-4" /> ייבוא לוח מקובץ
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={clearAllEvents}
-                        disabled={events.length === 0}
-                        className="text-destructive focus:text-destructive focus:bg-destructive/10"
-                      >
-                        <Trash2 className="w-4 h-4" /> נקה את כל האירועים
-                      </DropdownMenuItem>
-                    </>
-                  )}
+                  <DropdownMenuLabel>ניהול</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => setShowImport(true)}>
+                    <FileUp className="w-4 h-4" /> ייבוא לוח מקובץ
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={clearAllEvents}
+                    disabled={events.length === 0}
+                    className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                  >
+                    <Trash2 className="w-4 h-4" /> נקה את כל האירועים
+                  </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : null}
