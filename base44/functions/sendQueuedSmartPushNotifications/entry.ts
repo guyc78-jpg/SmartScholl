@@ -8,6 +8,7 @@ const EVENT_LABELS = {
   discipline_event: 'משמעת',
   new_task: 'משימה',
   urgent_treatment: 'טיפול דחוף',
+  conversation_reminder: 'תזכורת שיחה',
 };
 
 function groupBy(items, keyFn) {

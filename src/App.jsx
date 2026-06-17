@@ -26,6 +26,7 @@ const Community = lazy(() => import('./pages/Community'));
 const Discipline = lazy(() => import('./pages/Discipline'));
 const Performance = lazy(() => import('./pages/Performance'));
 const Communications = lazy(() => import('./pages/Communications'));
+const ScheduledConversations = lazy(() => import('./pages/ScheduledConversations'));
 const Tasks = lazy(() => import('./pages/Tasks'));
 const Announcements = lazy(() => import('./pages/Announcements'));
 const Reports = lazy(() => import('./pages/Reports'));
@@ -277,6 +278,7 @@ const AuthenticatedApp = () => {
           <Route path="/discipline" element={<Discipline role={pageRole} />} />
           <Route path="/performance" element={<Performance role={pageRole} />} />
           <Route path="/communications" element={<Communications role={pageRole} />} />
+          <Route path="/conversations" element={<ScheduledConversations role={pageRole} user={user} />} />
           <Route path="/tasks" element={<Tasks role={pageRole} user={user} />} />
           <Route path="/treatment-center" element={<TreatmentCenter />} />
           <Route path="/announcements" element={<Announcements role={pageRole} user={user} />} />
@@ -303,6 +305,7 @@ const AuthenticatedApp = () => {
           <Route path="/division-exams" element={<DivisionExams user={user} role={pageRole} />} />
           <Route path="/exams" element={<DivisionExams user={user} role={pageRole} />} />
           <Route path="/community" element={<Community role={pageRole} user={user} />} />
+          <Route path="/conversations" element={<ScheduledConversations role={pageRole} user={user} />} />
           <Route path="/students" element={<Students role={pageRole} />} />
           <Route path="/students/:id" element={<StudentProfile role={pageRole} />} />
           <Route path="/classrooms" element={<Classrooms user={user} role={pageRole} />} />
@@ -328,6 +331,7 @@ const AuthenticatedApp = () => {
         {studentRole && <Route path="/discipline/*" element={<Navigate to="/student-home" replace />} />}
         {studentRole && <Route path="/performance/*" element={<Navigate to="/student-home" replace />} />}
         {studentRole && <Route path="/communications/*" element={<Navigate to="/student-home" replace />} />}
+        {studentRole && <Route path="/conversations/*" element={<Navigate to="/student-home" replace />} />}
         {studentRole && <Route path="/tasks/*" element={<Navigate to="/student-home" replace />} />}
         {studentRole && <Route path="/reports/*" element={<Navigate to="/student-home" replace />} />}
         {studentRole && <Route path="/approvals/*" element={<Navigate to="/student-home" replace />} />}

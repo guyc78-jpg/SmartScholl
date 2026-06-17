@@ -214,6 +214,31 @@ export default function Dashboard({ user, role, initialData }) {
 
   const watchStudents = students.filter(s => s.status === 'דורש מעקב');
 
+  // Upcoming scheduled conversations (for internal notification center)
+  const [upcomingConversations, setUpcomingConversations] = useState([]);
+  useEffect(() => {
+    let cancelled = false;
+    base44.entities.ScheduledConversation.filter({ status: 'מתוכננת' }, '-date', 200)
+      .then(list => {
+        if (cancelled) return;
+        const scopedIds = new Set(students.map(s => s.id));
+        const scopedClassIds = new Set(students.map(s => s.class_id).filter(Boolean));
+        const mine = (list || []).filter(c =>
+          c.owner_user_id === user?.id ||
+          (c.student_id && scopedIds.has(c.student_id)) ||
+          (c.class_id && scopedClassIds.has(c.class_id))
+        );
+        const now = Date.now();
+        const soon = mine.filter(c => {
+          const start = new Date(`${c.date}T${c.time || '00:00'}`).getTime();
+          return start >= now && start - now <= 26 * 60 * 60 * 1000;
+        }).sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`));
+        setUpcomingConversations(soon);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [user?.id, students]);
+
   // Class attendance pattern alerts
   const [allAttRecords, setAllAttRecords] = useState([]);
   const [performanceReviews, setPerformanceReviews] = useState([]);
@@ -261,6 +286,13 @@ export default function Dashboard({ user, role, initialData }) {
       description: 'תלמידים שסומנו כדורשים מעקב',
       to: '/students'
     }] : []),
+    ...upcomingConversations.map(c => ({
+      id: `conversation-${c.id}`,
+      signature: `conversation-${c.id}-${c.date}-${c.time}`,
+      title: `${c.conversation_type}${c.student_name ? ` · ${c.student_name}` : ''}`,
+      description: `${new Date(c.date).toLocaleDateString('he-IL')} בשעה ${c.time}`,
+      to: c.student_id ? `/students/${c.student_id}` : '/conversations'
+    })),
   ];
 
   const notifications = allNotifications.filter(item => !isRead(item.id, item.signature));

@@ -8,7 +8,7 @@ import {
   Megaphone, BarChart2,
   Menu, X, Sun, Moon, BookMarked,
   UserCheck, UserRound, ShieldCheck, Settings, LogOut, Bell, School,
-  ChevronDown, Heart, MessageSquare, ClipboardList, AlertTriangle, GraduationCap, Building2, Eye
+  ChevronDown, Heart, MessageSquare, ClipboardList, AlertTriangle, GraduationCap, Building2, Eye, CalendarClock
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getAvailableRoles, getRoleDisplayLines, getUserDisplayName } from '@/lib/roleUtils';
@@ -28,6 +28,7 @@ const sidebarGroups = [
       { path: '/division', icon: Building2, label: 'ניהול חטיבה', roles: ['division_manager'] },
       { path: '/division-exams', icon: BookOpen, label: 'לוח מבחנים חכם', roles: ['division_manager'] },
       { path: '/community', icon: Heart, label: 'מעורבות חברתית', roles: ['division_manager'] },
+      { path: '/conversations', icon: CalendarClock, label: 'שיחות מתוכננות', roles: ['division_manager'] },
     ],
   },
   {
@@ -81,6 +82,7 @@ const sidebarGroups = [
     items: [
       { path: '/announcements', icon: Megaphone, label: 'הודעות', roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'] },
       { path: '/communications', icon: MessageSquare, label: 'יומן תקשורת', roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'] },
+      { path: '/conversations', icon: CalendarClock, label: 'שיחות מתוכננות', roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'] },
     ],
   },
   {
@@ -139,6 +141,7 @@ const coordinatorDualScopeGroups = [
       { path: '/class-attendance?scope=class', icon: CalendarCheck, label: 'מעקב נוכחות', roles: ['grade_coordinator', 'coordinator'] },
       { path: '/tasks?scope=class', icon: ClipboardList, label: 'משימות', roles: ['grade_coordinator', 'coordinator'] },
       { path: '/communications?scope=class', icon: MessageSquare, label: 'שיחות הורים', roles: ['grade_coordinator', 'coordinator'] },
+      { path: '/conversations', icon: CalendarClock, label: 'שיחות מתוכננות', roles: ['grade_coordinator', 'coordinator'] },
       { path: '/discipline?scope=class', icon: AlertTriangle, label: 'משמעת', roles: ['grade_coordinator', 'coordinator'] },
       { path: '/community?scope=class', icon: Heart, label: 'מעורבות חברתית', roles: ['grade_coordinator', 'coordinator'] },
     ],
