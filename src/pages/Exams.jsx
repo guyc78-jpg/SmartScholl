@@ -41,7 +41,8 @@ export default function Exams({ role, user }) {
   const [activeClassId, setActiveClassId] = useState('');
 
   const approvedRoles = getAvailableRoles(user);
-  const canImport = approvedRoles.includes('admin') || approvedRoles.includes('coordinator');
+  const canManageBoard = role !== 'student' && (approvedRoles.includes('admin') || approvedRoles.includes('system_admin') || approvedRoles.includes('coordinator') || approvedRoles.includes('grade_coordinator') || approvedRoles.includes('homeroom_teacher'));
+  const canImport = canManageBoard;
   const canEdit = role !== 'student' && (approvedRoles.includes('admin') || approvedRoles.includes('coordinator') || approvedRoles.includes('homeroom_teacher'));
   const canTrack = role !== 'student' && (approvedRoles.includes('coordinator') || approvedRoles.includes('grade_coordinator') || approvedRoles.includes('homeroom_teacher'));
   const isStudent = role === 'student';
@@ -209,6 +210,23 @@ export default function Exams({ role, user }) {
       />
 
       <EventFilters activeGroup={filterGroup} onGroupChange={setFilterGroup} search={search} onSearchChange={setSearch} />
+
+      {canManageBoard && (
+        <div className="flex flex-wrap items-center justify-start gap-2 rounded-2xl border bg-card p-3 text-right" dir="rtl">
+          <Button variant="outline" size="sm" onClick={() => setShowImport(true)} className="rounded-full font-bold justify-start">
+            <FileUp className="w-4 h-4" /> ייבוא לוח מקובץ
+          </Button>
+          <Button
+            variant="destructive"
+            size="sm"
+            onClick={clearAllEvents}
+            disabled={events.length === 0}
+            className="rounded-full font-bold justify-start"
+          >
+            <Trash2 className="w-4 h-4" /> מחיקת כל לוח המבחנים והנתונים
+          </Button>
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center justify-start gap-3" dir="rtl">
         {isStudent && <Button size="sm" variant={onlyMine ? 'default' : 'outline'} onClick={() => setOnlyMine(v => !v)}>{onlyMine ? 'הלוח שלי' : 'כל הלוח השכבתי'}</Button>}
