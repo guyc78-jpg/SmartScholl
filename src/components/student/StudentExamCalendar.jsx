@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import EventTypeBadge from '@/components/exams/EventTypeBadge';
-import { BookOpen, CheckCircle2, RotateCcw } from 'lucide-react';
+import { buildGoogleCalendarExamUrl } from '@/lib/googleCalendarExport';
+import { BookOpen, CalendarPlus, CheckCircle2, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 
 const today = () => new Date().toISOString().split('T')[0];
@@ -71,8 +72,14 @@ export default function StudentExamCalendar({ exams, student, user, reports, com
                   </div>
                   <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-700 dark:bg-purple-900/20 dark:text-purple-300 flex items-center justify-center text-xs font-bold shrink-0">{fmt(exam.date).slice(0,5)}</div>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap justify-start gap-2">
                   {report && <span className="self-start rounded-full bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300 px-2.5 py-1 text-xs font-medium">{report.status}: {report.reported_grade}</span>}
+                  <Button size="sm" variant="outline" asChild>
+                    <a href={buildGoogleCalendarExamUrl(exam)} target="_blank" rel="noopener noreferrer" aria-label="ייצוא ליומן Google">
+                      <CalendarPlus className="w-3 h-3" />
+                      ייצוא ליומן
+                    </a>
+                  </Button>
                   {onToggleCompletion && <Button size="sm" variant={completed ? 'outline' : 'default'} onClick={() => onToggleCompletion(exam)}>{completed ? <RotateCcw className="w-3 h-3" /> : <CheckCircle2 className="w-3 h-3" />}{completed ? 'בטל סימון' : 'סיימתי את המבחן'}</Button>}
                 </div>
               </div>
