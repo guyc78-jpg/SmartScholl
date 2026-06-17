@@ -3,13 +3,7 @@ import RtlSearchField from '@/components/ui/RtlSearchField';
 import { cn } from '@/lib/utils';
 import { EVENT_GROUPS } from './eventConstants';
 
-const GROUP_STYLES = {
-  all: 'bg-primary text-primary-foreground border-primary',
-  academic: 'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-900/50',
-  tasks: 'bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-900/50',
-  activities: 'bg-pink-100 text-pink-700 border-pink-200 dark:bg-pink-900/30 dark:text-pink-300 dark:border-pink-900/50',
-  holidays: 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-900/50'
-};
+const ACTIVE_CHIP_STYLE = 'bg-primary text-primary-foreground border-primary shadow-sm ring-2 ring-primary/25 dark:bg-primary dark:text-primary-foreground dark:border-primary';
 
 export default function EventFilters({ activeGroup, onGroupChange, search, onSearchChange }) {
   const groups = [{ key: 'all', label: 'הכל' }, ...EVENT_GROUPS];
@@ -35,7 +29,7 @@ export default function EventFilters({ activeGroup, onGroupChange, search, onSea
               onClick={() => onGroupChange(group.key)}
               className={cn(
                 'h-9 flex-1 basis-[30%] min-w-[30%] justify-center px-2 text-[13px] whitespace-nowrap',
-                active ? GROUP_STYLES[group.key] : 'bg-muted/50 text-foreground hover:bg-muted/80 border-border/60'
+                active ? ACTIVE_CHIP_STYLE : 'bg-muted/50 text-foreground hover:bg-muted/80 border-border/60'
               )}
             >
               {group.label}
