@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, List, Columns3, Grid3X3, Clock, MoreVertical, Pencil, Trash2 } from 'lucide-react';
@@ -219,36 +219,43 @@ export function MonthView({ events, offset, onOffsetChange, onEventClick, onEdit
 }
 
 export function WeekView({ events, offset, onOffsetChange, onEventClick, onEdit, onDelete, canEdit = true, todayIso, view = 'week', onViewChange }) {
+  const scrollRef = useRef(null);
+  const todayColumnRef = useRef(null);
+
   const start = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    if (offset === 0) return today;
     const d = new Date(today);
     d.setDate(today.getDate() - today.getDay() + offset * 7);
     return d;
   }, [offset]);
-  const days = useMemo(() => {
-    const count = offset === 0 ? Math.max(1, 7 - start.getDay()) : 7;
-    return Array.from({ length: count }, (_, i) => {
-      const d = new Date(start);
-      d.setDate(start.getDate() + i);
-      return d;
-    });
-  }, [start, offset]);
+  const days = useMemo(() => Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    return d;
+  }), [start]);
   const byDate = useMemo(() => groupByDate(events), [events]);
   const end = days[days.length - 1];
+
+  useEffect(() => {
+    if (offset !== 0) return;
+    const timer = window.setTimeout(() => {
+      todayColumnRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+    }, 80);
+    return () => window.clearTimeout(timer);
+  }, [offset, todayIso]);
   return (
     <CalendarShell view={view} onViewChange={onViewChange} title={`${dateLabel(start)} - ${dateLabel(end)}`} prevLabel="שבוע קודם" nextLabel="שבוע הבא" offset={offset} onOffsetChange={onOffsetChange}>
-      <div className="overflow-x-auto" dir="rtl">
-        <div className="grid gap-px bg-border min-w-[680px] lg:min-w-0" style={{ gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))`, minWidth: days.length < 7 ? '100%' : undefined }}>
+      <div ref={scrollRef} className="overflow-x-auto scroll-smooth overscroll-x-contain" dir="rtl">
+        <div className="grid gap-px bg-border min-w-[840px] lg:min-w-0" style={{ gridTemplateColumns: `repeat(7, minmax(120px, 1fr))` }}>
           {days.map((day, index) => {
             const dayIso = iso(day);
             const dayEvents = sortEvents(byDate[dayIso] || []);
             const isToday = dayIso === todayIso;
             return (
-              <div key={dayIso} className={cn('bg-card min-h-[360px] flex flex-col min-w-0', isToday && 'ring-2 ring-inset ring-primary bg-primary/[0.03]')}>
-                <div className={cn('p-2 border-b bg-muted/35 text-center', isToday && 'bg-primary/10')}>
-                  <p className="font-extrabold text-sm text-foreground truncate">{DAYS_SHORT[day.getDay()]}</p>
+              <div key={dayIso} ref={isToday ? todayColumnRef : null} className={cn('bg-card min-h-[360px] flex flex-col min-w-0 scroll-m-2', isToday && 'ring-2 ring-inset ring-primary bg-primary/[0.03]')}>
+                <div className={cn('p-2 border-b bg-muted/35 text-center', isToday && 'bg-primary/10 text-primary')}>
+                  <p className={cn('font-extrabold text-sm truncate', isToday ? 'text-primary' : 'text-foreground')}>{DAYS_SHORT[day.getDay()]}</p>
                   <p className="text-xs text-muted-foreground font-semibold whitespace-normal leading-tight">{dateLabel(day)}</p>
                 </div>
                 <div className="p-1.5 space-y-1 overflow-y-auto max-h-[310px] text-right">
