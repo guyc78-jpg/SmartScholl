@@ -4,14 +4,23 @@ export default function PremiumInitialLoader({ status = 'מכינים עבורך
   const hasError = !!error;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-background text-foreground text-right" dir="rtl">
+    <div
+      className="fixed inset-0 z-[9999] grid place-items-center bg-background text-foreground"
+      dir="rtl"
+      style={{
+        paddingTop: 'max(1.5rem, env(safe-area-inset-top))',
+        paddingRight: 'max(1.5rem, env(safe-area-inset-right))',
+        paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))',
+        paddingLeft: 'max(1.5rem, env(safe-area-inset-left))',
+      }}
+    >
       <style>{`
         @keyframes loaderPulse { 0%,100% { transform: scale(.96); opacity:.72 } 50% { transform: scale(1.04); opacity:1 } }
         @keyframes loaderOrbit { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
         @keyframes loaderRise { 0% { transform: translateY(10px); opacity:0 } 100% { transform: translateY(0); opacity:1 } }
       `}</style>
-      <div className="relative flex w-full max-w-sm flex-col items-center px-6 text-right">
-        <div className="relative mb-7 h-28 w-28">
+      <div className="flex w-full max-w-sm flex-col items-center justify-center gap-6 text-center" style={{ animation: 'loaderRise .55s ease-out both' }}>
+        <div className="relative h-28 w-28 shrink-0">
           <div className={`absolute inset-0 rounded-[2rem] ${hasError ? 'bg-destructive/10' : 'bg-primary/10'}`} style={{ animation: hasError ? undefined : 'loaderPulse 2.4s ease-in-out infinite' }} />
           <div className={`absolute inset-3 rounded-[1.6rem] border bg-card shadow-sm ${hasError ? 'border-destructive/25' : 'border-primary/20'}`} />
           {!hasError && (
@@ -27,23 +36,23 @@ export default function PremiumInitialLoader({ status = 'מכינים עבורך
           </div>
         </div>
 
-        <div className="w-full space-y-2 text-right" style={{ animation: 'loaderRise .55s ease-out both' }}>
-          <p className="text-lg font-extrabold tracking-tight text-foreground">ניהול כיתת חינוך</p>
-          <p className="text-sm font-medium text-muted-foreground">{hasError ? 'טעינת המערכת נכשלה' : status}</p>
-          {hasError && <p className="max-w-xs text-sm text-destructive">{error}</p>}
+        <div className="flex w-full flex-col items-center justify-center gap-2 text-center">
+          <p className="text-center text-lg font-extrabold tracking-tight text-foreground">ניהול כיתת חינוך</p>
+          <p className="max-w-xs text-center text-sm font-medium leading-relaxed text-muted-foreground">{hasError ? 'טעינת המערכת נכשלה' : status}</p>
+          {hasError && <p className="max-w-xs text-center text-sm leading-relaxed text-destructive">{error}</p>}
         </div>
 
         {hasError ? (
           <button
             type="button"
             onClick={onRetry}
-            className="mt-6 inline-flex items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-primary-foreground shadow-sm hover:bg-primary/90"
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-primary px-5 text-sm font-bold text-primary-foreground shadow-sm hover:bg-primary/90"
           >
             <RefreshCw className="h-4 w-4" />
             נסה שוב
           </button>
         ) : (
-          <div className="mt-6 flex h-1.5 w-44 overflow-hidden rounded-full bg-muted">
+          <div className="flex h-1.5 w-48 max-w-[70vw] overflow-hidden rounded-full bg-muted">
             <div className="h-full w-1/2 rounded-full bg-primary" style={{ animation: 'loaderPulse 1.2s ease-in-out infinite' }} />
           </div>
         )}
