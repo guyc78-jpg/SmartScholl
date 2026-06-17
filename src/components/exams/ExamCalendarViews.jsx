@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ChevronLeft, ChevronRight, CalendarDays, LayoutGrid, Clock, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, List, Columns3, Grid3X3, Clock, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { getDisplayEventType } from './eventConstants';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
@@ -13,9 +13,9 @@ const hebrewDate = date => new Intl.DateTimeFormat('he-IL-u-ca-hebrew', { day: '
 const dateLabel = date => `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
 
 const VIEW_META = {
-  day: { label: 'יום', icon: CalendarDays },
-  week: { label: 'שבוע', icon: LayoutGrid },
-  month: { label: 'חודש', icon: LayoutGrid },
+  day: { label: 'יום', icon: List },
+  week: { label: 'שבוע', icon: Columns3 },
+  month: { label: 'חודש', icon: Grid3X3 },
 };
 
 const TYPE_STYLES = {
@@ -81,11 +81,11 @@ function CalendarShell({ view, onViewChange, title, subtitle, prevLabel, nextLab
                 onClick={() => onViewChange?.(key)}
                 className={cn(
                   'flex items-center justify-center gap-2 border-s first:border-s-0 text-sm font-bold transition-colors text-center',
-                  active ? 'bg-primary/10 text-primary ring-2 ring-inset ring-primary' : 'text-muted-foreground hover:bg-muted/50'
+                  active ? 'bg-primary/12 text-primary ring-2 ring-inset ring-primary border-primary/40' : 'text-muted-foreground hover:bg-muted/50'
                 )}
               >
-                <span>{VIEW_META[key].label}</span>
                 <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span>{VIEW_META[key].label}</span>
               </button>
             );
           })}
