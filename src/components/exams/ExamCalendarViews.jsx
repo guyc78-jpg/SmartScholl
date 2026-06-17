@@ -221,22 +221,27 @@ export function MonthView({ events, offset, onOffsetChange, onEventClick, onEdit
 
 export function WeekView({ events, offset, onOffsetChange, onEventClick, onEdit, onDelete, canEdit = true, todayIso, view = 'week', onViewChange }) {
   const start = useMemo(() => {
-    const d = new Date();
-    d.setDate(d.getDate() - d.getDay() + offset * 7);
-    d.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (offset === 0) return today;
+    const d = new Date(today);
+    d.setDate(today.getDate() - today.getDay() + offset * 7);
     return d;
   }, [offset]);
-  const days = useMemo(() => Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(start);
-    d.setDate(start.getDate() + i);
-    return d;
-  }), [start]);
+  const days = useMemo(() => {
+    const count = offset === 0 ? Math.max(1, 7 - start.getDay()) : 7;
+    return Array.from({ length: count }, (_, i) => {
+      const d = new Date(start);
+      d.setDate(start.getDate() + i);
+      return d;
+    });
+  }, [start, offset]);
   const byDate = useMemo(() => groupByDate(events), [events]);
   const end = days[6];
   return (
     <CalendarShell view={view} onViewChange={onViewChange} title={`${dateLabel(start)} - ${dateLabel(end)}`} subtitle={`${hebrewDate(start)} - ${hebrewDate(end)}`} prevLabel="שבוע קודם" nextLabel="שבוע הבא" offset={offset} onOffsetChange={onOffsetChange}>
       <div className="overflow-x-auto" dir="rtl">
-        <div className="grid grid-cols-7 gap-px bg-border min-w-[680px] lg:min-w-0">
+        <div className="grid gap-px bg-border min-w-[680px] lg:min-w-0" style={{ gridTemplateColumns: `repeat(${days.length}, minmax(0, 1fr))`, minWidth: days.length < 7 ? '100%' : undefined }}>
           {days.map((day, index) => {
             const dayIso = iso(day);
             const dayEvents = sortEvents(byDate[dayIso] || []);
