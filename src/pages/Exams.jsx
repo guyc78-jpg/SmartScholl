@@ -171,28 +171,28 @@ export default function Exams({ role, user }) {
         actions={
           <RtlActionBar
             primary={(canEdit || canTrack) ? (
-              <div className={`grid ${canEdit && canTrack ? 'grid-cols-2' : 'grid-cols-1'} w-full sm:w-auto sm:min-w-[320px] gap-2 items-center`} dir="rtl">
+              <div className="grid w-full grid-cols-2 gap-2 sm:w-auto sm:min-w-[320px] items-center" dir="rtl">
                 {canEdit && (
                   <Button size="lg" onClick={() => { setEditingEvent(null); setShowForm(true); }} className="h-10 w-full rounded-full font-bold shadow-sm justify-center whitespace-nowrap">
                     <Plus className="w-4 h-4" />הוסף אירוע
                   </Button>
                 )}
                 {canTrack && (
-                  <Button size="lg" variant={showTracking ? 'default' : 'outline'} onClick={() => setShowTracking(v => !v)} className="h-10 w-full rounded-full font-bold justify-center whitespace-nowrap">
+                  <Button size="lg" variant={showTracking ? 'secondary' : 'outline'} onClick={() => setShowTracking(v => !v)} className="h-10 w-full rounded-full font-bold justify-center whitespace-nowrap">
                     <Users className="w-4 h-4" />מעקב כיתתי
                   </Button>
                 )}
               </div>
             ) : null}
-            more={canImport ? (
+            secondary={canManageBoard ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="icon" aria-label="תפריט אפשרויות"><MoreVertical className="w-4 h-4" /></Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-52">
+                <DropdownMenuContent align="start" className="w-44">
                   <DropdownMenuLabel>ניהול</DropdownMenuLabel>
                   <DropdownMenuItem onClick={() => setShowImport(true)}>
-                    <FileUp className="w-4 h-4" /> ייבוא לוח מקובץ
+                    <FileUp className="w-4 h-4" /> ייבוא לוח
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
@@ -200,7 +200,7 @@ export default function Exams({ role, user }) {
                     disabled={events.length === 0}
                     className="text-destructive focus:text-destructive focus:bg-destructive/10"
                   >
-                    <Trash2 className="w-4 h-4" /> מחק את כל נתוני הלוח
+                    <Trash2 className="w-4 h-4" /> מחיקת הכל
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -210,23 +210,6 @@ export default function Exams({ role, user }) {
       />
 
       <EventFilters activeGroup={filterGroup} onGroupChange={setFilterGroup} search={search} onSearchChange={setSearch} />
-
-      {canManageBoard && (
-        <div className="flex flex-wrap items-center justify-start gap-2 rounded-2xl border bg-card p-3 text-right" dir="rtl">
-          <Button variant="outline" size="sm" onClick={() => setShowImport(true)} className="rounded-full font-bold justify-start">
-            <FileUp className="w-4 h-4" /> ייבוא לוח מקובץ
-          </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={clearAllEvents}
-            disabled={events.length === 0}
-            className="rounded-full font-bold justify-start"
-          >
-            <Trash2 className="w-4 h-4" /> מחיקת כל לוח המבחנים והנתונים
-          </Button>
-        </div>
-      )}
 
       <div className="flex flex-wrap items-center justify-start gap-3" dir="rtl">
         {isStudent && <Button size="sm" variant={onlyMine ? 'default' : 'outline'} onClick={() => setOnlyMine(v => !v)}>{onlyMine ? 'הלוח שלי' : 'כל הלוח השכבתי'}</Button>}
