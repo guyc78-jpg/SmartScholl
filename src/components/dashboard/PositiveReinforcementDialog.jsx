@@ -3,8 +3,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import ReinforcementTypePicker from '@/components/dashboard/ReinforcementTypePicker';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { getLocalDateString } from '@/lib/attendanceScope';
@@ -95,18 +95,11 @@ export default function PositiveReinforcementDialog({
     <div className="space-y-4" dir="rtl">
       <div className="space-y-1">
         <Label>סוג חיזוק</Label>
-        <Select value={reinforcementType} onValueChange={setReinforcementType}>
-          <SelectTrigger>
-            <SelectValue placeholder="בחר סוג חיזוק" />
-          </SelectTrigger>
-          <SelectContent>
-            {REINFORCEMENT_TYPES.map(type => (
-              <SelectItem key={type} value={type}>
-                {type}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <ReinforcementTypePicker
+          value={reinforcementType}
+          onChange={setReinforcementType}
+          options={REINFORCEMENT_TYPES}
+        />
       </div>
 
       <div className="space-y-1">
