@@ -4,11 +4,13 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatRemaining, invalidateBellCache } from '@/lib/bellSchedule';
+import { colorToSubjectStyle, subjectMapById } from '@/lib/scheduleSubjects';
 import { loadScheduleNowNextData, resolveScheduleNowNext } from '@/lib/scheduleNowNext';
 
 // Smart "now / next" card driven by real ScheduleSlot lessons for class + day, enriched with the same bell times shown in Schedule.
 export default function NowNextCard({ classId, className, showEmpty = false }) {
   const [state, setState] = useState({ loading: true, current: null, next: null, remainingMins: 0 });
+  const [subjectsById, setSubjectsById] = useState({});
   const slotsRef = useRef([]);
   const periodsRef = useRef([]);
 
@@ -23,6 +25,8 @@ export default function NowNextCard({ classId, className, showEmpty = false }) {
 
     async function refreshSlots() {
       const result = await loadScheduleNowNextData(classId);
+      const subjects = await base44.entities.SchoolSubject.list('-updated_date', 500);
+      if (!cancelled) setSubjectsById(subjectMapById(subjects || []));
       slotsRef.current = result.slots;
       periodsRef.current = result.periods;
       if (!cancelled) {
@@ -86,15 +90,16 @@ export default function NowNextCard({ classId, className, showEmpty = false }) {
     <Card className={className}>
       <CardContent className="p-2 sm:p-2.5 text-right" dir="rtl">
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-2.5 items-stretch" dir="rtl">
-          <LessonBlock title="השיעור עכשיו" slot={current} emptyText="אין שיעור כרגע" remainingMins={current ? remainingMins : null} />
-          <LessonBlock title="השיעור הבא" slot={next} emptyText="אין שיעור נוסף היום" timeToNext={!current ? remainingMins : null} muted />
+          <LessonBlock title="השיעור עכשיו" slot={current} emptyText="אין שיעור כרגע" remainingMins={current ? remainingMins : null} subjectDefinition={current?.subject_id ? subjectsById[current.subject_id] : null} />
+          <LessonBlock title="השיעור הבא" slot={next} emptyText="אין שיעור נוסף היום" timeToNext={!current ? remainingMins : null} subjectDefinition={next?.subject_id ? subjectsById[next.subject_id] : null} muted />
         </div>
       </CardContent>
     </Card>
   );
 }
 
-function LessonBlock({ title, slot, emptyText, remainingMins, timeToNext, muted = false }) {
+function LessonBlock({ title, slot, emptyText, remainingMins, timeToNext, subjectDefinition, muted = false }) {
+  const subjectStyle = slot && subjectDefinition ? colorToSubjectStyle(subjectDefinition.color) : null;
   const timeRange = slot?.start_time
     ? slot.end_time ? `${slot.start_time}–${slot.end_time}` : slot.start_time
     : '—';
@@ -121,6 +126,7 @@ function LessonBlock({ title, slot, emptyText, remainingMins, timeToNext, muted 
         'grid h-[90px] min-w-0 grid-rows-[14px_24px_14px_14px] items-start rounded-xl border px-2.5 py-2 text-right',
         muted ? 'border-border/70 bg-muted/20' : slot?.kind === 'break' ? 'border-amber-200/70 bg-amber-50/40 dark:border-amber-800/70 dark:bg-amber-900/15' : 'border-emerald-200/70 bg-emerald-50/40 dark:border-emerald-800/70 dark:bg-emerald-900/15'
       )}
+      style={subjectStyle ? { backgroundColor: subjectStyle.backgroundColor, borderColor: `${subjectStyle.color}55` } : undefined}
       dir="rtl"
     >
       <div className="flex items-center justify-between gap-1.5" dir="rtl">
@@ -135,9 +141,9 @@ function LessonBlock({ title, slot, emptyText, remainingMins, timeToNext, muted 
 
       <p className={cn(
         'w-full truncate text-sm font-extrabold leading-[1.6]',
-        slot ? 'text-foreground' : 'text-muted-foreground'
-      )}>
-        {slot?.subject || emptyText}
+        !slot && 'text-muted-foreground'
+      )} style={subjectStyle ? { color: subjectStyle.color } : undefined}>
+        {subjectDefinition?.name || slot?.subject || emptyText}
       </p>
 
       <p className={cn(

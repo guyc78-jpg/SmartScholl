@@ -12,12 +12,13 @@ import {
 import PageHeader from '@/components/ui/PageHeader';
 import RtlActionBar from '@/components/ui/RtlActionBar';
 import { toast } from 'sonner';
-import { FileUp, Trash2 } from 'lucide-react';
+import { AlertTriangle, FileUp, Trash2 } from 'lucide-react';
 import ImportScheduleDialog from '@/components/schedule/ImportScheduleDialog';
 import WeeklyScheduleGrid from '@/components/schedule/WeeklyScheduleGrid';
 import CellEditorDialog from '@/components/schedule/CellEditorDialog';
 import NowNextCard from '@/components/schedule/NowNextCard';
 import { loadBellSchedule, getTodayDayType, HEBREW_DAY_NAMES, getNowAndNext } from '@/lib/bellSchedule';
+import { ensureSubjectForName, findDuplicateSubjectColors, loadAndNormalizeSubjects, subjectMapById } from '@/lib/scheduleSubjects';
 
 // Build a full list of lesson rows from the bell schedule, falling back to 1..12 if needed.
 function buildPeriodRows(bellPeriods) {
@@ -39,6 +40,7 @@ function buildPeriodRows(bellPeriods) {
 
 export default function Schedule({ role = 'homeroom_teacher', user }) {
   const [slots, setSlots] = useState([]);
+  const [subjects, setSubjects] = useState([]);
   const [periods, setPeriods] = useState([]);
   const [className, setClassName] = useState('');
   const [activeClassId, setActiveClassId] = useState('');
@@ -79,8 +81,15 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
     const classRoom = classRooms.find(room => room.id === classId) || findClassRoomByName(classRooms, fallbackClassName);
     const resolvedClassId = classRoom?.id || classId;
     const data = await base44.entities.ScheduleSlot.filter({ class_id: resolvedClassId });
+    const normalizedSubjects = await loadAndNormalizeSubjects(data || []);
+    const subjectByKey = Object.fromEntries(normalizedSubjects.map(subject => [subject.normalized_key, subject]));
+    const normalizedSlots = (data || []).map(slot => {
+      const subject = subjectByKey[String(slot.subject || '').trim().replace(/\s+/g, ' ').replace(/["'`׳״]/g, '').toLowerCase()];
+      return subject && slot.subject_id !== subject.id ? { ...slot, subject_id: subject.id } : slot;
+    });
     setActiveClassId(resolvedClassId);
-    setSlots(data);
+    setSubjects(normalizedSubjects);
+    setSlots(normalizedSlots);
     setPeriods(buildPeriodRows(bellPeriods));
     setClassName(classRoom?.name || fallbackClassName || '');
     setLoading(false);
@@ -92,6 +101,9 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
     return map;
   }, [slots]);
 
+  const subjectsById = useMemo(() => subjectMapById(subjects), [subjects]);
+  const duplicateColorGroups = useMemo(() => findDuplicateSubjectColors(subjects), [subjects]);
+
   const openCell = useCallback((day, period, slot, periodRow) => {
     if (!canEdit && !slot) return;
     setEditor({ day, period, slot, periodRow });
@@ -99,13 +111,16 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
 
   const handleSaveCell = useCallback(async (payload) => {
     const { day, period, slot, periodRow } = editor;
+    const subjectDefinition = await ensureSubjectForName(payload.subject, subjects, payload.subject_color);
+    const { subject_color, ...slotPayload } = payload;
     const base = {
       class_id: activeClassId || classId,
       day,
       period: Number(period),
       start_time: periodRow?.start_time || '',
       end_time: periodRow?.end_time || '',
-      ...payload,
+      ...slotPayload,
+      subject_id: subjectDefinition?.id || payload.subject_id || '',
     };
     if (slot?.id) {
       await base44.entities.ScheduleSlot.update(slot.id, base);
@@ -116,7 +131,7 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
     }
     setEditor(null);
     load();
-  }, [editor, activeClassId, classId]);
+  }, [editor, activeClassId, classId, subjects]);
 
   const handleDeleteCell = useCallback(async (id) => {
     await base44.entities.ScheduleSlot.delete(id);
@@ -154,6 +169,16 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
         ) : null}
       />
 
+      {duplicateColorGroups.length > 0 && (
+        <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-right text-xs text-amber-800 dark:border-amber-900/60 dark:bg-amber-900/20 dark:text-amber-200" dir="rtl">
+          <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+          <div className="min-w-0">
+            <p className="font-bold">נמצאו מקצועות שונים עם אותו צבע</p>
+            <p className="mt-0.5">{duplicateColorGroups.map(group => group.map(subject => subject.name).join(' / ')).join(' · ')}</p>
+          </div>
+        </div>
+      )}
+
       {/* Smart card synced with bells */}
       <NowNextCard classId={activeClassId || classId} />
 
@@ -169,6 +194,7 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
           currentPeriod={currentPeriod}
           canEdit={canEdit}
           onCellClick={openCell}
+          subjectsById={subjectsById}
         />
       )}
 
@@ -193,6 +219,7 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
             ? `${editor.periodRow.start_time}–${editor.periodRow.end_time}` : ''}
           onSave={handleSaveCell}
           onDelete={handleDeleteCell}
+          subjects={subjects}
         />
       )}
 

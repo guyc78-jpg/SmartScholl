@@ -5,23 +5,25 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Trash2, AlertTriangle } from 'lucide-react';
+import { SUBJECT_COLORS, normalizeSubjectName } from '@/lib/scheduleSubjects';
 
-const SUBJECTS = [
+const DEFAULT_SUBJECTS = [
   'מתמטיקה','עברית','ספרות','אנגלית','היסטוריה','גיאוגרפיה',
   'פיזיקה','כימיה','ביולוגיה','חינוך גופני','אמנות','שעת חינוך',
-  'תנ"ך','מחשבים','מדעים','אזרחות','אחר'
+  'תנ"ך','מחשבים','מדעים','אזרחות'
 ];
 
 // Cell editor — add / edit / delete a single ScheduleSlot
-export default function CellEditorDialog({ open, onOpenChange, slot, day, period, periodTime, onSave, onDelete }) {
+export default function CellEditorDialog({ open, onOpenChange, slot, day, period, periodTime, onSave, onDelete, subjects = [] }) {
   const isEdit = !!slot?.id;
-  const [form, setForm] = useState({ subject: '', teacher: '', room: '', group: '', notes: '', customSubject: '' });
+  const [form, setForm] = useState({ subject: '', teacher: '', room: '', group: '', notes: '', customSubject: '', subjectColor: SUBJECT_COLORS[0] });
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     if (open) {
       setForm({
         subject: slot?.subject || '',
+        subjectColor: subjects.find(subject => subject.id === slot?.subject_id || subject.normalized_key === normalizeSubjectName(slot?.subject))?.color || SUBJECT_COLORS[0],
         teacher: slot?.teacher || '',
         room: slot?.room || '',
         // "group" stored in notes prefix to avoid schema change: "[קבוצה: X] ..."
@@ -33,6 +35,13 @@ export default function CellEditorDialog({ open, onOpenChange, slot, day, period
   }, [open, slot]);
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
+  const activeSubjects = subjects.filter(subject => subject.is_active !== false);
+  const subjectOptions = [...activeSubjects.map(subject => subject.name), ...DEFAULT_SUBJECTS]
+    .filter((name, index, list) => name && list.indexOf(name) === index);
+  const selectSubject = (value) => {
+    const subject = activeSubjects.find(item => item.normalized_key === normalizeSubjectName(value));
+    setForm(prev => ({ ...prev, subject: value, subjectColor: subject?.color || prev.subjectColor || SUBJECT_COLORS[0] }));
+  };
 
   function handleSubmit() {
     const combinedNotes = form.group
@@ -44,6 +53,7 @@ export default function CellEditorDialog({ open, onOpenChange, slot, day, period
       teacher: form.teacher,
       room: form.room,
       notes: combinedNotes,
+      subject_color: form.subjectColor,
     });
   }
 
@@ -69,11 +79,29 @@ export default function CellEditorDialog({ open, onOpenChange, slot, day, period
                 onChange={e => set('customSubject', e.target.value)}
                 placeholder="הזן מקצוע" />
             ) : (
-              <Select value={form.subject} onValueChange={v => set('subject', v)}>
+              <Select value={form.subject} onValueChange={selectSubject}>
                 <SelectTrigger><SelectValue placeholder="בחר מקצוע" /></SelectTrigger>
-                <SelectContent>{SUBJECTS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                <SelectContent>
+                  {subjectOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  <SelectItem value="אחר">אחר</SelectItem>
+                </SelectContent>
               </Select>
             )}
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs">צבע מקצוע קבוע</Label>
+            <div className="grid grid-cols-8 gap-1.5" dir="rtl">
+              {SUBJECT_COLORS.slice(0, 16).map(color => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => set('subjectColor', color)}
+                  className="h-7 rounded-full border-2 transition-all"
+                  style={{ backgroundColor: color, borderColor: form.subjectColor === color ? 'hsl(var(--foreground))' : 'transparent' }}
+                  aria-label={`בחר צבע ${color}`}
+                />
+              ))}
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">

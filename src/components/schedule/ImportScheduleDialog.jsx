@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { AlertTriangle, FileUp, Loader2, ChevronDown } from 'lucide-react';
 import SelectedFileNotice from '@/components/import/SelectedFileNotice';
 import { base44 } from '@/api/base44Client';
+import { ensureSubjectForName, normalizeSubjectName } from '@/lib/scheduleSubjects';
 
 const DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי'];
 const PREVIEW_LIMIT = 10;
@@ -143,10 +144,21 @@ export default function ImportScheduleDialog({ open, onOpenChange, onImported, c
   const handleConfirmImport = async () => {
     if (hasMissingRequired) { setError('יש להשלים יום, מספר שיעור ומקצוע בכל השורות לפני הייבוא.'); return; }
     setIsImporting(true);
+    let subjects = (await base44.entities.SchoolSubject.list('-updated_date', 500)).filter(subject => subject.is_active !== false);
+    const subjectsByKey = {};
+    for (const subject of subjects) subjectsByKey[subject.normalized_key] = subject;
+    for (const row of rows) {
+      const key = normalizeSubjectName(row.subject);
+      if (!subjectsByKey[key]) {
+        const subject = await ensureSubjectForName(row.subject, subjects);
+        subjects = [...subjects, subject];
+        subjectsByKey[key] = subject;
+      }
+    }
     await base44.entities.ScheduleSlot.bulkCreate(rows.map(row => ({
       class_id: classId, day: row.day, period: Number(row.period),
       start_time: row.start_time, end_time: row.end_time,
-      subject: row.subject, teacher: row.teacher, room: row.room, notes: row.notes
+      subject: row.subject, subject_id: subjectsByKey[normalizeSubjectName(row.subject)]?.id || '', teacher: row.teacher, room: row.room, notes: row.notes
     })));
     toast.success('מערכת השעות יובאה בהצלחה');
     setIsImporting(false);
