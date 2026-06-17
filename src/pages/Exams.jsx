@@ -7,14 +7,11 @@ import { findClassRoomByName } from '@/lib/classAssignment';
 import PageHeader from '@/components/ui/PageHeader';
 import RtlActionBar from '@/components/ui/RtlActionBar';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { CalendarDays, FileUp, LayoutGrid, List, Plus, Users, Trash2, MoreVertical, Settings } from 'lucide-react';
+import { FileUp, Plus, Users, Trash2, MoreVertical } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import EventFilters, { filterByGroup, filterBySearch } from '@/components/exams/EventFilters';
-import EventTypeBadge from '@/components/exams/EventTypeBadge';
 import { MonthView, WeekView, DayView } from '@/components/exams/ExamCalendarViews';
-import EventListView from '@/components/exams/EventListView';
 import SmartCalendarImportDialog from '@/components/exams/SmartCalendarImportDialog';
 import EventFormDialog from '@/components/exams/EventFormDialog';
 import EventDetailsDialog from '@/components/exams/EventDetailsDialog';
@@ -33,7 +30,7 @@ export default function Exams({ role, user }) {
   const [gradeReports, setGradeReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('week');
-  const [offset, setOffset] = useState(0);
+  const [viewOffsets, setViewOffsets] = useState({ day: 0, week: 0, month: 0 });
   const [filterGroup, setFilterGroup] = useState('all');
   const [search, setSearch] = useState('');
   const [onlyMine, setOnlyMine] = useState(true);
@@ -156,6 +153,8 @@ export default function Exams({ role, user }) {
   }
 
   const upcoming = visibleEvents.filter(event => event.date >= todayIso).slice(0, 8);
+  const currentOffset = viewOffsets[view] || 0;
+  const setCurrentOffset = (nextOffset) => setViewOffsets(prev => ({ ...prev, [view]: nextOffset }));
 
   return (
     <div className="p-4 lg:p-6 space-y-5 pb-28 lg:pb-10" dir="rtl">
@@ -208,30 +207,11 @@ export default function Exams({ role, user }) {
 
       <EventFilters activeGroup={filterGroup} onGroupChange={setFilterGroup} search={search} onSearchChange={setSearch} />
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-start gap-3" dir="rtl">
         {isStudent && <Button size="sm" variant={onlyMine ? 'default' : 'outline'} onClick={() => setOnlyMine(v => !v)}>{onlyMine ? 'הלוח שלי' : 'כל הלוח השכבתי'}</Button>}
-        <div className="grid grid-cols-4 gap-1 rounded-lg border bg-card p-1 ms-auto w-full sm:w-auto sm:min-w-[360px]">
-          {[
-            { key: 'month', label: 'חודש', icon: CalendarDays, action: () => { setView('month'); setOffset(0); } },
-            { key: 'week', label: 'שבוע', icon: LayoutGrid, action: () => { setView('week'); setOffset(0); } },
-            { key: 'day', label: 'יום', icon: CalendarDays, action: () => { setView('day'); setOffset(0); } },
-            { key: 'list', label: 'רשימה', icon: List, action: () => setView('list') }
-          ].map(({ key, label, icon: Icon, action }) => (
-            <Button
-              key={key}
-              size="sm"
-              variant={view === key ? 'default' : 'ghost'}
-              onClick={action}
-              className="h-9 px-2 w-full flex items-center justify-center gap-1.5 text-xs sm:text-sm font-medium whitespace-nowrap"
-            >
-              <Icon className="w-4 h-4 shrink-0" />
-              <span>{label}</span>
-            </Button>
-          ))}
-        </div>
       </div>
 
-      {visibleEvents.length > 0 && <UpcomingEventsPanel events={visibleEvents} todayIso={todayIso} onEventClick={canEdit ? openEdit : setSelectedEvent} onEdit={openEdit} onDelete={deleteEvent} canEdit={canEdit} />}
+      {visibleEvents.length > 0 && <UpcomingEventsPanel events={visibleEvents} todayIso={todayIso} onEventClick={setSelectedEvent} onEdit={openEdit} onDelete={deleteEvent} canEdit={canEdit} />}
 
       {showTracking && canTrack && <ClassTrackingPanel events={visibleEvents} classId={classId} todayIso={todayIso} />}
       {canTrack && <ExamGradeReportsPanel reports={gradeReports} user={user} onChanged={loadData} readOnly={!['admin','system_admin','homeroom_teacher','coordinator','grade_coordinator'].includes(role)} />}
@@ -247,13 +227,11 @@ export default function Exams({ role, user }) {
           onDemo={() => setShowDemo(true)}
         />
       ) : view === 'month' ? (
-        <MonthView events={visibleEvents} offset={offset} onOffsetChange={setOffset} onEventClick={canEdit ? openEdit : setSelectedEvent} onEdit={openEdit} onDelete={deleteEvent} canEdit={canEdit} todayIso={todayIso} />
+        <MonthView events={visibleEvents} offset={currentOffset} onOffsetChange={setCurrentOffset} onEventClick={setSelectedEvent} onEdit={openEdit} onDelete={deleteEvent} canEdit={canEdit} todayIso={todayIso} view={view} onViewChange={setView} />
       ) : view === 'week' ? (
-        <WeekView events={visibleEvents} offset={offset} onOffsetChange={setOffset} onEventClick={canEdit ? openEdit : setSelectedEvent} onEdit={openEdit} onDelete={deleteEvent} canEdit={canEdit} todayIso={todayIso} />
-      ) : view === 'day' ? (
-        <DayView events={visibleEvents} offset={offset} onOffsetChange={setOffset} onEventClick={canEdit ? openEdit : setSelectedEvent} onEdit={openEdit} onDelete={deleteEvent} canEdit={canEdit} />
+        <WeekView events={visibleEvents} offset={currentOffset} onOffsetChange={setCurrentOffset} onEventClick={setSelectedEvent} onEdit={openEdit} onDelete={deleteEvent} canEdit={canEdit} todayIso={todayIso} view={view} onViewChange={setView} />
       ) : (
-        <EventListView events={visibleEvents} onEventClick={canEdit ? openEdit : setSelectedEvent} onEdit={openEdit} onDelete={deleteEvent} canEdit={canEdit} todayIso={todayIso} />
+        <DayView events={visibleEvents} offset={currentOffset} onOffsetChange={setCurrentOffset} onEventClick={setSelectedEvent} onEdit={openEdit} onDelete={deleteEvent} canEdit={canEdit} todayIso={todayIso} view={view} onViewChange={setView} />
       )}
 
       {canImport && <SmartCalendarImportDialog open={showImport} onOpenChange={setShowImport} classId={activeClassId || classId} onImported={loadData} />}
