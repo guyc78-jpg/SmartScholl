@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Bell, Send } from 'lucide-react';
+import { Bell } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { cn } from '@/lib/utils';
 
@@ -42,14 +42,13 @@ export default function PushNotificationToggle({ compact = false, iconOnly = fal
   }, []);
 
   const enable = async () => {
+    const previousEndpoint = endpoint;
+    setEnabled(true);
     setBusy(true);
     setMessage('');
     try {
       const permission = await withTimeout(Notification.requestPermission(), 15000, 'בקשת ההרשאה לא הושלמה');
-      if (permission !== 'granted') {
-        setMessage('ההתראות לא אושרו בדפדפן');
-        return;
-      }
+      if (permission !== 'granted') throw new Error('ההתראות לא אושרו בדפדפן');
 
       const { data } = await withTimeout(base44.functions.invoke('getVapidPublicKey', {}), 15000, 'לא התקבל מפתח התראות');
       if (!data?.publicKey) throw new Error('מפתח ההתראות שהוגדר במערכת אינו תקין');
@@ -66,47 +65,35 @@ export default function PushNotificationToggle({ compact = false, iconOnly = fal
       }), 15000, 'שמירת המנוי לא הושלמה');
 
       setEndpoint(subscription.endpoint);
-      setEnabled(true);
-      setMessage('ההתראות הופעלו');
     } catch (error) {
-      setMessage(error?.message || 'לא ניתן להפעיל התראות בדפדפן הזה');
+      setEnabled(false);
+      setEndpoint(previousEndpoint);
+      setMessage(error?.message || 'לא ניתן להפעיל התראות');
     } finally {
       setBusy(false);
     }
   };
 
   const disable = async () => {
+    const previousEndpoint = endpoint;
+    setEnabled(false);
+    setEndpoint('');
     setBusy(true);
     setMessage('');
     try {
       const registration = await withTimeout(navigator.serviceWorker.ready, 15000, 'שירות ההתראות לא זמין');
       const subscription = await registration.pushManager.getSubscription();
       if (subscription) {
-        await base44.functions.invoke('savePushSubscription', {
+        await withTimeout(base44.functions.invoke('savePushSubscription', {
           endpoint: subscription.endpoint,
           enabled: false,
-        });
+        }), 15000, 'שמירת השינוי נכשלה');
         await subscription.unsubscribe();
       }
-      setEndpoint('');
-      setEnabled(false);
-      setMessage('ההתראות כובו');
     } catch (error) {
-      setMessage(error?.message || 'לא ניתן לכבות התראות כרגע');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const sendTest = async () => {
-    if (!endpoint) return;
-    setBusy(true);
-    setMessage('');
-    try {
-      await withTimeout(base44.functions.invoke('sendTestPushNotification', { endpoint }), 15000, 'שליחת הבדיקה לא הושלמה');
-      setMessage('נשלח פוש דמו למכשיר הזה');
-    } catch (error) {
-      setMessage(error?.message || 'לא ניתן לשלוח התראת בדיקה כרגע');
+      setEnabled(true);
+      setEndpoint(previousEndpoint);
+      setMessage(error?.message || 'לא ניתן לכבות התראות');
     } finally {
       setBusy(false);
     }
@@ -176,18 +163,7 @@ export default function PushNotificationToggle({ compact = false, iconOnly = fal
           />
         </span>
       </button>
-      {enabled && (
-        <button
-          type="button"
-          onClick={sendTest}
-          disabled={busy}
-          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors text-right bg-secondary/15 text-secondary-foreground hover:bg-secondary/25 disabled:opacity-60"
-        >
-          <Send className="w-4 h-4 flex-shrink-0" />
-          <span className="text-[13px] flex-1 text-right">שלח פוש דמו עכשיו</span>
-        </button>
-      )}
-      {message && <p className="text-[11px] text-sidebar-foreground/55 px-3 text-right">{busy ? 'מעדכן מצב...' : message}</p>}
+      {message && <p className="text-[11px] text-destructive px-3 text-right">{message}</p>}
     </div>
   );
 }

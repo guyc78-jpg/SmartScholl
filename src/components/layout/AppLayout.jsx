@@ -296,10 +296,6 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
         </div>
       </div>
 
-      <div className="px-4 py-3 border-b border-sidebar-border">
-        <PushNotificationToggle showUnsupported />
-      </div>
-
       {/* Accordion Nav */}
       <nav className="flex-1 overflow-y-auto py-3 px-2.5 space-y-0.5">
         {navGroups.map(group => (
@@ -331,6 +327,7 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
             <span className="text-[13px] flex-1 text-right">פרופיל</span>
           </Link>
         )}
+        <PushNotificationToggle showUnsupported compact />
         <div className={cn(
           'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors',
           darkMode 
