@@ -50,34 +50,87 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
   const [sheetHeight, setSheetHeight] = useState(null);
   const [sheetBottom, setSheetBottom] = useState(0);
   const [sheetTop, setSheetTop] = useState(null);
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
   const sheetRef = useRef(null);
   const scrollAreaRef = useRef(null);
 
-  // עדכון גובה ומיקום דינמי — מצמיד את הפאנל ל-visual viewport האמיתי ב-iOS
+  // גובה הבסיס מחושב מחלון מלא (ללא תלות במקלדת) — כך נשמר גובה מקורי יציב
   useEffect(() => {
-    const update = () => {
-      const vv = window.visualViewport;
-      const viewportTop = vv?.offsetTop ?? 0;
-      const viewportHeight = vv?.height ?? window.innerHeight;
-      const viewportBottom = viewportTop + viewportHeight;
-      const keyboardInset = Math.max(0, window.innerHeight - viewportBottom);
+    const computeBase = () => {
       const navInset = window.innerWidth < 1024 ? 112 : 0;
-      const usableBottom = viewportBottom - navInset;
-      const usableHeight = Math.max(320, viewportHeight - navInset);
-      const nextHeight = Math.min(Math.round(usableHeight * 0.85), 640);
-
-      setSheetBottom(Math.max(keyboardInset, navInset));
-      setSheetHeight(nextHeight);
-      setSheetTop(Math.max(0, usableBottom - nextHeight));
+      const fullHeight = window.innerHeight;
+      const usableHeight = Math.max(320, fullHeight - navInset);
+      const baseHeight = Math.min(Math.round(usableHeight * 0.85), 640);
+      setSheetHeight(baseHeight);
+      // ברירת מחדל ללא מקלדת — מצמיד לתחתית מעל ניווט המובייל
+      setSheetBottom(navInset);
+      setSheetTop(Math.max(0, fullHeight - navInset - baseHeight));
     };
-    update();
-    window.visualViewport?.addEventListener('resize', update);
-    window.visualViewport?.addEventListener('scroll', update);
-    return () => {
-      window.visualViewport?.removeEventListener('resize', update);
-      window.visualViewport?.removeEventListener('scroll', update);
-    };
+    computeBase();
+    window.addEventListener('orientationchange', computeBase);
+    return () => window.removeEventListener('orientationchange', computeBase);
   }, []);
+
+  // מעקב אחר המקלדת ב-visualViewport — מתאים מיקום זמני כשהיא פתוחה ומשחזר בסגירה
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const KB_THRESHOLD = 120; // מתחת לסף לא נחשב מקלדת (סרגלי דפדפן וכד')
+
+    const onViewportChange = () => {
+      const viewportBottom = (vv.offsetTop ?? 0) + vv.height;
+      const keyboardInset = Math.max(0, window.innerHeight - viewportBottom);
+      const isKeyboard = keyboardInset > KB_THRESHOLD;
+      const navInset = window.innerWidth < 1024 ? 112 : 0;
+
+      if (isKeyboard) {
+        // העלאה זמנית מעל המקלדת — ללא שינוי גובה הבסיס
+        setKeyboardOpen(true);
+        setSheetBottom(keyboardInset);
+        setSheetTop(prev => {
+          const baseHeight = sheetHeight ?? 0;
+          return Math.max(0, viewportBottom - baseHeight);
+        });
+      } else {
+        // המקלדת נסגרה — שחזור אוטומטי לגובה ולמיקום המקוריים
+        setKeyboardOpen(false);
+        const fullHeight = window.innerHeight;
+        const baseHeight = sheetHeight ?? 0;
+        setSheetBottom(navInset);
+        setSheetTop(Math.max(0, fullHeight - navInset - baseHeight));
+      }
+    };
+
+    vv.addEventListener('resize', onViewportChange);
+    vv.addEventListener('scroll', onViewportChange);
+    return () => {
+      vv.removeEventListener('resize', onViewportChange);
+      vv.removeEventListener('scroll', onViewportChange);
+    };
+  }, [sheetHeight]);
+
+  // ניקוי styles זמניים בעת איבוד פוקוס מכל השדות — מבטיח חזרה לגובה המקורי
+  useEffect(() => {
+    const onBlurAnywhere = () => {
+      // עיכוב קצר כדי לאפשר מעבר פוקוס בין שדות מבלי לאפס באמצע
+      setTimeout(() => {
+        const active = document.activeElement;
+        const stillEditing = active && ['INPUT', 'TEXTAREA'].includes(active.tagName);
+        if (!stillEditing) {
+          const navInset = window.innerWidth < 1024 ? 112 : 0;
+          const fullHeight = window.innerHeight;
+          const baseHeight = sheetHeight ?? 0;
+          setKeyboardOpen(false);
+          setSheetBottom(navInset);
+          setSheetTop(Math.max(0, fullHeight - navInset - baseHeight));
+        }
+      }, 120);
+    };
+    const node = sheetRef.current;
+    node?.addEventListener('focusout', onBlurAnywhere);
+    return () => node?.removeEventListener('focusout', onBlurAnywhere);
+  }, [sheetHeight]);
 
   // גלילה אוטומטית לשדה הפעיל בתוך אזור הגלילה
   function handleFieldFocus(e) {
@@ -364,7 +417,9 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
             paddingTop: '1rem',
             paddingRight: '1rem',
             paddingLeft: '1rem',
-            paddingBottom: `max(var(--app-overlay-padding-bottom), ${Math.max(104, sheetBottom + 120)}px)`,
+            paddingBottom: keyboardOpen
+            ? `${Math.max(120, sheetBottom + 24)}px`
+            : 'var(--app-overlay-padding-bottom)',
             overscrollBehavior: 'contain',
             WebkitOverflowScrolling: 'touch'
           }}
