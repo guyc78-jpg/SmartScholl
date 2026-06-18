@@ -53,22 +53,28 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   const sheetRef = useRef(null);
   const scrollAreaRef = useRef(null);
+  const baseViewportHeightRef = useRef(null);
 
   // גובה הבסיס מחושב מחלון מלא (ללא תלות במקלדת) — כך נשמר גובה מקורי יציב
   useEffect(() => {
     const computeBase = () => {
       const navInset = window.innerWidth < 1024 ? 112 : 0;
-      const fullHeight = window.innerHeight;
+      if (!baseViewportHeightRef.current) baseViewportHeightRef.current = window.innerHeight;
+      const fullHeight = baseViewportHeightRef.current;
       const usableHeight = Math.max(320, fullHeight - navInset);
       const baseHeight = Math.min(Math.round(usableHeight * 0.85), 640);
       setSheetHeight(baseHeight);
-      // ברירת מחדל ללא מקלדת — מצמיד לתחתית מעל ניווט המובייל
+      // ברירת מחדל ללא מקלדת — גובה קבוע שאינו מושפע מ-visualViewport
       setSheetBottom(navInset);
       setSheetTop(Math.max(0, fullHeight - navInset - baseHeight));
     };
+    const resetBaseAfterOrientation = () => {
+      baseViewportHeightRef.current = null;
+      setTimeout(computeBase, 280);
+    };
     computeBase();
-    window.addEventListener('orientationchange', computeBase);
-    return () => window.removeEventListener('orientationchange', computeBase);
+    window.addEventListener('orientationchange', resetBaseAfterOrientation);
+    return () => window.removeEventListener('orientationchange', resetBaseAfterOrientation);
   }, []);
 
   // מעקב אחר המקלדת ב-visualViewport — מתאים מיקום זמני כשהיא פתוחה ומשחזר בסגירה
@@ -94,7 +100,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
       } else {
         // כל שינוי viewport שאינו מקלדת פעילה מחזיר לברירת המחדל
         setKeyboardOpen(false);
-        const fullHeight = window.innerHeight;
+        const fullHeight = baseViewportHeightRef.current || window.innerHeight;
         const baseHeight = sheetHeight ?? 0;
         setSheetBottom(navInset);
         setSheetTop(Math.max(0, fullHeight - navInset - baseHeight));
@@ -112,7 +118,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
   // איפוס ידני לגובה ולמיקום המקוריים — מנקה styles זמניים גם אם iOS לא ירה resize
   const resetSheetToBase = useCallback(() => {
     const navInset = window.innerWidth < 1024 ? 112 : 0;
-    const fullHeight = window.innerHeight;
+    const fullHeight = baseViewportHeightRef.current || window.innerHeight;
     const baseHeight = sheetHeight ?? 0;
     setKeyboardOpen(false);
     setSheetBottom(navInset);
@@ -399,7 +405,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
           left: 0,
           bottom: `${sheetBottom}px`,
           height: sheetHeight ? `${sheetHeight}px` : '85vh',
-          maxHeight: 'calc(100dvh - var(--app-mobile-overlay-bottom-space) - 1rem)',
+          maxHeight: sheetHeight ? `${sheetHeight}px` : undefined,
           background: 'hsl(var(--card))',
           borderRadius: '1rem 1rem 0 0',
           display: 'flex',

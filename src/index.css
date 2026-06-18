@@ -145,7 +145,7 @@
   [data-radix-dialog-content],
   [data-radix-alert-dialog-content] {
     z-index: 9999;
-    max-height: calc(100dvh - var(--app-mobile-overlay-bottom-space) - 1rem);
+    max-height: calc(100svh - var(--app-mobile-overlay-bottom-space) - 1rem);
     overflow-y: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
@@ -157,7 +157,7 @@
   [data-radix-popper-content-wrapper] {
     z-index: 10000 !important;
     max-width: calc(100vw - 1rem) !important;
-    max-height: calc(100dvh - var(--app-mobile-overlay-bottom-space) - 0.75rem) !important;
+    max-height: calc(100svh - var(--app-mobile-overlay-bottom-space) - 0.75rem) !important;
     overflow-x: hidden;
   }
 
@@ -166,7 +166,7 @@
   [data-radix-popover-content],
   [role="menu"],
   [role="listbox"] {
-    max-height: calc(100dvh - var(--app-mobile-overlay-bottom-space) - 1rem);
+    max-height: calc(100svh - var(--app-mobile-overlay-bottom-space) - 1rem);
     overflow-y: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
@@ -175,7 +175,7 @@
   }
 
   [data-radix-select-viewport] {
-    max-height: calc(100dvh - var(--app-mobile-overlay-bottom-space) - 2rem);
+    max-height: calc(100svh - var(--app-mobile-overlay-bottom-space) - 2rem);
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }

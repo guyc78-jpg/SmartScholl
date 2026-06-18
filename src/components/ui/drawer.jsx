@@ -4,6 +4,7 @@ import * as React from "react"
 import { Drawer as DrawerPrimitive } from "vaul"
 
 import { cn } from "@/lib/utils"
+import useStableSheetHeight from "@/hooks/useStableSheetHeight"
 
 const Drawer = ({
   shouldScaleBackground = true,
@@ -27,21 +28,28 @@ const DrawerOverlay = React.forwardRef(({ className, ...props }, ref) => (
 ))
 DrawerOverlay.displayName = DrawerPrimitive.Overlay.displayName
 
-const DrawerContent = React.forwardRef(({ className, children, ...props }, ref) => (
-  <DrawerPortal>
-    <DrawerOverlay />
-    <DrawerPrimitive.Content
-      ref={ref}
-      className={cn(
-        "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto flex-col rounded-t-[10px] border bg-background",
-        className
-      )}
-      {...props}>
-      <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted" />
-      {children}
-    </DrawerPrimitive.Content>
-  </DrawerPortal>
-))
+const DrawerContent = React.forwardRef(({ className, children, style, ...props }, ref) => {
+  const stableHeight = useStableSheetHeight();
+
+  return (
+    <DrawerPortal>
+      <DrawerOverlay />
+      <DrawerPrimitive.Content
+        ref={ref}
+        dir="rtl"
+        style={{ '--sheet-stable-height': `${stableHeight}px`, ...style }}
+        className={cn(
+          "fixed inset-x-0 bottom-0 z-50 mt-24 flex max-h-[calc(var(--sheet-stable-height,100svh)-1rem)] h-auto flex-col overflow-y-auto rounded-t-[10px] border bg-background text-right",
+          className
+        )}
+        {...props}
+      >
+        <div className="mx-auto mt-4 h-2 w-[100px] rounded-full bg-muted" />
+        {children}
+      </DrawerPrimitive.Content>
+    </DrawerPortal>
+  );
+})
 DrawerContent.displayName = "DrawerContent"
 
 const DrawerHeader = ({

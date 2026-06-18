@@ -5,6 +5,7 @@ import { cva } from "class-variance-authority";
 import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import useStableSheetHeight from "@/hooks/useStableSheetHeight"
 
 const Sheet = SheetPrimitive.Root
 
@@ -26,13 +27,13 @@ const SheetOverlay = React.forwardRef(({ className, ...props }, ref) => (
 SheetOverlay.displayName = SheetPrimitive.Overlay.displayName
 
 const sheetVariants = cva(
-  "fixed z-[9999] max-h-[calc(100dvh-var(--app-mobile-overlay-bottom-space)-1rem)] gap-4 overflow-y-auto overscroll-contain bg-background p-6 pb-[var(--app-overlay-padding-bottom)] text-right shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=open]:animate-in data-[state=closed]:animate-out",
+  "fixed z-[9999] max-h-[calc(var(--sheet-stable-height,100svh)-var(--app-mobile-overlay-bottom-space)-1rem)] gap-4 overflow-y-auto overscroll-contain bg-background p-6 pb-[var(--app-overlay-padding-bottom)] text-right shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=open]:animate-in data-[state=closed]:animate-out",
   {
     variants: {
       side: {
         top: "inset-x-0 top-0 border-b data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top",
         bottom:
-          "inset-x-0 bottom-[var(--app-mobile-overlay-bottom-space)] max-h-[calc(100dvh-var(--app-mobile-overlay-bottom-space)-1rem)] border-t data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
+          "inset-x-0 bottom-[var(--app-mobile-overlay-bottom-space)] max-h-[calc(var(--sheet-stable-height,100svh)-var(--app-mobile-overlay-bottom-space)-1rem)] border-t data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
         left: "top-0 bottom-[var(--app-mobile-overlay-bottom-space)] left-0 h-auto w-3/4 border-r data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left sm:max-w-sm",
         right:
           "top-0 bottom-[var(--app-mobile-overlay-bottom-space)] right-0 h-auto w-3/4 border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right sm:max-w-sm",
@@ -44,19 +45,29 @@ const sheetVariants = cva(
   }
 )
 
-const SheetContent = React.forwardRef(({ side = "right", className, children, ...props }, ref) => (
-  <SheetPortal>
-    <SheetOverlay />
-    <SheetPrimitive.Content ref={ref} dir="rtl" style={{ WebkitOverflowScrolling: 'touch' }} className={cn(sheetVariants({ side }), className)} {...props}>
-      <SheetPrimitive.Close
-        className="absolute end-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
-        <X className="h-4 w-4" />
-        <span className="sr-only">Close</span>
-      </SheetPrimitive.Close>
-      {children}
-    </SheetPrimitive.Content>
-  </SheetPortal>
-))
+const SheetContent = React.forwardRef(({ side = "right", className, children, style, ...props }, ref) => {
+  const stableHeight = useStableSheetHeight();
+
+  return (
+    <SheetPortal>
+      <SheetOverlay />
+      <SheetPrimitive.Content
+        ref={ref}
+        dir="rtl"
+        style={{ '--sheet-stable-height': `${stableHeight}px`, WebkitOverflowScrolling: 'touch', ...style }}
+        className={cn(sheetVariants({ side }), className)}
+        {...props}
+      >
+        <SheetPrimitive.Close
+          className="absolute end-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
+          <X className="h-4 w-4" />
+          <span className="sr-only">Close</span>
+        </SheetPrimitive.Close>
+        {children}
+      </SheetPrimitive.Content>
+    </SheetPortal>
+  );
+})
 SheetContent.displayName = SheetPrimitive.Content.displayName
 
 const SheetHeader = ({
