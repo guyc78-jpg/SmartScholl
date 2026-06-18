@@ -32,6 +32,7 @@ const classGrade = (className, fallback) => {
 const nextGrade = (grade) => GRADES[GRADES.indexOf(grade) + 1] || null;
 const displayGrade = (grade) => grade === 'יא' ? 'י״א' : grade === 'יב' ? 'י״ב' : grade;
 const displayClass = (grade, number) => `${displayGrade(grade)}${number || ''}`;
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const normalizeEmail = (email) => String(email || '').trim().toLowerCase();
 const parseRoles = (source) => {
   if (Array.isArray(source)) return source;
@@ -63,6 +64,10 @@ async function safeList(base44, entityName, limit = 1000) {
   } catch (_) {
     return [];
   }
+}
+
+function emptyDeletionCounts() {
+  return Object.fromEntries(OPERATIONAL_ENTITIES.map((entityName) => [entityName, 'יחושב בביצוע']));
 }
 
 function buildPreview({ students, classes, moveTeachers }) {
@@ -149,7 +154,9 @@ async function deleteOperationalData(base44) {
     for (const record of records) {
       await base44.asServiceRole.entities[entityName].delete(record.id);
       deleted += 1;
+      if (deleted % 20 === 0) await sleep(250);
     }
+    await sleep(120);
     deletedCounts[entityName] = deleted;
   }
   return deletedCounts;
@@ -175,12 +182,7 @@ Deno.serve(async (req) => {
     ]);
     const preview = buildPreview({ students, classes, moveTeachers });
 
-    const deletionCounts = {};
-    for (const entityName of OPERATIONAL_ENTITIES) {
-      deletionCounts[entityName] = (await safeList(base44, entityName, 1000)).length;
-    }
-
-    if (mode === 'preview') return Response.json({ ...preview, deletionCounts, operationalEntities: OPERATIONAL_ENTITIES });
+    if (mode === 'preview') return Response.json({ ...preview, deletionCounts: emptyDeletionCounts(), operationalEntities: OPERATIONAL_ENTITIES });
 
     if (body.confirmationText !== 'איפוס שנת לימודים' || body.confirmed !== true) {
       return Response.json({ error: 'נדרש אישור כפול לפני ביצוע האיפוס' }, { status: 400 });
