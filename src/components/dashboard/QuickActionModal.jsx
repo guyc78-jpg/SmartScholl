@@ -54,6 +54,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
   const sheetRef = useRef(null);
   const scrollAreaRef = useRef(null);
   const baseViewportHeightRef = useRef(null);
+  const resetTimersRef = useRef([]);
 
   // גובה הבסיס מחושב מחלון מלא (ללא תלות במקלדת) — כך נשמר גובה מקורי יציב
   useEffect(() => {
@@ -123,7 +124,46 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
     setKeyboardOpen(false);
     setSheetBottom(navInset);
     setSheetTop(Math.max(0, fullHeight - navInset - baseHeight));
+    if (sheetRef.current) {
+      sheetRef.current.style.height = baseHeight ? `${baseHeight}px` : '85vh';
+      sheetRef.current.style.maxHeight = baseHeight ? `${baseHeight}px` : '';
+      sheetRef.current.style.bottom = `${navInset}px`;
+      sheetRef.current.style.top = '';
+    }
   }, [sheetHeight]);
+
+  const scheduleStableReset = useCallback(() => {
+    resetTimersRef.current.forEach(clearTimeout);
+    resetTimersRef.current = [40, 180, 420].map(delay => setTimeout(resetSheetToBase, delay));
+  }, [resetSheetToBase]);
+
+  useEffect(() => {
+    const vv = window.visualViewport;
+    const resetIfKeyboardClosed = () => {
+      const viewportBottom = vv ? (vv.offsetTop || 0) + vv.height : window.innerHeight;
+      const keyboardInset = Math.max(0, window.innerHeight - viewportBottom);
+      const active = document.activeElement;
+      const activeTextFieldInSheet = active && ['INPUT', 'TEXTAREA'].includes(active.tagName) && sheetRef.current?.contains(active);
+      if (!activeTextFieldInSheet || keyboardInset < 120) scheduleStableReset();
+    };
+
+    vv?.addEventListener('resize', resetIfKeyboardClosed);
+    vv?.addEventListener('scroll', resetIfKeyboardClosed);
+    window.addEventListener('focusout', resetIfKeyboardClosed, true);
+    window.addEventListener('touchend', resetIfKeyboardClosed, true);
+    window.addEventListener('pointerup', resetIfKeyboardClosed, true);
+    window.addEventListener('keyup', resetIfKeyboardClosed, true);
+
+    return () => {
+      resetTimersRef.current.forEach(clearTimeout);
+      vv?.removeEventListener('resize', resetIfKeyboardClosed);
+      vv?.removeEventListener('scroll', resetIfKeyboardClosed);
+      window.removeEventListener('focusout', resetIfKeyboardClosed, true);
+      window.removeEventListener('touchend', resetIfKeyboardClosed, true);
+      window.removeEventListener('pointerup', resetIfKeyboardClosed, true);
+      window.removeEventListener('keyup', resetIfKeyboardClosed, true);
+    };
+  }, [scheduleStableReset]);
 
   // ניקוי styles זמניים בעת איבוד פוקוס מכל השדות — מבטיח חזרה לגובה המקורי
   useEffect(() => {
@@ -192,11 +232,29 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
     loadStudents();
   }, [action, usesStudentData, resolvedClassId, hasInitialStudents, initialStudents]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Prevent body scroll on iOS while sheet is open
+  // Prevent body scroll on iOS while sheet is open and restore page layout exactly on close
   useEffect(() => {
-    const prev = document.body.style.overflow;
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
+    const prevHtmlOverscroll = document.documentElement.style.overscrollBehavior;
+    const prevBodyOverscroll = document.body.style.overscrollBehavior;
+    const prevBodyWidth = document.body.style.width;
+
     document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = prev; };
+    document.documentElement.style.overflow = 'hidden';
+    document.documentElement.style.overscrollBehavior = 'contain';
+    document.body.style.overscrollBehavior = 'contain';
+    document.body.style.width = '100%';
+
+    return () => {
+      document.body.style.overflow = prevBodyOverflow;
+      document.documentElement.style.overflow = prevHtmlOverflow;
+      document.documentElement.style.overscrollBehavior = prevHtmlOverscroll;
+      document.body.style.overscrollBehavior = prevBodyOverscroll;
+      document.body.style.width = prevBodyWidth;
+      document.body.style.height = '';
+      document.documentElement.style.height = '';
+    };
   }, []);
 
   // כל פעולה מהירה מתחילה מטופס נקי כדי למנוע זליגת נתונים בין מודולים

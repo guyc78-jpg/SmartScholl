@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { X, UserX } from 'lucide-react';
+import useStableSheetHeight from '@/hooks/useStableSheetHeight';
 
 const STATUS_LABELS = {
   'נעדר': 'היעדר',
@@ -23,6 +24,8 @@ const STATUS_BADGE_STYLES = {
 };
 
 export default function AttendanceExceptionsDialog({ open, onOpenChange, records = [], dateLabel }) {
+  const stableHeight = useStableSheetHeight();
+
   useEffect(() => {
     if (!open) return;
     const previousBodyOverflow = document.body.style.overflow;
@@ -58,8 +61,8 @@ export default function AttendanceExceptionsDialog({ open, onOpenChange, records
           className="pointer-events-auto w-full sm:max-w-2xl flex flex-col rounded-t-3xl sm:rounded-3xl bg-card border border-border shadow-2xl text-right overflow-hidden"
           dir="rtl"
           style={{
-            height: 'min(85dvh, 720px)',
-            maxHeight: 'calc(100dvh - var(--app-mobile-overlay-bottom-space) - env(safe-area-inset-top) - 16px)',
+            height: `min(${Math.round(stableHeight * 0.85)}px, 720px)`,
+            maxHeight: `calc(${stableHeight}px - var(--app-mobile-overlay-bottom-space) - env(safe-area-inset-top) - 16px)`,
             overscrollBehavior: 'contain',
           }}
         >
@@ -85,7 +88,7 @@ export default function AttendanceExceptionsDialog({ open, onOpenChange, records
               overscrollBehaviorY: 'contain',
               WebkitOverflowScrolling: 'touch',
               touchAction: 'pan-y',
-              maxHeight: 'calc(min(85dvh, 720px) - 73px)',
+              maxHeight: `calc(min(${Math.round(stableHeight * 0.85)}px, 720px) - 73px)`,
               paddingBottom: 'max(1rem, calc(env(safe-area-inset-bottom) + 80px))',
             }}
           >
