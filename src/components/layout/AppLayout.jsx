@@ -8,7 +8,7 @@ import {
   Megaphone, BarChart2,
   Menu, X, Sun, Moon, BookMarked,
   UserCheck, UserRound, ShieldCheck, Settings, LogOut, Bell, School,
-  ChevronDown, Heart, MessageSquare, ClipboardList, AlertTriangle, GraduationCap, Building2, Eye, CalendarClock
+  ChevronDown, Heart, MessageSquare, ClipboardList, AlertTriangle, GraduationCap, Building2, Eye, CalendarClock, RefreshCw
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getAvailableRoles, getRoleDisplayLines, getUserDisplayName } from '@/lib/roleUtils';
@@ -102,6 +102,7 @@ const sidebarGroups = [
     items: [
       { path: '/users', icon: ShieldCheck, label: 'משתמשים מאושרים', roles: ['system_admin', 'admin'] },
       { path: '/classrooms', icon: School, label: 'ניהול כיתות', roles: ['system_admin', 'admin'] },
+      { path: '/year-transition', icon: RefreshCw, label: 'מעבר שנת לימודים', roles: ['system_admin'], systemAdminOnly: true },
       { path: '/permissions-tester', icon: Eye, label: 'בדיקת הרשאות', roles: ['system_admin', 'admin'] },
       { path: '/bell-schedule', icon: Bell, label: 'צלצולים והפסקות', roles: ['system_admin', 'admin'] },
       { path: '/push-notifications', icon: Bell, label: 'בדיקת התראות', roles: ['system_admin', 'admin'] },
@@ -254,7 +255,10 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
   const isActiveDivisionManager = activeRole === 'division_manager';
   const isStaffRole = ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'].includes(activeRole);
   const isApprovedAdmin = approvedRoles.includes('system_admin') || approvedRoles.includes('admin');
-  const canAccess = (item) => item.roles.includes(activeRole) || (isApprovedAdmin && (item.roles.includes('system_admin') || item.roles.includes('admin')));
+  const canAccess = (item) => {
+    if (item.systemAdminOnly) return approvedRoles.includes('system_admin');
+    return item.roles.includes(activeRole) || (isApprovedAdmin && (item.roles.includes('system_admin') || item.roles.includes('admin')));
+  };
 
   const hasCoordinatorClassScope = ['grade_coordinator', 'coordinator'].includes(activeRole) && coordinatorHasHomeroom(user);
   const sidebarSource = hasCoordinatorClassScope

@@ -49,6 +49,7 @@ const DivisionManagement = lazy(() => import('./pages/DivisionManagement'));
 const DivisionExams = lazy(() => import('./pages/DivisionExams'));
 const PermissionsTester = lazy(() => import('./pages/PermissionsTester'));
 const PushNotifications = lazy(() => import('./pages/PushNotifications'));
+const YearTransition = lazy(() => import('./pages/YearTransition'));
 import { isStaff, isStudent, defaultRoute } from './lib/permissions';
 import { getAvailableRoles, getInitialWorkRole, getSystemRole } from './lib/roleUtils';
 import { SimulationProvider, useSimulation } from '@/lib/SimulationContext';
@@ -251,6 +252,7 @@ const AuthenticatedApp = () => {
   const approvedRoles = getAvailableRoles(user);
   const systemRole = getSystemRole(user);
   const role = effectiveWorkRole || systemRole;
+  const isStrictSystemAdmin = approvedRoles.includes('system_admin');
   const isSystemAdmin = approvedRoles.includes('system_admin') || approvedRoles.includes('admin');
   const isDivisionManager = role === 'division_manager' && approvedRoles.includes('division_manager');
   // Emergency hotfix: admins always keep staff navigation/routes, regardless of active work mode.
@@ -292,6 +294,7 @@ const AuthenticatedApp = () => {
               <Route path="/users" element={<UserManagement />} />
               <Route path="/bell-schedule" element={<BellScheduleSettings user={user} role={pageRole} />} />
               <Route path="/push-notifications" element={<PushNotifications />} />
+              {isStrictSystemAdmin && <Route path="/year-transition" element={<YearTransition />} />}
               <Route path="/permissions-tester" element={<PermissionsTester />} />
             </>
           )}
