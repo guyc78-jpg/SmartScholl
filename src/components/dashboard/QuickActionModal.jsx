@@ -79,21 +79,20 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
     const KB_THRESHOLD = 120; // מתחת לסף לא נחשב מקלדת (סרגלי דפדפן וכד')
 
     const onViewportChange = () => {
+      const active = document.activeElement;
+      const editingTextField = active && ['INPUT', 'TEXTAREA'].includes(active.tagName) && sheetRef.current?.contains(active);
       const viewportBottom = (vv.offsetTop ?? 0) + vv.height;
       const keyboardInset = Math.max(0, window.innerHeight - viewportBottom);
-      const isKeyboard = keyboardInset > KB_THRESHOLD;
+      const isKeyboard = editingTextField && keyboardInset > KB_THRESHOLD;
       const navInset = window.innerWidth < 1024 ? 112 : 0;
 
       if (isKeyboard) {
-        // העלאה זמנית מעל המקלדת — ללא שינוי גובה הבסיס
+        // מצב זמני בלבד מעל מקלדת אמיתית של שדה טקסט
         setKeyboardOpen(true);
-        setSheetBottom(keyboardInset);
-        setSheetTop(prev => {
-          const baseHeight = sheetHeight ?? 0;
-          return Math.max(0, viewportBottom - baseHeight);
-        });
+        setSheetBottom(Math.max(keyboardInset, navInset));
+        setSheetTop(null);
       } else {
-        // המקלדת נסגרה — שחזור אוטומטי לגובה ולמיקום המקוריים
+        // כל שינוי viewport שאינו מקלדת פעילה מחזיר לברירת המחדל
         setKeyboardOpen(false);
         const fullHeight = window.innerHeight;
         const baseHeight = sheetHeight ?? 0;
@@ -150,6 +149,17 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
       const nextTop = elRect.top - containerRect.top + container.scrollTop - Math.max(24, container.clientHeight * 0.28);
       container.scrollTo({ top: Math.max(0, nextTop), behavior: 'smooth' });
     }, 360);
+  }
+
+  function handleSheetPointerDown(e) {
+    const active = document.activeElement;
+    const target = e.target;
+    const activeTextField = active && ['INPUT', 'TEXTAREA'].includes(active.tagName);
+    const targetTextField = target && ['INPUT', 'TEXTAREA'].includes(target.tagName);
+    if (activeTextField && !targetTextField) {
+      active.blur();
+      setTimeout(resetSheetToBase, 80);
+    }
   }
 
   const needsStudentPicker = ['discipline', 'note', 'communication', 'positive_reinforcement'].includes(action);
@@ -384,9 +394,10 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
         ref={sheetRef}
         style={{
           position: 'fixed',
-          top: sheetTop ?? undefined,
+          top: keyboardOpen ? (sheetTop ?? undefined) : undefined,
           right: 0,
           left: 0,
+          bottom: `${sheetBottom}px`,
           height: sheetHeight ? `${sheetHeight}px` : '85vh',
           maxHeight: 'calc(100dvh - var(--app-mobile-overlay-bottom-space) - 1rem)',
           background: 'hsl(var(--card))',
@@ -394,7 +405,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          transition: 'top 0.2s ease, height 0.2s ease',
+          transition: 'top 0.2s ease, bottom 0.2s ease, height 0.2s ease',
         }}
       >
         {/* Handle bar */}
@@ -417,7 +428,8 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
         <div
           ref={scrollAreaRef}
           onFocusCapture={handleFieldFocus}
-          style={{
+          onPointerDownCapture={handleSheetPointerDown}
+          style={{ 
             flex: 1,
             overflowY: 'auto',
             paddingTop: '1rem',
