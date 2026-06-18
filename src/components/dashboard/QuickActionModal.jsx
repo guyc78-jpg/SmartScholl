@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -110,6 +110,16 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
     };
   }, [sheetHeight]);
 
+  // איפוס ידני לגובה ולמיקום המקוריים — מנקה styles זמניים גם אם iOS לא ירה resize
+  const resetSheetToBase = useCallback(() => {
+    const navInset = window.innerWidth < 1024 ? 112 : 0;
+    const fullHeight = window.innerHeight;
+    const baseHeight = sheetHeight ?? 0;
+    setKeyboardOpen(false);
+    setSheetBottom(navInset);
+    setSheetTop(Math.max(0, fullHeight - navInset - baseHeight));
+  }, [sheetHeight]);
+
   // ניקוי styles זמניים בעת איבוד פוקוס מכל השדות — מבטיח חזרה לגובה המקורי
   useEffect(() => {
     const onBlurAnywhere = () => {
@@ -117,20 +127,13 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
       setTimeout(() => {
         const active = document.activeElement;
         const stillEditing = active && ['INPUT', 'TEXTAREA'].includes(active.tagName);
-        if (!stillEditing) {
-          const navInset = window.innerWidth < 1024 ? 112 : 0;
-          const fullHeight = window.innerHeight;
-          const baseHeight = sheetHeight ?? 0;
-          setKeyboardOpen(false);
-          setSheetBottom(navInset);
-          setSheetTop(Math.max(0, fullHeight - navInset - baseHeight));
-        }
+        if (!stillEditing) resetSheetToBase();
       }, 120);
     };
     const node = sheetRef.current;
     node?.addEventListener('focusout', onBlurAnywhere);
     return () => node?.removeEventListener('focusout', onBlurAnywhere);
-  }, [sheetHeight]);
+  }, [resetSheetToBase]);
 
   // גלילה אוטומטית לשדה הפעיל בתוך אזור הגלילה
   function handleFieldFocus(e) {
@@ -229,6 +232,9 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
     }));
     setSearchQuery(studentName);
     setStudentListOpen(false);
+    // סגירת המקלדת ואיפוס הגובה מיד אחרי בחירה — iOS לא תמיד יורה resize
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+    setTimeout(resetSheetToBase, 50);
   }
 
   const getSelectedStudent = () => students.find(s => s.id === form.student_id);
