@@ -7,8 +7,19 @@ const EVENT_LABELS = {
   discipline_event: 'משמעת',
   new_task: 'משימה',
   urgent_treatment: 'טיפול דחוף',
+  exam_grade: 'ציון מבחן',
 };
 
+// ספים להתראות חכמות (ניתן לכוונון)
+const ATTENDANCE_STREAK_THRESHOLD = 3; // רצף חיסורים/איחורים שמחייב התראה
+const DISCIPLINE_RECURRENCE_DAYS = 30; // חלון לזיהוי חזרתיות אירועי משמעת
+const DISCIPLINE_RECURRENCE_THRESHOLD = 3; // מספר אירועים בחלון שמחייב התראה
+const EXAM_LOW_GRADE = 55; // ציון מתחת לסף
+const EXAM_DROP_THRESHOLD = 20; // ירידה חריגה בנקודות לעומת ממוצע קודם
+
+const ABSENCE_STATUSES = new Set(['נעדר', 'נעדר/ת']);
+const LATE_STATUSES = new Set(['מאחר', 'מאחר/ת']);
+const SEVERE_DISCIPLINE = new Set(['חמורה', 'דחוף', 'דחופה']);
 const PRESENT_STATUSES = new Set(['נוכח', 'נוכח/ת']);
 const COMMUNITY_EXCEPTION_STATUSES = new Set(['ממתין לאישור', 'דורש תיקון', 'נדחה']);
 const MIDDLE_GRADES = new Set(['ז', 'ח', 'ט', '7', '8', '9']);
@@ -119,12 +130,29 @@ function userCanReceive(user, classInfo) {
   return false;
 }
 
-function getEventDescriptor(entityName, data, oldData, eventType) {
+function getEventDescriptor(entityName, data, oldData, eventType, history) {
   const studentName = data?.student_name || data?.studentName || data?.student_full_name || data?.student || '';
   const studentId = data?.student_id || data?.studentId || '';
 
   if (entityName === 'AttendanceRecord') {
     if (eventType !== 'create' || PRESENT_STATUSES.has(data?.status)) return null;
+    const isAbsence = ABSENCE_STATUSES.has(data?.status);
+    const isLate = LATE_STATUSES.has(data?.status);
+    const streak = history?.attendanceStreak || 1;
+
+    // רצף חיסורים/איחורים שחצה את הסף — התראה מודגשת
+    if ((isAbsence || isLate) && streak >= ATTENDANCE_STREAK_THRESHOLD) {
+      const kind = isAbsence ? 'חיסורים' : 'איחורים';
+      return {
+        event_type: 'attendance_exception',
+        title: `רצף ${kind} — ${streak} ברצף`,
+        body: `${studentName || 'תלמיד/ה'} · ${streak} ${kind} ברצף · מומלץ ליצור קשר`,
+        url: studentId ? `/students/${studentId}` : '/class-attendance',
+        student_id: studentId,
+        student_name: studentName,
+      };
+    }
+
     return {
       event_type: 'attendance_exception',
       title: 'חריג נוכחות חדש',
@@ -162,11 +190,61 @@ function getEventDescriptor(entityName, data, oldData, eventType) {
 
   if (entityName === 'DisciplineEvent') {
     if (eventType !== 'create') return null;
+    const isSevere = SEVERE_DISCIPLINE.has(data?.severity);
+    const recentCount = history?.disciplineCount || 1;
+    const isRecurring = recentCount >= DISCIPLINE_RECURRENCE_THRESHOLD;
+
+    if (isRecurring) {
+      return {
+        event_type: 'discipline_event',
+        title: `אירוע משמעת חוזר — ${recentCount} בחודש`,
+        body: `${studentName || 'תלמיד/ה'} · ${recentCount} אירועים בחודש האחרון · מצריך טיפול`,
+        url: studentId ? `/students/${studentId}` : '/discipline',
+        student_id: studentId,
+        student_name: studentName,
+      };
+    }
+    if (isSevere) {
+      return {
+        event_type: 'discipline_event',
+        title: 'אירוע משמעת חמור/דחוף',
+        body: `${studentName || 'תלמיד/ה'} · ${data?.category || 'אירוע חמור'} · ${data?.severity}`,
+        url: studentId ? `/students/${studentId}` : '/discipline',
+        student_id: studentId,
+        student_name: studentName,
+      };
+    }
     return {
       event_type: 'discipline_event',
       title: 'אירוע משמעת חדש',
       body: `${studentName || 'תלמיד/ה'} · ${data?.severity || data?.category || 'אירוע חדש'}`,
       url: studentId ? `/students/${studentId}` : '/discipline',
+      student_id: studentId,
+      student_name: studentName,
+    };
+  }
+
+  if (entityName === 'ExamGradeReport') {
+    // רק כשהציון אושר (ולא דיווח גולמי של תלמיד) — או בעדכון לסטטוס אושר
+    const justApproved = data?.status === 'אושר' && (eventType === 'create' || oldData?.status !== 'אושר');
+    if (!justApproved) return null;
+    const grade = Number(data?.reported_grade);
+    if (Number.isNaN(grade)) return null;
+
+    const subject = data?.subject || '';
+    const prevAvg = history?.examPrevAvg;
+    const isLow = grade < EXAM_LOW_GRADE;
+    const drop = (typeof prevAvg === 'number' && prevAvg - grade >= EXAM_DROP_THRESHOLD);
+    if (!isLow && !drop) return null;
+
+    const reason = drop
+      ? `ירידה חריגה: ${Math.round(prevAvg)} → ${grade}`
+      : `ציון ${grade} (מתחת ל-${EXAM_LOW_GRADE})`;
+    return {
+      event_type: 'exam_grade',
+      title: drop ? 'ירידה חריגה בציון' : 'ציון נמוך במבחן',
+      body: `${studentName || 'תלמיד/ה'}${subject ? ` · ${subject}` : ''} · ${reason}`,
+      url: studentId ? `/students/${studentId}` : '/exams',
       student_id: studentId,
       student_name: studentName,
     };
@@ -214,6 +292,56 @@ function getEventDescriptor(entityName, data, oldData, eventType) {
   return null;
 }
 
+// טוען היסטוריה רלוונטית לזיהוי חריגות "חכמות" (רצף / חזרתיות / ירידת ציון)
+async function loadHistory(base44, entityName, data, eventType) {
+  const studentId = data?.student_id || data?.studentId || '';
+  if (!studentId) return {};
+
+  try {
+    if (entityName === 'AttendanceRecord' && eventType === 'create') {
+      const records = await base44.asServiceRole.entities.AttendanceRecord.filter(
+        { student_id: studentId }, '-date', 30
+      );
+      // ספירת רצף עוקב של אותו סוג חריגה (חיסור או איחור) מהאחרון אחורה
+      const isAbsence = ABSENCE_STATUSES.has(data?.status);
+      const isLate = LATE_STATUSES.has(data?.status);
+      const matches = (status) => (isAbsence ? ABSENCE_STATUSES.has(status) : isLate ? LATE_STATUSES.has(status) : false);
+      let streak = 0;
+      for (const record of (records || [])) {
+        if (matches(record.status)) streak += 1;
+        else break;
+      }
+      return { attendanceStreak: Math.max(streak, 1) };
+    }
+
+    if (entityName === 'DisciplineEvent' && eventType === 'create') {
+      const events = await base44.asServiceRole.entities.DisciplineEvent.filter(
+        { student_id: studentId }, '-date', 50
+      );
+      const cutoff = new Date(Date.now() - DISCIPLINE_RECURRENCE_DAYS * 24 * 60 * 60 * 1000);
+      const count = (events || []).filter(event => {
+        const eventDate = new Date(event.date);
+        return !Number.isNaN(eventDate.getTime()) && eventDate >= cutoff;
+      }).length;
+      return { disciplineCount: Math.max(count, 1) };
+    }
+
+    if (entityName === 'ExamGradeReport') {
+      const reports = await base44.asServiceRole.entities.ExamGradeReport.filter(
+        { student_id: studentId, status: 'אושר' }, '-exam_date', 20
+      );
+      const others = (reports || []).filter(report => report.id !== data?.id && typeof report.reported_grade === 'number');
+      const recent = others.slice(0, 3);
+      if (!recent.length) return {};
+      const avg = recent.reduce((sum, report) => sum + Number(report.reported_grade), 0) / recent.length;
+      return { examPrevAvg: avg };
+    }
+  } catch {
+    return {};
+  }
+  return {};
+}
+
 function actorMatchesUser(user, data) {
   const actorUserId = data?.updated_by_id || data?.created_by_id || '';
   const actorEmail = data?.updated_by_email || data?.submitted_by_email || data?.created_by_email || '';
@@ -235,7 +363,8 @@ Deno.serve(async (req) => {
     }
     if (!data) return Response.json({ ok: true, queued: 0 });
 
-    const descriptor = getEventDescriptor(entityName, data, oldData, eventType);
+    const history = await loadHistory(base44, entityName, data, eventType);
+    const descriptor = getEventDescriptor(entityName, data, oldData, eventType, history);
     if (!descriptor) return Response.json({ ok: true, queued: 0 });
 
     const [users, subscriptions, classes] = await Promise.all([

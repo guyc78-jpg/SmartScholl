@@ -9,6 +9,7 @@ const EVENT_LABELS = {
   new_task: 'משימה',
   urgent_treatment: 'טיפול דחוף',
   conversation_reminder: 'תזכורת שיחה',
+  exam_grade: 'ציון מבחן',
 };
 
 function groupBy(items, keyFn) {
