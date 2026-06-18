@@ -4,13 +4,18 @@ const labels = {
 
 export default function DeleteCountsTable({ counts = {} }) {
   return (
-    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2" dir="rtl">
-      {Object.entries(counts).map(([key, count]) => (
-        <div key={key} className="flex items-center justify-between gap-3 rounded-lg border bg-card p-3 text-right">
-          <span className="font-medium">{labels[key] || key}</span>
-          <span className="text-destructive font-bold">{count}</span>
-        </div>
-      ))}
+    <div className="space-y-3 text-right" dir="rtl">
+      <p className="text-sm text-muted-foreground leading-relaxed">
+        הנתונים הבאים הם נתוני עבודה של השנה הנוכחית ויימחקו רק לאחר אישור סופי של האיפוס.
+      </p>
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
+        {Object.keys(counts).map((key) => (
+          <div key={key} className="flex items-center justify-between gap-3 rounded-lg border bg-card p-3 text-right">
+            <span className="font-medium">{labels[key] || key}</span>
+            <span className="text-destructive font-bold">יימחק</span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

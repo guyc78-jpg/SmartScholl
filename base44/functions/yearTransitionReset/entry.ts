@@ -67,7 +67,7 @@ async function safeList(base44, entityName, limit = 1000) {
 }
 
 function emptyDeletionCounts() {
-  return Object.fromEntries(OPERATIONAL_ENTITIES.map((entityName) => [entityName, 'יחושב בביצוע']));
+  return Object.fromEntries(OPERATIONAL_ENTITIES.map((entityName) => [entityName, true]));
 }
 
 function buildPreview({ students, classes, moveTeachers }) {
