@@ -130,6 +130,56 @@ function buildReminder(conv) {
   };
 }
 
+function buildOverdue(conv) {
+  const typeLabel = TYPE_PREFIX[conv.conversation_type] || 'שיחה';
+  const parts = [];
+  if (conv.student_name) parts.push(conv.student_name);
+  parts.push(`נקבעה ל-${conv.date} ${conv.time} וטרם טופלה`);
+  return {
+    title: `${typeLabel} שלא טופלה בזמן`,
+    body: parts.join(' · '),
+    url: conv.student_id ? `/students/${conv.student_id}` : '/conversations',
+  };
+}
+
+// שולח התראות פוש לרשימת שיחות, עם בונה הודעה ואירוע נתונים, ומסמן את השדה שניתן
+async function queueForConversations(base44, list, buildFn, eventType, users, subscribedUserIds, classes, nowIso, markFields) {
+  let queued = 0;
+  for (const conv of list) {
+    const classInfo = buildClassInfo(classes || [], conv);
+    const message = buildFn(conv);
+    const recipientIds = new Set();
+    if (conv.owner_user_id && subscribedUserIds.has(conv.owner_user_id)) recipientIds.add(conv.owner_user_id);
+    for (const user of (users || [])) {
+      if (!subscribedUserIds.has(user.id)) continue;
+      if (userCanReceive(user, classInfo)) recipientIds.add(user.id);
+    }
+    const records = [...recipientIds].map(userId => {
+      const user = (users || []).find(u => u.id === userId);
+      return {
+        recipient_user_id: userId,
+        recipient_email: user?.email || '',
+        actor_user_id: '',
+        event_type: eventType,
+        student_id: conv.student_id || '',
+        student_name: conv.student_name || '',
+        class_id: classInfo.class_id || '',
+        title: message.title,
+        body: message.body,
+        url: message.url,
+        status: 'pending',
+        queued_at: nowIso,
+      };
+    });
+    if (records.length) {
+      await base44.asServiceRole.entities.PushNotificationQueue.bulkCreate(records);
+      queued += records.length;
+    }
+    await base44.asServiceRole.entities.ScheduledConversation.update(conv.id, markFields(conv));
+  }
+  return queued;
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -154,7 +204,18 @@ Deno.serve(async (req) => {
       return true;
     });
 
-    if (!dueNow.length) return Response.json({ ok: true, queued: 0, checked: (conversations || []).length });
+    // שיחות שעברו יותר משעתיים מהמועד ועדיין מתוכננות — לא טופלו בזמן
+    const overdueCutoff = windowStart - 2 * 60 * 60 * 1000;
+    const overdue = (conversations || []).filter(conv => {
+      if (conv.overdue_notified) return false;
+      const startUtc = israelLocalToUtc(conv.date, conv.time);
+      if (!startUtc) return false;
+      return startUtc.getTime() < overdueCutoff;
+    });
+
+    if (!dueNow.length && !overdue.length) {
+      return Response.json({ ok: true, queued: 0, checked: (conversations || []).length });
+    }
 
     const [users, subscriptions, classes] = await Promise.all([
       base44.asServiceRole.entities.User.list(),
@@ -163,52 +224,18 @@ Deno.serve(async (req) => {
     ]);
 
     const subscribedUserIds = new Set((subscriptions || []).map(s => s.user_id).filter(Boolean));
-    let queuedTotal = 0;
 
-    for (const conv of dueNow) {
-      const classInfo = buildClassInfo(classes || [], conv);
-      const reminder = buildReminder(conv);
-      const startUtc = israelLocalToUtc(conv.date, conv.time);
+    const remindersQueued = await queueForConversations(
+      base44, dueNow, buildReminder, 'conversation_reminder', users, subscribedUserIds, classes, nowIso,
+      (conv) => ({ reminder_sent: true, reminder_for_datetime: israelLocalToUtc(conv.date, conv.time).toISOString() })
+    );
 
-      const recipientIds = new Set();
-      // owner always gets the reminder (if subscribed)
-      if (conv.owner_user_id && subscribedUserIds.has(conv.owner_user_id)) recipientIds.add(conv.owner_user_id);
-      // scoped staff
-      for (const user of (users || [])) {
-        if (!subscribedUserIds.has(user.id)) continue;
-        if (userCanReceive(user, classInfo)) recipientIds.add(user.id);
-      }
+    const overdueQueued = await queueForConversations(
+      base44, overdue, buildOverdue, 'parent_communication', users, subscribedUserIds, classes, nowIso,
+      () => ({ overdue_notified: true })
+    );
 
-      const records = [...recipientIds].map(userId => {
-        const user = (users || []).find(u => u.id === userId);
-        return {
-          recipient_user_id: userId,
-          recipient_email: user?.email || '',
-          actor_user_id: '',
-          event_type: 'conversation_reminder',
-          student_id: conv.student_id || '',
-          student_name: conv.student_name || '',
-          class_id: classInfo.class_id || '',
-          title: reminder.title,
-          body: reminder.body,
-          url: reminder.url,
-          status: 'pending',
-          queued_at: nowIso,
-        };
-      });
-
-      if (records.length) {
-        await base44.asServiceRole.entities.PushNotificationQueue.bulkCreate(records);
-        queuedTotal += records.length;
-      }
-
-      await base44.asServiceRole.entities.ScheduledConversation.update(conv.id, {
-        reminder_sent: true,
-        reminder_for_datetime: startUtc.toISOString(),
-      });
-    }
-
-    return Response.json({ ok: true, queued: queuedTotal, reminders: dueNow.length });
+    return Response.json({ ok: true, queued: remindersQueued + overdueQueued, reminders: dueNow.length, overdue: overdue.length });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
