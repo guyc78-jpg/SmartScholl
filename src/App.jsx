@@ -121,7 +121,7 @@ const AuthenticatedApp = () => {
   const navigate = useNavigate();
   const [seeded, setSeeded] = useState(false);
   const [workRole, setWorkRole] = useState(null);
-  const [initialLoaderVisible, setInitialLoaderVisible] = useState(true);
+  const [loaderComplete, setLoaderComplete] = useState(false);
   const [bootstrapAttempt, setBootstrapAttempt] = useState(0);
   const [bootstrap, setBootstrap] = useState({ status: 'idle', message: 'מכינים עבורך את סביבת העבודה', data: null, error: '' });
 
@@ -156,11 +156,6 @@ const AuthenticatedApp = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSimulating]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setInitialLoaderVisible(false), 2400);
-    return () => clearTimeout(timer);
-  }, []);
 
   useEffect(() => {
     // Emergency hotfix: do not run demo seeding during normal navigation.
@@ -207,9 +202,17 @@ const AuthenticatedApp = () => {
     return () => { cancelled = true; };
   }, [isLoadingPublicSettings, isLoadingAuth, user?.id, bootRole, bootPageRole, bootStaff, workRole, isSimulating, bootstrapAttempt]);
 
-  if (isLoadingPublicSettings || isLoadingAuth || initialLoaderVisible || bootstrap.status === 'loading' || (user && bootstrap.status === 'idle' && !authError)) {
-    const loaderProgress = isLoadingPublicSettings || isLoadingAuth ? 24 : initialLoaderVisible ? 42 : bootstrap.status === 'loading' ? 78 : 92;
-    return <PremiumInitialLoader status={bootstrap.message} targetProgress={loaderProgress} />;
+  // מסך הטעינה נשאר גלוי עד שכל הנתונים נטענו (bootstrap ready) והפס הגיע ל-100% בפועל
+  const dataLoading = isLoadingPublicSettings || isLoadingAuth || bootstrap.status === 'loading' || (user && bootstrap.status === 'idle' && !authError);
+  if ((dataLoading || (bootstrap.status === 'ready' && !loaderComplete)) && !authError) {
+    const loaderProgress = isLoadingPublicSettings || isLoadingAuth ? 24 : bootstrap.status === 'loading' ? 70 : bootstrap.status === 'ready' ? 100 : 50;
+    return (
+      <PremiumInitialLoader
+        status={bootstrap.message}
+        targetProgress={loaderProgress}
+        onComplete={() => setLoaderComplete(true)}
+      />
+    );
   }
 
   if (authError) {
@@ -220,7 +223,7 @@ const AuthenticatedApp = () => {
   }
 
   if (bootstrap.status === 'error') {
-    return <PremiumInitialLoader error={bootstrap.error} onRetry={() => setBootstrapAttempt(value => value + 1)} />;
+    return <PremiumInitialLoader error={bootstrap.error} onRetry={() => { setLoaderComplete(false); setBootstrapAttempt(value => value + 1); }} />;
   }
 
   // Onboarding gate — admin (by any approved role) always bypasses

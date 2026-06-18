@@ -7,7 +7,7 @@ const STATUS_PROGRESS = {
   'הכול מוכן': 100,
 };
 
-export default function PremiumInitialLoader({ status = 'מכינים עבורך את סביבת העבודה', error = '', onRetry, targetProgress }) {
+export default function PremiumInitialLoader({ status = 'מכינים עבורך את סביבת העבודה', error = '', onRetry, targetProgress, onComplete }) {
   const hasError = !!error;
   const target = useMemo(() => {
     if (hasError) return 100;
@@ -36,6 +36,15 @@ export default function PremiumInitialLoader({ status = 'מכינים עבורך
   }, [hasError, target]);
 
   const displayProgress = Math.round(progress);
+
+  // ברגע שהפס הגיע ל-100% בפועל — מאותתים לאפליקציה שניתן לפתוח
+  useEffect(() => {
+    if (hasError || !onComplete) return;
+    if (target >= 100 && progress >= 100) {
+      const timer = window.setTimeout(() => onComplete(), 260);
+      return () => window.clearTimeout(timer);
+    }
+  }, [hasError, onComplete, target, progress]);
 
   return (
     <div
