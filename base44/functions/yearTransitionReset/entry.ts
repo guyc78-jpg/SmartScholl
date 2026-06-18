@@ -32,20 +32,30 @@ const classGrade = (className, fallback) => {
 const nextGrade = (grade) => GRADES[GRADES.indexOf(grade) + 1] || null;
 const displayGrade = (grade) => grade === 'יא' ? 'י״א' : grade === 'יב' ? 'י״ב' : grade;
 const displayClass = (grade, number) => `${displayGrade(grade)}${number || ''}`;
-const rolesOf = (user) => {
-  const source = user?.authorization?.roles || user?.roles || [];
-  let parsed = [];
-  if (Array.isArray(source)) parsed = source;
-  else {
+const normalizeEmail = (email) => String(email || '').trim().toLowerCase();
+const parseRoles = (source) => {
+  if (Array.isArray(source)) return source;
+  const value = String(source || '').trim();
+  if (!value) return [];
+  if (value.startsWith('[')) {
     try {
-      const json = JSON.parse(String(source || '[]'));
-      parsed = Array.isArray(json) ? json : [];
+      const json = JSON.parse(value);
+      return Array.isArray(json) ? json : [];
     } catch (_) {
-      parsed = String(source || '').split(',').map((role) => role.trim());
+      return [];
     }
   }
-  return [...new Set([...parsed, user?.authorization?.role, user?.role].filter(Boolean))];
+  return value.split(',').map((role) => role.trim());
 };
+const rolesOf = (user) => [...new Set([...parseRoles(user?.authorization?.roles || user?.roles), user?.authorization?.role, user?.role].filter(Boolean))];
+
+async function hasSystemAdminAccess(base44, user) {
+  if (rolesOf(user).includes('system_admin')) return true;
+  const email = normalizeEmail(user?.email);
+  if (!email) return false;
+  const approvedUsers = await base44.asServiceRole.entities.ApprovedUser.filter({ email }, '-created_date', 20);
+  return approvedUsers.some((record) => record.isActive !== false && (record.role === 'system_admin' || parseRoles(record.roles).includes('system_admin')));
+}
 
 async function safeList(base44, entityName, limit = 1000) {
   try {
@@ -150,7 +160,8 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    if (!rolesOf(user).includes('system_admin')) return Response.json({ error: 'הפעולה זמינה רק למנהל/ת מערכת ראשי/ת' }, { status: 403 });
+    const isSystemAdmin = await hasSystemAdminAccess(base44, user);
+    if (!isSystemAdmin) return Response.json({ error: 'הפעולה זמינה רק למנהל/ת מערכת ראשי/ת' }, { status: 403 });
 
     const body = await req.json().catch(() => ({}));
     const mode = body.mode === 'execute' ? 'execute' : 'preview';
