@@ -66,7 +66,7 @@ export default function Classrooms({ user, role, onUserUpdate }) {
   }
 
   return (
-    <div className="p-4 lg:p-6 space-y-5 text-right" dir="rtl">
+    <div className="px-4 pb-4 pt-5 sm:pt-6 lg:p-6 space-y-5 text-right" dir="rtl">
       <PageHeader
         title="ניהול שיוכי כיתות"
         subtitle={canAssign ? 'שיוך מחנכים מאושרים לכיתות בהתאם להרשאות שלך' : 'צפייה בכיתת החינוך שהוגדרה עבורך'}
@@ -85,13 +85,17 @@ export default function Classrooms({ user, role, onUserUpdate }) {
                 <button
                   type="button"
                   onClick={() => setOpenGrades(prev => ({ ...prev, [group.grade]: !prev[group.grade] }))}
-                  className="flex w-full items-center justify-start gap-3 p-4 text-right transition-colors hover:bg-accent/50"
+                  className={cn(
+                    'flex w-full items-center justify-start gap-3 p-4 text-right transition-colors hover:bg-accent/35',
+                    isOpen && 'bg-accent/25'
+                  )}
                   dir="rtl"
                 >
-                  <ChevronDown className={cn('h-5 w-5 flex-shrink-0 text-muted-foreground transition-transform duration-200', isOpen && 'rotate-180')} />
-                  <div className="flex min-w-0 flex-1 items-center justify-start text-right" dir="rtl">
-                    <h2 className="text-lg font-bold text-foreground">שכבת {formatGrade(group.grade)} · {group.classes.length} כיתות</h2>
+                  <div className="flex min-w-0 flex-1 items-baseline justify-start gap-2 text-right" dir="rtl">
+                    <h2 className="text-lg font-bold text-foreground">שכבת {formatGrade(group.grade)}</h2>
+                    <span className="text-sm font-medium text-muted-foreground">· {group.classes.length} כיתות</span>
                   </div>
+                  <ChevronDown className={cn('h-5 w-5 flex-shrink-0 text-muted-foreground transition-transform duration-200', isOpen && 'rotate-180')} />
                 </button>
 
                 <AnimatePresence initial={false}>
