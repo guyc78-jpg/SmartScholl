@@ -15,6 +15,7 @@ import { getClassDisplayName } from '@/lib/classIdentity';
 const GRADE_ORDER = ['ז', 'ח', 'ט', 'י', 'יא', 'יב'];
 const GRADE_LABELS = { ז: 'ז׳', ח: 'ח׳', ט: 'ט׳', י: 'י׳', יא: 'י״א', יב: 'י״ב' };
 const extractClassNumber = (name = '') => (String(name).match(/\d+$/)?.[0] || '');
+const normalizeEmail = value => String(value || '').trim().toLowerCase();
 const getClassNumber = classRoom => Number(classRoom.class_number || extractClassNumber(classRoom.name) || 0);
 const sortClasses = (a, b) => {
   const gradeDiff = GRADE_ORDER.indexOf(normalizeGrade(a.grade)) - GRADE_ORDER.indexOf(normalizeGrade(b.grade));
@@ -35,6 +36,12 @@ export default function ClassSettings({ user, role }) {
   const homeroomClassId = getUserHomeroomClassId(user, '');
   const managedGrade = normalizeGrade(getUserApprovedGrade(user));
   const divisionGrades = getUserDivisionGrades(user);
+  const currentUserEmail = normalizeEmail(user?.email);
+  const currentHomeroomClassIds = useMemo(() => classes
+    .filter(classRoom => currentUserEmail && normalizeEmail(classRoom.homeroom_teacher_email) === currentUserEmail)
+    .map(classRoom => classRoom.id), [classes, currentUserEmail]);
+  const currentHomeroomIdSet = useMemo(() => new Set(currentHomeroomClassIds), [currentHomeroomClassIds]);
+  const hasCurrentHomeroomAssignment = currentHomeroomClassIds.length > 0;
 
   const allowedClasses = useMemo(() => {
     const seen = new Set();
@@ -42,8 +49,12 @@ export default function ClassSettings({ user, role }) {
       .filter(classRoom => {
         if (isAdmin) return true;
         if (role === 'division_manager') return divisionGrades.includes(normalizeGrade(classRoom.grade));
-        if (role === 'grade_coordinator' || role === 'coordinator') return normalizeGrade(classRoom.grade) === managedGrade || classRoom.id === homeroomClassId;
-        if (role === 'homeroom_teacher') return classRoom.id === homeroomClassId || classRoom.homeroom_teacher_email === user?.email;
+        if (role === 'grade_coordinator' || role === 'coordinator') {
+          return normalizeGrade(classRoom.grade) === managedGrade || currentHomeroomIdSet.has(classRoom.id) || (!hasCurrentHomeroomAssignment && classRoom.id === homeroomClassId);
+        }
+        if (role === 'homeroom_teacher') {
+          return hasCurrentHomeroomAssignment ? currentHomeroomIdSet.has(classRoom.id) : classRoom.id === homeroomClassId;
+        }
         return false;
       })
       .filter(classRoom => {
@@ -52,12 +63,12 @@ export default function ClassSettings({ user, role }) {
         return true;
       })
       .sort(sortClasses);
-  }, [classes, isAdmin, role, divisionGrades, managedGrade, homeroomClassId, user?.email]);
+  }, [classes, isAdmin, role, divisionGrades, managedGrade, homeroomClassId, currentHomeroomIdSet, hasCurrentHomeroomAssignment]);
 
   const selectedClass = allowedClasses.find(item => item.id === selectedId) || null;
   const canEditAll = !!selectedClass && (isAdmin || role === 'division_manager');
   const canEditByGrade = !!selectedClass && (role === 'grade_coordinator' || role === 'coordinator') && normalizeGrade(selectedClass.grade) === managedGrade;
-  const canEditOwnNotes = !!selectedClass && (selectedClass.id === homeroomClassId || selectedClass.homeroom_teacher_email === user?.email) && (role === 'homeroom_teacher' || role === 'coordinator' || role === 'grade_coordinator');
+  const canEditOwnNotes = !!selectedClass && (currentHomeroomIdSet.has(selectedClass.id) || (!hasCurrentHomeroomAssignment && selectedClass.id === homeroomClassId)) && (role === 'homeroom_teacher' || role === 'coordinator' || role === 'grade_coordinator');
   const canEditIdentity = canEditAll || canEditByGrade || canEditOwnNotes;
   const classSubtitle = selectedClass ? getClassDisplayName({ ...selectedClass, ...form }, selectedClass.name) : 'בחרו כיתה לעריכה';
   const groupedClasses = useMemo(() => GRADE_ORDER
@@ -79,8 +90,10 @@ export default function ClassSettings({ user, role }) {
 
   useEffect(() => {
     if (!allowedClasses.length) return;
-    if (!selectedId || !allowedClasses.some(item => item.id === selectedId)) setSelectedId(allowedClasses[0].id);
-  }, [allowedClasses, selectedId]);
+    if (!selectedId || !allowedClasses.some(item => item.id === selectedId)) {
+      setSelectedId(currentHomeroomClassIds.find(id => allowedClasses.some(item => item.id === id)) || allowedClasses[0].id);
+    }
+  }, [allowedClasses, selectedId, currentHomeroomClassIds]);
 
   useEffect(() => {
     if (!selectedClass) return;
