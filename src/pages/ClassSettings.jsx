@@ -38,8 +38,10 @@ export default function ClassSettings({ user, role }) {
 
   const selectedClass = allowedClasses.find(item => item.id === selectedId) || null;
   const canEditAll = !!selectedClass && (isAdmin || role === 'division_manager');
+  const canEditByGrade = !!selectedClass && (role === 'grade_coordinator' || role === 'coordinator') && normalizeGrade(selectedClass.grade) === managedGrade;
   const canEditOwnNotes = !!selectedClass && (selectedClass.id === homeroomClassId || selectedClass.homeroom_teacher_email === user?.email) && (role === 'homeroom_teacher' || role === 'coordinator' || role === 'grade_coordinator');
-  const canSave = canEditAll || canEditOwnNotes;
+  const canEditIdentity = canEditAll || canEditByGrade || canEditOwnNotes;
+  const canSave = canEditAll || canEditIdentity;
 
   useEffect(() => {
     async function loadClasses() {
@@ -66,11 +68,26 @@ export default function ClassSettings({ user, role }) {
   async function save() {
     if (!selectedClass || !canSave) return;
     setSaving(true);
-    const data = canEditAll ? form : {
-      class_identity: form.class_identity || '',
+    const previousIdentity = String(selectedClass.class_identity || '').trim();
+    const nextIdentity = String(form.class_identity || '').trim();
+    const data = canEditAll ? { ...form, class_identity: nextIdentity } : {
+      class_identity: nextIdentity,
       class_highlights: form.class_highlights || '',
     };
     await base44.entities.ClassRoom.update(selectedClass.id, data);
+    if (previousIdentity !== nextIdentity) {
+      const changedAt = new Date().toISOString();
+      await base44.entities.ActivityLog.create({
+        event_type: 'user_action',
+        actor_email: user?.email || '',
+        target_name: getClassDisplayName({ ...selectedClass, class_identity: nextIdentity }, selectedClass.name),
+        action_name: 'עדכון זהות כיתה / מגמה',
+        work_role: role,
+        details: `${user?.full_name || user?.email || 'משתמש'} עדכן/ה זהות כיתה בתאריך ושעה ${changedAt}`,
+        metadata: JSON.stringify({ classId: selectedClass.id, className: selectedClass.name, previousIdentity, nextIdentity, changedAt }),
+        severity: 'info'
+      });
+    }
     setClasses(prev => prev.map(item => item.id === selectedClass.id ? { ...item, ...data } : item));
     toast.success('הגדרות הכיתה נשמרו');
     setSaving(false);
@@ -80,7 +97,7 @@ export default function ClassSettings({ user, role }) {
   if (!allowedClasses.length) return <div className="p-6 text-center text-muted-foreground" dir="rtl"><Lock className="mx-auto mb-3 h-9 w-9" />אין לך כיתה זמינה להגדרות.</div>;
 
   const readOnlyCore = !canEditAll;
-  const readOnlyIdentity = !canEditAll && !canEditOwnNotes;
+  const readOnlyIdentity = !canEditIdentity;
 
   return (
     <div className="p-4 lg:p-6 space-y-5 text-right" dir="rtl">
@@ -103,7 +120,7 @@ export default function ClassSettings({ user, role }) {
             <Field label="יועץ/ת" value={form.counselor_name || ''} onChange={value => set('counselor_name', value)} readOnly={readOnlyCore} />
             <Field label="מנהל/ת חטיבה" value={form.division_manager_name || ''} onChange={value => set('division_manager_name', value)} readOnly={readOnlyCore} />
           </div>
-          <div className="space-y-2"><Label>שם/זהות כיתה בטקסט חופשי</Label><Input value={form.class_identity || ''} onChange={e => set('class_identity', e.target.value)} readOnly={readOnlyIdentity} placeholder="לדוגמה: אדריכלות, דיפלומטיה, מדעית" /></div>
+          <div className="space-y-2"><Label>זהות כיתה / מגמה</Label><Input value={form.class_identity || ''} onChange={e => set('class_identity', e.target.value)} readOnly={readOnlyIdentity} placeholder="לדוגמה: אדריכלות, דיפלומטיה, מדעית, מופת, מב״ר" /></div>
           <div className="space-y-2"><Label>דגשים של הכיתה</Label><Textarea value={form.class_highlights || ''} onChange={e => set('class_highlights', e.target.value)} readOnly={readOnlyIdentity} placeholder="דגשים לימודיים, חברתיים או ארגוניים" className="min-h-28" /></div>
           {canSave && <div className="flex justify-end"><Button onClick={save} disabled={saving}>{saving ? 'שומר...' : 'שמור הגדרות'}</Button></div>}
         </CardContent>

@@ -25,7 +25,7 @@ export default function ClassRoomForm({ classRoom, onSubmit, onCancel, saving })
         </div>
         <div className="space-y-2"><Label>כיתה *</Label><Input value={form.name || ''} onChange={e => set('name', e.target.value)} placeholder="לדוגמה: י׳1" /></div>
         <div className="space-y-2"><Label>מספר כיתה</Label><Input value={form.class_number || ''} onChange={e => set('class_number', e.target.value)} /></div>
-        <div className="space-y-2"><Label>זהות כיתה</Label><Input value={form.class_identity || ''} onChange={e => set('class_identity', e.target.value)} placeholder="לדוגמה: אדריכלות" /></div>
+        <div className="space-y-2"><Label>זהות כיתה / מגמה</Label><Input value={form.class_identity || ''} onChange={e => set('class_identity', e.target.value)} placeholder="לדוגמה: אדריכלות" /></div>
         <div className="space-y-2"><Label>מחנך/ת</Label><Input value={form.homeroom_teacher_name || ''} onChange={e => set('homeroom_teacher_name', e.target.value)} /></div>
         <div className="space-y-2"><Label>אימייל מחנך/ת</Label><Input type="email" value={form.homeroom_teacher_email || ''} onChange={e => set('homeroom_teacher_email', e.target.value)} /></div>
         <div className="space-y-2"><Label>רכז/ת שכבה</Label><Input value={form.coordinator_name || ''} onChange={e => set('coordinator_name', e.target.value)} /></div>
