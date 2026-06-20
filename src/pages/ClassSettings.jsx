@@ -6,9 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { BookOpenText, ChevronDown, Lightbulb, Lock, Save, UsersRound } from 'lucide-react';
+import { BookOpenText, Check, ChevronDown, Lightbulb, Lock, Save, UsersRound, X } from 'lucide-react';
 import { getAvailableRoles } from '@/lib/roleUtils';
 import { getUserApprovedGrade, getUserDivisionGrades, getUserHomeroomClassId, normalizeGrade } from '@/lib/schoolStructure';
 import { getClassDisplayName } from '@/lib/classIdentity';
@@ -21,6 +20,7 @@ export default function ClassSettings({ user, role }) {
   const [form, setForm] = useState({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [classPickerOpen, setClassPickerOpen] = useState(false);
 
   const roles = getAvailableRoles(user);
   const isAdmin = roles.includes('system_admin') || roles.includes('admin') || role === 'admin' || role === 'system_admin';
@@ -121,14 +121,15 @@ export default function ClassSettings({ user, role }) {
           <CardContent className="p-4 space-y-3">
             <div className="space-y-2">
               <Label>בחירת כיתה</Label>
-              <Select value={selectedId} onValueChange={setSelectedId}>
-                <SelectTrigger className="h-11 text-base"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  {allowedClasses.map(classRoom => (
-                    <SelectItem key={classRoom.id} value={classRoom.id}>{getClassDisplayName(classRoom, classRoom.name)}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <button
+                type="button"
+                onClick={() => setClassPickerOpen(true)}
+                className="flex h-11 w-full items-center justify-start gap-3 rounded-md border border-input bg-background px-4 py-2 text-right text-base shadow-sm transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                dir="rtl"
+              >
+                <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <span className="min-w-0 flex-1 whitespace-normal break-words text-right leading-snug">{classSubtitle}</span>
+              </button>
             </div>
             <div className="grid grid-cols-3 gap-2 text-sm">
               {classMeta.map(item => (
@@ -196,6 +197,52 @@ export default function ClassSettings({ user, role }) {
           </div>
         </details>
       </div>
+
+      {classPickerOpen && (
+        <div className="fixed inset-0 z-[10050] flex items-end bg-black/45 p-0 sm:items-center sm:justify-center sm:p-4" dir="rtl">
+          <div className="flex max-h-[82svh] w-full flex-col rounded-t-3xl border bg-card text-card-foreground shadow-2xl sm:max-w-xl sm:rounded-3xl">
+            <div className="flex items-center justify-start gap-3 border-b p-4 text-right">
+              <button
+                type="button"
+                onClick={() => setClassPickerOpen(false)}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full hover:bg-muted"
+                aria-label="סגור בחירת כיתה"
+              >
+                <X className="h-5 w-5" />
+              </button>
+              <div className="min-w-0 flex-1 text-right">
+                <h2 className="font-semibold text-foreground">בחירת כיתה</h2>
+                <p className="text-sm text-muted-foreground">בחרו כיתה מהרשימה</p>
+              </div>
+            </div>
+            <div className="max-h-[calc(82svh-80px)] overflow-y-auto overscroll-contain p-3" dir="rtl">
+              <div className="space-y-2">
+                {allowedClasses.map(classRoom => {
+                  const label = getClassDisplayName(classRoom, classRoom.name);
+                  const active = classRoom.id === selectedId;
+                  return (
+                    <button
+                      key={classRoom.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedId(classRoom.id);
+                        setClassPickerOpen(false);
+                      }}
+                      className={`flex w-full items-center justify-start gap-3 rounded-xl px-4 py-3 text-right leading-snug ${active ? 'bg-accent text-accent-foreground' : 'hover:bg-muted'}`}
+                      dir="rtl"
+                    >
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+                        {active && <Check className="h-5 w-5 text-primary" />}
+                      </span>
+                      <span className="min-w-0 flex-1 whitespace-normal break-words text-right">{label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {canEditIdentity && (
         <div className="sticky bottom-4 z-20 mx-auto mt-6 flex max-w-3xl justify-center rounded-2xl border bg-card/95 p-3 shadow-lg backdrop-blur" dir="rtl">
