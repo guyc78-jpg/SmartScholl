@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { queryClientInstance } from '@/lib/query-client';
 import PageHeader from '@/components/ui/PageHeader';
 import EmptyState from '@/components/ui/EmptyState';
 import ClassAssignmentCard from '@/components/classes/ClassAssignmentCard';
-import { School } from 'lucide-react';
+import { ChevronDown, School } from 'lucide-react';
 import { toast } from 'sonner';
 import { GRADES, formatGrade, normalizeGrade } from '@/lib/schoolStructure';
+import { cn } from '@/lib/utils';
 
 const sortClasses = (a, b) => {
   const gradeDiff = GRADES.indexOf(normalizeGrade(a.grade)) - GRADES.indexOf(normalizeGrade(b.grade));
@@ -20,6 +22,7 @@ export default function Classrooms({ user, role, onUserUpdate }) {
   const [canAssign, setCanAssign] = useState(false);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState('');
+  const [openGrades, setOpenGrades] = useState({});
 
   async function loadData() {
     setLoading(true);
@@ -32,10 +35,17 @@ export default function Classrooms({ user, role, onUserUpdate }) {
 
   useEffect(() => { loadData(); }, []);
 
-  const classesByGrade = useMemo(() => GRADES.map(grade => ({
+  const gradesToShow = useMemo(() => {
+    if (role === 'admin' || role === 'system_admin') return GRADES;
+    return GRADES.filter(grade => classes.some(item => normalizeGrade(item.grade) === grade));
+  }, [classes, role]);
+
+  const classesByGrade = useMemo(() => gradesToShow.map(grade => ({
     grade,
-    classes: classes.filter(item => normalizeGrade(item.grade) === grade),
-  })).filter(group => group.classes.length > 0), [classes]);
+    classes: classes
+      .filter(item => normalizeGrade(item.grade) === grade)
+      .sort(sortClasses),
+  })), [classes, gradesToShow]);
 
   async function handleAssign(classRoom, teacherId) {
     setSavingId(classRoom.id);
@@ -67,27 +77,55 @@ export default function Classrooms({ user, role, onUserUpdate }) {
       ) : classesByGrade.length === 0 ? (
         <EmptyState icon={School} title="אין כיתות להצגה" description="לא נמצאו כיתות בתחום ההרשאה שלך." />
       ) : (
-        <div className="space-y-6">
-          {classesByGrade.map(group => (
-            <section key={group.grade} className="space-y-3 text-right" dir="rtl">
-              <div className="flex items-center justify-start gap-2">
-                <h2 className="text-lg font-bold text-foreground">שכבה {formatGrade(group.grade)}</h2>
-                <span className="text-sm text-muted-foreground">{group.classes.length} כיתות</span>
-              </div>
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-                {group.classes.map(classRoom => (
-                  <ClassAssignmentCard
-                    key={classRoom.id}
-                    classRoom={classRoom}
-                    teachers={teachers}
-                    canAssign={canAssign}
-                    saving={savingId === classRoom.id}
-                    onAssign={handleAssign}
-                  />
-                ))}
-              </div>
-            </section>
-          ))}
+        <div className="space-y-3" dir="rtl">
+          {classesByGrade.map(group => {
+            const isOpen = !!openGrades[group.grade];
+            return (
+              <section key={group.grade} className="overflow-hidden rounded-2xl border bg-card/70 text-right" dir="rtl">
+                <button
+                  type="button"
+                  onClick={() => setOpenGrades(prev => ({ ...prev, [group.grade]: !prev[group.grade] }))}
+                  className="flex w-full items-center justify-start gap-3 p-4 text-right transition-colors hover:bg-accent/50"
+                  dir="rtl"
+                >
+                  <ChevronDown className={cn('h-5 w-5 flex-shrink-0 text-muted-foreground transition-transform duration-200', isOpen && 'rotate-180')} />
+                  <div className="flex min-w-0 flex-1 items-center justify-start gap-2 text-right">
+                    <h2 className="text-lg font-bold text-foreground">{formatGrade(group.grade)}</h2>
+                    <span className="text-sm text-muted-foreground">{group.classes.length} כיתות</span>
+                  </div>
+                </button>
+
+                <AnimatePresence initial={false}>
+                  {isOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: 'auto', opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+                      className="overflow-hidden border-t"
+                    >
+                      <div className="grid gap-3 p-3 sm:p-4 md:grid-cols-2 xl:grid-cols-3">
+                        {group.classes.length === 0 ? (
+                          <div className="rounded-xl border border-dashed bg-background/60 p-4 text-sm text-muted-foreground text-right md:col-span-2 xl:col-span-3">
+                            אין כיתות פעילות בשכבה זו.
+                          </div>
+                        ) : group.classes.map(classRoom => (
+                          <ClassAssignmentCard
+                            key={classRoom.id}
+                            classRoom={classRoom}
+                            teachers={teachers}
+                            canAssign={canAssign}
+                            saving={savingId === classRoom.id}
+                            onAssign={handleAssign}
+                          />
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </section>
+            );
+          })}
         </div>
       )}
     </div>
