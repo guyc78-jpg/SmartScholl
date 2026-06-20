@@ -63,13 +63,8 @@ export async function getAttendanceScopedStudents(user, role) {
   let rows = [];
 
   if (role === 'homeroom_teacher') {
-    const classId = user?.profile_class_id || getUserHomeroomClassId(user, '');
-    const className = getUserApprovedClass(user);
-    rows = classId
-      ? await base44.entities.Student.filter({ class_id: classId }, 'lastName', 300)
-      : className
-        ? await base44.entities.Student.filter({ class_name: className }, 'lastName', 300)
-        : [];
+    const classId = getUserHomeroomClassId(user, '');
+    rows = classId ? await base44.entities.Student.filter({ class_id: classId }, 'lastName', 300) : [];
   } else if (role === 'coordinator' || role === 'grade_coordinator') {
     if (getActiveScopeMode() === 'class') {
       const classId = getUserHomeroomClassId(user, '');

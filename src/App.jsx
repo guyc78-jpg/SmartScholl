@@ -134,6 +134,7 @@ const AuthenticatedApp = () => {
   const bootSystemRole = user ? getSystemRole(user) : null;
   const bootRole = effectiveWorkRole || bootSystemRole;
   const bootPageRole = bootRole === 'system_admin' ? 'admin' : bootRole === 'grade_coordinator' ? 'coordinator' : bootRole;
+  const bootHomeroomClassId = user?.active_homeroom_class_id || user?.profile_homeroom_class_id || user?.homeroomClassId || user?.authorization?.scope?.homeroomClassId || user?.authorization?.homeroomClassId || user?.profile_class_id || '';
   const bootStaff = bootApprovedRoles.includes('system_admin') || bootApprovedRoles.includes('admin') || (['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'].includes(bootRole) && bootApprovedRoles.includes(bootRole));
 
   // הפעלת/כיבוי מגן הסימולציה (חוסם כתיבת נתונים אמיתיים)
@@ -202,7 +203,7 @@ const AuthenticatedApp = () => {
 
     runBootstrap();
     return () => { cancelled = true; };
-  }, [isLoadingPublicSettings, isLoadingAuth, user?.id, bootRole, bootPageRole, bootStaff, workRole, isSimulating, bootstrapAttempt]);
+  }, [isLoadingPublicSettings, isLoadingAuth, user?.id, bootHomeroomClassId, bootRole, bootPageRole, bootStaff, workRole, isSimulating, bootstrapAttempt]);
 
   // מסך הטעינה נשאר גלוי עד שכל הנתונים נטענו (bootstrap ready) והפס הגיע ל-100% בפועל
   const dataLoading = isLoadingPublicSettings || isLoadingAuth || bootstrap.status === 'loading' || (user && bootstrap.status === 'idle' && !authError);
@@ -276,7 +277,7 @@ const AuthenticatedApp = () => {
           <Route path="/students" element={<Students role={pageRole} />} />
           <Route path="/students/:id" element={<StudentProfile role={pageRole} />} />
           <Route path="/classrooms" element={<Classrooms user={user} role={pageRole} />} />
-          <Route path="/class-settings" element={<ClassSettings user={user} role={pageRole} />} />
+          <Route path="/class-settings" element={<ClassSettings user={user} role={pageRole} onUserUpdate={updateCurrentUser} />} />
           <Route path="/attendance" element={<Attendance />} />
           <Route path="/class-attendance" element={<ClassAttendance role={pageRole} />} />
           <Route path="/schedule" element={<Schedule role={pageRole} user={user} />} />
@@ -317,7 +318,7 @@ const AuthenticatedApp = () => {
           <Route path="/students" element={<Students role={pageRole} />} />
           <Route path="/students/:id" element={<StudentProfile role={pageRole} />} />
           <Route path="/classrooms" element={<Classrooms user={user} role={pageRole} />} />
-          <Route path="/class-settings" element={<ClassSettings user={user} role={pageRole} />} />
+          <Route path="/class-settings" element={<ClassSettings user={user} role={pageRole} onUserUpdate={updateCurrentUser} />} />
           <Route path="/profile" element={<Profile user={user} role={pageRole} onRoleChange={setWorkRole} themePreference={themePreference} onThemePreferenceChange={setThemePreference} />} />
           {!staff && <Route path="/" element={<Navigate to="/division" replace />} />}
         </>}

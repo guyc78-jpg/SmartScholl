@@ -58,11 +58,11 @@ export function getUserApprovedClass(user) {
 }
 
 export function getUserApprovedClassId(user, fallbackClassId = '') {
-  return user?.profile_class_id || fallbackClassId || getUserApprovedClass(user);
+  return user?.active_homeroom_class_id || user?.profile_homeroom_class_id || user?.homeroomClassId || user?.authorization?.scope?.homeroomClassId || user?.authorization?.homeroomClassId || user?.profile_class_id || fallbackClassId || '';
 }
 
 export function getUserHomeroomClassId(user, fallbackClassId = '') {
-  return user?.profile_homeroom_class_id || user?.homeroomClassId || user?.authorization?.scope?.homeroomClassId || user?.authorization?.homeroomClassId || user?.profile_class_id || fallbackClassId || getUserApprovedClass(user);
+  return user?.active_homeroom_class_id || user?.profile_homeroom_class_id || user?.homeroomClassId || user?.authorization?.scope?.homeroomClassId || user?.authorization?.homeroomClassId || user?.profile_class_id || fallbackClassId || '';
 }
 
 export function getActiveScopeMode() {
@@ -78,7 +78,7 @@ export function isStudentInApprovedScope(student, user, role) {
   if (role === 'system_admin' || role === 'admin') return true;
   const studentGrade = normalizeGrade(student?.grade || extractGradeFromClass(student?.class_name));
   const studentClass = normalizeClassName(student?.class_name || '');
-  const approvedClassId = user?.profile_class_id || '';
+  const approvedClassId = getUserHomeroomClassId(user, '');
 
   if (role === 'grade_coordinator' || role === 'coordinator') {
     const homeroomClassId = getUserHomeroomClassId(user, '');
@@ -92,8 +92,7 @@ export function isStudentInApprovedScope(student, user, role) {
   }
 
   if (role === 'homeroom_teacher') {
-    const approvedClass = normalizeClassName(getUserApprovedClass(user));
-    return (!!approvedClassId && student?.class_id === approvedClassId) || (!!approvedClass && studentClass === approvedClass);
+    return !!approvedClassId && student?.class_id === approvedClassId;
   }
 
   return false;

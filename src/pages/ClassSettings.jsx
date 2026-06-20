@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { base44 } from '@/api/base44Client';
+import { queryClientInstance } from '@/lib/query-client';
 import PageHeader from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,7 +25,7 @@ const sortClasses = (a, b) => {
   return getClassNumber(a) - getClassNumber(b);
 };
 
-export default function ClassSettings({ user, role }) {
+export default function ClassSettings({ user, role, onUserUpdate }) {
   const [classes, setClasses] = useState([]);
   const [selectedId, setSelectedId] = useState('');
   const [form, setForm] = useState({});
@@ -125,7 +126,29 @@ export default function ClassSettings({ user, role }) {
       class_identity: nextIdentity,
       class_highlights: form.class_highlights || '',
     };
+    const activeClassPatch = {
+      active_homeroom_class_id: selectedClass.id,
+      profile_homeroom_class_id: selectedClass.id,
+      homeroomClassId: selectedClass.id,
+      profile_class_id: selectedClass.id,
+      profile_homeroom_class: selectedClass.name || '',
+      profile_class: selectedClass.name || '',
+    };
     await base44.entities.ClassRoom.update(selectedClass.id, data);
+    const updatedUser = await base44.auth.updateMe(activeClassPatch);
+    sessionStorage.removeItem(`approvedAccess:${user?.email}`);
+    localStorage.setItem(selectedClassStorageKey, selectedClass.id);
+    queryClientInstance.clear();
+    onUserUpdate?.({
+      ...(updatedUser || {}),
+      ...activeClassPatch,
+      authorization: {
+        ...(user?.authorization || {}),
+        scope: { ...(user?.authorization?.scope || {}), homeroomClassId: selectedClass.id },
+        homeroomClassId: selectedClass.id,
+      },
+    });
+    window.dispatchEvent(new CustomEvent('homeroomClassChanged', { detail: { classId: selectedClass.id, className: selectedClass.name } }));
     if (previousIdentity !== nextIdentity) {
       const changedAt = new Date().toISOString();
       await base44.entities.ActivityLog.create({
@@ -140,7 +163,7 @@ export default function ClassSettings({ user, role }) {
       });
     }
     setClasses(prev => prev.map(item => item.id === selectedClass.id ? { ...item, ...data } : item));
-    toast.success('הגדרות הכיתה נשמרו');
+    toast.success('כיתת החינוך עודכנה בהצלחה');
     setSaving(false);
   }
 
