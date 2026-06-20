@@ -29,7 +29,6 @@ const sidebarGroups = [
       { path: '/division', icon: Building2, label: 'ניהול חטיבה', roles: ['division_manager'] },
       { path: '/division-exams', icon: BookOpen, label: 'לוח מבחנים חכם', roles: ['division_manager'] },
       { path: '/community', icon: Heart, label: 'מעורבות חברתית', roles: ['division_manager'] },
-      { path: '/class-settings', icon: Settings, label: 'הגדרות כיתה', roles: ['division_manager'] },
       { path: '/conversations', icon: CalendarClock, label: 'שיחות מתוכננות', roles: ['division_manager'] },
     ],
   },
@@ -53,7 +52,6 @@ const sidebarGroups = [
       { path: '/', icon: LayoutDashboard, label: 'דשבורד', dynamicLabel: true, roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'] },
       { path: '/schedule', icon: Calendar, label: 'מערכת שעות', roles: ['homeroom_teacher', 'grade_coordinator', 'coordinator', 'system_admin', 'admin'] },
       { path: '/tasks', icon: ClipboardList, label: 'משימות', roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'] },
-      { path: '/class-settings', icon: Settings, label: 'הגדרות כיתה', roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'] },
     ],
   },
   {
@@ -72,8 +70,7 @@ const sidebarGroups = [
     icon: Users,
     items: [
       { path: '/students', icon: Users, label: 'רשימת תלמידים', roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'] },
-      { path: '/classrooms', icon: School, label: 'ניהול כיתות', roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator', 'division_manager'] },
-      { path: '/class-settings', icon: Settings, label: 'הגדרות כיתה', roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator', 'division_manager'] },
+      { path: '/classrooms', icon: School, label: 'ניהול שיוכי כיתות', roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'] },
       { path: '/class-attendance', icon: CalendarCheck, label: 'נוכחות', roles: ['homeroom_teacher', 'system_admin', 'admin', 'grade_coordinator', 'coordinator'] },
       { path: '/discipline', icon: AlertTriangle, label: 'משמעת', roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'] },
       { path: '/community', icon: Heart, label: 'מעורבות חברתית', roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'] },
@@ -105,8 +102,7 @@ const sidebarGroups = [
     adminOnly: true,
     items: [
       { path: '/users', icon: ShieldCheck, label: 'משתמשים מאושרים', roles: ['system_admin', 'admin'] },
-      { path: '/classrooms', icon: School, label: 'ניהול כיתות', roles: ['system_admin', 'admin'] },
-      { path: '/class-settings', icon: Settings, label: 'הגדרות כיתה', roles: ['system_admin', 'admin'] },
+      { path: '/classrooms', icon: School, label: 'ניהול שיוכי כיתות', roles: ['system_admin', 'admin'] },
       { path: '/permissions-tester', icon: Eye, label: 'בדיקת הרשאות', roles: ['system_admin', 'admin'] },
       { path: '/bell-schedule', icon: Bell, label: 'צלצולים והפסקות', roles: ['system_admin', 'admin'] },
       { path: '/year-transition', icon: RefreshCw, label: 'מעבר שנת לימודים', roles: ['system_admin'], systemAdminOnly: true },
@@ -145,7 +141,6 @@ const coordinatorDualScopeGroups = [
       { path: '/students?scope=class', icon: Users, label: 'תלמידי הכיתה', roles: ['grade_coordinator', 'coordinator'] },
       { path: '/class-attendance?scope=class', icon: CalendarCheck, label: 'מעקב נוכחות', roles: ['grade_coordinator', 'coordinator'] },
       { path: '/tasks?scope=class', icon: ClipboardList, label: 'משימות', roles: ['grade_coordinator', 'coordinator'] },
-      { path: '/class-settings', icon: Settings, label: 'הגדרות כיתה', roles: ['grade_coordinator', 'coordinator'] },
       { path: '/communications?scope=class', icon: MessageSquare, label: 'שיחות הורים', roles: ['grade_coordinator', 'coordinator'] },
       { path: '/conversations', icon: CalendarClock, label: 'שיחות מתוכננות', roles: ['grade_coordinator', 'coordinator'] },
       { path: '/discipline?scope=class', icon: AlertTriangle, label: 'משמעת', roles: ['grade_coordinator', 'coordinator'] },
@@ -158,7 +153,7 @@ const coordinatorDualScopeGroups = [
     icon: GraduationCap,
     items: [
       { path: '/students?scope=grade', icon: Users, label: 'תלמידי השכבה', roles: ['grade_coordinator', 'coordinator'] },
-      { path: '/classrooms', icon: School, label: 'ניהול כיתות', roles: ['grade_coordinator', 'coordinator'] },
+      { path: '/classrooms', icon: School, label: 'ניהול שיוכי כיתות', roles: ['grade_coordinator', 'coordinator'] },
       { path: '/exams?scope=grade', icon: BookOpen, label: 'מבחנים ואירועים', roles: ['grade_coordinator', 'coordinator'] },
       { path: '/community?scope=grade', icon: Heart, label: 'מעורבות חברתית', roles: ['grade_coordinator', 'coordinator'] },
       { path: '/performance?scope=grade', icon: GraduationCap, label: 'הערכות', roles: ['grade_coordinator', 'coordinator'] },

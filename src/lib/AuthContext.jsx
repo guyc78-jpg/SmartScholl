@@ -178,6 +178,17 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  useEffect(() => {
+    if (!user?.email) return;
+    const unsubscribe = base44.entities.ApprovedUser.subscribe((event) => {
+      if (event?.data?.email && event.data.email.toLowerCase() === user.email.toLowerCase()) {
+        sessionStorage.removeItem(getAccessCacheKey(user.email));
+        checkUserAuth();
+      }
+    });
+    return unsubscribe;
+  }, [user?.email]);
+
   const updateCurrentUser = (updates) => {
     setUser(prev => ({ ...prev, ...updates }));
   };

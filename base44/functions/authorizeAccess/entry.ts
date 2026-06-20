@@ -280,6 +280,101 @@ Deno.serve(async (req) => {
       return Response.json({ success: true });
     }
 
+    if (action === 'listHomeroomAssignments') {
+      const access = await getAccess(base44, user, true);
+      if (!access.allowed) return Response.json({ error: 'Forbidden' }, { status: 403 });
+      const claims = access.claims;
+      const roles = claims.roles || [claims.role];
+      const isSystemAdmin = roles.includes('system_admin') || claims.role === 'system_admin';
+      const isCoordinator = roles.includes('grade_coordinator') || roles.includes('coordinator') || claims.role === 'grade_coordinator' || claims.role === 'coordinator';
+      const isHomeroomTeacher = roles.includes('homeroom_teacher') || claims.role === 'homeroom_teacher';
+      const managedGrade = normalizeGrade(claims.profile_grade_managed || claims.scope?.gradeId || '');
+      const homeroomClassId = claims.homeroomClassId || claims.profile_homeroom_class_id || '';
+      const allClasses = (await base44.asServiceRole.entities.ClassRoom.list('grade', 500)).filter(item => item.is_active !== false);
+      const visibleClasses = allClasses.filter(classRoom => {
+        if (isSystemAdmin) return true;
+        if (isCoordinator) return normalizeGrade(classRoom.grade) === managedGrade;
+        if (isHomeroomTeacher) return classRoom.id === homeroomClassId;
+        return false;
+      });
+      const approvedUsers = await base44.asServiceRole.entities.ApprovedUser.list('fullName', 500);
+      const teachers = approvedUsers
+        .filter(record => record.isActive !== false && getRecordRoles(record).includes('homeroom_teacher'))
+        .map(record => ({ id: record.id, fullName: record.fullName, email: normalizeEmail(record.email), homeroomClassId: record.homeroomClassId || '' }));
+      const teacherByEmail = new Map(teachers.map(teacher => [teacher.email, teacher]));
+      const classes = visibleClasses.map(classRoom => {
+        const teacher = teacherByEmail.get(normalizeEmail(classRoom.homeroom_teacher_email));
+        return { ...classRoom, assigned_teacher_id: teacher?.id || '' };
+      });
+      return Response.json({ classes, teachers, canAssign: isSystemAdmin || isCoordinator });
+    }
+
+    if (action === 'assignHomeroomTeacher') {
+      const access = await getAccess(base44, user, true);
+      if (!access.allowed) return Response.json({ error: 'Forbidden' }, { status: 403 });
+      const claims = access.claims;
+      const roles = claims.roles || [claims.role];
+      const isSystemAdmin = roles.includes('system_admin') || claims.role === 'system_admin';
+      const isCoordinator = roles.includes('grade_coordinator') || roles.includes('coordinator') || claims.role === 'grade_coordinator' || claims.role === 'coordinator';
+      if (!isSystemAdmin && !isCoordinator) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+      const targetClass = (await base44.asServiceRole.entities.ClassRoom.filter({ id: body.classId }))[0];
+      if (!targetClass || targetClass.is_active === false) return Response.json({ error: 'Class not found' }, { status: 404 });
+      const managedGrade = normalizeGrade(claims.profile_grade_managed || claims.scope?.gradeId || '');
+      if (!isSystemAdmin && normalizeGrade(targetClass.grade) !== managedGrade) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+      const teacherId = String(body.teacherId || '').trim();
+      const previousEmail = normalizeEmail(targetClass.homeroom_teacher_email);
+      let teacher = null;
+      if (teacherId) {
+        teacher = (await base44.asServiceRole.entities.ApprovedUser.filter({ id: teacherId }))[0];
+        if (!teacher || teacher.isActive === false || !getRecordRoles(teacher).includes('homeroom_teacher')) {
+          return Response.json({ error: 'Teacher is not approved' }, { status: 400 });
+        }
+      }
+
+      if (previousEmail) {
+        const previousRecords = await base44.asServiceRole.entities.ApprovedUser.filter({ email: previousEmail });
+        for (const record of previousRecords) {
+          const scope = { ...(record.scope || {}) };
+          if (scope.classId === targetClass.id) scope.classId = '';
+          if (scope.homeroomClassId === targetClass.id) scope.homeroomClassId = '';
+          await base44.asServiceRole.entities.ApprovedUser.update(record.id, {
+            homeroomClassId: record.homeroomClassId === targetClass.id ? '' : record.homeroomClassId,
+            scope,
+          });
+        }
+      }
+
+      if (teacher) {
+        const teacherEmail = normalizeEmail(teacher.email);
+        const previousClasses = await base44.asServiceRole.entities.ClassRoom.filter({ homeroom_teacher_email: teacherEmail });
+        for (const classRoom of previousClasses.filter(item => item.id !== targetClass.id)) {
+          await base44.asServiceRole.entities.ClassRoom.update(classRoom.id, { homeroom_teacher_email: '', homeroom_teacher_name: '' });
+        }
+        const scope = { ...(teacher.scope || {}), classId: targetClass.id, homeroomClassId: targetClass.id };
+        await base44.asServiceRole.entities.ApprovedUser.update(teacher.id, { homeroomClassId: targetClass.id, scope });
+      }
+
+      const classPatch = {
+        homeroom_teacher_email: teacher ? normalizeEmail(teacher.email) : '',
+        homeroom_teacher_name: teacher ? teacher.fullName : '',
+      };
+      const savedClass = await base44.asServiceRole.entities.ClassRoom.update(targetClass.id, classPatch);
+      await writeLog(base44, {
+        eventType: 'permission_changed',
+        actorEmail: normalizeEmail(user.email),
+        targetEmail: teacher ? normalizeEmail(teacher.email) : previousEmail,
+        targetName: teacher ? teacher.fullName : targetClass.name,
+        actionName: 'homeroom_assignment_changed',
+        role: claims.role,
+        details: `שיוך מחנך/ת לכיתה ${targetClass.name} עודכן`,
+        metadata: { classId: targetClass.id, className: targetClass.name, previousEmail, nextEmail: classPatch.homeroom_teacher_email },
+        severity: 'warning',
+      });
+      return Response.json({ classRoom: savedClass, assignedTeacherEmail: classPatch.homeroom_teacher_email });
+    }
+
     const isAdmin = await requireSystemAdmin(base44, user, true);
     if (!isAdmin) {
       await writeLog(base44, {

@@ -45,7 +45,6 @@ const UserManagement = lazy(() => import('./pages/UserManagement'));
 const BellScheduleSettings = lazy(() => import('./pages/BellScheduleSettings'));
 const TreatmentCenter = lazy(() => import('./pages/TreatmentCenter'));
 const Classrooms = lazy(() => import('./pages/Classrooms'));
-const ClassSettings = lazy(() => import('./pages/ClassSettings'));
 const DivisionManagement = lazy(() => import('./pages/DivisionManagement'));
 const DivisionExams = lazy(() => import('./pages/DivisionExams'));
 const PermissionsTester = lazy(() => import('./pages/PermissionsTester'));
@@ -276,8 +275,7 @@ const AuthenticatedApp = () => {
           <Route path="/" element={<Dashboard user={user} role={pageRole} initialData={bootstrap.data?.dashboard} />} />
           <Route path="/students" element={<Students role={pageRole} />} />
           <Route path="/students/:id" element={<StudentProfile role={pageRole} />} />
-          <Route path="/classrooms" element={<Classrooms user={user} role={pageRole} />} />
-          <Route path="/class-settings" element={<ClassSettings user={user} role={pageRole} onUserUpdate={updateCurrentUser} />} />
+          <Route path="/classrooms" element={<Classrooms user={user} role={pageRole} onUserUpdate={updateCurrentUser} />} />
           <Route path="/attendance" element={<Attendance />} />
           <Route path="/class-attendance" element={<ClassAttendance role={pageRole} />} />
           <Route path="/schedule" element={<Schedule role={pageRole} user={user} />} />
@@ -317,8 +315,6 @@ const AuthenticatedApp = () => {
           <Route path="/conversations" element={<ScheduledConversations role={pageRole} user={user} />} />
           <Route path="/students" element={<Students role={pageRole} />} />
           <Route path="/students/:id" element={<StudentProfile role={pageRole} />} />
-          <Route path="/classrooms" element={<Classrooms user={user} role={pageRole} />} />
-          <Route path="/class-settings" element={<ClassSettings user={user} role={pageRole} onUserUpdate={updateCurrentUser} />} />
           <Route path="/profile" element={<Profile user={user} role={pageRole} onRoleChange={setWorkRole} themePreference={themePreference} onThemePreferenceChange={setThemePreference} />} />
           {!staff && <Route path="/" element={<Navigate to="/division" replace />} />}
         </>}
@@ -338,7 +334,6 @@ const AuthenticatedApp = () => {
         {studentRole && <Route path="/attendance/*" element={<Navigate to="/student-home" replace />} />}
         {studentRole && <Route path="/class-attendance/*" element={<Navigate to="/student-home" replace />} />}
         {studentRole && <Route path="/classrooms/*" element={<Navigate to="/student-home" replace />} />}
-        {studentRole && <Route path="/class-settings/*" element={<Navigate to="/student-home" replace />} />}
         {studentRole && <Route path="/discipline/*" element={<Navigate to="/student-home" replace />} />}
         {studentRole && <Route path="/performance/*" element={<Navigate to="/student-home" replace />} />}
         {studentRole && <Route path="/communications/*" element={<Navigate to="/student-home" replace />} />}
