@@ -19,6 +19,7 @@ import ClassTrackingPanel from '@/components/exams/ClassTrackingPanel';
 import SmartCalendarEmptyState from '@/components/exams/SmartCalendarEmptyState';
 import { isEventRelevantForStudent } from '@/components/exams/AudienceEditor';
 import { getAvailableRoles } from '@/lib/roleUtils';
+import { getClassDisplayName } from '@/lib/classIdentity';
 import { getLocalDateString } from '@/lib/attendanceScope.js';
 import useDeleteConfirm from '@/hooks/useDeleteConfirm';
 
@@ -40,6 +41,7 @@ export default function Exams({ role, user }) {
   const [editingEvent, setEditingEvent] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [activeClassId, setActiveClassId] = useState('');
+  const [currentClassRoom, setCurrentClassRoom] = useState(null);
   const { confirmDelete, DeleteConfirm } = useDeleteConfirm();
 
   const approvedRoles = getAvailableRoles(user);
@@ -59,6 +61,7 @@ export default function Exams({ role, user }) {
     const classRooms = await base44.entities.ClassRoom.list('-updated_date', 200);
     const classRoom = classRooms.find(room => room.id === classId) || findClassRoomByName(classRooms, fallbackClassName);
     const resolvedClassId = classRoom?.id || classId;
+    setCurrentClassRoom(classRoom || null);
     setActiveClassId(resolvedClassId);
     const [eventData, studentData] = await Promise.all([
       base44.entities.Exam.filter({ class_id: resolvedClassId }),
@@ -96,7 +99,11 @@ export default function Exams({ role, user }) {
     { id: 'demo_4', class_id: classId, title: 'מועד ב׳ באנגלית', subject: 'אנגלית', type: 'מועד ב׳', date: new Date(Date.now() + 4 * 86400000).toISOString().split('T')[0], time: '08:30', audience_scope: 'subject', audience_subjects: ['אנגלית'] }
   ], [classId, todayIso]);
 
-  const sourceEvents = showDemo && events.length === 0 ? demoEvents : events;
+  const classDisplayName = getClassDisplayName(currentClassRoom, fallbackClassName || 'הכיתה');
+  const sourceEvents = (showDemo && events.length === 0 ? demoEvents : events).map(event => ({
+    ...event,
+    class_or_grade: event.class_or_grade || classDisplayName,
+  }));
 
   const visibleEvents = useMemo(() => {
     let list = filterBySearch(filterByGroup(sourceEvents, filterGroup), search);
@@ -177,7 +184,7 @@ export default function Exams({ role, user }) {
     <div className="p-4 lg:p-6 space-y-5 pb-28 lg:pb-10" dir="rtl">
       <PageHeader
         title="לוח מבחנים ואירועים חכם"
-        subtitle="כל אירועי השכבה במקום אחד — מבחנים, בגרויות, חזרות, טקסים, חגים, צילומים ופעילויות"
+        subtitle={`כל אירועי ${classDisplayName} במקום אחד — מבחנים, בגרויות, חזרות, טקסים, חגים, צילומים ופעילויות`}
         actions={
           <RtlActionBar
             primary={(canEdit || canTrack || canManageBoard) ? (

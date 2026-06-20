@@ -3,6 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Edit, Trash2, UserRound, UsersRound, KeyRound } from 'lucide-react';
 import { formatGrade } from '@/lib/schoolStructure';
+import { getClassDisplayName } from '@/lib/classIdentity';
 
 export default function ClassRoomCard({ classRoom, onEdit, onDelete, canManage = true }) {
   return (
@@ -11,12 +12,13 @@ export default function ClassRoomCard({ classRoom, onEdit, onDelete, canManage =
         <div className="flex items-start justify-between gap-3 h-full">
           <div className="space-y-2 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="text-lg font-bold">{classRoom.name}</h3>
+              <h3 className="text-lg font-bold">{getClassDisplayName(classRoom, classRoom.name)}</h3>
               <Badge variant="secondary">שכבה {formatGrade(classRoom.grade)}</Badge>
             </div>
             <div className="grid gap-1 text-sm text-muted-foreground">
               <span className="flex items-center gap-2"><UserRound className="w-4 h-4" />מחנך/ת: {classRoom.homeroom_teacher_name || 'לא הוגדר'}</span>
               <span className="flex items-center gap-2"><UsersRound className="w-4 h-4" />רכז/ת: {classRoom.coordinator_name || 'לא הוגדר'}</span>
+              {classRoom.counselor_name && <span className="flex items-center gap-2"><UsersRound className="w-4 h-4" />יועץ/ת: {classRoom.counselor_name}</span>}
               {classRoom.class_code && <span className="flex items-center gap-2"><KeyRound className="w-4 h-4" />קוד כיתה: {classRoom.class_code}</span>}
             </div>
           </div>

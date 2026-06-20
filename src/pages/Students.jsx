@@ -36,6 +36,7 @@ import ImportStudentsModal from '@/components/students/ImportStudentsModal';
 import ParentConversationDialog from '@/components/student/ParentConversationDialog';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 import { ACCOMMODATION_TYPES, activeAccommodationLabels } from '@/lib/accommodations';
+import { buildClassIdentityMap, getClassDisplayById } from '@/lib/classIdentity';
 
 const PAGE_SIZE = 40;
 const LOAD_TIMEOUT_MS = 15000;
@@ -88,6 +89,7 @@ export default function Students({ role }) {
   const [showImport, setShowImport] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedConversationStudent, setSelectedConversationStudent] = useState(null);
+  const [classRooms, setClassRooms] = useState([]);
   const [accommodationRecords, setAccommodationRecords] = useState({});
   const [deleting, setDeleting] = useState(false);
 
@@ -142,6 +144,7 @@ export default function Students({ role }) {
   }, [user, role, scopeMode, loadAccommodationSummaries]);
 
   useEffect(() => { loadStudents(); }, [loadStudents]);
+  useEffect(() => { base44.entities.ClassRoom.list('grade', 500).then(rows => setClassRooms(rows || [])); }, []);
 
   // Reset pagination when search/filter changes.
   useEffect(() => { setVisibleCount(PAGE_SIZE); }, [search, statusFilter, accommodationFilter]);
@@ -155,6 +158,7 @@ export default function Students({ role }) {
   }).sort(compareStudentsByLastName), [students, search, statusFilter, accommodationFilter, accommodationRecords]);
 
   const visible = filtered.slice(0, visibleCount);
+  const classIdentityMap = useMemo(() => buildClassIdentityMap(classRooms), [classRooms]);
   const hasMore = filtered.length > visibleCount;
   const hasActiveFilters = search.trim() || statusFilter !== 'הכל' || accommodationFilter !== 'הכל';
 
@@ -296,6 +300,7 @@ export default function Students({ role }) {
                 <StudentCard
                   student={student}
                   communityPct={communityPct}
+                  classIdentityLabel={getClassDisplayById(classIdentityMap, student.class_id, student.class_name)}
                   onParentConversation={setSelectedConversationStudent}
                 />
               </motion.div>

@@ -31,6 +31,7 @@ import RoleIcon from '@/components/ui/RoleIcon';
 import NowNextCard from '@/components/schedule/NowNextCard';
 import { getUserApprovedClass, getUserApprovedClassId, getUserApprovedGrade } from '@/lib/schoolStructure';
 import { getAvailableRoles, getUserFirstName, hasApprovedRole, getRoleDisplayLines, getRoleShort } from '@/lib/roleUtils';
+import { getClassDisplayName } from '@/lib/classIdentity';
 import useReadNotifications from '@/hooks/useReadNotifications';
 import { ATTENDANCE_EXCEPTION_STATUSES, getAttendanceScopedStudents, getScopedClassIds, filterScopedAttendance, getSelectedAttendanceDate, getLocalDateString, loadScopedAttendanceForDate } from '@/lib/attendanceScope.js';
 
@@ -54,7 +55,8 @@ export default function Dashboard({ user, role, initialData }) {
    const [tasksDialogOpen, setTasksDialogOpen] = useState(false);
    const [selectedDisciplineEvent, setSelectedDisciplineEvent] = useState(null);
    const [attendanceFilterOpen, setAttendanceFilterOpen] = useState(false);
-  const loadTimerRef = useRef(null);
+   const [dashboardClassRoom, setDashboardClassRoom] = useState(null);
+   const loadTimerRef = useRef(null);
   const isLoadingDataRef = useRef(false);
   const pendingReloadRef = useRef(false);
   const lastLoadAtRef = useRef(0);
@@ -73,11 +75,17 @@ export default function Dashboard({ user, role, initialData }) {
   const dashboardSecondaryTitle = roleDisplayLines.slice(1).join(' · ');
   // classId must be stable from the start — never depend on async-loaded students
   const classId = getUserApprovedClassId(user, CLASS_ID);
+  const classIdentityTitle = dashboardClassRoom ? getClassDisplayName(dashboardClassRoom, getUserApprovedClass(user)) : getUserApprovedClass(user);
+  const headerRoleTitle = isActiveHomeroom && classIdentityTitle ? `הכיתה שלי — ${classIdentityTitle}` : dashboardTitle;
   const scopeLabels = [
     isActiveAdmin ? getRoleShort('admin', user) + ' מערכת' : null,
-    isActiveHomeroom ? `${getRoleShort('homeroom_teacher', user)}${getUserApprovedClass(user) ? ` · ${getUserApprovedClass(user)}` : ''}` : null,
+    isActiveHomeroom ? `${getRoleShort('homeroom_teacher', user)}${classIdentityTitle ? ` · ${classIdentityTitle}` : ''}` : null,
     isActiveCoordinator ? `${getRoleShort('coordinator', user)}${getUserApprovedGrade(user) ? ` · ${getUserApprovedGrade(user)}` : ''}` : null,
   ].filter(Boolean).join(' | ') || 'מערכת כללית';
+
+  useEffect(() => {
+    if (classId) base44.entities.ClassRoom.list('grade', 500).then(rows => setDashboardClassRoom((rows || []).find(item => item.id === classId) || null));
+  }, [classId]);
 
   useEffect(() => {
     if (initialData) {
@@ -320,7 +328,7 @@ export default function Dashboard({ user, role, initialData }) {
           </div>
           <p className="text-sm font-medium text-foreground/70 mt-0.5 flex items-center gap-1.5" dir="rtl">
             <RoleIcon role={role} roles={approvedRoles} />
-            <span>{dashboardTitle}</span>
+            <span>{headerRoleTitle}</span>
           </p>
           {dashboardSecondaryTitle && <p className="text-xs text-muted-foreground/80 mt-0.5">{dashboardSecondaryTitle}</p>}
           <p className="text-xs text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-1.5">

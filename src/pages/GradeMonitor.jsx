@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Users, AlertTriangle, Lock } from 'lucide-react';
 import ClassDashboard from '@/components/grade/ClassDashboard';
 import { getUserApprovedGrade, normalizeGrade } from '@/lib/schoolStructure';
+import { getClassDisplayName } from '@/lib/classIdentity';
 
 const GRADE_LABELS = { ז: 'שכבת ז׳', ח: 'שכבת ח׳', ט: 'שכבת ט׳', י: 'שכבת י׳', יא: 'שכבת י״א', יב: 'שכבת י״ב' };
 
@@ -66,14 +67,15 @@ export default function GradeMonitor({ user, role }) {
     </div>
   );
 
+  const selectedClassLabel = selectedClass ? getClassDisplayName(selectedClass, selectedClass.name) : '';
   const gradeLabel = role === 'coordinator'
     ? (GRADE_LABELS[managedGrade?.replace(/[׳״\s]/g, '')] || managedGrade || 'השכבה שלך')
-    : 'הכיתה שלך';
+    : (selectedClassLabel || 'הכיתה שלך');
 
   return (
     <div className="p-4 lg:p-6 space-y-5 text-right" dir="rtl">
       <PageHeader
-        title={role === 'coordinator' ? `מעקב שכבה – ${gradeLabel}` : 'מעקב כיתה'}
+        title={role === 'coordinator' ? `מעקב שכבה – ${gradeLabel}` : `מעקב כיתה – ${gradeLabel}`}
         subtitle={role === 'coordinator' ? 'מבט-על על כל כיתות השכבה' : 'דשבורד כיתתי מלא'}
       />
 
@@ -91,7 +93,7 @@ export default function GradeMonitor({ user, role }) {
             >
               <span className="inline-flex items-center gap-1.5">
                 <Users className="w-3.5 h-3.5" />
-                <span>{cls.name}</span>
+                <span>{getClassDisplayName(cls, cls.name)}</span>
               </span>
               {cls.homeroom_teacher_name && (
                 <span className="text-xs opacity-70 me-1">· {cls.homeroom_teacher_name}</span>

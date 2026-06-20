@@ -18,6 +18,18 @@
       ],
       "description": "\u05e9\u05db\u05d1\u05d4"
     },
+    "class_number": {
+      "type": "string",
+      "description": "\u05de\u05e1\u05e4\u05e8 \u05db\u05d9\u05ea\u05d4 \u05d1\u05ea\u05d5\u05da \u05d4\u05e9\u05db\u05d1\u05d4"
+    },
+    "class_identity": {
+      "type": "string",
+      "description": "\u05d6\u05d4\u05d5\u05ea/\u05e9\u05dd \u05d7\u05d5\u05e4\u05e9\u05d9 \u05e9\u05dc \u05d4\u05db\u05d9\u05ea\u05d4, \u05dc\u05de\u05e9\u05dc \u05d0\u05d3\u05e8\u05d9\u05db\u05dc\u05d5\u05ea \u05d0\u05d5 \u05d3\u05d9\u05e4\u05dc\u05d5\u05de\u05d8\u05d9\u05d4"
+    },
+    "class_highlights": {
+      "type": "string",
+      "description": "\u05d3\u05d2\u05e9\u05d9\u05dd \u05e4\u05d3\u05d2\u05d5\u05d2\u05d9\u05d9\u05dd/\u05d7\u05d1\u05e8\u05ea\u05d9\u05d9\u05dd \u05e9\u05dc \u05d4\u05db\u05d9\u05ea\u05d4"
+    },
     "homeroom_teacher_email": {
       "type": "string",
       "description": "\u05d0\u05d9\u05de\u05d9\u05d9\u05dc \u05de\u05d7\u05e0\u05da/\u05ea"
@@ -33,6 +45,22 @@
     "coordinator_name": {
       "type": "string",
       "description": "\u05e9\u05dd \u05e8\u05db\u05d6/\u05ea \u05e9\u05db\u05d1\u05d4"
+    },
+    "counselor_name": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05d9\u05d5\u05e2\u05e5/\u05ea"
+    },
+    "counselor_email": {
+      "type": "string",
+      "description": "\u05d0\u05d9\u05de\u05d9\u05d9\u05dc \u05d9\u05d5\u05e2\u05e5/\u05ea"
+    },
+    "division_manager_name": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05de\u05e0\u05d4\u05dc/\u05ea \u05d7\u05d8\u05d9\u05d1\u05d4"
+    },
+    "division_manager_email": {
+      "type": "string",
+      "description": "\u05d0\u05d9\u05de\u05d9\u05d9\u05dc \u05de\u05e0\u05d4\u05dc/\u05ea \u05d7\u05d8\u05d9\u05d1\u05d4"
     },
     "class_code": {
       "type": "string",

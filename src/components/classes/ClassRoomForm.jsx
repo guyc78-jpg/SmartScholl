@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GRADES, formatGrade } from '@/lib/schoolStructure';
 
 export default function ClassRoomForm({ classRoom, onSubmit, onCancel, saving }) {
   const [form, setForm] = useState(classRoom || {
-    grade: '', name: '', homeroom_teacher_name: '', homeroom_teacher_email: '',
-    coordinator_name: '', coordinator_email: '', class_code: '', room_number: '', year: '', is_active: true,
+    grade: '', name: '', class_number: '', class_identity: '', class_highlights: '', homeroom_teacher_name: '', homeroom_teacher_email: '',
+    coordinator_name: '', coordinator_email: '', counselor_name: '', counselor_email: '', division_manager_name: '', division_manager_email: '', class_code: '', room_number: '', year: '', is_active: true,
   });
   const set = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
 
@@ -23,13 +24,19 @@ export default function ClassRoomForm({ classRoom, onSubmit, onCancel, saving })
           </Select>
         </div>
         <div className="space-y-2"><Label>כיתה *</Label><Input value={form.name || ''} onChange={e => set('name', e.target.value)} placeholder="לדוגמה: י׳1" /></div>
+        <div className="space-y-2"><Label>מספר כיתה</Label><Input value={form.class_number || ''} onChange={e => set('class_number', e.target.value)} /></div>
+        <div className="space-y-2"><Label>זהות כיתה</Label><Input value={form.class_identity || ''} onChange={e => set('class_identity', e.target.value)} placeholder="לדוגמה: אדריכלות" /></div>
         <div className="space-y-2"><Label>מחנך/ת</Label><Input value={form.homeroom_teacher_name || ''} onChange={e => set('homeroom_teacher_name', e.target.value)} /></div>
         <div className="space-y-2"><Label>אימייל מחנך/ת</Label><Input type="email" value={form.homeroom_teacher_email || ''} onChange={e => set('homeroom_teacher_email', e.target.value)} /></div>
         <div className="space-y-2"><Label>רכז/ת שכבה</Label><Input value={form.coordinator_name || ''} onChange={e => set('coordinator_name', e.target.value)} /></div>
         <div className="space-y-2"><Label>אימייל רכז/ת</Label><Input type="email" value={form.coordinator_email || ''} onChange={e => set('coordinator_email', e.target.value)} /></div>
+        <div className="space-y-2"><Label>יועץ/ת</Label><Input value={form.counselor_name || ''} onChange={e => set('counselor_name', e.target.value)} /></div>
+        <div className="space-y-2"><Label>מנהל/ת חטיבה</Label><Input value={form.division_manager_name || ''} onChange={e => set('division_manager_name', e.target.value)} /></div>
+        <div className="space-y-2"><Label>שנת לימודים</Label><Input value={form.year || ''} onChange={e => set('year', e.target.value)} /></div>
         <div className="space-y-2"><Label>קוד כיתה אופציונלי</Label><Input value={form.class_code || ''} onChange={e => set('class_code', e.target.value)} /></div>
         <div className="space-y-2"><Label>חדר</Label><Input value={form.room_number || ''} onChange={e => set('room_number', e.target.value)} /></div>
       </div>
+      <div className="space-y-2"><Label>דגשים של הכיתה</Label><Textarea value={form.class_highlights || ''} onChange={e => set('class_highlights', e.target.value)} className="min-h-24" /></div>
       <div className="flex gap-2 justify-end">
         <Button variant="outline" type="button" onClick={onCancel}>ביטול</Button>
         <Button type="button" disabled={saving || !form.grade || !form.name} onClick={() => onSubmit(form)}>{saving ? 'שומר...' : 'שמור כיתה'}</Button>

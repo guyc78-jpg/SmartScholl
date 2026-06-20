@@ -4,7 +4,7 @@ import StatusBadge from '@/components/ui/StatusBadge';
 import { ChevronLeft, MessageSquare, Phone } from 'lucide-react';
 import { formatStudentName } from '@/lib/studentName';
 
-export default function StudentCard({ student, communityPct, onParentConversation }) {
+export default function StudentCard({ student, communityPct, onParentConversation, classIdentityLabel = '' }) {
   const avatarClass = student.status === 'דורש מעקב'
     ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
     : student.gender === 'נקבה'
@@ -28,7 +28,7 @@ export default function StudentCard({ student, communityPct, onParentConversatio
               <h3 className="text-sm font-semibold leading-tight text-foreground">{formatStudentName(student)}</h3>
               {student.status && student.status !== 'פעיל' && <StatusBadge status={student.status} />}
             </div>
-            <p className="text-xs text-muted-foreground">{student.class_name || 'כיתה י׳1'} · {student.grade || 'י'}</p>
+            <p className="text-xs text-muted-foreground">{classIdentityLabel || student.class_name || 'כיתה י׳1'} · {student.grade || 'י'}</p>
 
             <div className="mt-1.5 flex flex-wrap justify-start gap-3" dir="rtl">
               {phone && (

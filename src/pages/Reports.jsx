@@ -12,6 +12,7 @@ import { FileBarChart, Download } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 import { formatStudentName, compareStudentsByLastName, getLastName } from '@/lib/studentName';
 import { getAttendanceScopedStudents, getScopedClassIds, filterScopedAttendance } from '@/lib/attendanceScope';
+import { buildClassIdentityMap, getClassDisplayById } from '@/lib/classIdentity';
 
 export default function Reports({ role }) {
   const { user } = useAuth();
@@ -19,6 +20,7 @@ export default function Reports({ role }) {
   const [attendance, setAttendance] = useState([]);
   const [discipline, setDiscipline] = useState([]);
   const [exams, setExams] = useState([]);
+  const [classRooms, setClassRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedStudent, setSelectedStudent] = useState('all');
   const [dateFrom, setDateFrom] = useState(() => { const d = new Date(); d.setMonth(d.getMonth()-1); return d.toISOString().split('T')[0]; });
@@ -31,13 +33,15 @@ export default function Reports({ role }) {
     const classIds = getScopedClassIds(scopedStudents);
     const scopedIds = new Set(scopedStudents.map(student => student.id));
 
-    const [attArrays, disArrays, exsArrays] = await Promise.all([
+    const [attArrays, disArrays, exsArrays, classRows] = await Promise.all([
       Promise.all(classIds.map(classId => base44.entities.AttendanceRecord.filter({ class_id: classId }))),
       Promise.all(classIds.map(classId => base44.entities.DisciplineEvent.filter({ class_id: classId }))),
       Promise.all(classIds.map(classId => base44.entities.Exam.filter({ class_id: classId }))),
+      base44.entities.ClassRoom.list('grade', 500),
     ]);
 
     setStudents(scopedStudents);
+    setClassRooms(classRows || []);
     setAttendance(filterScopedAttendance(attArrays.flat(), scopedStudents));
     setDiscipline(disArrays.flat().filter(record => scopedIds.has(record.student_id)));
     setExams(exsArrays.flat());
@@ -45,6 +49,8 @@ export default function Reports({ role }) {
   }
 
   const studentById = new Map(students.map(student => [student.id, student]));
+  const classIdentityMap = buildClassIdentityMap(classRooms);
+  const scopedClassLabel = getClassDisplayById(classIdentityMap, students[0]?.class_id, students[0]?.class_name || 'הכיתה');
   const displayStudentName = (studentId, fallbackName = '') => formatStudentName(studentById.get(studentId) || fallbackName);
 
   const filteredAtt = attendance.filter(a => {
@@ -101,7 +107,7 @@ export default function Reports({ role }) {
 
   return (
     <div className="p-4 lg:p-6 space-y-5" dir="rtl">
-      <PageHeader title="דוחות" subtitle="ניתוח נתוני הכיתה"
+      <PageHeader title="דוחות" subtitle={`ניתוח נתוני ${scopedClassLabel}`}
         actions={<Button variant="outline" size="sm" className="gap-2" onClick={exportCSV}><Download className="w-4 h-4"/>ייצוא CSV</Button>} />
 
       {/* Filters */}
