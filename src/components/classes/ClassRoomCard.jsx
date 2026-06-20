@@ -1,8 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Edit, Trash2, UserRound, UsersRound, KeyRound } from 'lucide-react';
-import { formatGrade } from '@/lib/schoolStructure';
 import { getClassDisplayName } from '@/lib/classIdentity';
 
 const cleanStaffName = (value) => String(value || '')
@@ -16,9 +14,8 @@ export default function ClassRoomCard({ classRoom, onEdit, onDelete, canManage =
       <CardContent className="p-4 h-full" dir="rtl">
         <div className="flex items-start justify-between gap-3 h-full">
           <div className="space-y-2 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center justify-start gap-2 flex-wrap text-right" dir="rtl">
               <h3 className="text-lg font-bold">{getClassDisplayName(classRoom, classRoom.name)}</h3>
-              <Badge variant="secondary">שכבה {formatGrade(classRoom.grade)}</Badge>
             </div>
             <div className="grid gap-1 text-sm text-muted-foreground">
               <span className="flex items-center gap-2"><UserRound className="w-4 h-4" />מחנך/ת: {cleanStaffName(classRoom.homeroom_teacher_name) || 'לא הוגדר'}</span>
