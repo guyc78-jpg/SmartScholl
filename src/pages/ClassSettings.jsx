@@ -12,7 +12,15 @@ import { getAvailableRoles } from '@/lib/roleUtils';
 import { getUserApprovedGrade, getUserDivisionGrades, getUserHomeroomClassId, normalizeGrade } from '@/lib/schoolStructure';
 import { getClassDisplayName } from '@/lib/classIdentity';
 
+const GRADE_ORDER = ['ז', 'ח', 'ט', 'י', 'יא', 'יב'];
+const GRADE_LABELS = { ז: 'ז׳', ח: 'ח׳', ט: 'ט׳', י: 'י׳', יא: 'י״א', יב: 'י״ב' };
 const extractClassNumber = (name = '') => (String(name).match(/\d+$/)?.[0] || '');
+const getClassNumber = classRoom => Number(classRoom.class_number || extractClassNumber(classRoom.name) || 0);
+const sortClasses = (a, b) => {
+  const gradeDiff = GRADE_ORDER.indexOf(normalizeGrade(a.grade)) - GRADE_ORDER.indexOf(normalizeGrade(b.grade));
+  if (gradeDiff !== 0) return gradeDiff;
+  return getClassNumber(a) - getClassNumber(b);
+};
 
 export default function ClassSettings({ user, role }) {
   const [classes, setClasses] = useState([]);
@@ -28,13 +36,23 @@ export default function ClassSettings({ user, role }) {
   const managedGrade = normalizeGrade(getUserApprovedGrade(user));
   const divisionGrades = getUserDivisionGrades(user);
 
-  const allowedClasses = useMemo(() => classes.filter(classRoom => {
-    if (isAdmin) return true;
-    if (role === 'division_manager') return divisionGrades.includes(normalizeGrade(classRoom.grade));
-    if (role === 'grade_coordinator' || role === 'coordinator') return normalizeGrade(classRoom.grade) === managedGrade || classRoom.id === homeroomClassId;
-    if (role === 'homeroom_teacher') return classRoom.id === homeroomClassId || classRoom.homeroom_teacher_email === user?.email;
-    return false;
-  }), [classes, isAdmin, role, divisionGrades, managedGrade, homeroomClassId, user?.email]);
+  const allowedClasses = useMemo(() => {
+    const seen = new Set();
+    return classes
+      .filter(classRoom => {
+        if (isAdmin) return true;
+        if (role === 'division_manager') return divisionGrades.includes(normalizeGrade(classRoom.grade));
+        if (role === 'grade_coordinator' || role === 'coordinator') return normalizeGrade(classRoom.grade) === managedGrade || classRoom.id === homeroomClassId;
+        if (role === 'homeroom_teacher') return classRoom.id === homeroomClassId || classRoom.homeroom_teacher_email === user?.email;
+        return false;
+      })
+      .filter(classRoom => {
+        if (seen.has(classRoom.id)) return false;
+        seen.add(classRoom.id);
+        return true;
+      })
+      .sort(sortClasses);
+  }, [classes, isAdmin, role, divisionGrades, managedGrade, homeroomClassId, user?.email]);
 
   const selectedClass = allowedClasses.find(item => item.id === selectedId) || null;
   const canEditAll = !!selectedClass && (isAdmin || role === 'division_manager');
@@ -42,6 +60,12 @@ export default function ClassSettings({ user, role }) {
   const canEditOwnNotes = !!selectedClass && (selectedClass.id === homeroomClassId || selectedClass.homeroom_teacher_email === user?.email) && (role === 'homeroom_teacher' || role === 'coordinator' || role === 'grade_coordinator');
   const canEditIdentity = canEditAll || canEditByGrade || canEditOwnNotes;
   const classSubtitle = selectedClass ? getClassDisplayName({ ...selectedClass, ...form }, selectedClass.name) : 'בחרו כיתה לעריכה';
+  const groupedClasses = useMemo(() => GRADE_ORDER
+    .map(grade => ({
+      grade,
+      classes: allowedClasses.filter(classRoom => normalizeGrade(classRoom.grade) === grade).sort(sortClasses),
+    }))
+    .filter(group => group.classes.length > 0), [allowedClasses]);
 
   useEffect(() => {
     async function loadClasses() {
@@ -216,28 +240,37 @@ export default function ClassSettings({ user, role }) {
               </div>
             </div>
             <div className="max-h-[calc(82svh-80px)] overflow-y-auto overscroll-contain p-3" dir="rtl">
-              <div className="space-y-2">
-                {allowedClasses.map(classRoom => {
-                  const label = getClassDisplayName(classRoom, classRoom.name);
-                  const active = classRoom.id === selectedId;
-                  return (
-                    <button
-                      key={classRoom.id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedId(classRoom.id);
-                        setClassPickerOpen(false);
-                      }}
-                      className={`flex w-full items-center justify-start gap-3 rounded-xl px-4 py-3 text-right leading-snug ${active ? 'bg-accent text-accent-foreground' : 'hover:bg-muted'}`}
-                      dir="rtl"
-                    >
-                      <span className="flex h-5 w-5 shrink-0 items-center justify-center">
-                        {active && <Check className="h-5 w-5 text-primary" />}
-                      </span>
-                      <span className="min-w-0 flex-1 whitespace-normal break-words text-right">{label}</span>
-                    </button>
-                  );
-                })}
+              <div className="space-y-5">
+                {groupedClasses.map(group => (
+                  <section key={group.grade} className="space-y-2 text-right" dir="rtl">
+                    <div className="sticky top-0 z-10 rounded-lg bg-muted px-4 py-2 text-right text-sm font-bold text-foreground shadow-sm">
+                      שכבת {GRADE_LABELS[group.grade] || group.grade}
+                    </div>
+                    <div className="space-y-1.5">
+                      {group.classes.map(classRoom => {
+                        const label = getClassDisplayName(classRoom, classRoom.name);
+                        const active = classRoom.id === selectedId;
+                        return (
+                          <button
+                            key={classRoom.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedId(classRoom.id);
+                              setClassPickerOpen(false);
+                            }}
+                            className={`flex w-full items-center justify-start gap-3 rounded-xl px-4 py-3 text-right leading-snug ${active ? 'bg-accent text-accent-foreground' : 'hover:bg-muted'}`}
+                            dir="rtl"
+                          >
+                            <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+                              {active && <Check className="h-5 w-5 text-primary" />}
+                            </span>
+                            <span className="min-w-0 flex-1 whitespace-normal break-words text-right">{label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </section>
+                ))}
               </div>
             </div>
           </div>
