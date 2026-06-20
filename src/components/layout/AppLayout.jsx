@@ -12,11 +12,12 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getAvailableRoles, getRoleDisplayLines, getUserDisplayName } from '@/lib/roleUtils';
+import { getHomeroomClassLabel } from '@/lib/classIdentity';
 import ProfileAvatar from '@/components/profile/ProfileAvatar';
 import PushNotificationToggle from '@/components/notifications/PushNotificationToggle';
 import { getDashboardLabel } from '@/lib/dashboardLabels';
 import RoleIcon from '@/components/ui/RoleIcon';
-import { coordinatorHasHomeroom } from '@/lib/schoolStructure';
+import { coordinatorHasHomeroom, getUserHomeroomClassId } from '@/lib/schoolStructure';
 
 // ── Accordion nav groups ──────────────────────────────────────────────────────
 const sidebarGroups = [
@@ -252,6 +253,7 @@ function AccordionGroup({ group, role, pendingCount, location, onNavigate }) {
 export default function AppLayout({ children, user, role, darkMode, toggleDark, onRoleChange, simulationOffset = false }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
+  const [activeClassRoom, setActiveClassRoom] = useState(null);
   const location = useLocation();
 
   const approvedRoles = getAvailableRoles(user);
@@ -282,13 +284,24 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
   const bottomNavItems = bottomNavSource.filter(canAccess);
   const displayName = getUserDisplayName(user);
   const roleDisplayLines = getRoleDisplayLines(user, role);
-  const contextLabel = roleDisplayLines[0];
+  const activeHomeroomClassId = getUserHomeroomClassId(user, '');
+  const contextLabel = activeRole === 'homeroom_teacher' ? getHomeroomClassLabel(activeClassRoom, user?.profile_homeroom_class || user?.profile_class || '') : roleDisplayLines[0];
   const secondaryContextLabel = roleDisplayLines.slice(1).join(' · ');
 
   useEffect(() => {
     // Avoid an extra backend call on every navigation; no visible menu item currently uses this badge.
     setPendingCount(0);
   }, [activeRole]);
+
+  useEffect(() => {
+    if (!activeHomeroomClassId || activeRole !== 'homeroom_teacher') {
+      setActiveClassRoom(null);
+      return;
+    }
+    base44.entities.ClassRoom.list('grade', 500).then(rows => {
+      setActiveClassRoom((rows || []).find(item => item.id === activeHomeroomClassId) || null);
+    });
+  }, [activeHomeroomClassId, activeRole]);
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full text-right" dir="rtl">

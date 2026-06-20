@@ -31,7 +31,7 @@ import RoleIcon from '@/components/ui/RoleIcon';
 import NowNextCard from '@/components/schedule/NowNextCard';
 import { getUserApprovedClass, getUserApprovedClassId, getUserApprovedGrade } from '@/lib/schoolStructure';
 import { getAvailableRoles, getUserFirstName, hasApprovedRole, getRoleDisplayLines, getRoleShort } from '@/lib/roleUtils';
-import { getClassDisplayName } from '@/lib/classIdentity';
+import { getClassDisplayName, getHomeroomClassLabel } from '@/lib/classIdentity';
 import useReadNotifications from '@/hooks/useReadNotifications';
 import { ATTENDANCE_EXCEPTION_STATUSES, getAttendanceScopedStudents, getScopedClassIds, filterScopedAttendance, getSelectedAttendanceDate, getLocalDateString, loadScopedAttendanceForDate } from '@/lib/attendanceScope.js';
 
@@ -76,7 +76,7 @@ export default function Dashboard({ user, role, initialData }) {
   // classId must be stable from the start — never depend on async-loaded students
   const classId = getUserApprovedClassId(user, CLASS_ID);
   const classIdentityTitle = dashboardClassRoom ? getClassDisplayName(dashboardClassRoom, getUserApprovedClass(user)) : getUserApprovedClass(user);
-  const headerRoleTitle = isActiveHomeroom && classIdentityTitle ? `הכיתה שלי — ${classIdentityTitle}` : dashboardTitle;
+  const headerRoleTitle = isActiveHomeroom ? getHomeroomClassLabel(dashboardClassRoom, classIdentityTitle) : dashboardTitle;
   const scopeLabels = [
     isActiveAdmin ? getRoleShort('admin', user) + ' מערכת' : null,
     isActiveHomeroom ? `${getRoleShort('homeroom_teacher', user)}${classIdentityTitle ? ` · ${classIdentityTitle}` : ''}` : null,
