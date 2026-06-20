@@ -89,9 +89,8 @@ export default function Classrooms({ user, role, onUserUpdate }) {
                   dir="rtl"
                 >
                   <ChevronDown className={cn('h-5 w-5 flex-shrink-0 text-muted-foreground transition-transform duration-200', isOpen && 'rotate-180')} />
-                  <div className="flex min-w-0 flex-1 items-center justify-start gap-2 text-right">
-                    <h2 className="text-lg font-bold text-foreground">{formatGrade(group.grade)}</h2>
-                    <span className="text-sm text-muted-foreground">{group.classes.length} כיתות</span>
+                  <div className="flex min-w-0 flex-1 items-center justify-start text-right" dir="rtl">
+                    <h2 className="text-lg font-bold text-foreground">שכבת {formatGrade(group.grade)} · {group.classes.length} כיתות</h2>
                   </div>
                 </button>
 
