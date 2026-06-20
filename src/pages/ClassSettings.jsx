@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { Settings, Lock } from 'lucide-react';
+import { BookOpenText, ChevronDown, Lightbulb, Lock, Save, UsersRound } from 'lucide-react';
 import { getAvailableRoles } from '@/lib/roleUtils';
 import { getUserApprovedGrade, getUserDivisionGrades, getUserHomeroomClassId, normalizeGrade } from '@/lib/schoolStructure';
 import { getClassDisplayName } from '@/lib/classIdentity';
@@ -41,7 +41,7 @@ export default function ClassSettings({ user, role }) {
   const canEditByGrade = !!selectedClass && (role === 'grade_coordinator' || role === 'coordinator') && normalizeGrade(selectedClass.grade) === managedGrade;
   const canEditOwnNotes = !!selectedClass && (selectedClass.id === homeroomClassId || selectedClass.homeroom_teacher_email === user?.email) && (role === 'homeroom_teacher' || role === 'coordinator' || role === 'grade_coordinator');
   const canEditIdentity = canEditAll || canEditByGrade || canEditOwnNotes;
-  const canSave = canEditAll || canEditIdentity;
+  const classSubtitle = selectedClass ? getClassDisplayName({ ...selectedClass, ...form }, selectedClass.name) : 'בחרו כיתה לעריכה';
 
   useEffect(() => {
     async function loadClasses() {
@@ -60,17 +60,20 @@ export default function ClassSettings({ user, role }) {
 
   useEffect(() => {
     if (!selectedClass) return;
-    setForm({ ...selectedClass, class_number: selectedClass.class_number || extractClassNumber(selectedClass.name) });
+    setForm({
+      class_identity: selectedClass.class_identity || '',
+      class_highlights: selectedClass.class_highlights || '',
+    });
   }, [selectedClass?.id]);
 
   const set = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
 
   async function save() {
-    if (!selectedClass || !canSave) return;
+    if (!selectedClass || !canEditIdentity) return;
     setSaving(true);
     const previousIdentity = String(selectedClass.class_identity || '').trim();
     const nextIdentity = String(form.class_identity || '').trim();
-    const data = canEditAll ? { ...form, class_identity: nextIdentity } : {
+    const data = {
       class_identity: nextIdentity,
       class_highlights: form.class_highlights || '',
     };
@@ -96,39 +99,112 @@ export default function ClassSettings({ user, role }) {
   if (loading) return <div className="flex h-48 items-center justify-center" dir="rtl"><div className="h-7 w-7 rounded-full border-4 border-primary/20 border-t-primary animate-spin" /></div>;
   if (!allowedClasses.length) return <div className="p-6 text-center text-muted-foreground" dir="rtl"><Lock className="mx-auto mb-3 h-9 w-9" />אין לך כיתה זמינה להגדרות.</div>;
 
-  const readOnlyCore = !canEditAll;
-  const readOnlyIdentity = !canEditIdentity;
+  const readOnly = !canEditIdentity;
+  const classMeta = selectedClass ? [
+    { label: 'שכבה', value: selectedClass.grade || '—' },
+    { label: 'מספר כיתה', value: selectedClass.class_number || extractClassNumber(selectedClass.name) || '—' },
+    { label: 'שם כיתה', value: selectedClass.name || '—' },
+  ] : [];
+  const contacts = selectedClass ? [
+    { label: 'מחנך/ת', name: selectedClass.homeroom_teacher_name, email: selectedClass.homeroom_teacher_email },
+    { label: 'רכז/ת שכבה', name: selectedClass.coordinator_name, email: selectedClass.coordinator_email },
+    { label: 'יועץ/ת', name: selectedClass.counselor_name, email: selectedClass.counselor_email },
+    { label: 'מנהל/ת חטיבה', name: selectedClass.division_manager_name, email: selectedClass.division_manager_email },
+  ] : [];
 
   return (
-    <div className="p-4 lg:p-6 space-y-5 text-right" dir="rtl">
-      <PageHeader title="הגדרות כיתה" subtitle={selectedClass ? getClassDisplayName(selectedClass, selectedClass.name) : 'ניהול פרטי הכיתה'} />
+    <div className="min-h-full bg-background p-4 lg:p-6 pb-28 text-right" dir="rtl">
+      <div className="mx-auto max-w-3xl space-y-5">
+        <PageHeader title="הגדרות כיתה" subtitle={classSubtitle} />
 
-      {allowedClasses.length > 1 && (
-        <Card><CardContent className="p-4"><div className="space-y-2 max-w-md"><Label>בחירת כיתה</Label><Select value={selectedId} onValueChange={setSelectedId}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{allowedClasses.map(classRoom => <SelectItem key={classRoom.id} value={classRoom.id}>{getClassDisplayName(classRoom, classRoom.name)}</SelectItem>)}</SelectContent></Select></div></CardContent></Card>
-      )}
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <div className="space-y-2">
+              <Label>בחירת כיתה</Label>
+              <Select value={selectedId} onValueChange={setSelectedId}>
+                <SelectTrigger className="h-11 text-base"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {allowedClasses.map(classRoom => (
+                    <SelectItem key={classRoom.id} value={classRoom.id}>{getClassDisplayName(classRoom, classRoom.name)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-sm">
+              {classMeta.map(item => (
+                <div key={item.label} className="rounded-lg bg-muted/60 px-3 py-2 text-right">
+                  <p className="text-xs text-muted-foreground">{item.label}</p>
+                  <p className="font-semibold text-foreground">{item.value}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader><CardTitle className="flex items-center gap-2 justify-start"><Settings className="h-5 w-5 text-primary" />פרטי הכיתה</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Field label="שכבה" value={form.grade || ''} onChange={value => set('grade', value)} readOnly={readOnlyCore} />
-            <Field label="מספר כיתה" value={form.class_number || ''} onChange={value => set('class_number', value)} readOnly={readOnlyCore} />
-            <Field label="שם כיתה" value={form.name || ''} onChange={value => set('name', value)} readOnly={readOnlyCore} />
-            <Field label="שנת לימודים" value={form.year || ''} onChange={value => set('year', value)} readOnly={readOnlyCore} />
-            <Field label="מחנך/ת" value={form.homeroom_teacher_name || ''} onChange={value => set('homeroom_teacher_name', value)} readOnly={readOnlyCore} />
-            <Field label="רכז/ת שכבה" value={form.coordinator_name || ''} onChange={value => set('coordinator_name', value)} readOnly={readOnlyCore} />
-            <Field label="יועץ/ת" value={form.counselor_name || ''} onChange={value => set('counselor_name', value)} readOnly={readOnlyCore} />
-            <Field label="מנהל/ת חטיבה" value={form.division_manager_name || ''} onChange={value => set('division_manager_name', value)} readOnly={readOnlyCore} />
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center justify-start gap-2 text-lg">
+              <BookOpenText className="h-5 w-5 text-primary" />
+              זהות הכיתה
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Label>זהות כיתה / מגמה</Label>
+            <Input
+              value={form.class_identity || ''}
+              onChange={e => set('class_identity', e.target.value)}
+              readOnly={readOnly}
+              placeholder="לדוגמה: אדריכלות, דיפלומטיה, מדעית, מב״ר"
+              className="h-11 text-base"
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center justify-start gap-2 text-lg">
+              <Lightbulb className="h-5 w-5 text-primary" />
+              דגשים למחנך/ת
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Label>דגשים של הכיתה</Label>
+            <Textarea
+              value={form.class_highlights || ''}
+              onChange={e => set('class_highlights', e.target.value)}
+              readOnly={readOnly}
+              placeholder="דגשים לימודיים, חברתיים או ארגוניים בקצרה"
+              className="min-h-28 text-base"
+            />
+          </CardContent>
+        </Card>
+
+        <details className="group rounded-xl border bg-card text-card-foreground shadow" dir="rtl">
+          <summary className="flex cursor-pointer list-none items-center justify-start gap-2 p-5 text-right font-semibold">
+            <ChevronDown className="h-5 w-5 text-muted-foreground transition-transform group-open:rotate-180" />
+            <UsersRound className="h-5 w-5 text-primary" />
+            <span className="flex-1 text-right">אנשי קשר</span>
+          </summary>
+          <div className="grid grid-cols-1 gap-3 px-5 pb-5 sm:grid-cols-2">
+            {contacts.map(contact => (
+              <div key={contact.label} className="rounded-lg border bg-muted/30 p-3 text-right">
+                <p className="text-xs text-muted-foreground">{contact.label}</p>
+                <p className="font-semibold text-foreground">{contact.name || 'לא הוגדר'}</p>
+                {contact.email && <p className="force-ltr truncate text-sm text-muted-foreground">{contact.email}</p>}
+              </div>
+            ))}
           </div>
-          <div className="space-y-2"><Label>זהות כיתה / מגמה</Label><Input value={form.class_identity || ''} onChange={e => set('class_identity', e.target.value)} readOnly={readOnlyIdentity} placeholder="לדוגמה: אדריכלות, דיפלומטיה, מדעית, מופת, מב״ר" /></div>
-          <div className="space-y-2"><Label>דגשים של הכיתה</Label><Textarea value={form.class_highlights || ''} onChange={e => set('class_highlights', e.target.value)} readOnly={readOnlyIdentity} placeholder="דגשים לימודיים, חברתיים או ארגוניים" className="min-h-28" /></div>
-          {canSave && <div className="flex justify-end"><Button onClick={save} disabled={saving}>{saving ? 'שומר...' : 'שמור הגדרות'}</Button></div>}
-        </CardContent>
-      </Card>
+        </details>
+      </div>
+
+      {canEditIdentity && (
+        <div className="sticky bottom-4 z-20 mx-auto mt-6 flex max-w-3xl justify-center rounded-2xl border bg-card/95 p-3 shadow-lg backdrop-blur" dir="rtl">
+          <Button onClick={save} disabled={saving} size="lg" className="min-w-56">
+            <Save className="h-4 w-4" />
+            {saving ? 'שומר...' : 'שמור הגדרות'}
+          </Button>
+        </div>
+      )}
     </div>
   );
-}
-
-function Field({ label, value, onChange, readOnly }) {
-  return <div className="space-y-2"><Label>{label}</Label><Input value={value} onChange={e => onChange(e.target.value)} readOnly={readOnly} /></div>;
 }
