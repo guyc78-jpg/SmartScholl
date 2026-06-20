@@ -5,6 +5,11 @@ import { Edit, Trash2, UserRound, UsersRound, KeyRound } from 'lucide-react';
 import { formatGrade } from '@/lib/schoolStructure';
 import { getClassDisplayName } from '@/lib/classIdentity';
 
+const cleanStaffName = (value) => String(value || '')
+  .replace(/[–—-]\s*[^\s]+@[^\s]+/g, '')
+  .replace(/\b[^\s]+@[^\s]+\b/g, '')
+  .trim();
+
 export default function ClassRoomCard({ classRoom, onEdit, onDelete, canManage = true }) {
   return (
     <Card className="h-full">
@@ -16,9 +21,9 @@ export default function ClassRoomCard({ classRoom, onEdit, onDelete, canManage =
               <Badge variant="secondary">שכבה {formatGrade(classRoom.grade)}</Badge>
             </div>
             <div className="grid gap-1 text-sm text-muted-foreground">
-              <span className="flex items-center gap-2"><UserRound className="w-4 h-4" />מחנך/ת: {classRoom.homeroom_teacher_name || 'לא הוגדר'}</span>
-              <span className="flex items-center gap-2"><UsersRound className="w-4 h-4" />רכז/ת: {classRoom.coordinator_name || 'לא הוגדר'}</span>
-              {classRoom.counselor_name && <span className="flex items-center gap-2"><UsersRound className="w-4 h-4" />יועץ/ת: {classRoom.counselor_name}</span>}
+              <span className="flex items-center gap-2"><UserRound className="w-4 h-4" />מחנך/ת: {cleanStaffName(classRoom.homeroom_teacher_name) || 'לא הוגדר'}</span>
+              <span className="flex items-center gap-2"><UsersRound className="w-4 h-4" />רכז/ת: {cleanStaffName(classRoom.coordinator_name) || 'לא הוגדר'}</span>
+              {classRoom.counselor_name && <span className="flex items-center gap-2"><UsersRound className="w-4 h-4" />יועץ/ת: {cleanStaffName(classRoom.counselor_name)}</span>}
               {classRoom.class_code && <span className="flex items-center gap-2"><KeyRound className="w-4 h-4" />קוד כיתה: {classRoom.class_code}</span>}
             </div>
           </div>

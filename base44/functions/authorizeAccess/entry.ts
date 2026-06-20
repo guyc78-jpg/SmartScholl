@@ -7,6 +7,13 @@ function normalizeEmail(email) {
   return String(email || '').trim().toLowerCase();
 }
 
+function cleanStaffName(value) {
+  return String(value || '')
+    .replace(/[–—-]\s*[^\s]+@[^\s]+/g, '')
+    .replace(/\b[^\s]+@[^\s]+\b/g, '')
+    .trim();
+}
+
 function normalizeGrade(value = '') {
   return String(value).replace(/[׳״'"\s]/g, '').trim();
 }
@@ -300,7 +307,7 @@ Deno.serve(async (req) => {
       const approvedUsers = await base44.asServiceRole.entities.ApprovedUser.list('fullName', 500);
       const teachers = approvedUsers
         .filter(record => record.isActive !== false && getRecordRoles(record).includes('homeroom_teacher'))
-        .map(record => ({ id: record.id, fullName: record.fullName, email: normalizeEmail(record.email), homeroomClassId: record.homeroomClassId || '' }));
+        .map(record => ({ id: record.id, fullName: cleanStaffName(record.fullName), email: normalizeEmail(record.email), homeroomClassId: record.homeroomClassId || '' }));
       const teacherByEmail = new Map(teachers.map(teacher => [teacher.email, teacher]));
       const classes = visibleClasses.map(classRoom => {
         const teacher = teacherByEmail.get(normalizeEmail(classRoom.homeroom_teacher_email));
@@ -358,7 +365,7 @@ Deno.serve(async (req) => {
 
       const classPatch = {
         homeroom_teacher_email: teacher ? normalizeEmail(teacher.email) : '',
-        homeroom_teacher_name: teacher ? teacher.fullName : '',
+        homeroom_teacher_name: teacher ? cleanStaffName(teacher.fullName) : '',
       };
       const savedClass = await base44.asServiceRole.entities.ClassRoom.update(targetClass.id, classPatch);
       await writeLog(base44, {

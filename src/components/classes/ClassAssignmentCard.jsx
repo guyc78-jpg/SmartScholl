@@ -6,6 +6,11 @@ import { UserRound, School } from 'lucide-react';
 import { formatGrade } from '@/lib/schoolStructure';
 import { getClassDisplayName } from '@/lib/classIdentity';
 
+const cleanStaffName = (value) => String(value || '')
+  .replace(/[–—-]\s*[^\s]+@[^\s]+/g, '')
+  .replace(/\b[^\s]+@[^\s]+\b/g, '')
+  .trim();
+
 export default function ClassAssignmentCard({ classRoom, teachers, canAssign, saving, onAssign }) {
   const [teacherId, setTeacherId] = useState(classRoom.assigned_teacher_id || '');
   const changed = teacherId !== (classRoom.assigned_teacher_id || '');
@@ -21,7 +26,7 @@ export default function ClassAssignmentCard({ classRoom, teachers, canAssign, sa
           </div>
           <p className="flex items-center justify-start gap-2 text-sm text-muted-foreground">
             <UserRound className="h-4 w-4" />
-            מחנך/ת נוכחי/ת: {classRoom.homeroom_teacher_name || 'לא הוגדר'}
+            מחנך/ת נוכחי/ת: {cleanStaffName(classRoom.homeroom_teacher_name) || 'לא הוגדר'}
           </p>
         </div>
 
@@ -36,7 +41,7 @@ export default function ClassAssignmentCard({ classRoom, teachers, canAssign, sa
             >
               <option value="">ללא מחנך/ת</option>
               {teachers.map(teacher => (
-                <option key={teacher.id} value={teacher.id}>{teacher.fullName} — {teacher.email}</option>
+                <option key={teacher.id} value={teacher.id}>{cleanStaffName(teacher.fullName)}</option>
               ))}
             </select>
             <Button className="w-full" disabled={!changed || saving} onClick={() => onAssign(classRoom, teacherId)}>
