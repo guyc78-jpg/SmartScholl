@@ -16,6 +16,7 @@ const GRADE_ORDER = ['ז', 'ח', 'ט', 'י', 'יא', 'יב'];
 const GRADE_LABELS = { ז: 'ז׳', ח: 'ח׳', ט: 'ט׳', י: 'י׳', יא: 'י״א', יב: 'י״ב' };
 const extractClassNumber = (name = '') => (String(name).match(/\d+$/)?.[0] || '');
 const normalizeEmail = value => String(value || '').trim().toLowerCase();
+const getSelectedClassStorageKey = user => `classSettings:selectedClass:${normalizeEmail(user?.email) || 'guest'}`;
 const getClassNumber = classRoom => Number(classRoom.class_number || extractClassNumber(classRoom.name) || 0);
 const sortClasses = (a, b) => {
   const gradeDiff = GRADE_ORDER.indexOf(normalizeGrade(a.grade)) - GRADE_ORDER.indexOf(normalizeGrade(b.grade));
@@ -66,6 +67,7 @@ export default function ClassSettings({ user, role }) {
   }, [classes, isAdmin, role, divisionGrades, managedGrade, homeroomClassId, currentHomeroomIdSet, hasCurrentHomeroomAssignment]);
 
   const selectedClass = allowedClasses.find(item => item.id === selectedId) || null;
+  const selectedClassStorageKey = useMemo(() => getSelectedClassStorageKey(user), [user?.email]);
   const canEditAll = !!selectedClass && (isAdmin || role === 'division_manager');
   const canEditByGrade = !!selectedClass && (role === 'grade_coordinator' || role === 'coordinator') && normalizeGrade(selectedClass.grade) === managedGrade;
   const canEditOwnNotes = !!selectedClass && (currentHomeroomIdSet.has(selectedClass.id) || (!hasCurrentHomeroomAssignment && selectedClass.id === homeroomClassId)) && (role === 'homeroom_teacher' || role === 'coordinator' || role === 'grade_coordinator');
@@ -90,10 +92,19 @@ export default function ClassSettings({ user, role }) {
 
   useEffect(() => {
     if (!allowedClasses.length) return;
-    if (!selectedId || !allowedClasses.some(item => item.id === selectedId)) {
-      setSelectedId(currentHomeroomClassIds.find(id => allowedClasses.some(item => item.id === id)) || allowedClasses[0].id);
-    }
-  }, [allowedClasses, selectedId, currentHomeroomClassIds]);
+    if (selectedId && allowedClasses.some(item => item.id === selectedId)) return;
+
+    const savedClassId = localStorage.getItem(selectedClassStorageKey);
+    const savedAllowed = savedClassId && allowedClasses.some(item => item.id === savedClassId);
+    const currentAllowed = currentHomeroomClassIds.find(id => allowedClasses.some(item => item.id === id));
+    setSelectedId(savedAllowed ? savedClassId : currentAllowed || allowedClasses[0].id);
+  }, [allowedClasses, selectedId, currentHomeroomClassIds, selectedClassStorageKey]);
+
+  const chooseClass = classId => {
+    setSelectedId(classId);
+    localStorage.setItem(selectedClassStorageKey, classId);
+    setClassPickerOpen(false);
+  };
 
   useEffect(() => {
     if (!selectedClass) return;
@@ -267,10 +278,7 @@ export default function ClassSettings({ user, role }) {
                           <button
                             key={classRoom.id}
                             type="button"
-                            onClick={() => {
-                              setSelectedId(classRoom.id);
-                              setClassPickerOpen(false);
-                            }}
+                            onClick={() => chooseClass(classRoom.id)}
                             className={`flex w-full items-center justify-start gap-3 rounded-xl px-4 py-3 text-right leading-snug ${active ? 'bg-accent text-accent-foreground' : 'hover:bg-muted'}`}
                             dir="rtl"
                           >
