@@ -14,6 +14,12 @@ function cleanStaffName(value) {
     .trim();
 }
 
+function getClassDisplayName(classRoom) {
+  const identity = String(classRoom?.class_identity || '').trim();
+  const base = String(classRoom?.name || '').trim();
+  return identity && base ? `${base} — ${identity}` : (identity || base);
+}
+
 function normalizeGrade(value = '') {
   return String(value).replace(/[׳״'"\s]/g, '').trim();
 }
@@ -202,6 +208,16 @@ async function getAccess(base44, user, skipLog = false) {
       profile_display_additional_roles: [],
     };
 
+    const claimClassId = claims.profile_homeroom_class_id || claims.profile_class_id || claims.homeroomClassId || '';
+    if (claimClassId) {
+      const claimClass = (await base44.asServiceRole.entities.ClassRoom.filter({ id: claimClassId }))[0];
+      const classLabel = getClassDisplayName(claimClass);
+      if (classLabel) {
+        claims.profile_class = classLabel;
+        claims.profile_homeroom_class = classLabel;
+      }
+    }
+
     if (!skipLog) {
       await writeLog(base44, {
         eventType: 'login_success',
@@ -223,6 +239,14 @@ async function getAccess(base44, user, skipLog = false) {
 
   if (student) {
     const claims = buildClaimsFromStudent(student, email);
+    if (student.class_id) {
+      const studentClass = (await base44.asServiceRole.entities.ClassRoom.filter({ id: student.class_id }))[0];
+      const classLabel = getClassDisplayName(studentClass);
+      if (classLabel) {
+        claims.profile_class = classLabel;
+        claims.profile_homeroom_class = classLabel;
+      }
+    }
     if (!skipLog) {
       await writeLog(base44, {
         eventType: 'login_success',
@@ -313,7 +337,7 @@ Deno.serve(async (req) => {
         const teacher = teacherByEmail.get(normalizeEmail(classRoom.homeroom_teacher_email));
         return { ...classRoom, assigned_teacher_id: teacher?.id || '' };
       });
-      return Response.json({ classes, teachers, canAssign: isSystemAdmin || isCoordinator });
+      return Response.json({ classes, teachers, canAssign: isSystemAdmin || isCoordinator, canEditIdentity: isSystemAdmin || isCoordinator });
     }
 
     if (action === 'assignHomeroomTeacher') {
@@ -380,6 +404,49 @@ Deno.serve(async (req) => {
         severity: 'warning',
       });
       return Response.json({ classRoom: savedClass, assignedTeacherEmail: classPatch.homeroom_teacher_email });
+    }
+
+    if (action === 'updateClassIdentity') {
+      const access = await getAccess(base44, user, true);
+      if (!access.allowed) return Response.json({ error: 'Forbidden' }, { status: 403 });
+      const claims = access.claims;
+      const roles = claims.roles || [claims.role];
+      const isSystemAdmin = roles.includes('system_admin') || claims.role === 'system_admin';
+      const isCoordinator = roles.includes('grade_coordinator') || roles.includes('coordinator') || claims.role === 'grade_coordinator' || claims.role === 'coordinator';
+      if (!isSystemAdmin && !isCoordinator) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+      const targetClass = (await base44.asServiceRole.entities.ClassRoom.filter({ id: body.classId }))[0];
+      if (!targetClass || targetClass.is_active === false) return Response.json({ error: 'Class not found' }, { status: 404 });
+      const managedGrade = normalizeGrade(claims.profile_grade_managed || claims.scope?.gradeId || '');
+      if (!isSystemAdmin && normalizeGrade(targetClass.grade) !== managedGrade) return Response.json({ error: 'Forbidden' }, { status: 403 });
+
+      const previousIdentity = String(targetClass.class_identity || '').trim();
+      const nextIdentity = String(body.classIdentity || '').trim();
+      const savedClass = previousIdentity === nextIdentity
+        ? targetClass
+        : await base44.asServiceRole.entities.ClassRoom.update(targetClass.id, { class_identity: nextIdentity });
+
+      if (previousIdentity !== nextIdentity) {
+        await writeLog(base44, {
+          eventType: 'user_action',
+          actorEmail: normalizeEmail(user.email),
+          targetEmail: normalizeEmail(user.email),
+          targetName: claims.fullName || user.full_name || user.email,
+          actionName: 'class_identity_changed',
+          role: claims.role,
+          details: `מגמת הכיתה ${targetClass.name} עודכנה מ-${previousIdentity || 'ללא מגמה'} ל-${nextIdentity || 'ללא מגמה'}`,
+          metadata: {
+            actorName: claims.fullName || user.full_name || user.email,
+            classId: targetClass.id,
+            className: targetClass.name,
+            previousIdentity,
+            nextIdentity,
+            changedAt: new Date().toISOString(),
+          },
+          severity: 'warning',
+        });
+      }
+      return Response.json({ classRoom: savedClass });
     }
 
     const isAdmin = await requireSystemAdmin(base44, user, true);

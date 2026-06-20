@@ -20,8 +20,10 @@ export default function Classrooms({ user, role, onUserUpdate }) {
   const [classes, setClasses] = useState([]);
   const [teachers, setTeachers] = useState([]);
   const [canAssign, setCanAssign] = useState(false);
+  const [canEditIdentity, setCanEditIdentity] = useState(false);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState('');
+  const [savingIdentityId, setSavingIdentityId] = useState('');
   const [openGrades, setOpenGrades] = useState({});
 
   async function loadData() {
@@ -30,6 +32,7 @@ export default function Classrooms({ user, role, onUserUpdate }) {
     setClasses((res.data.classes || []).sort(sortClasses));
     setTeachers(res.data.teachers || []);
     setCanAssign(!!res.data.canAssign);
+    setCanEditIdentity(!!res.data.canEditIdentity);
     setLoading(false);
   }
 
@@ -63,6 +66,22 @@ export default function Classrooms({ user, role, onUserUpdate }) {
     toast.success('שיוך המחנך/ת עודכן בהצלחה');
     setSavingId('');
     await loadData();
+  }
+
+  async function handleIdentityChange(classRoom, classIdentity) {
+    setSavingIdentityId(classRoom.id);
+    const res = await base44.functions.invoke('authorizeAccess', {
+      action: 'updateClassIdentity',
+      classId: classRoom.id,
+      classIdentity,
+    });
+    setClasses(prev => prev.map(item => item.id === classRoom.id ? { ...item, ...res.data.classRoom } : item).sort(sortClasses));
+    sessionStorage.removeItem(`approvedAccess:${user?.email}`);
+    queryClientInstance.clear();
+    const access = await base44.functions.invoke('authorizeAccess', { action: 'getAccess' });
+    onUserUpdate?.(access.data.user);
+    toast.success('מגמת הכיתה עודכנה בהצלחה');
+    setSavingIdentityId('');
   }
 
   return (
@@ -118,8 +137,11 @@ export default function Classrooms({ user, role, onUserUpdate }) {
                             classRoom={classRoom}
                             teachers={teachers}
                             canAssign={canAssign}
+                            canEditIdentity={canEditIdentity}
                             saving={savingId === classRoom.id}
+                            savingIdentity={savingIdentityId === classRoom.id}
                             onAssign={handleAssign}
+                            onIdentityChange={handleIdentityChange}
                           />
                         ))}
                       </div>

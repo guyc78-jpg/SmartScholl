@@ -3,13 +3,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { UserRound, School } from 'lucide-react';
 import { getClassDisplayName } from '@/lib/classIdentity';
+import ClassIdentityEditor from '@/components/classes/ClassIdentityEditor';
 
 const cleanStaffName = (value) => String(value || '')
   .replace(/[–—-]\s*[^\s]+@[^\s]+/g, '')
   .replace(/\b[^\s]+@[^\s]+\b/g, '')
   .trim();
 
-export default function ClassAssignmentCard({ classRoom, teachers, canAssign, saving, onAssign }) {
+export default function ClassAssignmentCard({ classRoom, teachers, canAssign, canEditIdentity, saving, savingIdentity, onAssign, onIdentityChange }) {
   const [teacherId, setTeacherId] = useState(classRoom.assigned_teacher_id || '');
   const changed = teacherId !== (classRoom.assigned_teacher_id || '');
 
@@ -26,6 +27,13 @@ export default function ClassAssignmentCard({ classRoom, teachers, canAssign, sa
             מחנך/ת נוכחי/ת: {cleanStaffName(classRoom.homeroom_teacher_name) || 'לא הוגדר'}
           </p>
         </div>
+
+        <ClassIdentityEditor
+          classRoom={classRoom}
+          canEdit={canEditIdentity}
+          saving={savingIdentity}
+          onSave={onIdentityChange}
+        />
 
         {canAssign ? (
           <div className="mt-auto space-y-2 text-right">
@@ -47,7 +55,7 @@ export default function ClassAssignmentCard({ classRoom, teachers, canAssign, sa
           </div>
         ) : (
           <div className="mt-auto rounded-xl bg-muted/50 p-3 text-sm text-muted-foreground text-right">
-            ניתן לצפות בכיתה שהוגדרה לך, ללא שינוי שיוך או מגמה.
+            ניתן לצפות בכיתה שהוגדרה לך, ללא שינוי שיוך.
           </div>
         )}
       </CardContent>
