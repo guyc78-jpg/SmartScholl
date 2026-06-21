@@ -12,13 +12,13 @@ import {
 import PageHeader from '@/components/ui/PageHeader';
 import RtlActionBar from '@/components/ui/RtlActionBar';
 import { toast } from 'sonner';
-import { AlertTriangle, FileUp, Trash2, Palette } from 'lucide-react';
+import { FileUp, Trash2, Palette } from 'lucide-react';
 import ImportScheduleDialog from '@/components/schedule/ImportScheduleDialog';
 import WeeklyScheduleGrid from '@/components/schedule/WeeklyScheduleGrid';
 import CellEditorDialog from '@/components/schedule/CellEditorDialog';
 import NowNextCard from '@/components/schedule/NowNextCard';
 import { loadBellSchedule, getTodayDayType, HEBREW_DAY_NAMES, getNowAndNext } from '@/lib/bellSchedule';
-import { autoFixSubjectColors, ensureSubjectForName, findDuplicateSubjectColors, loadAndNormalizeSubjects, subjectMapById } from '@/lib/scheduleSubjects';
+import { autoFixSubjectColors, ensureSubjectForName, loadAndNormalizeSubjects, subjectMapById } from '@/lib/scheduleSubjects';
 
 // Build a full list of lesson rows from the bell schedule, falling back to 1..12 if needed.
 function buildPeriodRows(bellPeriods) {
@@ -111,7 +111,6 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
   }, [slots]);
 
   const subjectsById = useMemo(() => subjectMapById(subjects), [subjects]);
-  const duplicateColorGroups = useMemo(() => findDuplicateSubjectColors(subjects), [subjects]);
 
   const openCell = useCallback((day, period, slot, periodRow) => {
     if (!canEdit && !slot) return;
@@ -196,15 +195,6 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
         ) : null}
       />
 
-      {duplicateColorGroups.length > 0 && (
-        <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-right text-xs text-amber-800 dark:border-amber-900/60 dark:bg-amber-900/20 dark:text-amber-200" dir="rtl">
-          <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
-          <div className="min-w-0">
-            <p className="font-bold">נמצאו מקצועות שונים עם אותו צבע</p>
-            <p className="mt-0.5">{duplicateColorGroups.map(group => group.map(subject => subject.name).join(' / ')).join(' · ')}</p>
-          </div>
-        </div>
-      )}
 
       {/* Smart card synced with bells */}
       <NowNextCard classId={activeClassId || classId} />
