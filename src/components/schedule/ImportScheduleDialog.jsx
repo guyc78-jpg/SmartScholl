@@ -82,9 +82,7 @@ const parseLessonBlock = (block) => {
   const subject = lines[0];
   const teacher = lines[1];
   const tail = lines.slice(2).join(' ').trim();
-  const looksLikeClass = /[זחטיי][א-ת"׳״'`]*\s*\d+/.test(tail);
-  const classes = looksLikeClass ? tail : '';
-  return { teacher, subject, classes, level, room: room || (looksLikeClass ? '' : tail) };
+  return { teacher, subject, classes: '', level, room: room || tail };
 };
 
 const splitLessonBlocks = (cellValue) =>
@@ -171,7 +169,7 @@ export default function ImportScheduleDialog({ open, onOpenChange, onImported, c
         const blocks = splitLessonBlocks(row[Number(colIndex)]);
         for (const block of blocks) {
           const parsed = parseLessonBlock(block);
-          if (!parsed || !lessonBelongsToClass(parsed.classes, className)) continue;
+          if (!parsed) continue;
           results.push({ ...emptyRow, day: dayCols[colIndex], period, subject: parsed.subject, teacher: parsed.teacher, room: parsed.room, notes: parsed.level });
         }
       }
@@ -315,7 +313,7 @@ ${strict ? '6. אם נמצאו פחות מ-8 שיעורים, זה כמעט בו�
               <div className="min-w-0">
                 <p className="text-sm font-medium">Excel / CSV / PDF</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  שיעורים יסוננו לפי כיתה{className ? ` "${className}"` : ''}
+                  כל תא בקובץ המערכת ייקרא כשיעור של הכיתה{className ? ` "${className}"` : ''}
                 </p>
                 <SelectedFileNotice fileName={fileName} onRemove={clearSelectedFile} disabled={isParsing || isImporting} />
               </div>
