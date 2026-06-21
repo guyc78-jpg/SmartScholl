@@ -167,12 +167,66 @@ export default function ImportScheduleDialog({ open, onOpenChange, onImported, c
     return results;
   };
 
+  const parsePdfFile = async (file) => {
+    // Upload the PDF to storage so the LLM can read it via URL
+    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    const prompt = `זהו קובץ PDF של מערכת שעות בית ספרית עבור כיתה "${className || 'לא ידוע'}".
+המערכת כוללת שיעורים לפי ימים (ראשון–שישי) ומספרי שיעורים (1–12).
+כל תא במערכת עשוי להכיל מספר שיעורים (מופרדים בקו ---), בפורמט: "שם מורה, מקצוע, רשימת כיתות" ולפעמים "חדר: ...".
+
+המשימה שלך:
+1. זהה רק את השיעורים השייכים לכיתה "${className || ''}" (כולל וריאנטים של כתיב כמו י"ב 8, יב 8, י``ב 8).
+2. עבור כל שיעור שייך, החזר אובייקט עם השדות: day (יום בעברית), period (מספר שיעור), subject (מקצוע בלבד), teacher (שם מורה בלבד), room (חדר, ללא המילה "חדר:").
+3. אל תכלול שיעורים שאינם שייכים לכיתה.
+4. החזר מערך JSON בלבד, ללא הסברים.
+
+פורמט תשובה:
+[{"day":"ראשון","period":1,"subject":"מתמטיקה","teacher":"חגאי מיכל","room":"יב 8"}, ...]`;
+
+    const result = await base44.integrations.Core.InvokeLLM({
+      prompt,
+      file_urls: [file_url],
+      response_json_schema: {
+        type: 'object',
+        properties: {
+          lessons: {
+            type: 'array',
+            items: {
+              type: 'object',
+              properties: {
+                day: { type: 'string' },
+                period: { type: 'number' },
+                subject: { type: 'string' },
+                teacher: { type: 'string' },
+                room: { type: 'string' },
+              }
+            }
+          }
+        }
+      }
+    });
+
+    const lessons = Array.isArray(result) ? result : (result?.lessons || []);
+    return lessons
+      .filter(l => l.subject && l.day && l.period)
+      .map(l => ({
+        ...emptyRow,
+        day: normalizeDay(l.day),
+        period: Number(l.period),
+        subject: String(l.subject || '').trim(),
+        teacher: String(l.teacher || '').trim(),
+        room: String(l.room || '').trim(),
+        notes: '',
+      }));
+  };
+
   const handleFileChange = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
     setFileName(file.name); setRows([]); setError(''); setIsParsing(true); setShowAll(false);
     try {
-      const mappedRows = await parseSpreadsheetFile(file);
+      const isPdf = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';
+      const mappedRows = isPdf ? await parsePdfFile(file) : await parseSpreadsheetFile(file);
       if (mappedRows.length === 0) setError('לא נמצאו שיעורים בקובץ. ודאו שהקובץ מכיל מערכת שעות עם מקצועות.');
       else setRows(mappedRows);
     } catch (e) {
@@ -218,10 +272,10 @@ export default function ImportScheduleDialog({ open, onOpenChange, onImported, c
         <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3">
           {/* Upload area */}
           <div className="rounded-xl border border-dashed border-border p-4 bg-muted/30">
-            <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" onChange={handleFileChange} className="hidden" />
+            <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv,.pdf" onChange={handleFileChange} className="hidden" />
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
-                <p className="text-sm font-medium">Excel / CSV</p>
+                <p className="text-sm font-medium">Excel / CSV / PDF</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   שיעורים יסוננו לפי כיתה{className ? ` "${className}"` : ''}
                 </p>
