@@ -8,6 +8,8 @@ import SelectedFileNotice from '@/components/import/SelectedFileNotice';
 import { base44 } from '@/api/base44Client';
 import { ensureSubjectForName, normalizeSubjectName } from '@/lib/scheduleSubjects';
 import useDeleteConfirm from '@/hooks/useDeleteConfirm';
+import { parseExcelScheduleFile } from '@/lib/excelScheduleParser';
+import ScheduleImportPreview from '@/components/schedule/ScheduleImportPreview';
 
 const DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי'];
 const PREVIEW_LIMIT = 10;
@@ -92,6 +94,7 @@ export default function ImportScheduleDialog({ open, onOpenChange, onImported, c
   const fileInputRef = useRef(null);
   const [fileName, setFileName] = useState('');
   const [rows, setRows] = useState([]);
+  const [diagnostics, setDiagnostics] = useState(null);
   const [error, setError] = useState('');
   const [isParsing, setIsParsing] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -99,7 +102,6 @@ export default function ImportScheduleDialog({ open, onOpenChange, onImported, c
   const { confirmDelete, DeleteConfirm } = useDeleteConfirm();
 
   const hasMissingRequired = rows.some(row => !row.subject || !row.day || !row.period);
-  const visibleRows = showAll ? rows : rows.slice(0, PREVIEW_LIMIT);
 
   const clearSelectedFile = async () => {
     const approved = await confirmDelete({
@@ -108,7 +110,7 @@ export default function ImportScheduleDialog({ open, onOpenChange, onImported, c
       confirmLabel: 'הסר קובץ',
     });
     if (!approved) return;
-    setFileName(''); setRows([]); setError('');
+    setFileName(''); setRows([]); setDiagnostics(null); setError('');
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -259,12 +261,14 @@ ${strict ? '6. אם נמצאו פחות מ-8 שיעורים, זה כמעט בו�
   const handleFileChange = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    setFileName(file.name); setRows([]); setError(''); setIsParsing(true); setShowAll(false);
+    setFileName(file.name); setRows([]); setDiagnostics(null); setError(''); setIsParsing(true); setShowAll(false);
     try {
       const isPdf = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';
-      const mappedRows = isPdf ? await parsePdfFile(file) : await parseSpreadsheetFile(file);
-      if (mappedRows.length === 0) setError('לא נמצאו שיעורים בקובץ. ודאו שהקובץ מכיל מערכת שעות עם מקצועות.');
-      else setRows(mappedRows);
+      const parsed = isPdf
+        ? { rows: await parsePdfFile(file), diagnostics: { skippedEmptyRows: [], unparsedCells: [], duplicateCount: 0, parallelCount: 0 } }
+        : await parseExcelScheduleFile(file);
+      if (parsed.rows.length === 0) setError('לא נמצאו שיעורים בקובץ. ודאו שהקובץ מכיל מערכת שעות עם מקצועות.');
+      else { setRows(parsed.rows); setDiagnostics(parsed.diagnostics); }
     } catch (e) {
       setError(e.message || 'אירעה שגיאה בקריאת הקובץ.');
     }
@@ -285,10 +289,13 @@ ${strict ? '6. אם נמצאו פחות מ-8 שיעורים, זה כמעט בו�
         subjectsByKey[key] = subject;
       }
     }
+    const existingSlots = await base44.entities.ScheduleSlot.filter({ class_id: classId });
+    await Promise.all(existingSlots.map(slot => base44.entities.ScheduleSlot.delete(slot.id)));
     await base44.entities.ScheduleSlot.bulkCreate(rows.map(row => ({
       class_id: classId, day: row.day, period: Number(row.period),
       start_time: row.start_time, end_time: row.end_time,
-      subject: row.subject, subject_id: subjectsByKey[normalizeSubjectName(row.subject)]?.id || '', teacher: row.teacher, room: row.room, notes: row.notes
+      subject: row.subject, subject_id: subjectsByKey[normalizeSubjectName(row.subject)]?.id || '', teacher: row.teacher, room: row.room, notes: row.notes,
+      original_text: row.original_text || '', source_row: Number(row.source_row || 0), is_parallel: Boolean(row.is_parallel)
     })));
     toast.success('מערכת השעות יובאה בהצלחה');
     setIsImporting(false);
@@ -332,53 +339,13 @@ ${strict ? '6. אם נמצאו פחות מ-8 שיעורים, זה כמעט בו�
             </div>
           )}
 
-          {/* Preview cards */}
           {rows.length > 0 && (
             <div className="space-y-2">
               <p className="text-xs font-semibold text-muted-foreground">
                 תצוגה מקדימה — {rows.length} שיעורים
                 {hasMissingRequired && <span className="text-red-500 mr-2">· חסרים שדות חובה</span>}
               </p>
-
-              <div className="space-y-2">
-                {visibleRows.map((row, index) => (
-                  <div
-                    key={index}
-                    className={`rounded-xl border px-3 py-2.5 text-sm bg-card ${!row.subject ? 'border-red-300 bg-red-50/40 dark:bg-red-900/10' : 'border-border'}`}
-                  >
-                    {/* Row 1: day + period + times */}
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-semibold text-foreground">{row.day}</span>
-                      <span className="text-xs bg-muted rounded px-1.5 py-0.5">שיעור {row.period}</span>
-                      {(row.start_time || row.end_time) && (
-                        <span className="text-xs text-muted-foreground">
-                          {row.start_time}{row.start_time && row.end_time ? '–' : ''}{row.end_time}
-                        </span>
-                      )}
-                    </div>
-                    {/* Row 2: subject + teacher + room */}
-                    <div className="mt-1 flex items-center gap-2 flex-wrap text-xs text-muted-foreground">
-                      {row.subject
-                        ? <span className="font-medium text-foreground">{row.subject}</span>
-                        : <span className="text-red-500">חסר מקצוע</span>
-                      }
-                      {row.teacher && <span>· {row.teacher}</span>}
-                      {row.room && <span>· חדר {row.room}</span>}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {rows.length > PREVIEW_LIMIT && !showAll && (
-                <button
-                  type="button"
-                  onClick={() => setShowAll(true)}
-                  className="w-full flex items-center justify-center gap-1.5 py-2 text-xs text-primary hover:underline"
-                >
-                  <ChevronDown className="w-3.5 h-3.5" />
-                  הצג עוד ({rows.length - PREVIEW_LIMIT} שורות נוספות)
-                </button>
-              )}
+              <ScheduleImportPreview rows={rows} diagnostics={diagnostics} showAll={showAll} onShowAll={() => setShowAll(true)} />
             </div>
           )}
         </div>
