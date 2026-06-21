@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import AgentMessageBubble from '@/components/agents/AgentMessageBubble';
 import { Bot, Loader2, MessageSquarePlus, SendHorizontal } from 'lucide-react';
 
-const AGENT_NAME = 'SchoolSupportAgent';
+const AGENT_NAME = 'school_support_agent';
 
 export default function SchoolSupportAgent() {
   const [conversation, setConversation] = useState(null);
