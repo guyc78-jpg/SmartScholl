@@ -43,6 +43,7 @@ const classNameVariants = (name = '') => {
 
 const lessonBelongsToClass = (lessonClasses = '', targetClassName = '') => {
   if (!targetClassName) return true;
+  if (!String(lessonClasses || '').trim()) return true;
   const haystack = String(lessonClasses);
   const haystackNorm = normalizeClassName(haystack);
   for (const variant of classNameVariants(targetClassName)) {
@@ -66,16 +67,24 @@ const parseLessonBlock = (block) => {
   const text = String(block || '').trim();
   if (!text) return null;
   let room = '';
-  const roomMatch = text.match(/חדר:\s*(.+?)(?:\n|$)/);
+  const roomMatch = text.match(/חדר:?\s*(.+?)(?:\n|$)/);
   if (roomMatch) room = roomMatch[1].trim();
-  const withoutRoom = text.replace(/חדר:\s*.+?(?:\n|$)/g, '').trim();
+  const withoutRoom = text.replace(/חדר:?\s*.+?(?:\n|$)/g, '').trim();
   let level = '';
   const levelMatch = withoutRoom.match(/\(רמה:\s*([^)]+)\)/);
   if (levelMatch) level = levelMatch[1].replace(/`/g, '').trim();
   const withoutLevel = withoutRoom.replace(/\(רמה:[^)]+\)/, '').trim();
-  const parts = withoutLevel.split(',').map(p => p.trim()).filter(Boolean);
-  if (parts.length < 2) return null;
-  return { teacher: parts[0], subject: parts[1], classes: parts.slice(2).join(' ').trim(), level, room };
+  const commaParts = withoutLevel.split(',').map(p => p.trim()).filter(Boolean);
+  if (commaParts.length >= 2) return { teacher: commaParts[0], subject: commaParts[1], classes: commaParts.slice(2).join(' ').trim(), level, room };
+
+  const lines = withoutLevel.split('\n').map(p => p.trim()).filter(Boolean);
+  if (lines.length < 2) return null;
+  const subject = lines[0];
+  const teacher = lines[1];
+  const tail = lines.slice(2).join(' ').trim();
+  const looksLikeClass = /[זחטיי][א-ת"׳״'`]*\s*\d+/.test(tail);
+  const classes = looksLikeClass ? tail : '';
+  return { teacher, subject, classes, level, room: room || (looksLikeClass ? '' : tail) };
 };
 
 const splitLessonBlocks = (cellValue) =>
@@ -151,9 +160,12 @@ export default function ImportScheduleDialog({ open, onOpenChange, onImported, c
     }
 
     const results = [];
+    let inferredPeriod = 0;
     for (let r = headerRowIdx + 1; r < grid.length; r++) {
       const row = grid[r] || [];
-      const period = Number(periodCol >= 0 ? row[periodCol] : (r - headerRowIdx));
+      const rowHasLessons = Object.keys(dayCols).some(colIndex => String(row[Number(colIndex)] || '').trim());
+      if (!rowHasLessons) continue;
+      const period = Number(periodCol >= 0 ? row[periodCol] : ++inferredPeriod);
       if (!period || isNaN(period)) continue;
       for (const colIndex of Object.keys(dayCols)) {
         const blocks = splitLessonBlocks(row[Number(colIndex)]);
