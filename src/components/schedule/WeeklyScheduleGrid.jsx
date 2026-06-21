@@ -14,10 +14,10 @@ export default function WeeklyScheduleGrid({ periods, slotsByKey, todayDayName, 
   return (
     <div className="rounded-2xl border border-border bg-card overflow-hidden" dir="rtl">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[760px] table-fixed border-collapse text-center">
+        <table className="w-full min-w-[420px] sm:min-w-[760px] table-fixed border-collapse text-center">
           <thead>
             <tr>
-              <th className="bg-primary text-primary-foreground w-14 sm:w-16 p-0 border-b border-l border-primary/30 align-middle">
+              <th className="bg-primary text-primary-foreground w-9 sm:w-16 p-0 border-b border-l border-primary/30 align-middle">
                 <CornerHeader />
               </th>
               {DAYS.map(day => (
@@ -50,7 +50,7 @@ export default function WeeklyScheduleGrid({ periods, slotsByKey, todayDayName, 
                       isCurrentRow && 'bg-primary/10 text-primary',
                     )}
                   >
-                    <div className="flex flex-col items-center justify-center gap-1 px-1 min-h-[46px] sm:min-h-[54px]">
+                    <div className="flex flex-col items-center justify-center gap-1 px-0.5 sm:px-1 min-h-[56px] sm:min-h-[64px]">
                       <div className={cn('text-xs sm:text-sm leading-none', isCurrentRow ? 'text-primary' : 'text-foreground')}>
                         {p.period}
                       </div>
@@ -128,7 +128,7 @@ function Cell({ slots = [], isToday, isNow, canEdit, onClick, subjectsById }) {
   return (
     <td
       className={cn(
-        'border-b border-l last:border-l-0 border-border align-middle p-0 transition-colors relative',
+        'border-b border-l last:border-l-0 border-border align-top p-0 transition-colors relative',
         isNow && 'ring-1 ring-inset ring-primary/40',
         !hasSlots && (isNow ? 'bg-primary/15 dark:bg-primary/20' : isToday ? 'bg-primary/[0.05]' : ''),
         canEdit ? 'cursor-pointer hover:bg-accent/60' : (hasSlots ? 'cursor-pointer hover:bg-accent/40' : 'cursor-default'),
@@ -137,18 +137,18 @@ function Cell({ slots = [], isToday, isNow, canEdit, onClick, subjectsById }) {
       onClick={canEdit || hasSlots ? onClick : undefined}
     >
       {hasSlots ? (
-        <div className="px-1 py-1 min-h-[46px] sm:min-h-[54px] flex flex-col items-stretch justify-center gap-1 text-center">
+        <div className="px-0.5 sm:px-1 py-1 min-h-[56px] sm:min-h-[64px] flex flex-col items-stretch justify-center gap-1 text-center">
           {slots.map((slot, index) => {
             const subjectDefinition = slot.subject_id ? subjectsById[slot.subject_id] : null;
             const subjectStyle = colorToSubjectStyle(subjectDefinition?.color);
             const group = slot?.notes?.match(/^\[קבוצה: ([^\]]+)\]/)?.[1];
             return (
               <div key={slot.id || index} className={cn('min-w-0', index > 0 && 'border-t border-border/50 pt-1')}>
-                <div className="text-xs sm:text-sm font-extrabold leading-tight truncate w-full" style={{ color: subjectStyle.color }}>
+                <div className="text-[10px] sm:text-sm font-extrabold leading-tight w-full line-clamp-2" style={{ color: subjectStyle.color }}>
                   {subjectDefinition?.name || slot.subject}
                 </div>
                 {slot.teacher && (
-                  <div className="text-[9px] text-muted-foreground leading-tight truncate w-full inline-flex items-center justify-center gap-0.5">
+                  <div className="text-[8px] sm:text-[9px] text-muted-foreground leading-tight truncate w-full inline-flex items-center justify-center gap-0.5">
                     <User className="w-2 h-2 flex-shrink-0" />
                     <span className="truncate">{slot.teacher}</span>
                   </div>

@@ -168,64 +168,82 @@ export default function ImportScheduleDialog({ open, onOpenChange, onImported, c
   };
 
   const parsePdfFile = async (file) => {
-    // Upload the PDF to storage so the LLM can read it via URL
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    const prompt = `זהו קובץ PDF של מערכת שעות בית ספרית בעברית עבור כיתה "${className || 'לא ידוע'}".
-קרא את כל עמודי הקובץ, לא רק את העמוד הראשון.
-הטבלה מימין לשמאל: העמודה הימנית ביותר היא מספר שיעור, והימים מימין לשמאל הם ראשון, שני, שלישי, רביעי, חמישי, שישי.
-המערכת כוללת שיעורים לפי ימים (ראשון–שישי) ומספרי שיעורים (1–12).
-כל תא במערכת עשוי להכיל כמה שיעורים מקבילים, מופרדים בקו "----------" או בשורות ריקות.
-פורמט שיעור נפוץ: "שם מורה, מקצוע, רשימת כיתות" ולפעמים "חדר: ...".
-
-המשימה שלך:
-1. זהה את כל השיעורים השייכים לכיתה "${className || ''}" בלבד, כולל וריאנטים כמו י"ב 8, יב 8, י``ב 8, י״ב 8.
-2. אם בתא אחד יש כמה שיעורים ששייכים לכיתה — החזר כל אחד מהם כשורה נפרדת, עם אותו day ואותו period.
-3. אל תאחד שיעורים שונים באותו תא, ואל תדלג על שיעורים בגלל שיש כמה באותו תא.
-4. עבור כל שיעור החזר: day (יום בעברית), period (מספר שיעור), subject (מקצוע בלבד), teacher (שם מורה בלבד), room (חדר ללא המילה "חדר:").
-5. אל תכלול שיעורים שאינם שייכים לכיתה.
-6. החזר JSON בלבד בתוך השדה lessons.
-
-דוגמת תשובה:
-{"lessons":[{"day":"ראשון","period":1,"subject":"תקשורת עיונית","teacher":"חייט רועי","room":"חדר תקשורת"}]}`;
-
-    const result = await base44.integrations.Core.InvokeLLM({
-      prompt,
-      file_urls: [file_url],
-      model: 'gpt_5_4',
-      response_json_schema: {
-        type: 'object',
-        required: ['lessons'],
-        properties: {
-          lessons: {
-            type: 'array',
-            items: {
-              type: 'object',
-              required: ['day', 'period', 'subject'],
-              properties: {
-                day: { type: 'string' },
-                period: { type: 'number' },
-                subject: { type: 'string' },
-                teacher: { type: 'string' },
-                room: { type: 'string' },
-              }
+    const schema = {
+      type: 'object',
+      required: ['lessons'],
+      properties: {
+        lessons: {
+          type: 'array',
+          items: {
+            type: 'object',
+            required: ['day', 'period', 'subject'],
+            properties: {
+              day: { type: 'string' },
+              period: { type: 'number' },
+              subject: { type: 'string' },
+              teacher: { type: 'string' },
+              room: { type: 'string' },
             }
           }
         }
       }
-    });
+    };
 
-    const lessons = Array.isArray(result) ? result : (result?.lessons || []);
-    return lessons
-      .filter(l => l.subject && l.day && l.period)
-      .map(l => ({
-        ...emptyRow,
-        day: normalizeDay(l.day),
-        period: Number(l.period),
-        subject: String(l.subject || '').trim(),
-        teacher: String(l.teacher || '').trim(),
-        room: String(l.room || '').trim(),
-        notes: '',
-      }));
+    const buildPrompt = (strict = false) => `זהו PDF של מערכת שעות בעברית עבור כיתה "${className || 'לא ידוע'}".
+קרא את כל 3 העמודים ואת כל השורות 1–12. הטבלה מימין לשמאל: העמודה הימנית ביותר היא מספר שיעור, והימים מימין לשמאל הם ראשון, שני, שלישי, רביעי, חמישי, שישי.
+בכל תא עשויים להיות כמה שיעורים מקבילים, מופרדים בקו "----------". כל מקטע כזה הוא שיעור נפרד.
+
+כללי חילוץ חובה:
+1. החזר רק שיעורים שבהם רשימת הכיתות כוללת את "${className || ''}" או וריאנט שלו: י"ב 8, יב 8, י``ב 8, י״ב 8.
+2. אם בתא אחד יש כמה מקטעים ששייכים לכיתה — החזר את כולם כשורות נפרדות עם אותו day ואותו period.
+3. אל תאחד מקצועות, אל תבחר רק מקצוע אחד מתוך תא, ואל תדלג על עמודים.
+4. שמות ימים חייבים להיות: ראשון, שני, שלישי, רביעי, חמישי, שישי.
+5. החזר subject כמקצוע בלבד, teacher כשם מורה בלבד, room ללא המילה "חדר:".
+${strict ? '6. אם נמצאו פחות מ-8 שיעורים, זה כמעט בוודאות חסר — עבור שוב תא-תא, עמוד-עמוד, והשלם את כל השיעורים של הכיתה.' : ''}
+
+החזר JSON בלבד במבנה:
+{"lessons":[{"day":"ראשון","period":1,"subject":"תקשורת עיונית","teacher":"חייט רועי","room":"חדר תקשורת"}]}`;
+
+    const normalizeLessons = (result) => {
+      const lessons = Array.isArray(result) ? result : (result?.lessons || []);
+      const seen = new Set();
+      return lessons
+        .filter(l => l.subject && l.day && l.period)
+        .map(l => ({
+          ...emptyRow,
+          day: normalizeDay(l.day),
+          period: Number(l.period),
+          subject: String(l.subject || '').trim(),
+          teacher: String(l.teacher || '').trim(),
+          room: String(l.room || '').trim(),
+          notes: '',
+        }))
+        .filter(l => {
+          const key = `${l.day}|${l.period}|${l.subject}|${l.teacher}|${l.room}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
+    };
+
+    const firstResult = await base44.integrations.Core.InvokeLLM({
+      prompt: buildPrompt(false),
+      file_urls: [file_url],
+      model: 'gpt_5_4',
+      response_json_schema: schema,
+    });
+    const firstLessons = normalizeLessons(firstResult);
+    if (firstLessons.length >= 8) return firstLessons;
+
+    const secondResult = await base44.integrations.Core.InvokeLLM({
+      prompt: buildPrompt(true),
+      file_urls: [file_url],
+      model: 'gpt_5_5',
+      response_json_schema: schema,
+    });
+    const secondLessons = normalizeLessons(secondResult);
+    return secondLessons.length > firstLessons.length ? secondLessons : firstLessons;
   };
 
   const handleFileChange = async (event) => {
