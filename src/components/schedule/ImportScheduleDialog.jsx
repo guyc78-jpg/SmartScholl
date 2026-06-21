@@ -170,29 +170,37 @@ export default function ImportScheduleDialog({ open, onOpenChange, onImported, c
   const parsePdfFile = async (file) => {
     // Upload the PDF to storage so the LLM can read it via URL
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    const prompt = `זהו קובץ PDF של מערכת שעות בית ספרית עבור כיתה "${className || 'לא ידוע'}".
+    const prompt = `זהו קובץ PDF של מערכת שעות בית ספרית בעברית עבור כיתה "${className || 'לא ידוע'}".
+קרא את כל עמודי הקובץ, לא רק את העמוד הראשון.
+הטבלה מימין לשמאל: העמודה הימנית ביותר היא מספר שיעור, והימים מימין לשמאל הם ראשון, שני, שלישי, רביעי, חמישי, שישי.
 המערכת כוללת שיעורים לפי ימים (ראשון–שישי) ומספרי שיעורים (1–12).
-כל תא במערכת עשוי להכיל מספר שיעורים (מופרדים בקו ---), בפורמט: "שם מורה, מקצוע, רשימת כיתות" ולפעמים "חדר: ...".
+כל תא במערכת עשוי להכיל כמה שיעורים מקבילים, מופרדים בקו "----------" או בשורות ריקות.
+פורמט שיעור נפוץ: "שם מורה, מקצוע, רשימת כיתות" ולפעמים "חדר: ...".
 
 המשימה שלך:
-1. זהה רק את השיעורים השייכים לכיתה "${className || ''}" (כולל וריאנטים של כתיב כמו י"ב 8, יב 8, י``ב 8).
-2. עבור כל שיעור שייך, החזר אובייקט עם השדות: day (יום בעברית), period (מספר שיעור), subject (מקצוע בלבד), teacher (שם מורה בלבד), room (חדר, ללא המילה "חדר:").
-3. אל תכלול שיעורים שאינם שייכים לכיתה.
-4. החזר מערך JSON בלבד, ללא הסברים.
+1. זהה את כל השיעורים השייכים לכיתה "${className || ''}" בלבד, כולל וריאנטים כמו י"ב 8, יב 8, י``ב 8, י״ב 8.
+2. אם בתא אחד יש כמה שיעורים ששייכים לכיתה — החזר כל אחד מהם כשורה נפרדת, עם אותו day ואותו period.
+3. אל תאחד שיעורים שונים באותו תא, ואל תדלג על שיעורים בגלל שיש כמה באותו תא.
+4. עבור כל שיעור החזר: day (יום בעברית), period (מספר שיעור), subject (מקצוע בלבד), teacher (שם מורה בלבד), room (חדר ללא המילה "חדר:").
+5. אל תכלול שיעורים שאינם שייכים לכיתה.
+6. החזר JSON בלבד בתוך השדה lessons.
 
-פורמט תשובה:
-[{"day":"ראשון","period":1,"subject":"מתמטיקה","teacher":"חגאי מיכל","room":"יב 8"}, ...]`;
+דוגמת תשובה:
+{"lessons":[{"day":"ראשון","period":1,"subject":"תקשורת עיונית","teacher":"חייט רועי","room":"חדר תקשורת"}]}`;
 
     const result = await base44.integrations.Core.InvokeLLM({
       prompt,
       file_urls: [file_url],
+      model: 'gpt_5_4',
       response_json_schema: {
         type: 'object',
+        required: ['lessons'],
         properties: {
           lessons: {
             type: 'array',
             items: {
               type: 'object',
+              required: ['day', 'period', 'subject'],
               properties: {
                 day: { type: 'string' },
                 period: { type: 'number' },

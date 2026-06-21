@@ -98,7 +98,15 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
 
   const slotsByKey = useMemo(() => {
     const map = {};
-    slots.forEach(s => { map[`${s.day}|${Number(s.period)}`] = s; });
+    const seen = new Set();
+    slots.forEach(s => {
+      const key = `${s.day}|${Number(s.period)}`;
+      const uniqueKey = `${key}|${String(s.subject || '').trim()}|${String(s.teacher || '').trim()}|${String(s.room || '').trim()}`;
+      if (seen.has(uniqueKey)) return;
+      seen.add(uniqueKey);
+      if (!map[key]) map[key] = [];
+      map[key].push(s);
+    });
     return map;
   }, [slots]);
 
@@ -153,7 +161,7 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
     <div className="p-4 lg:p-6 pb-24 lg:pb-6 space-y-4" dir="rtl">
       <PageHeader
         title="מערכת שעות"
-        subtitle="לוח שבועי לפי הצלצולים — ימים א׳–ה׳"
+        subtitle="לוח שבועי לפי הצלצולים — ימים א׳–ו׳"
         actions={canEdit ? (
           <RtlActionBar
             primary={(

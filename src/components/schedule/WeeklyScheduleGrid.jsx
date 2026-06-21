@@ -3,9 +3,9 @@ import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { colorToSubjectStyle } from '@/lib/scheduleSubjects';
 
-// Weekly schedule grid — Sun → Thu only (no Friday), periods 1..N as rows.
+// Weekly schedule grid — Sun → Fri, periods 1..N as rows.
 // Slim, professional, mobile-friendly. Highlights today + current period.
-const DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי'];
+const DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי'];
 
 export default function WeeklyScheduleGrid({ periods, slotsByKey, todayDayName, currentPeriod, canEdit, onCellClick, subjectsById = {} }) {
   // todayDayName might be 'שישי' or 'שבת' — only highlight if it's in DAYS list
@@ -14,7 +14,7 @@ export default function WeeklyScheduleGrid({ periods, slotsByKey, todayDayName, 
   return (
     <div className="rounded-2xl border border-border bg-card overflow-hidden" dir="rtl">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[640px] table-fixed border-collapse text-center">
+        <table className="w-full min-w-[760px] table-fixed border-collapse text-center">
           <thead>
             <tr>
               <th className="bg-primary text-primary-foreground w-14 sm:w-16 p-0 border-b border-l border-primary/30 align-middle">
@@ -63,17 +63,18 @@ export default function WeeklyScheduleGrid({ periods, slotsByKey, todayDayName, 
                   </td>
                   {DAYS.map(day => {
                     const slot = slotsByKey[`${day}|${p.period}`];
+                    const cellSlots = Array.isArray(slot) ? slot : (slot ? [slot] : []);
                     const isToday = day === highlightDay;
                     const isNow = isToday && isCurrentRow;
                     return (
                       <Cell
                         key={day + p.period}
-                        slot={slot}
+                        slots={cellSlots}
                         isToday={isToday}
                         isNow={isNow}
                         canEdit={canEdit}
-                        onClick={() => onCellClick(day, p.period, slot, p)}
-                        subjectDefinition={slot?.subject_id ? subjectsById[slot.subject_id] : null}
+                        onClick={() => onCellClick(day, p.period, cellSlots[0], p)}
+                        subjectsById={subjectsById}
                       />
                     );
                   })}
@@ -118,36 +119,47 @@ function CornerHeader() {
   );
 }
 
-function Cell({ slot, isToday, isNow, canEdit, onClick, subjectDefinition }) {
-  const subjectStyle = slot ? colorToSubjectStyle(subjectDefinition?.color) : null;
-  const group = slot?.notes?.match(/^\[קבוצה: ([^\]]+)\]/)?.[1];
+function Cell({ slots = [], isToday, isNow, canEdit, onClick, subjectsById }) {
+  const hasSlots = slots.length > 0;
+  const primarySlot = slots[0];
+  const primarySubject = primarySlot?.subject_id ? subjectsById[primarySlot.subject_id] : null;
+  const primaryStyle = hasSlots ? colorToSubjectStyle(primarySubject?.color) : null;
 
   return (
     <td
       className={cn(
         'border-b border-l last:border-l-0 border-border align-middle p-0 transition-colors relative',
         isNow && 'ring-1 ring-inset ring-primary/40',
-        !slot && (isNow ? 'bg-primary/15 dark:bg-primary/20' : isToday ? 'bg-primary/[0.05]' : ''),
-        canEdit ? 'cursor-pointer hover:bg-accent/60' : (slot ? 'cursor-pointer hover:bg-accent/40' : 'cursor-default'),
+        !hasSlots && (isNow ? 'bg-primary/15 dark:bg-primary/20' : isToday ? 'bg-primary/[0.05]' : ''),
+        canEdit ? 'cursor-pointer hover:bg-accent/60' : (hasSlots ? 'cursor-pointer hover:bg-accent/40' : 'cursor-default'),
       )}
-      style={slot ? { backgroundColor: subjectStyle.backgroundColor } : undefined}
-      onClick={canEdit || slot ? onClick : undefined}
+      style={hasSlots ? { backgroundColor: primaryStyle.backgroundColor } : undefined}
+      onClick={canEdit || hasSlots ? onClick : undefined}
     >
-      {slot ? (
-        <div className="px-1 py-1.5 min-h-[46px] sm:min-h-[54px] flex flex-col items-center justify-center gap-0.5 text-center">
-          <div className="text-sm sm:text-base font-extrabold leading-tight truncate w-full" style={{ color: subjectStyle.color }}>
-            {subjectDefinition?.name || slot.subject}
-          </div>
-          {slot.teacher && (
-            <div className="text-[9px] text-muted-foreground leading-tight truncate w-full inline-flex items-center justify-center gap-0.5">
-              <User className="w-2 h-2 flex-shrink-0" />
-              <span className="truncate">{slot.teacher}</span>
-            </div>
-          )}
-          <div className="flex items-center justify-center gap-0.5 text-[9px] text-muted-foreground/90 leading-tight">
-            {slot.room && <span className="inline-flex items-center gap-0.5"><MapPin className="w-2 h-2" />{slot.room}</span>}
-            {group && <span className="inline-flex items-center gap-0.5">· {group}</span>}
-          </div>
+      {hasSlots ? (
+        <div className="px-1 py-1 min-h-[46px] sm:min-h-[54px] flex flex-col items-stretch justify-center gap-1 text-center">
+          {slots.map((slot, index) => {
+            const subjectDefinition = slot.subject_id ? subjectsById[slot.subject_id] : null;
+            const subjectStyle = colorToSubjectStyle(subjectDefinition?.color);
+            const group = slot?.notes?.match(/^\[קבוצה: ([^\]]+)\]/)?.[1];
+            return (
+              <div key={slot.id || index} className={cn('min-w-0', index > 0 && 'border-t border-border/50 pt-1')}>
+                <div className="text-xs sm:text-sm font-extrabold leading-tight truncate w-full" style={{ color: subjectStyle.color }}>
+                  {subjectDefinition?.name || slot.subject}
+                </div>
+                {slot.teacher && (
+                  <div className="text-[9px] text-muted-foreground leading-tight truncate w-full inline-flex items-center justify-center gap-0.5">
+                    <User className="w-2 h-2 flex-shrink-0" />
+                    <span className="truncate">{slot.teacher}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-center gap-0.5 text-[9px] text-muted-foreground/90 leading-tight">
+                  {slot.room && <span className="inline-flex items-center gap-0.5"><MapPin className="w-2 h-2" />{slot.room}</span>}
+                  {group && <span className="inline-flex items-center gap-0.5">· {group}</span>}
+                </div>
+              </div>
+            );
+          })}
         </div>
       ) : (
         <div className="px-1 py-1.5 min-h-[46px] sm:min-h-[54px] flex flex-col items-center justify-center gap-1">
