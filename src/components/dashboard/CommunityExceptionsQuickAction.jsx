@@ -165,7 +165,7 @@ export default function CommunityExceptionsQuickAction({ students = [], loading 
         </div>
       )}
 
-      <div className="flex justify-end" dir="rtl">
+      <div className="flex justify-start text-right" dir="rtl">
         <span className="rounded-full bg-accent px-2.5 py-1 text-[11px] font-medium text-accent-foreground">
           {filteredExceptions.length} חריגים לטיפול
         </span>
