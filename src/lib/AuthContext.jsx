@@ -26,6 +26,21 @@ const writeCachedAccess = (email, accessUser) => {
   sessionStorage.setItem(key, JSON.stringify({ user: accessUser, savedAt: Date.now() }));
 };
 
+const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+const withNetworkRetry = async (loader, attempts = 2) => {
+  let lastError;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      return await loader();
+    } catch (error) {
+      lastError = error;
+      if (attempt < attempts - 1) await wait(450 * (attempt + 1));
+    }
+  }
+  throw lastError;
+};
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -56,7 +71,7 @@ export const AuthProvider = ({ children }) => {
       });
       
       try {
-        const publicSettings = await appClient.get(`/prod/public-settings/by-id/${appParams.appId}`);
+        const publicSettings = await withNetworkRetry(() => appClient.get(`/prod/public-settings/by-id/${appParams.appId}`), 3);
         setAppPublicSettings(publicSettings);
         
         // If we got the app public settings successfully, check if user is authenticated
@@ -113,7 +128,7 @@ export const AuthProvider = ({ children }) => {
   const checkUserAuth = async () => {
     try {
       setIsLoadingAuth(true);
-      const currentUser = await base44.auth.me();
+      const currentUser = await withNetworkRetry(() => base44.auth.me(), 3);
 
       const applyAccessUser = (accessUser) => {
         setBase44AccessClaims(accessUser);
@@ -149,10 +164,10 @@ export const AuthProvider = ({ children }) => {
         return;
       }
 
-      const accessRes = await Promise.race([
+      const accessRes = await withNetworkRetry(() => Promise.race([
         base44.functions.invoke('authorizeAccess', { action: 'getAccess' }),
         new Promise((_, reject) => setTimeout(() => reject(new Error('authorizeAccess timeout')), 3500))
-      ]);
+      ]), 2);
       const accessUser = accessRes.data.user;
       writeCachedAccess(currentUser.email, accessUser);
       applyAccessUser(accessUser);
@@ -173,6 +188,11 @@ export const AuthProvider = ({ children }) => {
         setAuthError({
           type: 'auth_required',
           message: 'Authentication required'
+        });
+      } else {
+        setAuthError({
+          type: 'unknown',
+          message: error.message || 'Network Error'
         });
       }
     }

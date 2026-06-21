@@ -92,17 +92,25 @@ const loadDashboardBootstrapData = async (user, role) => {
       const records = await base44.entities[entityName].list('-updated_date', limit);
       return filterByClass(records);
     }
-    const results = await Promise.all(classIds.map(classId => base44.entities[entityName].filter({ class_id: classId }, '-updated_date', limit)));
-    return results.flat();
+    const results = await Promise.allSettled(classIds.map(classId => base44.entities[entityName].filter({ class_id: classId }, '-updated_date', limit)));
+    return results.flatMap(result => result.status === 'fulfilled' ? result.value : []);
+  };
+
+  const safeLoad = async (loader) => {
+    try {
+      return await loader();
+    } catch {
+      return [];
+    }
   };
 
   const attendanceDate = getSelectedAttendanceDate();
   const [todayAttendance, exams, tasks, discipline, announcements] = await Promise.all([
-    loadScopedAttendanceForDate(students, attendanceDate),
-    fetchForScope('Exam', 250),
-    fetchForScope('Task', 250),
-    fetchForScope('DisciplineEvent', 250),
-    fetchForScope('Announcement', 100),
+    safeLoad(() => loadScopedAttendanceForDate(students, attendanceDate)),
+    safeLoad(() => fetchForScope('Exam', 250)),
+    safeLoad(() => fetchForScope('Task', 250)),
+    safeLoad(() => fetchForScope('DisciplineEvent', 250)),
+    safeLoad(() => fetchForScope('Announcement', 100)),
   ]);
 
   return {

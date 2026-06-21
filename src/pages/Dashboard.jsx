@@ -87,7 +87,11 @@ export default function Dashboard({ user, role, initialData }) {
   ].filter(Boolean).join(' | ') || 'מערכת כללית';
 
   useEffect(() => {
-    if (classId) base44.entities.ClassRoom.list('grade', 500).then(rows => setDashboardClassRoom((rows || []).find(item => item.id === classId) || null));
+    if (classId) {
+      base44.entities.ClassRoom.list('grade', 500)
+        .then(rows => setDashboardClassRoom((rows || []).find(item => item.id === classId) || null))
+        .catch(() => setDashboardClassRoom(null));
+    }
   }, [classId]);
 
   useEffect(() => {

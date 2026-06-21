@@ -13,6 +13,20 @@ export const ATTENDANCE_STATUSES = ['נוכח/ת', 'מאחר/ת', 'נעדר/ת',
 export const ATTENDANCE_EXCEPTION_STATUSES = ['מאחר', 'מאחר/ת', 'נעדר', 'נעדר/ת', 'שוחרר', 'שוחרר/ת'];
 export const PRESENT_STATUS = 'נוכח/ת';
 
+const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+const safeEntityRead = async (loader, fallback = []) => {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      return await loader();
+    } catch (error) {
+      if (attempt === 1) return fallback;
+      await wait(350);
+    }
+  }
+  return fallback;
+};
+
 const DB_TO_UI_STATUS = {
   'נוכח': 'נוכח/ת',
   'מאחר': 'מאחר/ת',
@@ -64,17 +78,17 @@ export async function getAttendanceScopedStudents(user, role) {
 
   if (role === 'homeroom_teacher') {
     const classId = getUserHomeroomClassId(user, '');
-    rows = classId ? await base44.entities.Student.filter({ class_id: classId }, 'lastName', 300) : [];
+    rows = classId ? await safeEntityRead(() => base44.entities.Student.filter({ class_id: classId }, 'lastName', 300)) : [];
   } else if (role === 'coordinator' || role === 'grade_coordinator') {
     if (getActiveScopeMode() === 'class') {
       const classId = getUserHomeroomClassId(user, '');
-      rows = classId ? await base44.entities.Student.filter({ class_id: classId }, 'lastName', 300) : [];
+      rows = classId ? await safeEntityRead(() => base44.entities.Student.filter({ class_id: classId }, 'lastName', 300)) : [];
     } else {
       const grade = normalizeGrade(getUserApprovedGrade(user));
-      rows = grade ? await base44.entities.Student.filter({ grade }, 'lastName', 600) : [];
+      rows = grade ? await safeEntityRead(() => base44.entities.Student.filter({ grade }, 'lastName', 600)) : [];
     }
   } else {
-    rows = await base44.entities.Student.list('-updated_date', 1000);
+    rows = await safeEntityRead(() => base44.entities.Student.list('-updated_date', 1000));
   }
 
   const activeStudents = (rows || []).filter(s => s.status === 'פעיל' || s.status === 'דורש מעקב');
@@ -97,8 +111,11 @@ export function filterScopedAttendance(records, students) {
 export async function loadScopedAttendanceForDate(students, date) {
   const classIds = getScopedClassIds(students);
   if (classIds.length === 0) return [];
-  const attendanceByClass = await Promise.all(
-    classIds.map(classId => base44.entities.AttendanceRecord.filter({ class_id: classId, date }))
+  const attendanceByClass = await Promise.allSettled(
+    classIds.map(classId => safeEntityRead(() => base44.entities.AttendanceRecord.filter({ class_id: classId, date })))
   );
-  return filterScopedAttendance(attendanceByClass.flat(), students);
+  return filterScopedAttendance(
+    attendanceByClass.flatMap(result => result.status === 'fulfilled' ? result.value : []),
+    students
+  );
 }
