@@ -8,7 +8,7 @@ import {
   Megaphone, BarChart2,
   Menu, X, Sun, Moon, BookMarked,
   UserCheck, UserRound, ShieldCheck, Settings, LogOut, Bell, School,
-  ChevronDown, Heart, MessageSquare, ClipboardList, AlertTriangle, GraduationCap, Building2, Eye, CalendarClock, RefreshCw
+  ChevronDown, Heart, MessageSquare, ClipboardList, AlertTriangle, GraduationCap, Building2, Eye, CalendarClock, RefreshCw, Bot
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getAvailableRoles, getRoleDisplayLines, getUserDisplayName } from '@/lib/roleUtils';
@@ -30,6 +30,7 @@ const sidebarGroups = [
       { path: '/division-exams', icon: BookOpen, label: 'לוח מבחנים חכם', roles: ['division_manager'] },
       { path: '/community', icon: Heart, label: 'מעורבות חברתית', roles: ['division_manager'] },
       { path: '/conversations', icon: CalendarClock, label: 'שיחות מתוכננות', roles: ['division_manager'] },
+      { path: '/support-agent', icon: Bot, label: 'סוכן תמיכה', roles: ['division_manager'] },
     ],
   },
   {
@@ -41,6 +42,7 @@ const sidebarGroups = [
       { path: '/student-schedule', icon: Calendar, label: 'מערכת שעות', roles: ['student'] },
       { path: '/student-exams', icon: BookOpen, label: 'לוח מבחנים', roles: ['student'] },
       { path: '/student-attendance', icon: CalendarCheck, label: 'הנוכחות שלי', roles: ['student'] },
+      { path: '/support-agent', icon: Bot, label: 'סוכן תמיכה', roles: ['student'] },
       { path: '/student-more', icon: UserRound, label: 'הפרופיל שלי', roles: ['student'] },
     ],
   },
@@ -84,6 +86,7 @@ const sidebarGroups = [
       { path: '/announcements', icon: Megaphone, label: 'הודעות', roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'] },
       { path: '/communications', icon: MessageSquare, label: 'יומן תקשורת', roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'] },
       { path: '/conversations', icon: CalendarClock, label: 'שיחות מתוכננות', roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'] },
+      { path: '/support-agent', icon: Bot, label: 'סוכן תמיכה', roles: ['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'] },
     ],
   },
   {

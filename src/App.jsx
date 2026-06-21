@@ -50,6 +50,7 @@ const DivisionExams = lazy(() => import('./pages/DivisionExams'));
 const PermissionsTester = lazy(() => import('./pages/PermissionsTester'));
 const PushNotifications = lazy(() => import('./pages/PushNotifications'));
 const YearTransition = lazy(() => import('./pages/YearTransition'));
+const SchoolSupportAgent = lazy(() => import('./pages/SchoolSupportAgent'));
 import { isStaff, isStudent, defaultRoute } from './lib/permissions';
 import { getAvailableRoles, getInitialWorkRole, getSystemRole } from './lib/roleUtils';
 import { SimulationProvider, useSimulation } from '@/lib/SimulationContext';
@@ -289,6 +290,7 @@ const AuthenticatedApp = () => {
           <Route path="/treatment-center" element={<TreatmentCenter />} />
           <Route path="/announcements" element={<Announcements role={pageRole} user={user} />} />
           <Route path="/reports" element={<Reports role={pageRole} />} />
+          <Route path="/support-agent" element={<SchoolSupportAgent />} />
           <Route path="/profile" element={<Profile user={user} role={pageRole} onRoleChange={setWorkRole} themePreference={themePreference} onThemePreferenceChange={setThemePreference} />} />
           {isSystemAdmin && (
             <>
@@ -315,6 +317,7 @@ const AuthenticatedApp = () => {
           <Route path="/conversations" element={<ScheduledConversations role={pageRole} user={user} />} />
           <Route path="/students" element={<Students role={pageRole} />} />
           <Route path="/students/:id" element={<StudentProfile role={pageRole} />} />
+          <Route path="/support-agent" element={<SchoolSupportAgent />} />
           <Route path="/profile" element={<Profile user={user} role={pageRole} onRoleChange={setWorkRole} themePreference={themePreference} onThemePreferenceChange={setThemePreference} />} />
           {!staff && <Route path="/" element={<Navigate to="/division" replace />} />}
         </>}
@@ -326,6 +329,7 @@ const AuthenticatedApp = () => {
           <Route path="/student-exams" element={<StudentExams user={user} />} />
           <Route path="/student-attendance" element={<StudentAttendance user={user} />} />
           <Route path="/student-more" element={<StudentMore user={user} />} />
+          <Route path="/support-agent" element={<SchoolSupportAgent />} />
         </>}
 
         {/* Block students from any staff route — redirect to their home */}
