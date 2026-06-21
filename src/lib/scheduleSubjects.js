@@ -96,3 +96,39 @@ export async function ensureSubjectForName(name, subjects = [], preferredColor =
 export function subjectMapById(subjects = []) {
   return Object.fromEntries(subjects.map(subject => [subject.id, subject]));
 }
+
+/**
+ * Reassigns unique colors to all active subjects that share a color (or have none).
+ * Returns the updated subjects list.
+ */
+export async function autoFixSubjectColors() {
+  const allSubjects = await base44.entities.SchoolSubject.list('-updated_date', 500);
+  const active = (allSubjects || []).filter(s => s.is_active !== false);
+
+  // Find which colors are already uniquely used
+  const colorCount = {};
+  for (const s of active) {
+    const c = String(s.color || '').toLowerCase();
+    if (c) colorCount[c] = (colorCount[c] || 0) + 1;
+  }
+
+  const takenUnique = new Set(Object.keys(colorCount).filter(c => colorCount[c] === 1));
+  const updates = [];
+
+  for (const subject of active) {
+    const c = String(subject.color || '').toLowerCase();
+    const isDuplicate = !c || colorCount[c] > 1;
+    if (!isDuplicate) continue;
+
+    // Pick next color not yet taken by a unique subject
+    const newColor = SUBJECT_COLORS.find(col => !takenUnique.has(col.toLowerCase()))
+      || SUBJECT_COLORS[updates.length % SUBJECT_COLORS.length];
+
+    takenUnique.add(newColor.toLowerCase());
+    colorCount[c] = (colorCount[c] || 1) - 1; // reduce count so siblings also get reassigned
+    updates.push(base44.entities.SchoolSubject.update(subject.id, { color: newColor }));
+  }
+
+  if (updates.length) await Promise.all(updates);
+  return updates.length;
+}

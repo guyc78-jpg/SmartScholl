@@ -12,13 +12,13 @@ import {
 import PageHeader from '@/components/ui/PageHeader';
 import RtlActionBar from '@/components/ui/RtlActionBar';
 import { toast } from 'sonner';
-import { AlertTriangle, FileUp, Trash2 } from 'lucide-react';
+import { AlertTriangle, FileUp, Trash2, Palette } from 'lucide-react';
 import ImportScheduleDialog from '@/components/schedule/ImportScheduleDialog';
 import WeeklyScheduleGrid from '@/components/schedule/WeeklyScheduleGrid';
 import CellEditorDialog from '@/components/schedule/CellEditorDialog';
 import NowNextCard from '@/components/schedule/NowNextCard';
 import { loadBellSchedule, getTodayDayType, HEBREW_DAY_NAMES, getNowAndNext } from '@/lib/bellSchedule';
-import { ensureSubjectForName, findDuplicateSubjectColors, loadAndNormalizeSubjects, subjectMapById } from '@/lib/scheduleSubjects';
+import { autoFixSubjectColors, ensureSubjectForName, findDuplicateSubjectColors, loadAndNormalizeSubjects, subjectMapById } from '@/lib/scheduleSubjects';
 
 // Build a full list of lesson rows from the bell schedule, falling back to 1..12 if needed.
 function buildPeriodRows(bellPeriods) {
@@ -48,6 +48,7 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
 
   const [showImport, setShowImport] = useState(false);
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
+  const [fixingColors, setFixingColors] = useState(false);
   const [editor, setEditor] = useState(null); // { day, period, slot, periodRow }
   const [currentPeriod, setCurrentPeriod] = useState(null);
 
@@ -161,9 +162,27 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
               </Button>
             )}
             secondary={(
-              <Button size="sm" variant="outline" className="h-9 gap-2 text-destructive hover:text-destructive" onClick={() => setConfirmDeleteAll(true)}>
-                <Trash2 className="w-4 h-4" /> מחק מערכת
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-9 gap-2 text-violet-600 border-violet-200 hover:bg-violet-50 hover:text-violet-700 dark:border-violet-800 dark:text-violet-400"
+                  disabled={fixingColors}
+                  onClick={async () => {
+                    setFixingColors(true);
+                    const count = await autoFixSubjectColors();
+                    await load();
+                    toast.success(count > 0 ? `עודכנו ${count} מקצועות עם צבעים ייחודיים` : 'כל המקצועות כבר עם צבעים ייחודיים');
+                    setFixingColors(false);
+                  }}
+                >
+                  <Palette className="w-4 h-4" />
+                  {fixingColors ? 'מסדר...' : 'סדר צבעים'}
+                </Button>
+                <Button size="sm" variant="outline" className="h-9 gap-2 text-destructive hover:text-destructive" onClick={() => setConfirmDeleteAll(true)}>
+                  <Trash2 className="w-4 h-4" /> מחק מערכת
+                </Button>
+              </div>
             )}
           />
         ) : null}
