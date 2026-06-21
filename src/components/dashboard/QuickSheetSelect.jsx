@@ -3,13 +3,14 @@ import { createPortal } from 'react-dom';
 import { Check, ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-export default function QuickSheetSelect({ value, options, placeholder = 'בחר', onChange }) {
+export default function QuickSheetSelect({ value, options, optionLabels = {}, placeholder = 'בחר', onChange }) {
   const triggerRef = useRef(null);
   const menuRef = useRef(null);
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState(null);
 
-  const selectedLabel = value || placeholder;
+  const getLabel = option => optionLabels[option] || option;
+  const selectedLabel = value ? getLabel(value) : placeholder;
 
   const updatePosition = () => {
     const trigger = triggerRef.current;
@@ -76,6 +77,7 @@ export default function QuickSheetSelect({ value, options, placeholder = 'בחר
       <div className="w-full overflow-y-auto overscroll-contain p-1" style={{ maxHeight: position.maxHeight, WebkitOverflowScrolling: 'touch' }} dir="rtl">
         {options.map(option => {
           const selected = value === option;
+          const label = getLabel(option);
           return (
             <button
               key={option}
@@ -94,7 +96,7 @@ export default function QuickSheetSelect({ value, options, placeholder = 'בחר
               <span className="flex h-4 w-4 items-center justify-center flex-shrink-0">
                 {selected && <Check className="h-4 w-4" />}
               </span>
-              <span className="min-w-0 flex-1 text-right">{option}</span>
+              <span className="min-w-0 flex-1 text-right">{label}</span>
             </button>
           );
         })}

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertTriangle } from 'lucide-react';
+import QuickSheetSelect from '@/components/dashboard/QuickSheetSelect';
 import CommunityExceptionRow from '@/components/dashboard/CommunityExceptionRow';
 import { compareStudentsByLastName, formatStudentName } from '@/lib/studentName';
 
@@ -142,26 +142,24 @@ export default function CommunityExceptionsQuickAction({ students = [], loading 
           {canFilterByGrade && (
             <div className="space-y-1 text-right">
               <p className="text-[11px] font-medium text-muted-foreground">שכבה</p>
-              <Select value={gradeFilter} onValueChange={setGradeFilter}>
-                <SelectTrigger className="text-right" dir="rtl"><SelectValue placeholder="כל השכבות" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">כל השכבות</SelectItem>
-                  {gradeOptions.map((grade) => <SelectItem key={grade} value={grade}>{grade}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <QuickSheetSelect
+                value={gradeFilter}
+                options={['all', ...gradeOptions]}
+                optionLabels={{ all: 'כל השכבות' }}
+                onChange={setGradeFilter}
+              />
             </div>
           )}
 
           {canFilterByClass && (
             <div className="space-y-1 text-right">
               <p className="text-[11px] font-medium text-muted-foreground">כיתה</p>
-              <Select value={classFilter} onValueChange={setClassFilter}>
-                <SelectTrigger className="text-right" dir="rtl"><SelectValue placeholder="כל הכיתות" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">כל הכיתות</SelectItem>
-                  {classOptions.map((option) => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <QuickSheetSelect
+                value={classFilter}
+                options={['all', ...classOptions.map(option => option.value)]}
+                optionLabels={{ all: 'כל הכיתות', ...Object.fromEntries(classOptions.map(option => [option.value, option.label])) }}
+                onChange={setClassFilter}
+              />
             </div>
           )}
         </div>

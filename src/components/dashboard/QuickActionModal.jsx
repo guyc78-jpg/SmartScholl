@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { X, Check, ChevronDown } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
@@ -676,12 +675,11 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
                 </div>
                 <div className="space-y-1">
                   <Label>סוג</Label>
-                  <Select onValueChange={v => set('type', v)}>
-                    <SelectTrigger><SelectValue placeholder="בחר" /></SelectTrigger>
-                    <SelectContent>
-                      {['מבחן', 'בחן', 'עבודה', 'פרויקט', 'הגשה'].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <QuickSheetSelect
+                    value={form.type || 'מבחן'}
+                    options={['מבחן', 'בחן', 'עבודה', 'פרויקט', 'הגשה']}
+                    onChange={v => set('type', v)}
+                  />
                 </div>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
@@ -703,12 +701,11 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
               </div>
               <div className="space-y-1">
                 <Label>סוג</Label>
-                <Select onValueChange={v => set('type', v)}>
-                  <SelectTrigger><SelectValue placeholder="בחר סוג" /></SelectTrigger>
-                  <SelectContent>
-                    {['כיתתית', 'חשובה', 'אישית', 'להורים'].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <QuickSheetSelect
+                  value={form.type || 'כיתתית'}
+                  options={['כיתתית', 'חשובה', 'אישית', 'להורים']}
+                  onChange={v => set('type', v)}
+                />
               </div>
               <div className="space-y-1">
                 <Label>תוכן</Label>
@@ -721,21 +718,19 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div className="space-y-1">
                     <Label>סוג</Label>
-                    <Select onValueChange={v => set('type', v)}>
-                      <SelectTrigger><SelectValue placeholder="סוג" /></SelectTrigger>
-                      <SelectContent>
-                        {['שיחה טלפונית', 'פגישה', 'מייל', 'הודעה'].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    <QuickSheetSelect
+                      value={form.type || 'שיחה טלפונית'}
+                      options={['שיחה טלפונית', 'פגישה', 'מייל', 'הודעה']}
+                      onChange={v => set('type', v)}
+                    />
                   </div>
                   <div className="space-y-1">
                     <Label>עם מי</Label>
-                    <Select onValueChange={v => set('with_whom', v)}>
-                      <SelectTrigger><SelectValue placeholder="עם מי" /></SelectTrigger>
-                      <SelectContent>
-                        {['הורה 1', 'הורה 2', 'תלמיד', 'יועצת'].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    <QuickSheetSelect
+                      value={form.with_whom || 'הורה 1'}
+                      options={['הורה 1', 'הורה 2', 'תלמיד', 'יועצת']}
+                      onChange={v => set('with_whom', v)}
+                    />
                   </div>
                 </div>
               )}
@@ -757,12 +752,11 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
                 </div>
                 <div className="space-y-1">
                   <Label>עדיפות</Label>
-                  <Select onValueChange={v => set('priority', v)}>
-                    <SelectTrigger><SelectValue placeholder="בחר" /></SelectTrigger>
-                    <SelectContent>
-                      {['נמוכה', 'בינונית', 'גבוהה', 'דחופה'].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <QuickSheetSelect
+                    value={form.priority || 'בינונית'}
+                    options={['נמוכה', 'בינונית', 'גבוהה', 'דחופה']}
+                    onChange={v => set('priority', v)}
+                  />
                 </div>
               </div>
             </>}

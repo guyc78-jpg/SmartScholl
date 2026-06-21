@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import ReinforcementTypePicker from '@/components/dashboard/ReinforcementTypePicker';
+import QuickSheetSelect from '@/components/dashboard/QuickSheetSelect';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
 import { getLocalDateString } from '@/lib/attendanceScope';
@@ -95,10 +95,11 @@ export default function PositiveReinforcementDialog({
     <div className="space-y-4" dir="rtl">
       <div className="space-y-1">
         <Label>סוג חיזוק</Label>
-        <ReinforcementTypePicker
+        <QuickSheetSelect
           value={reinforcementType}
           onChange={setReinforcementType}
           options={REINFORCEMENT_TYPES}
+          placeholder="בחר סוג חיזוק"
         />
       </div>
 
