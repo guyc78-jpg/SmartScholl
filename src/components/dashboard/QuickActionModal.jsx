@@ -13,6 +13,7 @@ import { getUserApprovedGrade, getUserDivisionGrades } from '@/lib/schoolStructu
 import { getAvailableRoles, hasApprovedRole } from '@/lib/roleUtils';
 import CommunityExceptionsQuickAction from '@/components/dashboard/CommunityExceptionsQuickAction';
 import PositiveReinforcementDialog from '@/components/dashboard/PositiveReinforcementDialog';
+import QuickSheetSelect from '@/components/dashboard/QuickSheetSelect';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 import { getLocalDateString } from '@/lib/attendanceScope';
 
@@ -639,24 +640,22 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
             )}
 
             {action === 'discipline' && <>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="space-y-1">
+              <div className="grid gap-3 sm:grid-cols-2" dir="rtl">
+                <div className="space-y-1 text-right" dir="rtl">
                   <Label>חומרה</Label>
-                  <Select onValueChange={v => set('severity', v)}>
-                    <SelectTrigger><SelectValue placeholder="בחר" /></SelectTrigger>
-                    <SelectContent>
-                      {['קלה', 'בינונית', 'חמורה'].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <QuickSheetSelect
+                    value={form.severity || 'קלה'}
+                    options={['קלה', 'בינונית', 'חמורה']}
+                    onChange={v => set('severity', v)}
+                  />
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-1 text-right" dir="rtl">
                   <Label>קטגוריה</Label>
-                  <Select onValueChange={v => set('category', v)}>
-                    <SelectTrigger><SelectValue placeholder="בחר" /></SelectTrigger>
-                    <SelectContent>
-                      {['התנהגות', 'למידה', 'נוכחות', 'תקשורת', 'אחר'].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <QuickSheetSelect
+                    value={form.category || 'התנהגות'}
+                    options={['התנהגות', 'למידה', 'נוכחות', 'תקשורת', 'אחר']}
+                    onChange={v => set('category', v)}
+                  />
                 </div>
               </div>
               <div className="space-y-1">
