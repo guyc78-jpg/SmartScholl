@@ -20,22 +20,21 @@ import NowNextCard from '@/components/schedule/NowNextCard';
 import { loadBellSchedule, getTodayDayType, HEBREW_DAY_NAMES, getNowAndNext } from '@/lib/bellSchedule';
 import { autoFixSubjectColors, ensureSubjectForName, loadAndNormalizeSubjects, subjectMapById } from '@/lib/scheduleSubjects';
 
-// Build a full list of lesson rows from the bell schedule, falling back to 1..12 if needed.
+// Build the weekly rows from the bell schedule: lessons plus visible break rows.
 function buildPeriodRows(bellPeriods) {
-  const lessons = (bellPeriods || []).filter(p => p.kind === 'lesson').sort((a, b) => a.period - b.period);
-  if (lessons.length === 0) {
-    return Array.from({ length: 12 }, (_, i) => ({ period: i + 1, start_time: '', end_time: '', label: `שיעור ${i + 1}` }));
+  const visibleRows = (bellPeriods || [])
+    .filter(p => p.kind === 'lesson' || p.kind === 'break')
+    .sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''));
+
+  if (visibleRows.length === 0) {
+    return Array.from({ length: 12 }, (_, i) => ({ kind: 'lesson', period: i + 1, start_time: '', end_time: '', label: `שיעור ${i + 1}` }));
   }
-  // Ensure we always render up to max period (typically 12), even if some are missing
-  const max = Math.max(12, lessons[lessons.length - 1].period);
-  const map = new Map(lessons.map(l => [l.period, l]));
-  return Array.from({ length: max }, (_, i) => {
-    const n = i + 1;
-    const found = map.get(n);
-    return found
-      ? { period: n, start_time: found.start_time, end_time: found.end_time, label: found.label || `שיעור ${n}` }
-      : { period: n, start_time: '', end_time: '', label: `שיעור ${n}` };
-  });
+
+  return visibleRows.map((row, index) => ({
+    ...row,
+    row_key: row.kind === 'break' ? `break-${row.start_time || index}` : `lesson-${row.period || index}`,
+    label: row.label || (row.kind === 'break' ? 'הפסקה' : `שיעור ${row.period}`),
+  }));
 }
 
 export default function Schedule({ role = 'homeroom_teacher', user }) {
@@ -60,7 +59,7 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
   // Update current-period highlight every 30s
   useEffect(() => {
     if (periods.length === 0) return;
-    const fullPeriods = periods.filter(p => p.start_time).map(p => ({ ...p, kind: 'lesson' }));
+    const fullPeriods = periods.filter(p => p.start_time);
     const tick = () => {
       const { current } = getNowAndNext(fullPeriods);
       setCurrentPeriod(current?.period || null);

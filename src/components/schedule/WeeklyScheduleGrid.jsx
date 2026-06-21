@@ -41,9 +41,28 @@ export default function WeeklyScheduleGrid({ periods, slotsByKey, todayDayName, 
           </thead>
           <tbody>
             {periods.map((p, rowIdx) => {
+              const isBreakRow = p.kind === 'break';
               const isCurrentRow = highlightDay && Number(currentPeriod) === Number(p.period);
+              if (isBreakRow) {
+                return (
+                  <tr key={p.row_key || `break-${p.start_time}-${rowIdx}`}>
+                    <td className="w-14 sm:w-16 border-b border-l border-border bg-secondary/10 p-1 align-middle text-center">
+                      <div className="flex min-h-[34px] flex-col items-center justify-center gap-0.5 px-0.5 sm:px-1">
+                        <div className="text-[10px] sm:text-xs font-extrabold text-secondary-foreground">הפסקה</div>
+                        {p.start_time && <div className="force-ltr text-[9px] sm:text-[10px] font-bold text-foreground/80">{p.start_time}</div>}
+                      </div>
+                    </td>
+                    <td colSpan={DAYS.length} className="border-b border-border bg-secondary/10 px-2 py-1 text-center align-middle">
+                      <div className="flex min-h-[34px] items-center justify-center gap-2 rounded-lg border border-secondary/20 bg-secondary/10 text-center text-xs font-bold text-secondary-foreground" dir="rtl">
+                        <span>{p.label || 'הפסקה'}</span>
+                        {p.start_time && p.end_time && <span className="force-ltr text-[11px] font-semibold text-muted-foreground">{p.start_time}–{p.end_time}</span>}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              }
               return (
-                <tr key={p.period}>
+                <tr key={p.row_key || p.period}>
                   <td
                     className={cn(
                       'w-14 sm:w-16 font-bold border-b border-l border-border align-middle p-0',
