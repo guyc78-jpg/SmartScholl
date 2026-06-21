@@ -1,6 +1,204 @@
 {
-  "name": "school_support_agent",
   "description": "\u05e1\u05d5\u05db\u05df \u05ea\u05de\u05d9\u05db\u05d4 \u05db\u05dc\u05dc\u05d9 \u05dc\u05de\u05e9\u05ea\u05de\u05e9\u05d9 \u05d4\u05d0\u05e4\u05dc\u05d9\u05e7\u05e6\u05d9\u05d4, \u05d4\u05de\u05e1\u05d9\u05d9\u05e2 \u05d1\u05d4\u05d1\u05e0\u05ea \u05e0\u05ea\u05d5\u05e0\u05d9 \u05d1\u05d9\u05ea \u05d4\u05e1\u05e4\u05e8, \u05e0\u05d9\u05d5\u05d5\u05d8 \u05d1\u05de\u05e2\u05e8\u05db\u05ea, \u05d4\u05e1\u05d1\u05e8 \u05de\u05d9\u05d3\u05e2 \u05d5\u05ea\u05de\u05d9\u05db\u05d4 \u05ea\u05e4\u05e2\u05d5\u05dc\u05d9\u05ea \u05d1\u05e2\u05d1\u05e8\u05d9\u05ea.",
   "instructions": "\u05d0\u05ea\u05d4 \u05e1\u05d5\u05db\u05df \u05ea\u05de\u05d9\u05db\u05d4 \u05db\u05dc\u05dc\u05d9 \u05d1\u05d0\u05e4\u05dc\u05d9\u05e7\u05e6\u05d9\u05d9\u05ea \u05e0\u05d9\u05d4\u05d5\u05dc \u05d1\u05d9\u05ea \u05e1\u05e4\u05e8 \u05d1\u05e2\u05d1\u05e8\u05d9\u05ea. \u05d3\u05d1\u05e8 \u05ea\u05de\u05d9\u05d3 \u05d1\u05e2\u05d1\u05e8\u05d9\u05ea, \u05d1\u05d8\u05d5\u05df \u05de\u05e7\u05e6\u05d5\u05e2\u05d9, \u05d1\u05e8\u05d5\u05e8, \u05e1\u05d1\u05dc\u05e0\u05d9 \u05d5\u05d7\u05dd. \u05e2\u05d6\u05d5\u05e8 \u05dc\u05de\u05e9\u05ea\u05de\u05e9\u05d9\u05dd \u05dc\u05d4\u05d1\u05d9\u05df \u05e0\u05ea\u05d5\u05e0\u05d9\u05dd, \u05dc\u05de\u05e6\u05d5\u05d0 \u05de\u05d9\u05d3\u05e2, \u05dc\u05d4\u05e1\u05d1\u05d9\u05e8 \u05de\u05e6\u05d1 \u05ea\u05dc\u05de\u05d9\u05d3\u05d9\u05dd, \u05db\u05d9\u05ea\u05d5\u05ea, \u05e0\u05d5\u05db\u05d7\u05d5\u05ea, \u05de\u05e9\u05d9\u05de\u05d5\u05ea, \u05de\u05d1\u05d7\u05e0\u05d9\u05dd, \u05d4\u05d5\u05d3\u05e2\u05d5\u05ea, \u05de\u05e2\u05d5\u05e8\u05d1\u05d5\u05ea \u05d7\u05d1\u05e8\u05ea\u05d9\u05ea, \u05de\u05e9\u05de\u05e2\u05ea, \u05e9\u05d9\u05d7\u05d5\u05ea, \u05d4\u05e8\u05e9\u05d0\u05d5\u05ea \u05d5\u05ea\u05e4\u05e2\u05d5\u05dc \u05db\u05dc\u05dc\u05d9 \u05e9\u05dc \u05d4\u05de\u05e2\u05e8\u05db\u05ea. \u05e9\u05de\u05d5\u05e8 \u05e2\u05dc \u05e4\u05e8\u05d8\u05d9\u05d5\u05ea \u05d5\u05e1\u05d5\u05d3\u05d9\u05d5\u05ea: \u05d4\u05e6\u05d2 \u05d0\u05d5 \u05e1\u05db\u05dd \u05e8\u05e7 \u05de\u05d9\u05d3\u05e2 \u05e9\u05d4\u05de\u05e9\u05ea\u05de\u05e9 \u05de\u05d5\u05e8\u05e9\u05d4 \u05dc\u05e8\u05d0\u05d5\u05ea \u05d3\u05e8\u05da \u05db\u05dc\u05d9 \u05d4\u05e0\u05ea\u05d5\u05e0\u05d9\u05dd \u05e9\u05e0\u05d9\u05ea\u05e0\u05d5 \u05dc\u05da. \u05d0\u05dc \u05ea\u05de\u05e6\u05d9\u05d0 \u05e0\u05ea\u05d5\u05e0\u05d9\u05dd \u05d0\u05dd \u05d0\u05d9\u05e0\u05dd \u05e7\u05d9\u05d9\u05de\u05d9\u05dd. \u05db\u05d0\u05e9\u05e8 \u05de\u05d9\u05d3\u05e2 \u05d7\u05e1\u05e8, \u05d0\u05de\u05d5\u05e8 \u05d6\u05d0\u05ea \u05d1\u05d1\u05d9\u05e8\u05d5\u05e8 \u05d5\u05d4\u05e6\u05e2 \u05e4\u05e2\u05d5\u05dc\u05d4 \u05d4\u05d1\u05d0\u05d4. \u05d0\u05dc \u05ea\u05d1\u05e6\u05e2 \u05e4\u05e2\u05d5\u05dc\u05d5\u05ea \u05de\u05d7\u05d9\u05e7\u05d4 \u05d0\u05d5 \u05e9\u05d9\u05e0\u05d5\u05d9 \u05e0\u05ea\u05d5\u05e0\u05d9\u05dd; \u05d4\u05e1\u05d5\u05db\u05df \u05de\u05d9\u05d5\u05e2\u05d3 \u05dc\u05ea\u05de\u05d9\u05db\u05d4, \u05d4\u05e1\u05d1\u05e8 \u05d5\u05e7\u05e8\u05d9\u05d0\u05d4 \u05d1\u05dc\u05d1\u05d3. \u05e9\u05de\u05d5\u05e8 \u05e2\u05dc \u05e0\u05d9\u05e1\u05d5\u05d7 \u05e7\u05e6\u05e8 \u05d5\u05d1\u05e8\u05d5\u05e8 \u05d1\u05de\u05d5\u05d1\u05d9\u05d9\u05dc, \u05e2\u05dd \u05e0\u05e7\u05d5\u05d3\u05d5\u05ea \u05de\u05e1\u05d5\u05d3\u05e8\u05d5\u05ea \u05db\u05e9\u05de\u05ea\u05d0\u05d9\u05dd.",
-  "tool_configs": []
+  "tool_configs": [
+    {
+      "entity_name": "Student",
+      "allowed_operations": [
+        "read"
+      ]
+    },
+    {
+      "entity_name": "ClassRoom",
+      "allowed_operations": [
+        "read"
+      ]
+    },
+    {
+      "entity_name": "AttendanceRecord",
+      "allowed_operations": [
+        "read"
+      ]
+    },
+    {
+      "entity_name": "ScheduleSlot",
+      "allowed_operations": [
+        "read"
+      ]
+    },
+    {
+      "entity_name": "SchoolSubject",
+      "allowed_operations": [
+        "read"
+      ]
+    },
+    {
+      "entity_name": "Exam",
+      "allowed_operations": [
+        "read"
+      ]
+    },
+    {
+      "entity_name": "ExamGradeReport",
+      "allowed_operations": [
+        "read"
+      ]
+    },
+    {
+      "entity_name": "ExamCompletion",
+      "allowed_operations": [
+        "read"
+      ]
+    },
+    {
+      "entity_name": "Task",
+      "allowed_operations": [
+        "read"
+      ]
+    },
+    {
+      "entity_name": "Announcement",
+      "allowed_operations": [
+        "read"
+      ]
+    },
+    {
+      "entity_name": "AnnouncementRead",
+      "allowed_operations": [
+        "read"
+      ]
+    },
+    {
+      "entity_name": "DisciplineEvent",
+      "allowed_operations": [
+        "read"
+      ]
+    },
+    {
+      "entity_name": "Communication",
+      "allowed_operations": [
+        "read"
+      ]
+    },
+    {
+      "entity_name": "ScheduledConversation",
+      "allowed_operations": [
+        "read"
+      ]
+    },
+    {
+      "entity_name": "TeacherNote",
+      "allowed_operations": [
+        "read"
+      ]
+    },
+    {
+      "entity_name": "CommunityServiceReport",
+      "allowed_operations": [
+        "read"
+      ]
+    },
+    {
+      "entity_name": "StudentAccommodation",
+      "allowed_operations": [
+        "read"
+      ]
+    },
+    {
+      "entity_name": "SmartAlert",
+      "allowed_operations": [
+        "read"
+      ]
+    },
+    {
+      "entity_name": "UrgentFlag",
+      "allowed_operations": [
+        "read"
+      ]
+    },
+    {
+      "entity_name": "TreatmentCase",
+      "allowed_operations": [
+        "read"
+      ]
+    },
+    {
+      "entity_name": "ParentContact",
+      "allowed_operations": [
+        "read"
+      ]
+    },
+    {
+      "entity_name": "FamilySensitiveInfo",
+      "allowed_operations": [
+        "read"
+      ]
+    },
+    {
+      "entity_name": "PerformanceReview",
+      "allowed_operations": [
+        "read"
+      ]
+    },
+    {
+      "entity_name": "ApprovedUser",
+      "allowed_operations": [
+        "read"
+      ]
+    },
+    {
+      "entity_name": "ApprovedStaff",
+      "allowed_operations": [
+        "read"
+      ]
+    },
+    {
+      "entity_name": "ApprovalRequest",
+      "allowed_operations": [
+        "read"
+      ]
+    },
+    {
+      "entity_name": "BellSchedule",
+      "allowed_operations": [
+        "read"
+      ]
+    },
+    {
+      "entity_name": "PushNotificationQueue",
+      "allowed_operations": [
+        "read"
+      ]
+    },
+    {
+      "entity_name": "PushSubscription",
+      "allowed_operations": [
+        "read"
+      ]
+    },
+    {
+      "entity_name": "ActivityLog",
+      "allowed_operations": [
+        "read"
+      ]
+    }
+  ],
+  "context_files": [],
+  "app_user_connector_configs": [],
+  "selected_skill_names": [],
+  "selected_workspace_skill_ids": [],
+  "model": "automatic",
+  "whatsapp_greeting": null,
+  "telegram_greeting": null,
+  "line_greeting": null,
+  "memory_config": {
+    "enabled": true,
+    "scope": "both",
+    "include_other_conversation_context": false,
+    "instructions": null
+  },
+  "voice_config": {
+    "voice_id": null
+  },
+  "name": "school_support_agent"
 }

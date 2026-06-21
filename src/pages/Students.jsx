@@ -34,6 +34,7 @@ import {
 import AddStudentModal from '@/components/students/AddStudentModal';
 import ImportStudentsModal from '@/components/students/ImportStudentsModal';
 import ParentConversationDialog from '@/components/student/ParentConversationDialog';
+import QuickPerformanceReviewDialog from '@/components/students/QuickPerformanceReviewDialog';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 import { ACCOMMODATION_TYPES, activeAccommodationLabels } from '@/lib/accommodations';
 import { buildClassIdentityMap, getClassDisplayById } from '@/lib/classIdentity';
@@ -89,6 +90,7 @@ export default function Students({ role }) {
   const [showImport, setShowImport] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedConversationStudent, setSelectedConversationStudent] = useState(null);
+  const [selectedReviewStudent, setSelectedReviewStudent] = useState(null);
   const [classRooms, setClassRooms] = useState([]);
   const [accommodationRecords, setAccommodationRecords] = useState({});
   const [deleting, setDeleting] = useState(false);
@@ -302,6 +304,7 @@ export default function Students({ role }) {
                   communityPct={communityPct}
                   classIdentityLabel={getClassDisplayById(classIdentityMap, student.class_id, student.class_name)}
                   onParentConversation={setSelectedConversationStudent}
+                  onPerformanceReview={setSelectedReviewStudent}
                 />
               </motion.div>
             ))}
@@ -322,6 +325,11 @@ export default function Students({ role }) {
         open={!!selectedConversationStudent}
         onOpenChange={(open) => !open && setSelectedConversationStudent(null)}
         student={selectedConversationStudent}
+      />
+      <QuickPerformanceReviewDialog
+        open={!!selectedReviewStudent}
+        onOpenChange={(open) => !open && setSelectedReviewStudent(null)}
+        student={selectedReviewStudent}
       />
 
       <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>

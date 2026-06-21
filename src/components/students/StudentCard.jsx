@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import StatusBadge from '@/components/ui/StatusBadge';
-import { ChevronLeft, MessageSquare, Phone } from 'lucide-react';
+import { ChevronLeft, ClipboardCheck, MessageSquare, Phone } from 'lucide-react';
 import { formatStudentName } from '@/lib/studentName';
 
-export default function StudentCard({ student, communityPct, onParentConversation, classIdentityLabel = '' }) {
+export default function StudentCard({ student, communityPct, onParentConversation, onPerformanceReview, classIdentityLabel = '' }) {
   const avatarClass = student.status === 'דורש מעקב'
     ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
     : student.gender === 'נקבה'
@@ -47,6 +47,18 @@ export default function StudentCard({ student, communityPct, onParentConversatio
               >
                 <MessageSquare className="h-3 w-3 text-primary" />
                 הוסף שיחת הורה
+              </button>
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  onPerformanceReview(student);
+                }}
+                className="flex items-center gap-1 text-xs text-primary transition-colors hover:text-primary/80"
+              >
+                <ClipboardCheck className="h-3 w-3 text-primary" />
+                הערכת תפקוד
               </button>
             </div>
 
