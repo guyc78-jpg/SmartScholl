@@ -18,13 +18,46 @@ const normalizeDay = (value = '') => {
 };
 
 const normalizeClassName = (value = '') =>
-  String(value).replace(/["'`׳״]/g, '').replace(/\s+/g, '').trim();
+  String(value)
+    .replace(/["'`׳״']/g, '')
+    .replace(/\s+/g, '')
+    .replace(/יב/g, 'יב')
+    .replace(/יא/g, 'יא')
+    .replace(/י"/g, 'י')
+    .trim();
+
+// Build multiple variants of a class name to try matching against lesson text
+const classNameVariants = (name = '') => {
+  const clean = String(name).trim();
+  const variants = new Set([
+    clean,
+    normalizeClassName(clean),
+    clean.replace(/׳/g, "'").replace(/"/g, '"'),
+    clean.replace(/['"׳״`]/g, ''),
+    clean.replace(/\s+/g, ''),
+  ]);
+  // Also try replacing Hebrew abbreviation markers: י"ב → יב, י׳ב → יב etc.
+  variants.add(clean.replace(/י["׳]ב/g, 'יב').replace(/י["׳]א/g, 'יא'));
+  return [...variants].filter(Boolean);
+};
 
 const lessonBelongsToClass = (lessonClasses = '', targetClassName = '') => {
   if (!targetClassName) return true;
-  const target = normalizeClassName(targetClassName);
-  if (!target) return true;
-  return normalizeClassName(lessonClasses).includes(target);
+  const haystack = String(lessonClasses);
+  const haystackNorm = normalizeClassName(haystack);
+  for (const variant of classNameVariants(targetClassName)) {
+    if (haystackNorm.includes(normalizeClassName(variant))) return true;
+    if (haystack.includes(variant)) return true;
+  }
+  // Fallback: try matching just the numeric part (e.g. "8" in "יב 8")
+  const numMatch = targetClassName.match(/(\d+)\s*$/);
+  if (numMatch) {
+    const grade = targetClassName.replace(/\s*\d+\s*$/, '').trim();
+    const gradeNorm = normalizeClassName(grade);
+    const num = numMatch[1];
+    if (gradeNorm && haystackNorm.includes(gradeNorm) && haystackNorm.includes(num)) return true;
+  }
+  return false;
 };
 
 const emptyRow = { day: 'ראשון', period: 1, start_time: '', end_time: '', subject: '', teacher: '', room: '', notes: '' };
