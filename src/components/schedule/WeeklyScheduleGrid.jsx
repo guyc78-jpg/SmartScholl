@@ -1,7 +1,8 @@
-import { Plus, MapPin, User } from 'lucide-react';
+import { Plus, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { colorToSubjectStyle } from '@/lib/scheduleSubjects';
+import { getUnitLabel, groupSlotsByBaseSubject, stripUnitFromRoom } from '@/lib/scheduleLessonGrouping';
 
 // Weekly schedule grid — Sun → Fri, periods 1..N as rows.
 // Slim, professional, mobile-friendly. Highlights today + current period.
@@ -138,24 +139,31 @@ function Cell({ slots = [], isToday, isNow, canEdit, onClick, subjectsById }) {
     >
       {hasSlots ? (
         <div className="px-0.5 sm:px-1 py-1 min-h-[56px] sm:min-h-[64px] flex flex-col items-stretch justify-center gap-1 text-center">
-          {slots.map((slot, index) => {
-            const subjectDefinition = slot.subject_id ? subjectsById[slot.subject_id] : null;
+          {groupSlotsByBaseSubject(slots).map((lessonGroup, index) => {
+            const firstSlot = lessonGroup.slots[0];
+            const subjectDefinition = firstSlot?.subject_id ? subjectsById[firstSlot.subject_id] : null;
             const subjectStyle = colorToSubjectStyle(subjectDefinition?.color);
-            const group = slot?.notes?.match(/^\[קבוצה: ([^\]]+)\]/)?.[1];
             return (
-              <div key={slot.id || index} className={cn('min-w-0', index > 0 && 'border-t border-border/50 pt-1')}>
-                <div className="text-[10px] sm:text-sm font-extrabold leading-tight w-full line-clamp-2" style={{ color: subjectStyle.color }}>
-                  {subjectDefinition?.name || slot.subject}
+              <div key={`${lessonGroup.subject}-${index}`} className={cn('min-w-0 text-right', index > 0 && 'border-t border-border/50 pt-1')} dir="rtl">
+                <div className="text-[10px] sm:text-sm font-extrabold leading-tight w-full line-clamp-1" style={{ color: subjectStyle.color }}>
+                  {lessonGroup.subject}
                 </div>
-                {slot.teacher && (
-                  <div className="text-[8px] sm:text-[9px] text-muted-foreground leading-tight truncate w-full inline-flex items-center justify-center gap-0.5">
-                    <User className="w-2 h-2 flex-shrink-0" />
-                    <span className="truncate">{slot.teacher}</span>
-                  </div>
-                )}
-                <div className="flex items-center justify-center gap-0.5 text-[9px] text-muted-foreground/90 leading-tight">
-                  {slot.room && <span className="inline-flex items-center gap-0.5"><MapPin className="w-2 h-2" />{slot.room}</span>}
-                  {group && <span className="inline-flex items-center gap-0.5">· {group}</span>}
+                <div className="mt-0.5 space-y-0.5">
+                  {lessonGroup.slots.map((slot, unitIndex) => {
+                    const unitLabel = getUnitLabel(slot);
+                    const room = stripUnitFromRoom(slot.room, unitLabel);
+                    const group = slot?.notes?.match(/^\[קבוצה: ([^\]]+)\]/)?.[1];
+                    return (
+                      <div key={slot.id || unitIndex} className="flex items-center justify-start gap-1 text-[8px] sm:text-[9px] text-muted-foreground leading-tight min-w-0">
+                        <User className="w-2 h-2 shrink-0" />
+                        <span className="truncate">
+                          {unitLabel && <span className="font-semibold text-foreground/80">{unitLabel} – </span>}
+                          {slot.teacher || 'ללא מורה'}
+                          {(room || group) && <span className="text-muted-foreground/80"> · {room || group}</span>}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             );

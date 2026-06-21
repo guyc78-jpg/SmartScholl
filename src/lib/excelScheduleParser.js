@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx';
+import { getBaseSubjectName, getUnitLabel } from '@/lib/scheduleLessonGrouping';
 
 export const SCHEDULE_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי'];
 
@@ -67,14 +68,18 @@ function parseLessonBlock(block, sourceRow) {
   const lines = originalText.split('\n').map(line => fixScheduleText(line)).filter(Boolean);
   if (lines.length < 2) return null;
 
+  const rawSubject = lines[0];
+  const roomText = lines.slice(2).join(' · ');
+  const unitLabel = getUnitLabel({ subject: rawSubject, room: roomText, original_text: originalText });
+
   return {
     day: '',
     period: 1,
     start_time: '',
     end_time: '',
-    subject: lines[0],
+    subject: getBaseSubjectName(rawSubject),
     teacher: lines[1],
-    room: lines.slice(2).join(' · '),
+    room: [unitLabel, roomText].filter(Boolean).join(' · '),
     notes: '',
     original_text: originalText,
     source_row: sourceRow,
