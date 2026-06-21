@@ -103,9 +103,9 @@ export default function QuickPerformanceReviewDialog({ student, open, onOpenChan
             dir="rtl"
           />
 
-          <div className="flex justify-start gap-2">
-            <Button onClick={saveReview} disabled={saving}>{saving ? 'שומר...' : 'שמור הערכה'}</Button>
+          <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>ביטול</Button>
+            <Button onClick={saveReview} disabled={saving}>{saving ? 'שומר...' : 'שמור הערכה'}</Button>
           </div>
         </div>
       </DialogContent>

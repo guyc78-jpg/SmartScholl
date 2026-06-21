@@ -96,7 +96,7 @@ export default function Tasks({ role = 'homeroom_teacher', user }) {
         ? <EmptyState icon={CheckSquare} title="אין משימות" description="הוסף משימה ראשונה" action={<Button onClick={openAdd} className="gap-2"><Plus className="w-4 h-4"/>הוסף משימה</Button>} />
         : <div className="space-y-2">
           {filtered.map((task, i) => (
-            <motion.div key={task.id} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}>
+            <motion.div key={task.id} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.03 }}>
               <Card className={`p-3.5 transition-all ${task.status === 'בוצע' ? 'opacity-50' : ''} ${isOverdue(task) ? 'border-red-200 dark:border-red-800/50' : ''}`}>
                 <div className="flex items-start gap-3">
                   <button onClick={() => toggleDone(task)}

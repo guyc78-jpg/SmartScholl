@@ -16,6 +16,8 @@ import { toast } from 'sonner';
 import { BarChart2, Plus, Edit, Trash2 } from 'lucide-react';
 import useDeleteConfirm from '@/hooks/useDeleteConfirm';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
+import { useAuth } from '@/lib/AuthContext';
+import { getUserApprovedClassId } from '@/lib/schoolStructure';
 
 const CATEGORIES = [
   { key: 'learning_habits', label: 'הרגלי למידה' },
@@ -57,12 +59,15 @@ export default function Performance({ role = 'homeroom_teacher' }) {
   const [form, setForm] = useState({ student_id: '', period: '', date: today, learning_habits: 3, participation: 3, responsibility: 3, behavior: 3, social_functioning: 3, emotional_state: 3, notes: '' });
   const { confirmDelete, DeleteConfirm } = useDeleteConfirm();
 
+  const { user } = useAuth();
+  const classId = getUserApprovedClassId(user, CLASS_ID);
+
   useEffect(() => { loadData(); }, []);
   async function loadData() {
     setLoading(true);
     const [rvs, sts] = await Promise.all([
-      base44.entities.PerformanceReview.filter({ class_id: CLASS_ID }),
-      base44.entities.Student.filter({ class_id: CLASS_ID }),
+      base44.entities.PerformanceReview.filter({ class_id: classId }),
+      base44.entities.Student.filter({ class_id: classId }),
     ]);
     setReviews(rvs.sort((a,b) => b.date.localeCompare(a.date)));
     setStudents(sts);
@@ -76,7 +81,7 @@ export default function Performance({ role = 'homeroom_teacher' }) {
   async function handleSave() {
     if (!form.student_id || !form.period) { toast.error('יש לבחור תלמיד ותקופה'); return; }
     const student = students.find(s => s.id === form.student_id);
-    const data = { ...form, student_name: student ? formatStudentName(student) : '', class_id: CLASS_ID };
+    const data = { ...form, student_name: student ? formatStudentName(student) : '', class_id: classId };
     try {
       if (editReview) { await base44.entities.PerformanceReview.update(editReview.id, data); toast.success('עודכן'); }
       else { await base44.entities.PerformanceReview.create(data); toast.success('הערכה נשמרה!'); }

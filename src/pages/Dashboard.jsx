@@ -56,6 +56,9 @@ export default function Dashboard({ user, role, initialData }) {
    const [selectedDisciplineEvent, setSelectedDisciplineEvent] = useState(null);
    const [attendanceFilterOpen, setAttendanceFilterOpen] = useState(false);
    const [dashboardClassRoom, setDashboardClassRoom] = useState(null);
+   const [upcomingConversations, setUpcomingConversations] = useState([]);
+   const [allAttRecords, setAllAttRecords] = useState([]);
+   const [performanceReviews, setPerformanceReviews] = useState([]);
    const loadTimerRef = useRef(null);
   const isLoadingDataRef = useRef(false);
   const pendingReloadRef = useRef(false);
@@ -223,7 +226,6 @@ export default function Dashboard({ user, role, initialData }) {
   const watchStudents = students.filter(s => s.status === 'דורש מעקב');
 
   // Upcoming scheduled conversations (for internal notification center)
-  const [upcomingConversations, setUpcomingConversations] = useState([]);
   useEffect(() => {
     let cancelled = false;
     base44.entities.ScheduledConversation.filter({ status: 'מתוכננת' }, '-date', 200)
@@ -248,8 +250,6 @@ export default function Dashboard({ user, role, initialData }) {
   }, [user?.id, students]);
 
   // Class attendance pattern alerts
-  const [allAttRecords, setAllAttRecords] = useState([]);
-  const [performanceReviews, setPerformanceReviews] = useState([]);
   const attendanceAlertStudents = students.filter(s => {
     const absences = allAttRecords.filter(r => r.student_id === s.id && ['נעדר/ת'].includes(r.status)).length;
     const lates    = allAttRecords.filter(r => r.student_id === s.id && ['מאחר/ת'].includes(r.status)).length;
@@ -380,8 +380,6 @@ export default function Dashboard({ user, role, initialData }) {
         />
       )}
 
-
-
       {/* Watch Students Section — identify students needing attention */}
       {(isActiveHomeroom || isActiveAdmin || isActiveCoordinator) && (
         <WatchStudentsSection
@@ -392,8 +390,6 @@ export default function Dashboard({ user, role, initialData }) {
           classId={classId}
         />
       )}
-
-
 
       {/* Tasks Card */}
       {openTasks > 0 && (
