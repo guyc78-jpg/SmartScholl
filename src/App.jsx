@@ -199,11 +199,10 @@ const AuthenticatedApp = () => {
 
     let cancelled = false;
     const runBootstrap = async () => {
-      setBootstrap({ status: 'loading', message: 'טוענים משתמש, הרשאות ושיוכים', data: null, error: '' });
+      setBootstrap({ status: 'loading', message: 'טוענים משתמש והרשאות', data: null, error: '' });
       try {
         validateRequiredBootstrapData(user, bootRole, bootApprovedRoles);
-        const dashboard = bootStaff ? await loadDashboardBootstrapData(user, bootPageRole) : null;
-        if (!cancelled) setBootstrap({ status: 'ready', message: 'הכול מוכן', data: { dashboard }, error: '' });
+        if (!cancelled) setBootstrap({ status: 'ready', message: 'הכול מוכן', data: { dashboard: null }, error: '' });
       } catch (error) {
         if (!cancelled) setBootstrap({ status: 'error', message: '', data: null, error: error.message || 'אירעה שגיאה בטעינת נתוני החובה.' });
       }

@@ -28,10 +28,10 @@ export default function PremiumInitialLoader({ status = 'מכינים עבורך
         const ceiling = target >= 100 ? 100 : Math.min(96, target + 18);
         if (current >= ceiling) return current;
         const gap = ceiling - current;
-        const step = Math.max(0.45, Math.min(4.8, gap * 0.12));
+        const step = target >= 100 ? Math.max(8, gap * 0.65) : Math.max(1.8, Math.min(10, gap * 0.28));
         return Math.min(ceiling, current + step);
       });
-    }, 90);
+    }, 50);
     return () => window.clearInterval(timer);
   }, [hasError, target]);
 
@@ -41,7 +41,7 @@ export default function PremiumInitialLoader({ status = 'מכינים עבורך
   useEffect(() => {
     if (hasError || !onComplete) return;
     if (target >= 100 && progress >= 100) {
-      const timer = window.setTimeout(() => onComplete(), 260);
+      const timer = window.setTimeout(() => onComplete(), 80);
       return () => window.clearTimeout(timer);
     }
   }, [hasError, onComplete, target, progress]);
