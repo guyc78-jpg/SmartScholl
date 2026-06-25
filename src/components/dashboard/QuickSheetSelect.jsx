@@ -111,13 +111,13 @@ export default function QuickSheetSelect({ value, options, optionLabels = {}, pl
         ref={triggerRef}
         type="button"
         onClick={() => setOpen(prev => !prev)}
-        className="flex h-10 w-full items-center justify-start gap-2 rounded-md border border-input bg-background px-3 text-right text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+        className="flex h-10 w-full items-center justify-between gap-2 rounded-md border border-input bg-background px-3 text-right text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
         aria-haspopup="listbox"
         aria-expanded={open}
         dir="rtl"
       >
-        <ChevronDown className={cn('h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform', open && 'rotate-180')} />
         <span className={cn('min-w-0 flex-1 truncate text-right', !value && 'text-muted-foreground')}>{selectedLabel}</span>
+        <ChevronDown className={cn('h-4 w-4 flex-shrink-0 text-muted-foreground transition-transform', open && 'rotate-180')} />
       </button>
       {menu}
     </>
