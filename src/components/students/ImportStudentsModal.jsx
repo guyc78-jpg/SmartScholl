@@ -3,12 +3,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
-import { Upload, FileText, Check, AlertCircle } from 'lucide-react';
+import { Upload, FileText, Check } from 'lucide-react';
 import SelectedFileNotice from '@/components/import/SelectedFileNotice';
 import { parseStudentsWorksheetRows } from '@/lib/studentImport';
 import { formatStudentName } from '@/lib/studentName';
 import { findClassRoomByName } from '@/lib/classAssignment';
 import useDeleteConfirm from '@/hooks/useDeleteConfirm';
+import { validateFileSize } from '@/lib/fileValidation';
 
 function parseGradeFromClassName(className = '') {
   const clean = String(className).replace(/[\s״"׳']/g, '');
@@ -61,6 +62,8 @@ export default function ImportStudentsModal({ classId, onClose, onSuccess }) {
     const file = e.target.files[0];
     if (!file) return;
     try {
+      const fileError = validateFileSize(file);
+      if (fileError) { setError(fileError); return; }
       setFileName(file.name);
       setPreview([]);
       setError('');

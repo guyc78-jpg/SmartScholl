@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, AlertTriangle, Clock, MessageSquare, CheckSquare, FileText, Star, Flag } from 'lucide-react';
-import StatusBadge from '@/components/ui/StatusBadge';
+import { Users, AlertTriangle, Clock, MessageSquare, CheckSquare, Star, Flag } from 'lucide-react';
 import WatchStudentsList from '@/components/grade/WatchStudentsList';
 import AttendanceSummary from '@/components/grade/AttendanceSummary';
 import DisciplineList from '@/components/grade/DisciplineList';

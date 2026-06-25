@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CheckCircle2, ImagePlus, Save, UserRound } from 'lucide-react';
 import { toast } from 'sonner';
+import { MAX_IMAGE_FILE_BYTES, validateFileSize } from '@/lib/fileValidation';
 
 const AVATARS = [
   { value: 'male_student', label: 'תלמיד', icon: '👨‍🎓' },
@@ -36,6 +37,8 @@ export default function StudentProfileEditCard({ student, user, onSaved }) {
   const handleUpload = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    const fileError = validateFileSize(file, MAX_IMAGE_FILE_BYTES);
+    if (fileError) { toast.error(fileError); event.target.value = ''; return; }
     setUploading(true);
     const { file_url } = await base44.integrations.Core.UploadFile({ file });
     set({ photo_url: file_url, image_mode: 'photo' });

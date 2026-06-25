@@ -1,5 +1,36 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
+const MAX_FILE_BYTES = 5 * 1024 * 1024;
+const rateLimitBuckets = new Map<string, number[]>();
+
+function rateLimit(key: string, limit = 10, windowMs = 60_000) {
+  const now = Date.now();
+  const recent = (rateLimitBuckets.get(key) || []).filter(timestamp => now - timestamp < windowMs);
+  if (recent.length >= limit) return false;
+  recent.push(now);
+  rateLimitBuckets.set(key, recent);
+  return true;
+}
+
+function isBlockedHost(hostname = '') {
+  const host = hostname.toLowerCase();
+  return host === 'localhost'
+    || host === '0.0.0.0'
+    || host === '127.0.0.1'
+    || host === '::1'
+    || host.startsWith('10.')
+    || host.startsWith('192.168.')
+    || /^172\.(1[6-9]|2\d|3[0-1])\./.test(host)
+    || /^169\.254\./.test(host);
+}
+
+function validateFileUrl(fileUrl = '') {
+  const url = new URL(fileUrl);
+  if (url.protocol !== 'https:') throw new Error('Only HTTPS file URLs are allowed');
+  if (isBlockedHost(url.hostname)) throw new Error('File URL host is not allowed');
+  return url.toString();
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -7,6 +38,9 @@ Deno.serve(async (req) => {
     
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    if (!rateLimit(user.email || user.id || 'anonymous')) {
+      return Response.json({ error: 'Too many requests' }, { status: 429 });
     }
 
     const body = await req.json();
@@ -16,13 +50,20 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'file_url required' }, { status: 400 });
     }
 
-    // Fetch file content
-    const fileResponse = await fetch(file_url);
+    const safeFileUrl = validateFileUrl(file_url);
+    const fileResponse = await fetch(safeFileUrl);
     if (!fileResponse.ok) {
       return Response.json({ error: 'Failed to fetch file' }, { status: 400 });
     }
+    const contentLength = Number(fileResponse.headers.get('content-length') || 0);
+    if (contentLength > MAX_FILE_BYTES) {
+      return Response.json({ error: 'File is too large' }, { status: 413 });
+    }
 
     const arrayBuffer = await fileResponse.arrayBuffer();
+    if (arrayBuffer.byteLength > MAX_FILE_BYTES) {
+      return Response.json({ error: 'File is too large' }, { status: 413 });
+    }
     const uint8Array = new Uint8Array(arrayBuffer);
 
     // Detect file type by extension or try to parse
@@ -45,7 +86,8 @@ Deno.serve(async (req) => {
       count: events.length
     });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('Function error:', error);
+    return Response.json({ error: 'Internal server error' }, { status: 500 });
   }
 });
 

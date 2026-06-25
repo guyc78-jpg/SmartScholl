@@ -2,15 +2,13 @@ import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import { CLASS_ID } from '@/lib/demoData';
 import PageHeader from '@/components/ui/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectTrigger, SelectContent, SelectItem } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { AlertTriangle, Plus, Filter, Search, Clock, CheckCircle2, AlertCircle, Archive, User, Calendar, FileText } from 'lucide-react';
+import { AlertTriangle, Search, Clock, CheckCircle2, AlertCircle, Archive, User, Calendar, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import StatusBadge from '@/components/ui/StatusBadge';
 import { formatStudentName } from '@/lib/studentName';
 
 const EVENT_TYPES = {

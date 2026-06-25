@@ -14,7 +14,7 @@ import StatusBadge from '@/components/ui/StatusBadge';
 import PageHeader from '@/components/ui/PageHeader';
 import EmptyState from '@/components/ui/EmptyState';
 import { toast } from 'sonner';
-import { Shield, Plus, Edit, Trash2, Filter } from 'lucide-react';
+import { Shield, Plus, Edit, Trash2 } from 'lucide-react';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 import { useAuth } from '@/lib/AuthContext';
 import { getUserHomeroomClassId, getUserApprovedClassId } from '@/lib/schoolStructure';

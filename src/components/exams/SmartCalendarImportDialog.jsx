@@ -17,6 +17,7 @@ import { parseWordCalendarFile, isWordFile } from '@/lib/wordCalendarParser';
 import { format } from 'date-fns';
 import useDeleteConfirm from '@/hooks/useDeleteConfirm';
 import { he } from 'date-fns/locale';
+import { validateFileSize } from '@/lib/fileValidation';
 
 const emptyRow = {
   title: '',
@@ -127,6 +128,8 @@ export default function SmartCalendarImportDialog({ open, onOpenChange, classId,
 
   const handleFile = async (file) => {
     if (!file) return;
+    const fileError = validateFileSize(file);
+    if (fileError) { setError(fileError); return; }
     setLoading(true);
     setError('');
     setRows([]);

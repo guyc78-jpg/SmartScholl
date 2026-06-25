@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Clock, LogOut, AlertTriangle, Lock, Mail } from 'lucide-react';
+import { Clock, LogOut, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 

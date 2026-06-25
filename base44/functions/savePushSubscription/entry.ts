@@ -40,6 +40,7 @@ Deno.serve(async (req) => {
     const created = await base44.asServiceRole.entities.PushSubscription.create(data);
     return Response.json({ ok: true, id: created.id, active: true });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('Function error:', error);
+    return Response.json({ error: 'Internal server error' }, { status: 500 });
   }
 });

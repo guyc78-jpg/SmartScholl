@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { AlertTriangle, Clock, UserX, ChevronLeft } from 'lucide-react';
+import { AlertTriangle, ChevronLeft } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';

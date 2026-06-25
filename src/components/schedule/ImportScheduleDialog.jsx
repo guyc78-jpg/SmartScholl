@@ -3,13 +3,14 @@ import * as XLSX from 'xlsx';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { AlertTriangle, FileUp, Loader2, ChevronDown } from 'lucide-react';
+import { AlertTriangle, FileUp, Loader2 } from 'lucide-react';
 import SelectedFileNotice from '@/components/import/SelectedFileNotice';
 import { base44 } from '@/api/base44Client';
 import { ensureSubjectForName, normalizeSubjectName } from '@/lib/scheduleSubjects';
 import useDeleteConfirm from '@/hooks/useDeleteConfirm';
 import { parseExcelScheduleFile } from '@/lib/excelScheduleParser';
 import ScheduleImportPreview from '@/components/schedule/ScheduleImportPreview';
+import { validateFileSize } from '@/lib/fileValidation';
 
 const DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי'];
 const PREVIEW_LIMIT = 10;
@@ -261,6 +262,8 @@ ${strict ? '6. אם נמצאו פחות מ-8 שיעורים, זה כמעט בו�
   const handleFileChange = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    const fileError = validateFileSize(file);
+    if (fileError) { setError(fileError); return; }
     setFileName(file.name); setRows([]); setDiagnostics(null); setError(''); setIsParsing(true); setShowAll(false);
     try {
       const isPdf = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';

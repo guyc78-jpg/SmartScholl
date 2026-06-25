@@ -9,6 +9,7 @@ import { ACCOMMODATION_TYPES, normalizeAccommodationList } from '@/lib/accommoda
 import SelectedFileNotice from '@/components/import/SelectedFileNotice';
 import { Upload, FileText, Trash2, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import { validateFileSize } from '@/lib/fileValidation';
 
 export default function ImportAccommodationsModal({ onClose, onSuccess }) {
   const fileInputRef = useRef(null);
@@ -22,6 +23,8 @@ export default function ImportAccommodationsModal({ onClose, onSuccess }) {
   async function handleFile(event) {
     const file = event.target.files?.[0];
     if (!file) return;
+    const fileError = validateFileSize(file);
+    if (fileError) { setError(fileError); return; }
     setLoading(true);
     setError('');
     setFileName(file.name);

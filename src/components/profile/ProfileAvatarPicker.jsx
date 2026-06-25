@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { CheckCircle2, ImagePlus, UserRound } from 'lucide-react';
 import { toast } from 'sonner';
+import { MAX_IMAGE_FILE_BYTES, validateFileSize } from '@/lib/fileValidation';
 
 const AVATAR_OPTIONS = [
   { value: 'male_teacher', label: 'מורה זכר', icon: '👨‍🏫' },
@@ -21,6 +22,8 @@ export default function ProfileAvatarPicker({ value, onChange }) {
   const handleUpload = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    const fileError = validateFileSize(file, MAX_IMAGE_FILE_BYTES);
+    if (fileError) { toast.error(fileError); event.target.value = ''; return; }
     setUploading(true);
     const result = await base44.integrations.Core.UploadFile({ file });
     update({ profile_photo_url: result.file_url, profile_image_mode: 'photo' });

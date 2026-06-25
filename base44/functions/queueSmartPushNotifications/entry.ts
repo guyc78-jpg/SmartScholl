@@ -402,6 +402,7 @@ Deno.serve(async (req) => {
     if (records.length) await base44.asServiceRole.entities.PushNotificationQueue.bulkCreate(records);
     return Response.json({ ok: true, queued: records.length, event_type: descriptor.event_type });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('Function error:', error);
+    return Response.json({ error: 'Internal server error' }, { status: 500 });
   }
 });

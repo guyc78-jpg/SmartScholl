@@ -1,6 +1,6 @@
 import { createClient } from '@base44/sdk';
 import { appParams } from '@/lib/app-params';
-import { setBase44AccessClaims, clearBase44AccessClaims } from '@/lib/accessGuard';
+import { createGuardedBase44Client, setBase44AccessClaims, clearBase44AccessClaims } from '@/lib/accessGuard';
 
 const { appId, token, functionsVersion, appBaseUrl, serverUrl } = appParams;
 
@@ -84,11 +84,12 @@ const entitiesProxy = new Proxy(rawBase44.entities, {
   }
 });
 
-// Emergency hotfix: keep the raw client for navigation performance, with a small direct-access block for sensitive accommodations.
-export const base44 = new Proxy(rawBase44, {
+const accommodationBlockedClient = new Proxy(rawBase44, {
   get(target, prop) {
     if (prop === 'entities') return entitiesProxy;
     return target[prop];
   }
 });
+
+export const base44 = createGuardedBase44Client(accommodationBlockedClient);
 export { setBase44AccessClaims, clearBase44AccessClaims };
