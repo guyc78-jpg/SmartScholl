@@ -41,6 +41,13 @@
     --sidebar-border: 45 18% 91%;
     --sidebar-ring: 161 84% 22%;
     --font-heebo: 'Heebo', sans-serif;
+    --liquid-surface: 255 255 255;
+    --liquid-surface-strong: 255 255 255;
+    --liquid-tint: 236 253 245;
+    --liquid-border: 255 255 255;
+    --liquid-shadow: 18 64 48;
+    --liquid-highlight: 255 255 255;
+    --liquid-blur: 18px;
     --app-bottom-nav-height: 72px;
     --app-mobile-overlay-bottom-space: calc(var(--app-bottom-nav-height) + env(safe-area-inset-bottom));
     --app-overlay-padding-bottom: calc(var(--app-mobile-overlay-bottom-space) + 16px);
@@ -80,6 +87,13 @@
     --sidebar-accent-foreground: 45 25% 94%;
     --sidebar-border: 200 14% 17%;
     --sidebar-ring: 161 60% 55%;
+    --liquid-surface: 21 32 36;
+    --liquid-surface-strong: 29 43 48;
+    --liquid-tint: 32 80 67;
+    --liquid-border: 255 255 255;
+    --liquid-shadow: 0 0 0;
+    --liquid-highlight: 255 255 255;
+    --liquid-blur: 20px;
   }
 }
 
@@ -102,32 +116,132 @@
 }
 
 @layer components {
-  /* Subtle 3D effect & soft shadow for all card-like blocks */
+  /* Apple Liquid Glass visual layer — global, non-structural, RTL-safe */
   .bg-card,
+  .bg-popover,
+  .bg-sidebar,
   [class*="rounded-xl"].border,
   [class*="rounded-2xl"].border,
-  [class*="rounded-3xl"].border {
-    box-shadow: 0 1px 2px hsl(var(--foreground) / 0.04);
+  [class*="rounded-3xl"].border,
+  [data-radix-dialog-content],
+  [data-radix-select-content],
+  [data-radix-dropdown-menu-content],
+  [data-radix-popover-content],
+  [role="menu"],
+  [role="listbox"] {
+    background: linear-gradient(145deg, rgb(var(--liquid-surface) / 0.78), rgb(var(--liquid-tint) / 0.42));
+    border-color: rgb(var(--liquid-border) / 0.42);
+    box-shadow:
+      inset 0 1px 0 rgb(var(--liquid-highlight) / 0.34),
+      0 12px 34px rgb(var(--liquid-shadow) / 0.10),
+      0 1px 2px rgb(var(--liquid-shadow) / 0.08);
+    backdrop-filter: blur(var(--liquid-blur)) saturate(165%);
+    -webkit-backdrop-filter: blur(var(--liquid-blur)) saturate(165%);
+    transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
   }
 
   .dark .bg-card,
+  .dark .bg-popover,
+  .dark .bg-sidebar,
   .dark [class*="rounded-xl"].border,
   .dark [class*="rounded-2xl"].border,
-  .dark [class*="rounded-3xl"].border {
-    box-shadow: 0 1px 2px hsl(0 0% 0% / 0.2);
+  .dark [class*="rounded-3xl"].border,
+  .dark [data-radix-dialog-content],
+  .dark [data-radix-select-content],
+  .dark [data-radix-dropdown-menu-content],
+  .dark [data-radix-popover-content],
+  .dark [role="menu"],
+  .dark [role="listbox"] {
+    background: linear-gradient(145deg, rgb(var(--liquid-surface) / 0.76), rgb(var(--liquid-tint) / 0.28));
+    border-color: rgb(var(--liquid-border) / 0.13);
+    box-shadow:
+      inset 0 1px 0 rgb(var(--liquid-highlight) / 0.10),
+      0 16px 38px rgb(var(--liquid-shadow) / 0.32),
+      0 1px 2px rgb(var(--liquid-shadow) / 0.24);
   }
 
-  /* Hover lift — remove expensive transitions during scroll */
   a .bg-card:hover,
   button .bg-card:hover,
-  .bg-card.cursor-pointer:hover {
-    box-shadow: 0 2px 4px hsl(var(--foreground) / 0.05);
+  .bg-card.cursor-pointer:hover,
+  [class*="rounded-xl"].border:hover,
+  [class*="rounded-2xl"].border:hover {
+    box-shadow:
+      inset 0 1px 0 rgb(var(--liquid-highlight) / 0.42),
+      0 16px 42px rgb(var(--liquid-shadow) / 0.13),
+      0 2px 5px rgb(var(--liquid-shadow) / 0.09);
+    transform: translateY(-1px);
   }
 
   .dark a .bg-card:hover,
   .dark button .bg-card:hover,
-  .dark .bg-card.cursor-pointer:hover {
-    box-shadow: 0 2px 4px hsl(0 0% 0% / 0.25);
+  .dark .bg-card.cursor-pointer:hover,
+  .dark [class*="rounded-xl"].border:hover,
+  .dark [class*="rounded-2xl"].border:hover {
+    box-shadow:
+      inset 0 1px 0 rgb(var(--liquid-highlight) / 0.13),
+      0 18px 44px rgb(var(--liquid-shadow) / 0.40),
+      0 2px 5px rgb(var(--liquid-shadow) / 0.24);
+  }
+
+  button,
+  [role="button"],
+  input,
+  textarea,
+  select,
+  [data-radix-select-trigger] {
+    transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease, color 160ms ease;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    box-shadow: inset 0 1px 0 rgb(var(--liquid-highlight) / 0.22), 0 4px 12px rgb(var(--liquid-shadow) / 0.08);
+  }
+
+  button:not(:disabled):hover,
+  [role="button"]:not([aria-disabled="true"]):hover {
+    transform: translateY(-1px);
+    box-shadow: inset 0 1px 0 rgb(var(--liquid-highlight) / 0.30), 0 7px 18px rgb(var(--liquid-shadow) / 0.11);
+  }
+
+  input,
+  textarea,
+  select,
+  [data-radix-select-trigger] {
+    background: rgb(var(--liquid-surface-strong) / 0.52);
+    border-color: rgb(var(--liquid-border) / 0.38);
+    box-shadow: inset 0 1px 0 rgb(var(--liquid-highlight) / 0.20), 0 1px 2px rgb(var(--liquid-shadow) / 0.05);
+    backdrop-filter: blur(12px) saturate(145%);
+    -webkit-backdrop-filter: blur(12px) saturate(145%);
+  }
+
+  .dark input,
+  .dark textarea,
+  .dark select,
+  .dark [data-radix-select-trigger] {
+    background: rgb(var(--liquid-surface-strong) / 0.58);
+    border-color: rgb(var(--liquid-border) / 0.12);
+    box-shadow: inset 0 1px 0 rgb(var(--liquid-highlight) / 0.08), 0 1px 2px rgb(var(--liquid-shadow) / 0.18);
+  }
+
+  input:focus-visible,
+  textarea:focus-visible,
+  select:focus-visible,
+  [data-radix-select-trigger]:focus-visible {
+    box-shadow: inset 0 1px 0 rgb(var(--liquid-highlight) / 0.28), 0 0 0 3px hsl(var(--ring) / 0.18), 0 8px 22px rgb(var(--liquid-shadow) / 0.08);
+  }
+
+  .rounded-full,
+  [class*="rounded-full"].border,
+  [data-radix-dropdown-menu-item],
+  [data-radix-select-item] {
+    transition: background-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
+  }
+
+  [data-radix-dropdown-menu-item]:hover,
+  [data-radix-select-item]:hover,
+  [data-highlighted] {
+    background-color: hsl(var(--accent) / 0.72);
+    box-shadow: inset 0 1px 0 rgb(var(--liquid-highlight) / 0.18);
   }
 }
 
