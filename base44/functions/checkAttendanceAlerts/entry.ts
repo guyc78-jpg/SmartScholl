@@ -28,8 +28,9 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'Record not found' });
     }
 
-    // Only process absences (נעדר)
-    if (record.status !== 'נעדר') {
+    // Only process absences (נעדר / נעדר/ת)
+    const ABSENCE_STATUSES = ['נעדר', 'נעדר/ת'];
+    if (!ABSENCE_STATUSES.includes(record.status)) {
       return Response.json({ processed: false, reason: 'Not an absence' });
     }
 
@@ -41,11 +42,10 @@ Deno.serve(async (req) => {
     const absenceRecords = await base44.asServiceRole.entities.AttendanceRecord.filter({
       student_id: record.student_id,
       class_id: record.class_id,
-      status: 'נעדר',
     });
 
-    // Filter for last 30 days
-    const recentAbsences = absenceRecords.filter(r => r.date >= fromDate);
+    // Filter for last 30 days, counting both 'נעדר' and 'נעדר/ת'
+    const recentAbsences = absenceRecords.filter(r => ABSENCE_STATUSES.includes(r.status) && r.date >= fromDate);
     const absenceCount = recentAbsences.length;
 
     // Thresholds for alerts

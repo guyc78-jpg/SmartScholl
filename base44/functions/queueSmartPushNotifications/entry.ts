@@ -351,6 +351,11 @@ function actorMatchesUser(user, data) {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    // Block anonymous external callers — this endpoint is reachable publicly.
+    // Entity-trigger automations run with an authenticated context.
+    const isAuthenticated = await base44.auth.isAuthenticated().catch(() => false);
+    if (!isAuthenticated) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
     const payload = await req.json().catch(() => ({}));
     const entityName = payload?.event?.entity_name;
     const eventType = payload?.event?.type;

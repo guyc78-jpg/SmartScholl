@@ -105,7 +105,7 @@ Deno.serve(async (req) => {
 
     // Attendance trend
     if (priorStats.total > 0) {
-      const diff = recentStats.percentage - priorStats.percentage;
+      const diff = Number(recentStats.percentage) - Number(priorStats.percentage);
       indicators.push({
         category: 'נוכחות',
         current: `${recentStats.percentage}%`,
