@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 
 export default function StudentQuickPicker({ open, onClose, students, title, onSelect, excludeIds = [] }) {

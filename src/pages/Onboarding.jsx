@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { getUserDisplayName } from '@/lib/roleUtils';
 import {
   GraduationCap, BookOpen, Users, ChevronLeft, ChevronRight,
-  CheckCircle, Lock, Eye, EyeOff, ShieldCheck
+  CheckCircle, Clock, Lock, Eye, EyeOff, ShieldCheck
 } from 'lucide-react';
 
 /* ─── Role guide content ─── */

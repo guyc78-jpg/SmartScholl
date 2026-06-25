@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import PageHeader from '@/components/ui/PageHeader';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { Download } from 'lucide-react';
+import { FileBarChart, Download } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 import { formatStudentName, compareStudentsByLastName, getLastName } from '@/lib/studentName';
 import { getAttendanceScopedStudents, getScopedClassIds, filterScopedAttendance } from '@/lib/attendanceScope';

@@ -14,17 +14,11 @@ export default function WeeklyScheduleGrid({ periods, slotsByKey, todayDayName, 
 
   return (
     <div className="rounded-2xl border border-border bg-card overflow-hidden" dir="rtl">
-      <div className="w-full">
-        <table className="w-full table-fixed border-collapse text-center">
-          <colgroup>
-            <col className="w-9 sm:w-16" />
-            {DAYS.map(day => (
-              <col key={day} style={{ width: `${80 / DAYS.length}%` }} />
-            ))}
-          </colgroup>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[420px] sm:min-w-[760px] table-fixed border-collapse text-center">
           <thead>
             <tr>
-              <th className="bg-primary text-primary-foreground p-0 border-b border-l border-primary/30 align-middle">
+              <th className="bg-primary text-primary-foreground w-9 sm:w-16 p-0 border-b border-l border-primary/30 align-middle">
                 <CornerHeader />
               </th>
               {DAYS.map(day => (
@@ -52,7 +46,7 @@ export default function WeeklyScheduleGrid({ periods, slotsByKey, todayDayName, 
               if (isBreakRow) {
                 return (
                   <tr key={p.row_key || `break-${p.start_time}-${rowIdx}`}>
-                    <td className="border-b border-l border-border bg-secondary/10 p-1 align-middle text-center">
+                    <td className="w-14 sm:w-16 border-b border-l border-border bg-secondary/10 p-1 align-middle text-center">
                       <div className="flex min-h-[34px] flex-col items-center justify-center gap-0.5 px-0.5 sm:px-1">
                         <div className="text-[10px] sm:text-xs font-extrabold text-secondary-foreground">הפסקה</div>
                         {p.start_time && <div className="force-ltr text-[9px] sm:text-[10px] font-bold text-foreground/80">{p.start_time}</div>}
@@ -71,7 +65,7 @@ export default function WeeklyScheduleGrid({ periods, slotsByKey, todayDayName, 
                 <tr key={p.row_key || p.period}>
                   <td
                     className={cn(
-                      'font-bold border-b border-l border-border align-middle p-0',
+                      'w-14 sm:w-16 font-bold border-b border-l border-border align-middle p-0',
                       rowIdx % 2 === 0 ? 'bg-muted/40' : 'bg-card',
                       isCurrentRow && 'bg-primary/10 text-primary',
                     )}
@@ -163,7 +157,7 @@ function Cell({ slots = [], isToday, isNow, canEdit, onClick, subjectsById }) {
       onClick={canEdit || hasSlots ? onClick : undefined}
     >
       {hasSlots ? (
-        <div className="px-px sm:px-1 py-1 min-h-[56px] sm:min-h-[64px] flex flex-col items-stretch justify-center gap-1 text-center">
+        <div className="px-0.5 sm:px-1 py-1 min-h-[56px] sm:min-h-[64px] flex flex-col items-stretch justify-center gap-1 text-center">
           {groupSlotsByBaseSubject(slots).map((lessonGroup, index) => {
             const firstSlot = lessonGroup.slots[0];
             const subjectDefinition = firstSlot?.subject_id ? subjectsById[firstSlot.subject_id] : null;

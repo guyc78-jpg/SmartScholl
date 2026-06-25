@@ -1,4 +1,4 @@
-import { ShieldCheck, Eye, Info, GraduationCap, UserCheck, Users, Building2 } from 'lucide-react';
+import { ShieldCheck, Eye, Info, GraduationCap, UserCheck, Users, Building2, Settings } from 'lucide-react';
 import PageHeader from '@/components/ui/PageHeader';
 import { cn } from '@/lib/utils';
 import { useSimulation, SIM_ROLES } from '@/lib/SimulationContext';

@@ -13,9 +13,10 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import StatusBadge from '@/components/ui/StatusBadge';
 import PageHeader from '@/components/ui/PageHeader';
+import EmptyState from '@/components/ui/EmptyState';
 import CommunityServiceReportsPanel from '@/components/staff/CommunityServiceReportsPanel';
 import { toast } from 'sonner';
-import { Edit, AlertTriangle } from 'lucide-react';
+import { Heart, Edit, AlertTriangle, TrendingUp } from 'lucide-react';
 
 export default function Community({ role = 'homeroom_teacher', user }) {
   const [students, setStudents] = useState([]);

@@ -2,6 +2,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CalendarDays, Clock, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
+import { he } from 'date-fns/locale';
 import { TYPE_STYLES, getDisplayEventType } from './eventConstants';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 

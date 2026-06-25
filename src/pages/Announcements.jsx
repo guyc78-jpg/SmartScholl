@@ -16,7 +16,7 @@ import StatusBadge from '@/components/ui/StatusBadge';
 import PageHeader from '@/components/ui/PageHeader';
 import EmptyState from '@/components/ui/EmptyState';
 import { toast } from 'sonner';
-import { Megaphone, Plus, Edit, Trash2, Eye } from 'lucide-react';
+import { Megaphone, Plus, Edit, Trash2, Eye, Check } from 'lucide-react';
 import useDeleteConfirm from '@/hooks/useDeleteConfirm';
 
 export default function Announcements({ role = 'homeroom_teacher', user }) {

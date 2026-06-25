@@ -37,48 +37,24 @@ function firstPresent(...values) {
   return values.find(value => value !== undefined && value !== null && String(value).trim() !== '') || '';
 }
 
-function parseRolesValue(value) {
-  if (Array.isArray(value)) return value;
-  const text = String(value || '').trim();
-  if (!text) return [];
-  if (text.startsWith('[')) {
-    try { const parsed = JSON.parse(text); return Array.isArray(parsed) ? parsed : []; } catch { return []; }
-  }
-  return text.split(',').map(item => item.trim()).filter(Boolean);
+function getUserRoles(user) {
+  const roles = new Set([user?.role].filter(Boolean));
+  toList(user?.approved_roles).forEach(role => roles.add(role));
+  toList(user?.available_roles).forEach(role => roles.add(role));
+  toList(user?.profile_roles).forEach(role => roles.add(role));
+  toList(user?.roles).forEach(role => roles.add(role));
+  if (user?.profile_role) roles.add(user.profile_role);
+  return [...roles];
 }
 
-// Resolves the caller's verified roles from the ApprovedUser table (server-side
-// source of truth) rather than client-controllable User fields. Falls back to
-// the student record so students can fetch their own alerts.
-async function getVerifiedRole(base44, user, payloadRole) {
-  const email = String(user?.email || '').trim().toLowerCase();
-  const verifiedRoles = new Set();
-
-  if (user?.role === 'admin' || user?.role === 'system_admin') verifiedRoles.add('admin');
-
-  if (email) {
-    const approved = await base44.asServiceRole.entities.ApprovedUser.filter({ email }, '-created_date', 20).catch(() => []);
-    for (const record of approved) {
-      if (record.isActive === false) continue;
-      const recordRoles = [...parseRolesValue(record.roles), record.role].filter(Boolean);
-      if (recordRoles.includes('system_admin')) verifiedRoles.add('admin');
-      if (recordRoles.includes('grade_coordinator') || recordRoles.includes('coordinator')) verifiedRoles.add('coordinator');
-      if (recordRoles.includes('homeroom_teacher')) verifiedRoles.add('homeroom_teacher');
-    }
-  }
-
-  if (!verifiedRoles.size && email) {
-    const byUserEmail = await base44.asServiceRole.entities.Student.filter({ user_email: email }, '-updated_date', 5).catch(() => []);
-    const byEmail = byUserEmail.length ? byUserEmail : await base44.asServiceRole.entities.Student.filter({ email }, '-updated_date', 5).catch(() => []);
-    if (byEmail.length) verifiedRoles.add('student');
-  }
-
-  if (payloadRole && verifiedRoles.has(payloadRole)) return payloadRole;
-  if (verifiedRoles.has('admin')) return 'admin';
-  if (verifiedRoles.has('coordinator')) return 'coordinator';
-  if (verifiedRoles.has('homeroom_teacher')) return 'homeroom_teacher';
-  if (verifiedRoles.has('student')) return 'student';
-  return '';
+function getRequestedRole(user, payloadRole) {
+  const roles = getUserRoles(user);
+  if (payloadRole && (roles.includes(payloadRole) || roles.includes('admin'))) return payloadRole;
+  if (roles.includes('admin')) return 'admin';
+  if (roles.includes('coordinator')) return 'coordinator';
+  if (roles.includes('homeroom_teacher')) return 'homeroom_teacher';
+  if (roles.includes('student')) return 'student';
+  return user?.role || 'user';
 }
 
 function getStudentGrade(student) {
@@ -183,7 +159,7 @@ Deno.serve(async (req) => {
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const payload = await req.json().catch(() => ({}));
-    const role = await getVerifiedRole(base44, user, payload?.role);
+    const role = getRequestedRole(user, payload?.role);
     if (!['admin', 'homeroom_teacher', 'coordinator', 'student'].includes(role)) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
     const nowIsrael = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jerusalem' }));
@@ -349,7 +325,6 @@ Deno.serve(async (req) => {
 
     return Response.json({ alerts, count: alerts.length, role, scoped_students: students.length });
   } catch (error) {
-    console.error('Function error:', error);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    return Response.json({ error: error.message }, { status: 500 });
   }
 });

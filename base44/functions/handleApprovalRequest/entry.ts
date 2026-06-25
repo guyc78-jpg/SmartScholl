@@ -13,16 +13,6 @@ const ROLE_LABELS = {
 
 const VALID_ROLES = ['system_admin', 'admin', 'division_manager', 'homeroom_teacher', 'grade_coordinator', 'coordinator', 'student', 'parent'];
 const SYSTEM_ROLE_PRIORITY = ['system_admin', 'admin', 'division_manager', 'grade_coordinator', 'coordinator', 'homeroom_teacher', 'student', 'parent'];
-const rateLimitBuckets = new Map<string, number[]>();
-
-function rateLimit(key: string, limit = 30, windowMs = 60_000) {
-  const now = Date.now();
-  const recent = (rateLimitBuckets.get(key) || []).filter(timestamp => now - timestamp < windowMs);
-  if (recent.length >= limit) return false;
-  recent.push(now);
-  rateLimitBuckets.set(key, recent);
-  return true;
-}
 
 function parseRoles(value) {
   if (Array.isArray(value)) return value;
@@ -115,9 +105,6 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     const { action, request_id, rejection_reason } = body;
-    if (!rateLimit(`${user.email || user.id || 'anonymous'}:${action || 'unknown'}`)) {
-      return Response.json({ error: 'Too many requests' }, { status: 429 });
-    }
 
     if (action === 'submit') {
       const { full_name, requested_role, class_or_grade, class_id, subject, school_role, extra_roles } = body;
@@ -546,7 +533,6 @@ ${suspicionNote}
 
     return Response.json({ error: 'Unknown action' }, { status: 400 });
   } catch (error) {
-    console.error('Function error:', error);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    return Response.json({ error: error.message }, { status: 500 });
   }
 });

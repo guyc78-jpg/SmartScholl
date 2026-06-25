@@ -2,18 +2,6 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 import * as XLSX from 'npm:xlsx@0.18.5';
 import mammoth from 'npm:mammoth@1.9.0';
 
-const MAX_IMPORT_FILE_BYTES = 5 * 1024 * 1024;
-const rateLimitBuckets = new Map<string, number[]>();
-
-function rateLimit(key: string, limit = 20, windowMs = 60_000) {
-  const now = Date.now();
-  const recent = (rateLimitBuckets.get(key) || []).filter(timestamp => now - timestamp < windowMs);
-  if (recent.length >= limit) return false;
-  recent.push(now);
-  rateLimitBuckets.set(key, recent);
-  return true;
-}
-
 const ACCOMMODATIONS = [
   { key: 'extra_time_25', label: 'תוספת זמן 25%', aliases: ['תוספת זמן', '25%', 'הארכת זמן'] },
   { key: 'computer_recording', label: 'הקלטת תשובות במחשב', aliases: ['הקלטת תשובות', 'מחשב', 'הקלטה במחשב'] },
@@ -37,25 +25,6 @@ function normalizeEmail(value = '') {
 
 function cleanText(value = '') {
   return String(value ?? '').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
-}
-
-function isBlockedHost(hostname = '') {
-  const host = hostname.toLowerCase();
-  return host === 'localhost'
-    || host === '0.0.0.0'
-    || host === '127.0.0.1'
-    || host === '::1'
-    || host.startsWith('10.')
-    || host.startsWith('192.168.')
-    || /^172\.(1[6-9]|2\d|3[0-1])\./.test(host)
-    || /^169\.254\./.test(host);
-}
-
-function validateFileUrl(fileUrl = '') {
-  const url = new URL(fileUrl);
-  if (url.protocol !== 'https:') throw new Error('Only HTTPS file URLs are allowed');
-  if (isBlockedHost(url.hostname)) throw new Error('File URL host is not allowed');
-  return url.toString();
 }
 
 function defaultAccommodations() {
@@ -241,12 +210,9 @@ function rowsFromHtmlTables(html = '') {
 }
 
 async function parseImport(fileUrl, fileName = '') {
-  const response = await fetch(validateFileUrl(fileUrl));
+  const response = await fetch(fileUrl);
   if (!response.ok) throw new Error('לא ניתן לקרוא את הקובץ');
-  const contentLength = Number(response.headers.get('content-length') || 0);
-  if (contentLength > MAX_IMPORT_FILE_BYTES) throw new Error('הקובץ גדול מדי');
   const arrayBuffer = await response.arrayBuffer();
-  if (arrayBuffer.byteLength > MAX_IMPORT_FILE_BYTES) throw new Error('הקובץ גדול מדי');
   const name = fileName.toLowerCase();
 
   if (name.endsWith('.xlsx') || name.endsWith('.xls') || name.endsWith('.csv')) {
@@ -311,9 +277,6 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     const action = body.action || 'getForStudent';
-    if (!rateLimit(`${user.email || user.id || 'anonymous'}:${action}`)) {
-      return Response.json({ error: 'Too many requests' }, { status: 429 });
-    }
     const claims = await getClaims(base44, user);
     if (!claims.authorized) return Response.json({ error: 'Forbidden' }, { status: 403 });
     const actor = { fullName: claims.fullName || user.full_name || user.email, email: claims.email || user.email };
@@ -382,7 +345,6 @@ Deno.serve(async (req) => {
 
     return Response.json({ error: 'Unknown action' }, { status: 400 });
   } catch (error) {
-    console.error('Function error:', error);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    return Response.json({ error: error.message }, { status: 500 });
   }
 });

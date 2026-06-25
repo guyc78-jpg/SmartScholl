@@ -230,7 +230,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
       return;
     }
     loadStudents();
-  }, [action, usesStudentData, resolvedClassId, hasInitialStudents, initialStudents]);  
+  }, [action, usesStudentData, resolvedClassId, hasInitialStudents, initialStudents]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Prevent body scroll on iOS while sheet is open and restore page layout exactly on close
   useEffect(() => {

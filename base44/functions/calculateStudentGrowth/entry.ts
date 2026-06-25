@@ -105,7 +105,7 @@ Deno.serve(async (req) => {
 
     // Attendance trend
     if (priorStats.total > 0) {
-      const diff = Number(recentStats.percentage) - Number(priorStats.percentage);
+      const diff = recentStats.percentage - priorStats.percentage;
       indicators.push({
         category: 'נוכחות',
         current: `${recentStats.percentage}%`,
@@ -170,7 +170,6 @@ Deno.serve(async (req) => {
       }
     });
   } catch (error) {
-    console.error('Function error:', error);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    return Response.json({ error: error.message }, { status: 500 });
   }
 });

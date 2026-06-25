@@ -5,8 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectTrigger, SelectContent, SelectItem } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { MessageCircle, Plus, Trash2, AlertCircle, Calendar } from 'lucide-react';
+import { Phone, MessageCircle, Plus, Trash2, AlertCircle, CheckCircle2, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 import { formatStudentName } from '@/lib/studentName';
 import useDeleteConfirm from '@/hooks/useDeleteConfirm';
 

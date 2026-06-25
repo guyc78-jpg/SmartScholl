@@ -6,15 +6,8 @@ Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const isAdmin = user.role === 'admin' || user.role === 'system_admin' || await (async () => {
-      const email = String(user.email || '').trim().toLowerCase();
-      if (!email) return false;
-      const approved = await base44.asServiceRole.entities.ApprovedUser.filter({ email }, '-created_date', 20).catch(() => []);
-      return approved.some(record => record.isActive !== false && (record.role === 'system_admin' || String(record.roles || '').includes('system_admin')));
-    })();
-    if (!isAdmin) {
+    if (user?.role !== 'admin') {
       return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
@@ -38,7 +31,6 @@ Deno.serve(async (req) => {
 
     return Response.json({ ok: true, class_id: match.id, class_name: match.name });
   } catch (error) {
-    console.error('Function error:', error);
-    return Response.json({ error: 'Internal server error' }, { status: 500 });
+    return Response.json({ error: error.message }, { status: 500 });
   }
 });

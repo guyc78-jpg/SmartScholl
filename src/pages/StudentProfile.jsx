@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import StatusBadge from '@/components/ui/StatusBadge';
-import { ChevronRight, ChevronDown, Phone, Mail, Edit, Calendar, Shield, Heart, Star, MessageSquare, BarChart2, Eye, EyeOff } from 'lucide-react';
+import { ChevronRight, ChevronDown, Phone, Mail, Edit, Plus, Calendar, Shield, Heart, Star, MessageSquare, BarChart2, CheckSquare, Eye, EyeOff } from 'lucide-react';
 import AddStudentModal from '@/components/students/AddStudentModal';
 import ParentContactLog from '@/components/student/ParentContactLog';
 import GrowthReport from '@/components/student/GrowthReport';
