@@ -6,7 +6,7 @@ import { getUnitLabel, groupSlotsByBaseSubject, stripUnitFromRoom } from '@/lib/
 
 // Weekly schedule grid — Sun → Fri, periods 1..N as rows.
 // Slim, professional, mobile-friendly. Highlights today + current period.
-const DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי'];
+const DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי'];
 
 export default function WeeklyScheduleGrid({ periods, slotsByKey, todayDayName, currentPeriod, canEdit, onCellClick, subjectsById = {} }) {
   // todayDayName might be 'שישי' or 'שבת' — only highlight if it's in DAYS list
