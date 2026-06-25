@@ -2,12 +2,23 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 // Maintenance: pin the homeroom class id on the current admin user's profile,
 // so Exams/Schedule resolve the class deterministically (by id, not by name).
+async function isAdminUser(base44, user) {
+  if (!user) return false;
+  if (user.role === 'admin' || user.role === 'system_admin') return true;
+  const email = String(user.email || '').trim().toLowerCase();
+  if (!email) return false;
+  const records = await base44.asServiceRole.entities.ApprovedUser.filter({ email }).catch(() => []);
+  return records.some(record => record.isActive !== false
+    && (record.role === 'system_admin' || record.role === 'admin'
+      || (Array.isArray(record.roles) && (record.roles.includes('system_admin') || record.roles.includes('admin')))));
+}
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
+    const user = await base44.auth.me().catch(() => null);
 
-    if (user?.role !== 'admin') {
+    if (!(await isAdminUser(base44, user))) {
       return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 

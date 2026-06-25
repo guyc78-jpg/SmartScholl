@@ -37,24 +37,29 @@ function firstPresent(...values) {
   return values.find(value => value !== undefined && value !== null && String(value).trim() !== '') || '';
 }
 
-function getUserRoles(user) {
-  const roles = new Set([user?.role].filter(Boolean));
-  toList(user?.approved_roles).forEach(role => roles.add(role));
-  toList(user?.available_roles).forEach(role => roles.add(role));
-  toList(user?.profile_roles).forEach(role => roles.add(role));
-  toList(user?.roles).forEach(role => roles.add(role));
-  if (user?.profile_role) roles.add(user.profile_role);
-  return [...roles];
+// מקור אמת לתפקידים — נטען מ-ApprovedUser בשרת, לא מנתוני לקוח הניתנים לזיוף
+async function resolveServerRoles(base44, user) {
+  const roles = new Set();
+  if (user?.role === 'admin' || user?.role === 'system_admin') roles.add('admin');
+  const email = String(user?.email || '').trim().toLowerCase();
+  if (email) {
+    const records = await base44.asServiceRole.entities.ApprovedUser.filter({ email }).catch(() => []);
+    records
+      .filter(record => record.isActive !== false)
+      .flatMap(record => [record.role, ...(Array.isArray(record.roles) ? record.roles : [])])
+      .filter(Boolean)
+      .forEach(role => roles.add(role === 'system_admin' ? 'admin' : role === 'grade_coordinator' ? 'coordinator' : role));
+  }
+  return roles;
 }
 
-function getRequestedRole(user, payloadRole) {
-  const roles = getUserRoles(user);
-  if (payloadRole && (roles.includes(payloadRole) || roles.includes('admin'))) return payloadRole;
-  if (roles.includes('admin')) return 'admin';
-  if (roles.includes('coordinator')) return 'coordinator';
-  if (roles.includes('homeroom_teacher')) return 'homeroom_teacher';
-  if (roles.includes('student')) return 'student';
-  return user?.role || 'user';
+function getRequestedRole(roles, payloadRole) {
+  if (payloadRole && (roles.has(payloadRole) || roles.has('admin'))) return payloadRole;
+  if (roles.has('admin')) return 'admin';
+  if (roles.has('coordinator')) return 'coordinator';
+  if (roles.has('homeroom_teacher')) return 'homeroom_teacher';
+  if (roles.has('student')) return 'student';
+  return 'user';
 }
 
 function getStudentGrade(student) {
@@ -159,7 +164,8 @@ Deno.serve(async (req) => {
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const payload = await req.json().catch(() => ({}));
-    const role = getRequestedRole(user, payload?.role);
+    const serverRoles = await resolveServerRoles(base44, user);
+    const role = getRequestedRole(serverRoles, payload?.role);
     if (!['admin', 'homeroom_teacher', 'coordinator', 'student'].includes(role)) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
     const nowIsrael = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jerusalem' }));
