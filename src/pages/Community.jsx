@@ -40,11 +40,25 @@ export default function Community({ role = 'homeroom_teacher', user }) {
   useEffect(() => { loadStudents(); }, [user?.id, role, scopeMode]);
   async function loadStudents() {
     setLoading(true);
+    // Fetch only scoped students instead of all students for performance + security
+    let studentQuery = {};
+    if (role === 'student') {
+      studentQuery = { class_id: classId };
+    } else if (role === 'homeroom_teacher') {
+      studentQuery = { class_id: classId };
+    } else if (role === 'coordinator' || role === 'grade_coordinator') {
+      const grade = user?.profile_grade_managed || user?.authorization?.scope?.gradeId || '';
+      if (grade) studentQuery = { grade };
+    }
+    // division_manager and admin: no filter (scoped by accessGuard)
+
     const [data, reports] = await Promise.all([
-      base44.entities.Student.list(),
+      Object.keys(studentQuery).length > 0
+        ? base44.entities.Student.filter(studentQuery, '-updated_date', 500)
+        : base44.entities.Student.list('-updated_date', 500),
       base44.entities.CommunityServiceReport.list('-updated_action_at', 500)
     ]);
-    const activeStudents = data.filter(s => s.status !== 'מועבר' && s.status !== 'סיים');
+    const activeStudents = (data || []).filter(s => s.status !== 'מועבר' && s.status !== 'סיים');
     const scopedStudents = role === 'student'
       ? activeStudents.filter(s => s.class_id === classId || s.user_email === user?.email)
       : activeStudents.filter(s => isStudentInApprovedScope(s, user, role));
@@ -118,10 +132,10 @@ export default function Community({ role = 'homeroom_teacher', user }) {
         </div>
       </div>
 
-      <div className="flex gap-2 flex-wrap">
+      <div className="flex gap-2 flex-wrap" dir="rtl">
         {['הכל', 'לא התחיל', 'בתהליך', 'הושלם'].map(s => (
           <button key={s} onClick={() => setFilter(s)}
-            className={`text-xs px-3 py-1.5 rounded-xl border font-medium transition-all ${filter === s ? 'bg-primary text-white border-primary' : 'bg-background border-border text-muted-foreground hover:bg-muted'}`}>
+            className={`text-xs px-3 py-1.5 rounded-xl border font-medium transition-all ${filter === s ? 'bg-primary text-primary-foreground border-primary' : 'bg-background border-border text-muted-foreground hover:bg-muted'}`}>
             {s}
           </button>
         ))}

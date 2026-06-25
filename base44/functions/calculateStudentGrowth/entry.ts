@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 Deno.serve(async (req) => {
   try {
@@ -16,7 +16,29 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'student_id required' }, { status: 400 });
     }
 
-    // Fetch all relevant data for the student
+    // Security: only staff or the student themselves may access growth data
+    const STAFF_ROLES = ['admin', 'system_admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator', 'division_manager'];
+    const userRole = user?.authorization?.role || user?.role || '';
+    const userRoles = Array.isArray(user?.authorization?.roles || user?.roles)
+      ? (user?.authorization?.roles || user?.roles || [])
+      : [];
+    const isStaff = STAFF_ROLES.some(r => userRole === r || userRoles.includes(r));
+    const isOwnStudent = user?.authorization?.student_id === student_id;
+    if (!isStaff && !isOwnStudent) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    // Use asServiceRole for consistent access + fetch only what's needed for this student
+    // Fetch the student first to get class_id for scoped exam query
+    const studentRows = await base44.asServiceRole.entities.Student.filter({ id: student_id }).catch(() => []);
+    const student = studentRows?.[0];
+    if (!student) {
+      return Response.json({ indicators: [], summary: {} });
+    }
+    const class_id = student.class_id;
+
+    // Fetch all relevant data for the student — use asServiceRole for security
+    // Exam: filter by class_id instead of listing all exams
     const [
       attendanceRecords,
       exams,
@@ -25,12 +47,14 @@ Deno.serve(async (req) => {
       disciplineEvents,
       performanceReviews
     ] = await Promise.all([
-      base44.entities.AttendanceRecord.filter({ student_id }),
-      base44.entities.Exam.list(),
-      base44.entities.ExamCompletion.filter({ student_id }),
-      base44.entities.Task.filter({ student_id }),
-      base44.entities.DisciplineEvent.filter({ student_id }),
-      base44.entities.PerformanceReview.filter({ student_id })
+      base44.asServiceRole.entities.AttendanceRecord.filter({ student_id }),
+      class_id
+        ? base44.asServiceRole.entities.Exam.filter({ class_id })
+        : Promise.resolve([]),
+      base44.asServiceRole.entities.ExamCompletion.filter({ student_id }),
+      base44.asServiceRole.entities.Task.filter({ student_id }),
+      base44.asServiceRole.entities.DisciplineEvent.filter({ student_id }),
+      base44.asServiceRole.entities.PerformanceReview.filter({ student_id })
     ]);
 
     // Calculate attendance metrics (month-over-month)
@@ -55,10 +79,9 @@ Deno.serve(async (req) => {
     const recentStats = calcAttendanceStats(recentAttendance);
     const priorStats = calcAttendanceStats(priorAttendance);
 
-    // Exam completion rate
-    const studentExams = exams.filter(e => {
-      const completions = examCompletions.filter(ec => ec.exam_id === e.id);
-      return completions.some(ec => ec.student_id === student_id);
+    // Exam completion rate — exams relevant to this student
+    const studentExams = (exams || []).filter(e => {
+      return (examCompletions || []).some(ec => ec.exam_id === e.id && ec.student_id === student_id);
     });
     const examsCompleted = examCompletions.filter(ec => ec.student_id === student_id).length;
     const examCompletionRate = studentExams.length > 0 ? (examsCompleted / studentExams.length * 100).toFixed(1) : 0;
