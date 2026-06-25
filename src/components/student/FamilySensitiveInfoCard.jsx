@@ -25,8 +25,8 @@ export default function FamilySensitiveInfoCard({ student, canEdit }) {
 
   const loadSensitiveInfo = async () => {
     setLoading(true);
-    const records = await base44.entities.FamilySensitiveInfo.filter({ student_id: student.id });
-    const existing = records[0] || null;
+    const { data } = await base44.functions.invoke('familySensitiveInfo', { action: 'get', student_id: student.id });
+    const existing = data?.record || null;
     setRecord(existing);
     setStatuses(existing?.statuses || []);
     setNote(existing?.note || '');
@@ -50,21 +50,15 @@ export default function FamilySensitiveInfoCard({ student, canEdit }) {
 
   const handleSave = async () => {
     setSaving(true);
-    const payload = {
+    const { data } = await base44.functions.invoke('familySensitiveInfo', {
+      action: 'save',
       student_id: student.id,
       student_name: student.full_name,
       no_sensitive_info: noSensitiveInfo,
       statuses: noSensitiveInfo ? [] : statuses,
-      note: noSensitiveInfo ? '' : note.trim()
-    };
-
-    if (record?.id) {
-      await base44.entities.FamilySensitiveInfo.update(record.id, payload);
-      setRecord({ ...record, ...payload });
-    } else {
-      const created = await base44.entities.FamilySensitiveInfo.create(payload);
-      setRecord(created);
-    }
+      note: noSensitiveInfo ? '' : note.trim(),
+    });
+    if (data?.record) setRecord(data.record);
 
     setSaving(false);
     setIsEditing(false);
