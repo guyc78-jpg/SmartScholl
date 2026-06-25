@@ -16,14 +16,24 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'student_id required' }, { status: 400 });
     }
 
-    // Security: only staff or the student themselves may access growth data
+    // Security: only staff or the student themselves may access growth data.
+    // Resolve the user's real role/scope from server-side sources of truth
+    // (ApprovedUser / Student) — never trust client-provided user.authorization.
     const STAFF_ROLES = ['admin', 'system_admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator', 'division_manager'];
-    const userRole = user?.authorization?.role || user?.role || '';
-    const userRoles = Array.isArray(user?.authorization?.roles || user?.roles)
-      ? (user?.authorization?.roles || user?.roles || [])
-      : [];
-    const isStaff = STAFF_ROLES.some(r => userRole === r || userRoles.includes(r));
-    const isOwnStudent = user?.authorization?.student_id === student_id;
+    const email = String(user.email || '').trim().toLowerCase();
+    const approvedRecords = await base44.asServiceRole.entities.ApprovedUser.filter({ email }).catch(() => []);
+    const approvedRoles = approvedRecords
+      .filter(record => record.isActive !== false)
+      .flatMap(record => [record.role, ...(Array.isArray(record.roles) ? record.roles : [])])
+      .filter(Boolean);
+    const isStaff = user.role === 'admin' || user.role === 'system_admin' || approvedRoles.some(role => STAFF_ROLES.includes(role));
+
+    let isOwnStudent = false;
+    if (!isStaff) {
+      const ownByUserEmail = await base44.asServiceRole.entities.Student.filter({ user_email: email }).catch(() => []);
+      const ownByEmail = ownByUserEmail.length ? ownByUserEmail : await base44.asServiceRole.entities.Student.filter({ email }).catch(() => []);
+      isOwnStudent = ownByEmail.some(item => item.id === student_id);
+    }
     if (!isStaff && !isOwnStudent) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
@@ -62,8 +72,9 @@ Deno.serve(async (req) => {
     const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
     const sixtyDaysAgo = new Date(today.getTime() - 60 * 24 * 60 * 60 * 1000);
 
-    const recentAttendance = attendanceRecords.filter(r => new Date(r.date) >= thirtyDaysAgo);
-    const priorAttendance = attendanceRecords.filter(r => {
+    const validAttendance = attendanceRecords.filter(r => r.date && !isNaN(new Date(r.date).getTime()));
+    const recentAttendance = validAttendance.filter(r => new Date(r.date) >= thirtyDaysAgo);
+    const priorAttendance = validAttendance.filter(r => {
       const d = new Date(r.date);
       return d >= sixtyDaysAgo && d < thirtyDaysAgo;
     });
@@ -97,7 +108,9 @@ Deno.serve(async (req) => {
     const resolutionRate = (openDiscipline + closedDiscipline) > 0 ? (closedDiscipline / (openDiscipline + closedDiscipline) * 100).toFixed(1) : 0;
 
     // Performance participation (latest review)
-    const latestReview = performanceReviews.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+    const latestReview = performanceReviews
+      .filter(r => r.date && !isNaN(new Date(r.date).getTime()))
+      .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
     const participationScore = latestReview?.participation || null;
 
     // Build growth indicators

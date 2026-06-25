@@ -48,8 +48,15 @@ function buildNotification(items) {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const isAuthenticated = await base44.auth.isAuthenticated().catch(() => false);
-    if (!isAuthenticated) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    const user = await base44.auth.me().catch(() => null);
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    // Only system admins may trigger the push queue manually (automations also run as admin).
+    const adminRecords = await base44.asServiceRole.entities.ApprovedUser
+      .filter({ email: String(user.email || '').trim().toLowerCase() })
+      .catch(() => []);
+    const isAdmin = user.role === 'admin' || user.role === 'system_admin'
+      || adminRecords.some(record => record.isActive !== false && (record.role === 'system_admin' || (Array.isArray(record.roles) && record.roles.includes('system_admin'))));
+    if (!isAdmin) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
     const publicKey = Deno.env.get('VAPID_PUBLIC_KEY');
     const privateKey = Deno.env.get('VAPID_PRIVATE_KEY');
