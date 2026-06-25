@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { CLASS_ID } from '@/lib/demoData';
 import PageHeader from '@/components/ui/PageHeader';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -59,8 +58,9 @@ export default function TreatmentCenter() {
   async function loadCases() {
     setLoading(true);
     try {
-      const data = await base44.entities.TreatmentCase.filter({ class_id: CLASS_ID });
-      setCases(data.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)));
+      const { data } = await base44.functions.invoke('treatmentCases', { action: 'list' });
+      const list = data?.cases || [];
+      setCases(list.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)));
     } catch (e) {
       console.error(e);
       toast.error('שגיאה בטעינת הנתונים');
@@ -70,35 +70,27 @@ export default function TreatmentCenter() {
 
   async function updateCaseStatus(caseId, newStatus) {
     try {
-      await base44.entities.TreatmentCase.update(caseId, { status: newStatus });
+      await base44.functions.invoke('treatmentCases', { action: 'updateStatus', case_id: caseId, status: newStatus });
       setCases(cases.map(c => c.id === caseId ? { ...c, status: newStatus } : c));
       toast.success('סטטוס עודכן');
     } catch (e) {
       console.error(e);
-      toast.error('שגיאה בעדכון');
+      toast.error('אין הרשאה לעדכן טיפול זה');
     }
   }
 
   async function addNote() {
     if (!newNote.trim() || !editingCase) return;
     try {
-      const updatedNotes = [
-        ...(editingCase.notes || []),
-        {
-          author_email: user?.email,
-          author_name: user?.full_name,
-          content: newNote,
-          timestamp: new Date().toISOString(),
-        },
-      ];
-      await base44.entities.TreatmentCase.update(editingCase.id, { notes: updatedNotes });
+      const { data } = await base44.functions.invoke('treatmentCases', { action: 'addNote', case_id: editingCase.id, content: newNote });
+      const updatedNotes = data?.record?.notes || editingCase.notes || [];
       setEditingCase({ ...editingCase, notes: updatedNotes });
       setCases(cases.map(c => c.id === editingCase.id ? { ...c, notes: updatedNotes } : c));
       setNewNote('');
       toast.success('הערה נוספה');
     } catch (e) {
       console.error(e);
-      toast.error('שגיאה בהוספת הערה');
+      toast.error('אין הרשאה להוסיף הערה');
     }
   }
 
