@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { CLASS_ID } from '@/lib/demoData';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -22,7 +21,7 @@ import useDeleteConfirm from '@/hooks/useDeleteConfirm';
 
 export default function Discipline({ role = 'homeroom_teacher' }) {
   const { user } = useAuth();
-  const classId = role === 'coordinator' ? getUserHomeroomClassId(user, CLASS_ID) : getUserApprovedClassId(user, CLASS_ID);
+  const classId = role === 'coordinator' ? getUserHomeroomClassId(user, '') : getUserApprovedClassId(user, '');
   const [events, setEvents] = useState([]);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -36,12 +35,9 @@ export default function Discipline({ role = 'homeroom_teacher' }) {
   useEffect(() => { loadData(); }, []);
   async function loadData() {
     setLoading(true);
-    const [evs, sts] = await Promise.all([
-      base44.entities.DisciplineEvent.filter({ class_id: classId }),
-      base44.entities.Student.filter({ class_id: classId }),
-    ]);
-    setEvents(evs.sort((a,b) => b.date.localeCompare(a.date)));
-    setStudents(sts);
+    const { data } = await base44.functions.invoke('sensitiveStudentRecords', { action: 'list', entity: 'DisciplineEvent', class_id: classId });
+    setEvents(data.records || []);
+    setStudents(data.students || []);
     setLoading(false);
   }
 
@@ -52,12 +48,12 @@ export default function Discipline({ role = 'homeroom_teacher' }) {
   async function handleSave() {
     if (!form.student_id || !form.description) { toast.error('יש למלא תלמיד ותיאור'); return; }
     const student = students.find(s => s.id === form.student_id);
-    const data = { ...form, student_name: student ? formatStudentName(student) : '', class_id: classId };
+    const data = { ...form, id: editEvent?.id, student_name: student ? formatStudentName(student) : '', class_id: classId };
     try {
-      if (editEvent) { await base44.entities.DisciplineEvent.update(editEvent.id, data); toast.success('עודכן'); }
-      else { await base44.entities.DisciplineEvent.create(data); toast.success('אירוע תועד!'); }
+      await base44.functions.invoke('sensitiveStudentRecords', { action: 'save', entity: 'DisciplineEvent', ...data });
+      toast.success(editEvent ? 'עודכן' : 'אירוע תועד!');
       setShowForm(false); loadData();
-    } catch { toast.error('שגיאה'); }
+    } catch { toast.error('אין הרשאה או שהשמירה נכשלה'); }
   }
 
   async function handleDelete(id) {
@@ -66,12 +62,12 @@ export default function Discipline({ role = 'homeroom_teacher' }) {
       description: 'האירוע יימחק מתיק התלמיד ולא ניתן יהיה לשחזר אותו.',
     });
     if (!approved) return;
-    await base44.entities.DisciplineEvent.delete(id);
+    await base44.functions.invoke('sensitiveStudentRecords', { action: 'delete', entity: 'DisciplineEvent', id });
     toast.success('נמחק'); loadData();
   }
 
   async function updateStatus(id, status) {
-    await base44.entities.DisciplineEvent.update(id, { status });
+    await base44.functions.invoke('sensitiveStudentRecords', { action: 'updateStatus', entity: 'DisciplineEvent', id, status });
     toast.success(`סטטוס עודכן ל${status}`); loadData();
   }
 

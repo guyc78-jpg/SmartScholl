@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { CLASS_ID } from '@/lib/demoData';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -22,7 +21,7 @@ const typeIcons = { 'שיחה טלפונית': Phone, 'פגישה': MessageSquar
 
 export default function Communications({ role = 'homeroom_teacher' }) {
   const { user } = useAuth();
-  const classId = role === 'coordinator' ? getUserHomeroomClassId(user, CLASS_ID) : getUserApprovedClassId(user, CLASS_ID);
+  const classId = role === 'coordinator' ? getUserHomeroomClassId(user, '') : getUserApprovedClassId(user, '');
   const [comms, setComms] = useState([]);
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -35,12 +34,9 @@ export default function Communications({ role = 'homeroom_teacher' }) {
   useEffect(() => { loadData(); }, []);
   async function loadData() {
     setLoading(true);
-    const [cms, sts] = await Promise.all([
-      base44.entities.Communication.filter({ class_id: classId }),
-      base44.entities.Student.filter({ class_id: classId }),
-    ]);
-    setComms(cms.sort((a,b) => b.date.localeCompare(a.date)));
-    setStudents(sts);
+    const { data } = await base44.functions.invoke('sensitiveStudentRecords', { action: 'list', entity: 'Communication', class_id: classId });
+    setComms(data.records || []);
+    setStudents(data.students || []);
     setLoading(false);
   }
 
@@ -51,12 +47,12 @@ export default function Communications({ role = 'homeroom_teacher' }) {
   async function handleSave() {
     if (!form.student_id || !form.summary) { toast.error('יש לבחור תלמיד ולמלא סיכום'); return; }
     const student = students.find(s => s.id === form.student_id);
-    const data = { ...form, student_name: student ? formatStudentName(student) : '', class_id: classId };
+    const data = { ...form, id: editComm?.id, student_name: student ? formatStudentName(student) : '', class_id: classId };
     try {
-      if (editComm) { await base44.entities.Communication.update(editComm.id, data); toast.success('עודכן'); }
-      else { await base44.entities.Communication.create(data); toast.success('שיחה תועדה!'); }
+      await base44.functions.invoke('sensitiveStudentRecords', { action: 'save', entity: 'Communication', ...data });
+      toast.success(editComm ? 'עודכן' : 'שיחה תועדה!');
       setShowForm(false); loadData();
-    } catch { toast.error('שגיאה'); }
+    } catch { toast.error('אין הרשאה או שהשמירה נכשלה'); }
   }
 
   async function handleDelete(id) {
@@ -65,7 +61,7 @@ export default function Communications({ role = 'homeroom_teacher' }) {
       description: 'התיעוד יימחק מיומן התקשורת ולא ניתן יהיה לשחזר אותו.',
     });
     if (!approved) return;
-    await base44.entities.Communication.delete(id);
+    await base44.functions.invoke('sensitiveStudentRecords', { action: 'delete', entity: 'Communication', id });
     loadData();
   }
 

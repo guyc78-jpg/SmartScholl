@@ -17,7 +17,6 @@ import GrowthReport from '@/components/student/GrowthReport';
 import ParentDetailsCard from '@/components/student/ParentDetailsCard';
 import FamilySensitiveInfoCard from '@/components/student/FamilySensitiveInfoCard';
 import LearningAccommodationsCard from '@/components/student/LearningAccommodationsCard';
-import { CLASS_ID } from '@/lib/demoData';
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/AuthContext';
 import { formatStudentName } from '@/lib/studentName';
@@ -59,21 +58,21 @@ export default function StudentProfile({ role }) {
 
   async function loadAll() {
     setLoading(true);
-    const [st, att, dis, nts, rvs, cms, tks] = await Promise.all([
+    const [st, att, disRes, nts, rvs, cmsRes, tks] = await Promise.all([
       base44.entities.Student.filter({ id: studentId }),
       base44.entities.AttendanceRecord.filter({ student_id: studentId }),
-      base44.entities.DisciplineEvent.filter({ student_id: studentId }),
+      base44.functions.invoke('sensitiveStudentRecords', { action: 'listForStudent', entity: 'DisciplineEvent', student_id: studentId }),
       base44.entities.TeacherNote.filter({ student_id: studentId }),
       base44.entities.PerformanceReview.filter({ student_id: studentId }),
-      base44.entities.Communication.filter({ student_id: studentId }),
+      base44.functions.invoke('sensitiveStudentRecords', { action: 'listForStudent', entity: 'Communication', student_id: studentId }),
       base44.entities.Task.filter({ student_id: studentId }),
     ]);
     setStudent(st[0]);
     setAttendance(att.sort((a,b) => b.date.localeCompare(a.date)));
-    setDiscipline(dis.sort((a,b) => b.date.localeCompare(a.date)));
+    setDiscipline(disRes.data.records || []);
     setNotes(nts.sort((a,b) => b.date.localeCompare(a.date)));
     setReviews(rvs.sort((a,b) => b.date.localeCompare(a.date)));
-    setComms(cms.sort((a,b) => b.date.localeCompare(a.date)));
+    setComms(cmsRes.data.records || []);
     setTasks(tks);
     setLoading(false);
   }
@@ -115,14 +114,14 @@ export default function StudentProfile({ role }) {
       ...conversationForm,
       student_id: studentId,
       student_name: studentDisplayName,
-      class_id: student.class_id || CLASS_ID
+      class_id: student.class_id || ''
     };
 
-    await base44.entities.Communication.create(communicationData);
+    await base44.functions.invoke('sensitiveStudentRecords', { action: 'save', entity: 'Communication', ...communicationData });
 
     if (conversationForm.follow_up.trim() && conversationForm.follow_up_date) {
       await base44.entities.Task.create({
-        class_id: student.class_id || CLASS_ID,
+        class_id: student.class_id || '',
         student_id: studentId,
         student_name: studentDisplayName,
         title: `תזכורת המשך: ${studentDisplayName}`,
@@ -346,7 +345,7 @@ export default function StudentProfile({ role }) {
         <TabsContent value="contacts" className="space-y-4">
           <ParentContactLog 
             studentId={studentId}
-            classId={student.class_id || CLASS_ID}
+            classId={student.class_id || ''}
             studentName={studentDisplayName}
             parentPhone1={student.parent1_phone}
             parentPhone2={student.parent2_phone}
@@ -500,7 +499,7 @@ export default function StudentProfile({ role }) {
 
       </Tabs>
 
-      {showEdit && <AddStudentModal classId={CLASS_ID} editData={student} onClose={() => setShowEdit(false)} onSuccess={() => { setShowEdit(false); loadAll(); }} />}
+      {showEdit && <AddStudentModal classId={student.class_id || ''} editData={student} onClose={() => setShowEdit(false)} onSuccess={() => { setShowEdit(false); loadAll(); }} />}
       <div className="h-24 sm:h-16" />
       </div>
       );
