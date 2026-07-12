@@ -1,8 +1,8 @@
 import { base44 } from '@/api/base44Client';
 import { compareStudentsByLastName } from '@/lib/studentName';
+import { getLocalDateString } from '@/lib/dateUtils';
 import {
   isStudentInApprovedScope,
-  getUserApprovedClass,
   getUserApprovedGrade,
   getUserHomeroomClassId,
   getActiveScopeMode,
@@ -58,12 +58,7 @@ export function toStoredAttendanceStatus(status) {
 }
 export const ATTENDANCE_DATE_KEY = 'attendance:selectedDate';
 
-export function getLocalDateString(date = new Date()) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
+export { getLocalDateString };
 
 export function getSelectedAttendanceDate() {
   return localStorage.getItem(ATTENDANCE_DATE_KEY) || getLocalDateString();

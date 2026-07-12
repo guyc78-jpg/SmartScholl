@@ -76,6 +76,7 @@
       "type": "string",
       "enum": [
         "pending",
+        "processing",
         "approved",
         "rejected",
         "suspicious"
@@ -90,6 +91,30 @@
     "reviewed_at": {
       "type": "string",
       "description": "\u05ea\u05d0\u05e8\u05d9\u05da \u05d8\u05d9\u05e4\u05d5\u05dc"
+    },
+    "review_action": {
+      "type": "string",
+      "enum": [
+        "approve",
+        "reject"
+      ],
+      "description": "\u05d4\u05d7\u05dc\u05d8\u05ea \u05d4\u05d8\u05d9\u05e4\u05d5\u05dc \u05e9\u05e0\u05ea\u05e4\u05e1\u05d4 \u05d0\u05d8\u05d5\u05de\u05d9\u05ea"
+    },
+    "review_token": {
+      "type": "string",
+      "description": "\u05de\u05d6\u05d4\u05d4 lease \u05e4\u05e0\u05d9\u05de\u05d9 \u05dc\u05de\u05e0\u05d9\u05e2\u05ea \u05d8\u05d9\u05e4\u05d5\u05dc \u05de\u05e7\u05d1\u05d9\u05dc\u05d9"
+    },
+    "review_started_at": {
+      "type": "string",
+      "description": "\u05d6\u05de\u05df \u05ea\u05e4\u05d9\u05e1\u05ea \u05d4\u05d1\u05e7\u05e9\u05d4 \u05dc\u05d8\u05d9\u05e4\u05d5\u05dc"
+    },
+    "review_error": {
+      "type": "string",
+      "description": "\u05e9\u05d2\u05d9\u05d0\u05ea \u05d4\u05e0\u05d9\u05e1\u05d9\u05d5\u05df \u05d4\u05d0\u05d7\u05e8\u05d5\u05df \u05dc\u05e6\u05d5\u05e8\u05da \u05d4\u05ea\u05d0\u05d5\u05e9\u05e9\u05d5\u05ea"
+    },
+    "side_effects_completed_at": {
+      "type": "string",
+      "description": "\u05d6\u05de\u05df \u05d4\u05e9\u05dc\u05de\u05ea \u05e9\u05d9\u05e0\u05d5\u05d9\u05d9 \u05d4\u05d4\u05e8\u05e9\u05d0\u05d4/\u05d4\u05db\u05d9\u05ea\u05d4"
     },
     "rejection_reason": {
       "type": "string",
@@ -114,5 +139,66 @@
     "user_email",
     "full_name",
     "requested_role"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "system_admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "system_admin"
+          }
+        },
+        {
+          "data.user_email": "{{user.email}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "system_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "system_admin"
+          }
+        }
+      ]
+    }
+  }
 }

@@ -1,6 +1,6 @@
 import { AlertTriangle, UserX, Clock } from 'lucide-react';
 import { Card } from '@/components/ui/card';
-import { THRESHOLDS } from '@/pages/ClassAttendance';
+import { ATTENDANCE_THRESHOLDS as THRESHOLDS } from '@/lib/attendanceThresholds';
 
 export default function AttendanceAlerts({ statsPerStudent }) {
   const alerts = statsPerStudent.filter(s => s.absences >= THRESHOLDS.absences || s.lates >= THRESHOLDS.lates);

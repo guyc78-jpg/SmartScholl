@@ -1,9 +1,25 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.34';
 
 // Israel local time → UTC. Handles DST (Apr-Oct = +3, otherwise +2) well enough for reminders.
-function israelOffsetHours(date) {
-  const month = date.getUTCMonth(); // 0-11
-  return month >= 3 && month <= 9 ? 3 : 2;
+const ISRAEL_TIME_FORMATTER = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'Asia/Jerusalem',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  hourCycle: 'h23',
+});
+
+function israelParts(date) {
+  return Object.fromEntries(ISRAEL_TIME_FORMATTER.formatToParts(date)
+    .filter(part => part.type !== 'literal')
+    .map(part => [part.type, Number(part.value)]));
+}
+
+function israelOffsetMs(date) {
+  const parts = israelParts(date);
+  return Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute) - date.getTime();
 }
 
 // Build a UTC Date from a local Israel "YYYY-MM-DD" + "HH:MM"
@@ -12,10 +28,13 @@ function israelLocalToUtc(dateStr, timeStr) {
   const [y, m, d] = dateStr.split('-').map(Number);
   const [hh, mm] = timeStr.split(':').map(Number);
   if ([y, m, d, hh, mm].some(v => Number.isNaN(v))) return null;
-  // approximate the offset using the naive UTC of the local time
-  const naive = new Date(Date.UTC(y, m - 1, d, hh, mm));
-  const offset = israelOffsetHours(naive);
-  return new Date(Date.UTC(y, m - 1, d, hh - offset, mm));
+  const naiveMs = Date.UTC(y, m - 1, d, hh, mm);
+  const firstPass = new Date(naiveMs - israelOffsetMs(new Date(naiveMs)));
+  const result = new Date(naiveMs - israelOffsetMs(firstPass));
+  const roundTrip = israelParts(result);
+  if (roundTrip.year !== y || roundTrip.month !== m || roundTrip.day !== d
+      || roundTrip.hour !== hh || roundTrip.minute !== mm) return null;
+  return result;
 }
 
 const MIDDLE_GRADES = new Set(['ז', 'ח', 'ט', '7', '8', '9']);
@@ -154,7 +173,15 @@ async function queueForConversations(base44, list, buildFn, eventType, users, su
       if (!subscribedUserIds.has(user.id)) continue;
       if (userCanReceive(user, classInfo)) recipientIds.add(user.id);
     }
-    const records = [...recipientIds].map(userId => {
+    const startUtc = israelLocalToUtc(conv.date, conv.time);
+    const sourceEventKey = `ScheduledConversation:${conv.id}:${eventType}:${startUtc?.toISOString() || conv.updated_date || ''}`;
+    const existingQueue = await base44.asServiceRole.entities.PushNotificationQueue.filter(
+      { source_event_key: sourceEventKey },
+      '-created_date',
+      5000
+    );
+    const existingRecipientIds = new Set((existingQueue || []).map(item => item.recipient_user_id).filter(Boolean));
+    const records = [...recipientIds].filter(userId => !existingRecipientIds.has(userId)).map(userId => {
       const user = (users || []).find(u => u.id === userId);
       return {
         recipient_user_id: userId,
@@ -169,6 +196,9 @@ async function queueForConversations(base44, list, buildFn, eventType, users, su
         url: message.url,
         status: 'pending',
         queued_at: nowIso,
+        source_entity: 'ScheduledConversation',
+        source_entity_id: conv.id,
+        source_event_key: sourceEventKey,
       };
     });
     if (records.length) {
@@ -183,6 +213,12 @@ async function queueForConversations(base44, list, buildFn, eventType, users, su
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    const user = await base44.auth.me().catch(() => null);
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    const roles = getRoles(user);
+    if (user?.is_service !== true && !roles.includes('admin') && !roles.includes('system_admin')) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
     const now = new Date();
     const nowIso = now.toISOString();
 

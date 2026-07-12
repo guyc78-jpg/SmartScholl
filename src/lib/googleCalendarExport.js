@@ -1,11 +1,7 @@
+import { addDaysToDateString } from './dateUtils.js';
+
 function compactDate(date) {
   return String(date || '').replace(/-/g, '');
-}
-
-function addOneHour(time) {
-  const [hour = '0', minute = '0'] = String(time || '08:00').split(':');
-  const nextHour = (Number(hour) + 1) % 24;
-  return `${String(nextHour).padStart(2, '0')}${String(minute).padStart(2, '0')}00`;
 }
 
 function compactTime(time) {
@@ -13,10 +9,39 @@ function compactTime(time) {
   return `${String(hour).padStart(2, '0')}${String(minute).padStart(2, '0')}00`;
 }
 
+function timeToMinutes(time) {
+  const match = /^(\d{1,2}):(\d{2})$/.exec(String(time || ''));
+  if (!match) return null;
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+  if (hour > 23 || minute > 59) return null;
+  return hour * 60 + minute;
+}
+
+function minutesToTime(minutes) {
+  const normalized = ((minutes % 1440) + 1440) % 1440;
+  return `${String(Math.floor(normalized / 60)).padStart(2, '0')}:${String(normalized % 60).padStart(2, '0')}`;
+}
+
 export function buildGoogleCalendarExamUrl(exam) {
-  const date = compactDate(exam?.date);
-  const start = exam?.time ? `${date}T${compactTime(exam.time)}` : date;
-  const end = exam?.time ? `${date}T${exam?.end_time ? compactTime(exam.end_time) : addOneHour(exam.time)}` : date;
+  const dateString = String(exam?.date || '');
+  const date = compactDate(dateString);
+  const startMinutes = timeToMinutes(exam?.time);
+  let start;
+  let end;
+
+  if (startMinutes !== null) {
+    const explicitEndMinutes = timeToMinutes(exam?.end_time);
+    const rawEndMinutes = explicitEndMinutes ?? startMinutes + 60;
+    const crossesMidnight = rawEndMinutes <= startMinutes || rawEndMinutes >= 1440;
+    const endDate = compactDate(crossesMidnight ? addDaysToDateString(dateString, 1) : dateString);
+    start = `${date}T${compactTime(minutesToTime(startMinutes))}`;
+    end = `${endDate}T${compactTime(minutesToTime(rawEndMinutes))}`;
+  } else {
+    // Google Calendar treats the end date of an all-day event as exclusive.
+    start = date;
+    end = compactDate(addDaysToDateString(dateString, 1));
+  }
   const details = [
     exam?.subject ? `מקצוע: ${exam.subject}` : '',
     exam?.material ? `חומר: ${exam.material}` : '',

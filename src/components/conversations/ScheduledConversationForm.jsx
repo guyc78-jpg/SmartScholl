@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
+import { getLocalDateString } from '@/lib/dateUtils';
 
 const CONVERSATION_TYPES = [
   'שיחה אישית עם תלמיד',
@@ -15,7 +16,7 @@ const CONVERSATION_TYPES = [
 ];
 
 export default function ScheduledConversationForm({ open, onOpenChange, students, initial, onSave }) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDateString();
   const [form, setForm] = useState(
     initial || { title: '', conversation_type: 'שיחת הורים', date: today, time: '', student_id: '', participants: '', notes: '' }
   );

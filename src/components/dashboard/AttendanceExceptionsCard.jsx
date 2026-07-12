@@ -11,6 +11,7 @@ export default function AttendanceExceptionsCard({
   exceptionsCount,
   totalStudents = 0,
   exceptions = [],
+  date = 'היום',
   onClick,
 }) {
   const lates = exceptions.filter(item => STATUS_GROUPS.late.includes(item.status)).length;
@@ -24,7 +25,7 @@ export default function AttendanceExceptionsCard({
           <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
             <CheckCircle2 className="w-4 h-4 text-primary" strokeWidth={2.2} />
           </div>
-          <p className="text-sm font-semibold text-foreground">אין חריגי נוכחות היום</p>
+          <p className="text-sm font-semibold text-foreground">אין חריגי נוכחות {date}</p>
         </div>
       </div>
     );
@@ -45,7 +46,7 @@ export default function AttendanceExceptionsCard({
             <UserX className="w-5 h-5 text-destructive" strokeWidth={2.2} />
           </div>
           <div className="min-w-0 text-right">
-            <p className="text-sm font-bold text-foreground">חריגי נוכחות</p>
+            <p className="text-sm font-bold text-foreground">חריגי נוכחות · {date}</p>
             <div className="mt-1 flex flex-wrap items-center justify-start gap-x-3 gap-y-1 text-xs text-muted-foreground">
               <span className="tabular-nums">מאחרים: <strong className="text-foreground">{lates}</strong></span>
               <span className="tabular-nums">נעדרים: <strong className="text-foreground">{absences}</strong></span>

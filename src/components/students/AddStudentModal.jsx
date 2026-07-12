@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { normalizeStudentNameFields } from '@/lib/studentName';
 import { findClassRoomByName } from '@/lib/classAssignment';
 
-export default function AddStudentModal({ classId, editData, onClose, onSuccess }) {
+export default function AddStudentModal({ classId, editData = null, onClose, onSuccess }) {
   const [form, setForm] = useState(() => {
     const base = editData || {
       full_name: '', grade: 'י', gender: 'זכר', student_number: '',
@@ -30,7 +30,7 @@ export default function AddStudentModal({ classId, editData, onClose, onSuccess 
   const [classRooms, setClassRooms] = useState([]);
 
   useEffect(() => {
-    if (!classId || !/^[a-f0-9]{24}$/i.test(classId)) {
+    if (!classId) {
       setClassRoom(null);
       base44.entities.ClassRoom.list('-updated_date', 200).then(data => setClassRooms(data || []));
       return;
@@ -53,13 +53,17 @@ export default function AddStudentModal({ classId, editData, onClose, onSuccess 
       toast.error('שם פרטי ושם משפחה הם שדות חובה');
       return;
     }
+    const resolvedClassRoom = classRoom || findClassRoomByName(classRooms, form.class_name);
+    if (!resolvedClassRoom?.id) {
+      toast.error('יש לבחור כיתה קיימת לפני שמירת התלמיד/ה');
+      return;
+    }
     setSaving(true);
     try {
-      const resolvedClassRoom = classRoom || findClassRoomByName(classRooms, form.class_name);
       const classData = {
-        class_id: resolvedClassRoom?.id || classId,
-        class_name: resolvedClassRoom?.name || form.class_name || '',
-        grade: resolvedClassRoom?.grade || form.grade || '',
+        class_id: resolvedClassRoom.id,
+        class_name: resolvedClassRoom.name,
+        grade: resolvedClassRoom.grade,
       };
       const payload = {
         ...form,

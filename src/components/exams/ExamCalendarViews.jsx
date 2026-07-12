@@ -50,7 +50,7 @@ function getEventStyle(event) {
   return TYPE_STYLES[displayType] || TYPE_STYLES[event.type] || TYPE_STYLES['אחר'];
 }
 
-function CalendarShell({ view, onViewChange, title, subtitle, prevLabel, nextLabel, offset, onOffsetChange, children }) {
+function CalendarShell({ view, onViewChange = null, title, subtitle = '', prevLabel, nextLabel, offset, onOffsetChange, children }) {
   return (
     <Card className="overflow-hidden rounded-2xl border bg-card shadow-sm" dir="rtl">
       <div className="border-b bg-muted/20 p-3 sm:p-4 space-y-3 text-right">
@@ -96,7 +96,7 @@ function CalendarShell({ view, onViewChange, title, subtitle, prevLabel, nextLab
 }
 
 function EventActionsMenu({ event, onEdit, onDelete, canEdit, compact = false }) {
-  if (!canEdit) return null;
+  if (!canEdit || (!onEdit && !onDelete)) return null;
   return (
     <DropdownMenu dir="rtl">
       <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
@@ -105,12 +105,16 @@ function EventActionsMenu({ event, onEdit, onDelete, canEdit, compact = false })
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" sideOffset={6} collisionPadding={16} className="w-32 text-right z-[10000]" dir="rtl">
-        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit?.(event); }} className="justify-start gap-2 cursor-pointer">
-          <Pencil className="w-4 h-4" /> ערוך
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDelete?.(event.id); }} className="justify-start gap-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10">
-          <Trash2 className="w-4 h-4" /> מחק
-        </DropdownMenuItem>
+        {onEdit && (
+          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(event); }} className="justify-start gap-2 cursor-pointer">
+            <Pencil className="w-4 h-4" /> ערוך
+          </DropdownMenuItem>
+        )}
+        {onDelete && (
+          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDelete(event.id); }} className="justify-start gap-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10">
+            <Trash2 className="w-4 h-4" /> מחק
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );
@@ -174,7 +178,7 @@ function EventRow({ event, onClick, onEdit, onDelete, canEdit }) {
   );
 }
 
-export function MonthView({ events, offset, onOffsetChange, onEventClick, onEdit, onDelete, canEdit = true, todayIso, view = 'month', onViewChange }) {
+export function MonthView({ events, offset, onOffsetChange, onEventClick, onEdit = null, onDelete = null, canEdit = true, todayIso, view = 'month', onViewChange = null }) {
   const base = useMemo(() => {
     const today = new Date();
     return new Date(today.getFullYear(), today.getMonth() + offset, 1);
@@ -218,7 +222,7 @@ export function MonthView({ events, offset, onOffsetChange, onEventClick, onEdit
   );
 }
 
-export function WeekView({ events, offset, onOffsetChange, onEventClick, onEdit, onDelete, canEdit = true, todayIso, view = 'week', onViewChange }) {
+export function WeekView({ events, offset, onOffsetChange, onEventClick, onEdit = null, onDelete = null, canEdit = true, todayIso, view = 'week', onViewChange = null }) {
   const scrollRef = useRef(null);
   const todayColumnRef = useRef(null);
 
@@ -270,7 +274,7 @@ export function WeekView({ events, offset, onOffsetChange, onEventClick, onEdit,
   );
 }
 
-export function DayView({ events, offset, onOffsetChange, onEventClick, onEdit, onDelete, canEdit = true, todayIso, view = 'day', onViewChange }) {
+export function DayView({ events, offset, onOffsetChange, onEventClick, onEdit = null, onDelete = null, canEdit = true, todayIso, view = 'day', onViewChange = null }) {
   const day = useMemo(() => {
     const d = new Date();
     d.setDate(d.getDate() + offset);

@@ -1,0 +1,15 @@
+{
+  "name": "sendQueuedSmartPushNotifications",
+  "entry": "entry.ts",
+  "automations": [
+    {
+      "name": "Send queued smart push notifications",
+      "type": "scheduled",
+      "schedule_mode": "recurring",
+      "schedule_type": "cron",
+      "cron_expression": "*/5 * * * *",
+      "ends_type": "never",
+      "is_active": true
+    }
+  ]
+}

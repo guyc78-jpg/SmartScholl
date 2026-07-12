@@ -1,27 +1,19 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CalendarDays, Clock, MoreVertical, Pencil, Trash2 } from 'lucide-react';
-import { format } from 'date-fns';
-import { he } from 'date-fns/locale';
 import { TYPE_STYLES, getDisplayEventType } from './eventConstants';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { addDaysToDateString, formatSchoolDate, getSchoolWeekdayIndex } from '@/lib/dateUtils';
 
 const HEB_DAYS = ['א׳', 'ב׳', 'ג׳', 'ד׳', 'ה׳', 'ו׳', 'ש׳'];
 
-const addDays = (iso, days) => {
-  const d = new Date(iso);
-  d.setDate(d.getDate() + days);
-  return d.toISOString().split('T')[0];
-};
+const addDays = addDaysToDateString;
 
 const formatHebDate = (iso) => {
   if (!iso) return '';
-  try {
-    const d = new Date(iso);
-    return `${format(d, 'd.M.yy')} · יום ${HEB_DAYS[d.getDay()]}`;
-  } catch {
-    return iso;
-  }
+  const weekday = getSchoolWeekdayIndex(iso);
+  const formatted = formatSchoolDate(iso, { day: 'numeric', month: 'numeric', year: '2-digit' });
+  return formatted && weekday >= 0 ? `${formatted} · יום ${HEB_DAYS[weekday]}` : iso;
 };
 
 // מיפוי קטגוריה לפס צד עדין

@@ -109,20 +109,38 @@ function StudentProfileForm({ form, setForm }) {
 }
 
 /* ─── Change password form ─── */
-function ChangePasswordForm({ onSave }) {
+function ChangePasswordForm({ userId, onSave }) {
+  const [currentPw, setCurrentPw] = useState('');
   const [pw, setPw] = useState('');
   const [pw2, setPw2] = useState('');
   const [show, setShow] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [passwordChanged, setPasswordChanged] = useState(false);
 
   async function handleSave() {
+    if (!userId) { toast.error('לא ניתן לזהות את המשתמש. יש להתחבר מחדש'); return; }
+    if (!passwordChanged && !currentPw) { toast.error('יש להזין את הסיסמה הזמנית הנוכחית'); return; }
     if (pw.length < 8) { toast.error('הסיסמה חייבת להכיל לפחות 8 תווים'); return; }
     if (pw !== pw2) { toast.error('הסיסמאות אינן תואמות'); return; }
+    if (!passwordChanged && currentPw === pw) { toast.error('הסיסמה החדשה חייבת להיות שונה מהסיסמה הזמנית'); return; }
     setSaving(true);
-    await base44.auth.updateMe({ must_change_password: false });
-    toast.success('הסיסמה עודכנה בהצלחה!');
-    setSaving(false);
-    onSave();
+    try {
+      if (!passwordChanged) {
+        await base44.auth.changePassword({
+          userId,
+          currentPassword: currentPw,
+          newPassword: pw,
+        });
+        setPasswordChanged(true);
+      }
+      await base44.auth.updateMe({ must_change_password: false });
+      toast.success('הסיסמה עודכנה בהצלחה!');
+      onSave();
+    } catch (error) {
+      toast.error(error?.message || 'שינוי הסיסמה נכשל. יש לבדוק את הסיסמה הזמנית ולנסות שוב');
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
@@ -134,12 +152,23 @@ function ChangePasswordForm({ onSave }) {
         </p>
       </div>
       <div className="space-y-1">
+        <Label>סיסמה זמנית נוכחית *</Label>
+        <Input
+          type={show ? 'text' : 'password'}
+          value={currentPw}
+          onChange={event => setCurrentPw(event.target.value)}
+          autoComplete="current-password"
+          disabled={passwordChanged}
+        />
+      </div>
+      <div className="space-y-1">
         <Label>סיסמה חדשה *</Label>
         <div className="relative">
           <Input
             type={show ? 'text' : 'password'}
             value={pw}
             onChange={e => setPw(e.target.value)}
+            autoComplete="new-password"
             placeholder="לפחות 8 תווים"
             className="pl-10"
           />
@@ -158,6 +187,7 @@ function ChangePasswordForm({ onSave }) {
           type={show ? 'text' : 'password'}
           value={pw2}
           onChange={e => setPw2(e.target.value)}
+          autoComplete="new-password"
           placeholder="הזן/י שוב"
         />
       </div>
@@ -170,8 +200,15 @@ function ChangePasswordForm({ onSave }) {
 
 /* ─── Role guide screen ─── */
 function RoleGuideScreen({ role, userName, onContinue }) {
-  const guide = GUIDE[role];
-  if (!guide) { onContinue(); return null; }
+  const guide = GUIDE[role] || {
+    title: 'החשבון שלך מוכן',
+    color: 'bg-primary',
+    icon: ShieldCheck,
+    points: [
+      'ההרשאות שלך נקבעו ואומתו על ידי מנהל/ת המערכת',
+      'ניתן להמשיך כעת לסביבת העבודה המאושרת שלך',
+    ],
+  };
   const Icon = guide.icon;
 
   return (
@@ -204,8 +241,8 @@ function RoleGuideScreen({ role, userName, onContinue }) {
 /* ─── Main Onboarding component ─── */
 export default function Onboarding({ user, onComplete }) {
   // Determine flow type
-  const isAdminCreated = user?.pre_created_by_admin === true;
   const mustChangePw = user?.must_change_password === true;
+  const isAdminCreated = user?.pre_created_by_admin === true || mustChangePw;
   const role = user?.role || 'student';
 
   // For admin-created staff: step 0=change password (if needed), step 1=guide, step 2=done
@@ -215,7 +252,14 @@ export default function Onboarding({ user, onComplete }) {
     return 'role';
   });
 
-  const [profileForm, setProfileForm] = useState({});
+  const [profileForm, setProfileForm] = useState({
+    profile_full_name: user?.profile_full_name || user?.full_name || '',
+    profile_grade_managed: user?.profile_grade_managed || '',
+    profile_class_id: user?.profile_class_id || '',
+    profile_class: user?.profile_class || '',
+    profile_homeroom_teacher: user?.profile_homeroom_teacher || '',
+    profile_tracks: user?.profile_tracks || '',
+  });
   const [saving, setSaving] = useState(false);
 
   /* Admin-created flow */
@@ -234,7 +278,7 @@ export default function Onboarding({ user, onComplete }) {
                   <p className="text-sm text-muted-foreground mt-1">כניסה ראשונה – עליך להגדיר סיסמה אישית</p>
                 </div>
                 <div className="bg-card rounded-3xl border p-6">
-                  <ChangePasswordForm onSave={() => setStep('guide')} />
+                  <ChangePasswordForm userId={user?.id} onSave={() => setStep('guide')} />
                 </div>
               </motion.div>
             )}
@@ -244,8 +288,16 @@ export default function Onboarding({ user, onComplete }) {
                 role={role}
                 userName={getUserDisplayName(user)}
                 onContinue={async () => {
-                  await base44.auth.updateMe({ onboarding_status: 'approved' });
-                  onComplete({ ...user, onboarding_status: 'approved' });
+                  if (saving) return;
+                  setSaving(true);
+                  try {
+                    const updated = await base44.auth.updateMe({ onboarding_status: 'approved', onboardingCompleted: true });
+                    onComplete(updated || { ...user, onboarding_status: 'approved', onboardingCompleted: true });
+                  } catch (error) {
+                    toast.error(error?.message || 'שמירת תהליך ההצטרפות נכשלה. יש לנסות שוב');
+                  } finally {
+                    setSaving(false);
+                  }
                 }}
               />
             )}
@@ -257,13 +309,18 @@ export default function Onboarding({ user, onComplete }) {
 
   async function activateApprovedStaff() {
     setSaving(true);
-    const res = await base44.functions.invoke('handleApprovalRequest', { action: 'activate_approved_staff' });
-    if (res.data.found) {
-      onComplete(res.data.user);
-      return;
+    try {
+      const res = await base44.functions.invoke('handleApprovalRequest', { action: 'activate_approved_staff' });
+      if (res.data.found) {
+        onComplete(res.data.user);
+        return;
+      }
+      toast.error('המייל שלך לא נמצא ברשימת הצוות המאושרת. יש לפנות למנהל/ת המערכת.');
+    } catch (error) {
+      toast.error(error?.message || 'בדיקת הרשאת הצוות נכשלה. יש לנסות שוב');
+    } finally {
+      setSaving(false);
     }
-    toast.error('המייל שלך לא נמצא ברשימת הצוות המאושרת. יש לפנות למנהל/ת המערכת.');
-    setSaving(false);
   }
 
   /* New user self-registration flow — only students allowed to self-register */
@@ -276,10 +333,6 @@ export default function Onboarding({ user, onComplete }) {
       // Do NOT update role/permissions from client — only safe profile fields.
       const updateData = {
         profile_full_name: profileForm.profile_full_name?.trim(),
-        profile_grade_managed: profileForm.profile_grade_managed,
-        profile_class_id: profileForm.profile_class_id,
-        profile_class: profileForm.profile_class,
-        profile_homeroom_class: profileForm.profile_class,
         profile_homeroom_teacher: profileForm.profile_homeroom_teacher?.trim() || '',
         profile_tracks: profileForm.profile_tracks?.trim() || '',
         onboarding_status: 'approved',

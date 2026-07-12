@@ -1,10 +1,57 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.34';
+
+function parseRoles(value) {
+  if (Array.isArray(value)) return value;
+  if (typeof value !== 'string') return [];
+  const text = value.trim();
+  if (!text) return [];
+  if (text.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(text);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return text.split(',').map(role => role.trim()).filter(Boolean);
+}
+
+function normalize(value) {
+  return String(value || '').replace(/[׳״'"\s]/g, '').trim();
+}
+
+function recordAllowsStudent(record, student) {
+  const roles = [...new Set([...parseRoles(record?.roles), record?.role].filter(Boolean))];
+  if (roles.includes('system_admin') || roles.includes('admin')) return true;
+
+  const scope = record?.scope || {};
+  const classId = record?.homeroomClassId || scope.classId || scope.homeroomClassId || '';
+  if (roles.includes('homeroom_teacher') && classId && student.class_id === classId) return true;
+
+  const grade = normalize(record?.gradeId || scope.gradeId);
+  if ((roles.includes('grade_coordinator') || roles.includes('coordinator'))
+      && grade && normalize(student.grade) === grade) return true;
+
+  const division = record?.divisionType || scope.divisionType;
+  const divisionGrades = division === 'upper' ? ['י', 'יא', 'יב'] : division === 'middle' ? ['ז', 'ח', 'ט'] : [];
+  return roles.includes('division_manager') && divisionGrades.includes(normalize(student.grade));
+}
+
+async function canAccessStudent(base44, user, student) {
+  const email = String(user?.email || '').trim().toLowerCase();
+  if (!email || !student) return false;
+  if (String(student.user_email || '').trim().toLowerCase() === email
+      || String(student.email || '').trim().toLowerCase() === email) return true;
+
+  const approved = await base44.asServiceRole.entities.ApprovedUser.filter({ email }, '-updated_date', 20).catch(() => []);
+  return approved.some(record => record?.isActive !== false && recordAllowsStudent(record, student));
+}
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me();
-    
+
     if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -16,34 +63,15 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'student_id required' }, { status: 400 });
     }
 
-    // Security: only staff or the student themselves may access growth data.
-    // Resolve the user's real role/scope from server-side sources of truth
-    // (ApprovedUser / Student) — never trust client-provided user.authorization.
-    const STAFF_ROLES = ['admin', 'system_admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator', 'division_manager'];
-    const email = String(user.email || '').trim().toLowerCase();
-    const approvedRecords = await base44.asServiceRole.entities.ApprovedUser.filter({ email }).catch(() => []);
-    const approvedRoles = approvedRecords
-      .filter(record => record.isActive !== false)
-      .flatMap(record => [record.role, ...(Array.isArray(record.roles) ? record.roles : [])])
-      .filter(Boolean);
-    const isStaff = user.role === 'admin' || user.role === 'system_admin' || approvedRoles.some(role => STAFF_ROLES.includes(role));
-
-    let isOwnStudent = false;
-    if (!isStaff) {
-      const ownByUserEmail = await base44.asServiceRole.entities.Student.filter({ user_email: email }).catch(() => []);
-      const ownByEmail = ownByUserEmail.length ? ownByUserEmail : await base44.asServiceRole.entities.Student.filter({ email }).catch(() => []);
-      isOwnStudent = ownByEmail.some(item => item.id === student_id);
-    }
-    if (!isStaff && !isOwnStudent) {
-      return Response.json({ error: 'Forbidden' }, { status: 403 });
-    }
-
-    // Use asServiceRole for consistent access + fetch only what's needed for this student
-    // Fetch the student first to get class_id for scoped exam query
+    // Resolve the target before authorizing so scoped staff are checked against
+    // the student's verified class/grade rather than editable request fields.
     const studentRows = await base44.asServiceRole.entities.Student.filter({ id: student_id }).catch(() => []);
     const student = studentRows?.[0];
     if (!student) {
       return Response.json({ indicators: [], summary: {} });
+    }
+    if (!await canAccessStudent(base44, user, student)) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
     const class_id = student.class_id;
 
@@ -72,9 +100,8 @@ Deno.serve(async (req) => {
     const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
     const sixtyDaysAgo = new Date(today.getTime() - 60 * 24 * 60 * 60 * 1000);
 
-    const validAttendance = attendanceRecords.filter(r => r.date && !isNaN(new Date(r.date).getTime()));
-    const recentAttendance = validAttendance.filter(r => new Date(r.date) >= thirtyDaysAgo);
-    const priorAttendance = validAttendance.filter(r => {
+    const recentAttendance = attendanceRecords.filter(r => new Date(r.date) >= thirtyDaysAgo);
+    const priorAttendance = attendanceRecords.filter(r => {
       const d = new Date(r.date);
       return d >= sixtyDaysAgo && d < thirtyDaysAgo;
     });
@@ -91,10 +118,12 @@ Deno.serve(async (req) => {
     const priorStats = calcAttendanceStats(priorAttendance);
 
     // Exam completion rate — exams relevant to this student
-    const studentExams = (exams || []).filter(e => {
-      return (examCompletions || []).some(ec => ec.exam_id === e.id && ec.student_id === student_id);
-    });
-    const examsCompleted = examCompletions.filter(ec => ec.student_id === student_id).length;
+    const studentExams = exams || [];
+    const relevantExamIds = new Set(studentExams.map(exam => exam.id));
+    const completedExamIds = new Set((examCompletions || [])
+      .filter(completion => completion.student_id === student_id && relevantExamIds.has(completion.exam_id))
+      .map(completion => completion.exam_id));
+    const examsCompleted = completedExamIds.size;
     const examCompletionRate = studentExams.length > 0 ? (examsCompleted / studentExams.length * 100).toFixed(1) : 0;
 
     // Task completion
@@ -108,9 +137,7 @@ Deno.serve(async (req) => {
     const resolutionRate = (openDiscipline + closedDiscipline) > 0 ? (closedDiscipline / (openDiscipline + closedDiscipline) * 100).toFixed(1) : 0;
 
     // Performance participation (latest review)
-    const latestReview = performanceReviews
-      .filter(r => r.date && !isNaN(new Date(r.date).getTime()))
-      .sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+    const latestReview = performanceReviews.sort((a, b) => new Date(b.date) - new Date(a.date))[0];
     const participationScore = latestReview?.participation || null;
 
     // Build growth indicators
@@ -118,7 +145,7 @@ Deno.serve(async (req) => {
 
     // Attendance trend
     if (priorStats.total > 0) {
-      const diff = recentStats.percentage - priorStats.percentage;
+      const diff = Number(recentStats.percentage) - Number(priorStats.percentage);
       indicators.push({
         category: 'נוכחות',
         current: `${recentStats.percentage}%`,
@@ -183,6 +210,7 @@ Deno.serve(async (req) => {
       }
     });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('Function error:', error);
+    return Response.json({ error: 'Internal server error' }, { status: 500 });
   }
 });

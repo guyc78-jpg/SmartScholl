@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Calendar, Clock, MapPin, Pencil, Trash2, User, Users, X } from 'lucide-react';
+import { Calendar, Clock, MapPin, Pencil, User, Users, X } from 'lucide-react';
 import EventTypeBadge from './EventTypeBadge';
 import { getDisplayEventType } from './eventConstants';
 
@@ -17,7 +17,7 @@ const STATUS_OPTIONS = [
 
 const SCOPE_LABEL = { school: 'כל בית הספר', grade: 'שכבה', class: 'כיתה', subject: 'מקצוע', track: 'מגמה', group: 'קבוצה' };
 
-export default function EventDetailsDialog({ event, open, onClose, canEdit, isStudent, completion, onStudentUpdate, onEdit, onDelete, extraContent }) {
+export default function EventDetailsDialog({ event, open, onClose, canEdit, isStudent, completion = null, onStudentUpdate = null, onEdit, extraContent = null }) {
   const [status, setStatus] = useState('not_started');
   const [note, setNote] = useState('');
 
@@ -72,18 +72,12 @@ export default function EventDetailsDialog({ event, open, onClose, canEdit, isSt
             </div>
           )}
 
-          <div className={canEdit ? "grid grid-cols-3 gap-2 pt-1" : "grid grid-cols-1 gap-2 pt-1"}>
-            {canEdit ? (
-              <>
+          <div className={canEdit && onEdit ? "grid grid-cols-2 gap-2 pt-1" : "grid grid-cols-1 gap-2 pt-1"}>
+            {canEdit && onEdit ? (
                 <Button variant="outline" onClick={() => onEdit(event)} className="h-10 rounded-xl gap-1.5">
                   <Pencil className="w-4 h-4" />
                   ערוך
                 </Button>
-                <Button variant="destructive" onClick={() => onDelete(event.id)} className="h-10 rounded-xl gap-1.5">
-                  <Trash2 className="w-4 h-4" />
-                  מחק
-                </Button>
-              </>
             ) : null}
             <Button variant="outline" onClick={onClose} className="h-10 rounded-xl gap-1.5">
               <X className="w-4 h-4" />

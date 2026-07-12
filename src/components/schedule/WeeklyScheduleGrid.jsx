@@ -8,7 +8,7 @@ import { getUnitLabel, groupSlotsByBaseSubject, stripUnitFromRoom } from '@/lib/
 // Slim, professional, mobile-friendly. Highlights today + current period.
 const DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי'];
 
-export default function WeeklyScheduleGrid({ periods, slotsByKey, todayDayName, currentPeriod, canEdit, onCellClick, subjectsById = {} }) {
+export default function WeeklyScheduleGrid({ periods, slotsByKey, todayDayName, currentPeriod, canEdit, onCellClick = null, subjectsById = {} }) {
   // todayDayName might be 'שישי' or 'שבת' — only highlight if it's in DAYS list
   const highlightDay = DAYS.includes(todayDayName) ? todayDayName : null;
 
@@ -90,14 +90,18 @@ export default function WeeklyScheduleGrid({ periods, slotsByKey, todayDayName, 
                     const cellSlots = Array.isArray(slot) ? slot : (slot ? [slot] : []);
                     const isToday = day === highlightDay;
                     const isNow = isToday && isCurrentRow;
+                    const isInteractive = canEdit || (cellSlots.length > 0 && typeof onCellClick === 'function');
                     return (
                       <Cell
                         key={day + p.period}
                         slots={cellSlots}
+                        day={day}
+                        period={p.period}
                         isToday={isToday}
                         isNow={isNow}
                         canEdit={canEdit}
-                        onClick={() => onCellClick(day, p.period, cellSlots[0], p)}
+                        interactive={isInteractive}
+                        onClick={isInteractive ? () => onCellClick?.(day, p.period, cellSlots[0], p) : undefined}
                         subjectsById={subjectsById}
                       />
                     );
@@ -143,11 +147,15 @@ function CornerHeader() {
   );
 }
 
-function Cell({ slots = [], isToday, isNow, canEdit, onClick, subjectsById }) {
+function Cell({ slots = [], day, period, isToday, isNow, canEdit, interactive, onClick, subjectsById }) {
   const hasSlots = slots.length > 0;
   const primarySlot = slots[0];
   const primarySubject = primarySlot?.subject_id ? subjectsById[primarySlot.subject_id] : null;
   const primaryStyle = hasSlots ? colorToSubjectStyle(primarySubject?.color) : null;
+  const subjectNames = groupSlotsByBaseSubject(slots).map(group => group.subject).filter(Boolean).join(', ');
+  const accessibleLabel = hasSlots
+    ? `${day}, שיעור ${period}: ${subjectNames || 'שיעור קיים'}`
+    : `${day}, שיעור ${period}: הוספת שיעור`;
 
   return (
     <td
@@ -155,10 +163,21 @@ function Cell({ slots = [], isToday, isNow, canEdit, onClick, subjectsById }) {
         'border-b border-l last:border-l-0 border-border align-top p-0 transition-colors relative',
         isNow && 'ring-1 ring-inset ring-primary/40',
         !hasSlots && (isNow ? 'bg-primary/15 dark:bg-primary/20' : isToday ? 'bg-primary/[0.05]' : ''),
-        canEdit ? 'cursor-pointer hover:bg-accent/60' : (hasSlots ? 'cursor-pointer hover:bg-accent/40' : 'cursor-default'),
+        interactive ? (canEdit ? 'cursor-pointer hover:bg-accent/60' : 'cursor-pointer hover:bg-accent/40') : 'cursor-default',
       )}
       style={hasSlots ? { backgroundColor: primaryStyle.backgroundColor } : undefined}
-      onClick={canEdit || hasSlots ? onClick : undefined}
+      role={interactive ? 'button' : undefined}
+      tabIndex={interactive ? 0 : undefined}
+      aria-label={interactive ? accessibleLabel : undefined}
+      aria-current={isNow ? 'time' : undefined}
+      onClick={interactive ? onClick : undefined}
+      onKeyDown={interactive ? (event) => {
+        if (event.target !== event.currentTarget) return;
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onClick?.();
+        }
+      } : undefined}
     >
       {hasSlots ? (
         <div className="px-0.5 sm:px-1 py-1 min-h-[56px] sm:min-h-[64px] flex flex-col items-stretch justify-center gap-1 text-center">

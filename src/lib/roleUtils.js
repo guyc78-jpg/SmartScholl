@@ -106,16 +106,23 @@ export function parseRoles(value) {
 }
 
 export function getAvailableRoles(user) {
-  if (!user) return ['student'];
+  if (!user) return [];
 
-  const sourceRoles = user.authorization?.roles || user.roles;
+  // Once server-issued authorization exists it is the only source of truth.
+  // Falling back to editable profile fields would let malformed/stale client
+  // state grant a role that the authorization function did not approve.
+  if (user.authorization && (user.authorization.authorized !== true || user.authorization.isActive === false)) {
+    return [];
+  }
+
+  const sourceRoles = user.authorization ? user.authorization.roles : user.roles;
   const roles = [
     ...parseRoles(sourceRoles),
-    user.authorization?.role || user.role,
+    user.authorization ? user.authorization.role : user.role,
   ];
 
   const unique = [...new Set(roles.filter(role => VALID_ROLES.includes(role)))];
-  return unique.length ? unique : ['student'];
+  return unique;
 }
 
 export function hasApprovedRole(user, role) {
@@ -129,12 +136,12 @@ export function getWorkModeRoles(user) {
     if (role === 'coordinator' && list.includes('grade_coordinator')) return false;
     return list.indexOf(role) === index;
   });
-  return withoutDuplicates.length ? withoutDuplicates : ['student'];
+  return withoutDuplicates;
 }
 
 export function getSystemRole(user) {
   const roles = getAvailableRoles(user);
-  return SYSTEM_ROLE_PRIORITY.find(role => roles.includes(role)) || 'student';
+  return SYSTEM_ROLE_PRIORITY.find(role => roles.includes(role)) || null;
 }
 
 export function getEducationalRoles(user) {
@@ -256,14 +263,14 @@ export function getRoleDisplayLines(user, activeRole) {
   const primaryRole = getDefaultDisplayRole(user, activeRole);
   const primary = getFullRoleDisplay(user) || getRoleContextLabel(user, primaryRole);
   const additionalRoles = getDisplayAdditionalRoles(user, primaryRole);
-  
+
   // סנן תפקידים נוספים: הצג רק אלה שמשנים בפועל הרשאות ותצוגה
   const filtered = additionalRoles.filter(roleText => {
-    const roleKey = Object.keys(ROLE_LABELS).find(k => 
+    const roleKey = Object.keys(ROLE_LABELS).find(k =>
       ROLE_LABELS[k] === roleText || roleText.includes(ROLE_LABELS[k])
     );
     return roleKey ? WORK_MODE_ROLES.includes(roleKey) : false;
   });
-  
+
   return [primary, ...filtered];
 }

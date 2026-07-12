@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { CLASS_ID } from '@/lib/demoData';
 import { getUserApprovedClassId, getUserHomeroomClassId } from '@/lib/schoolStructure';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -16,6 +15,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import { toast } from 'sonner';
 import { CheckSquare, Plus, Edit, Trash2, Check } from 'lucide-react';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
+import { formatSchoolDate, getLocalDateString } from '@/lib/dateUtils';
 import useDeleteConfirm from '@/hooks/useDeleteConfirm';
 
 export default function Tasks({ role = 'homeroom_teacher', user }) {
@@ -25,9 +25,9 @@ export default function Tasks({ role = 'homeroom_teacher', user }) {
   const [showForm, setShowForm] = useState(false);
   const [editTask, setEditTask] = useState(null);
   const [statusFilter, setStatusFilter] = useState('הכל');
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDateString();
   const [form, setForm] = useState({ student_id: '', student_name: '', title: '', description: '', due_date: today, priority: 'בינונית', status: 'לביצוע', category: 'כללי' });
-  const classId = role === 'coordinator' ? getUserHomeroomClassId(user, CLASS_ID) : getUserApprovedClassId(user, CLASS_ID);
+  const classId = role === 'coordinator' ? getUserHomeroomClassId(user, '') : getUserApprovedClassId(user, '');
   const { confirmDelete, DeleteConfirm } = useDeleteConfirm();
 
   useEffect(() => { loadData(); }, []);
@@ -74,7 +74,7 @@ export default function Tasks({ role = 'homeroom_teacher', user }) {
   }
 
   const filtered = statusFilter === 'הכל' ? tasks : tasks.filter(t => t.status === statusFilter);
-  const formatDate = (d) => { if (!d) return '—'; const dt = new Date(d); return `${dt.getDate().toString().padStart(2,'0')}/${(dt.getMonth()+1).toString().padStart(2,'0')}/${dt.getFullYear()}`; };
+  const formatDate = (d) => formatSchoolDate(d, { day: '2-digit', month: '2-digit', year: 'numeric' }) || '—';
   const isOverdue = (t) => t.due_date && t.due_date < today && t.status !== 'בוצע';
 
   return (
@@ -117,8 +117,8 @@ export default function Tasks({ role = 'homeroom_teacher', user }) {
                     </div>
                   </div>
                   <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => openEdit(task)}><Edit className="w-3.5 h-3.5"/></Button>
-                    <Button variant="ghost" size="icon" className="w-7 h-7 text-red-500" onClick={() => handleDelete(task.id)}><Trash2 className="w-3.5 h-3.5"/></Button>
+                    <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => openEdit(task)} aria-label={'עריכת משימה: ' + (task.title || 'ללא כותרת')}><Edit className="w-3.5 h-3.5"/></Button>
+                    <Button variant="ghost" size="icon" className="w-7 h-7 text-red-500" onClick={() => handleDelete(task.id)} aria-label={'מחיקת משימה: ' + (task.title || 'ללא כותרת')}><Trash2 className="w-3.5 h-3.5"/></Button>
                   </div>
                 </div>
               </Card>

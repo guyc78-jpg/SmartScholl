@@ -10,29 +10,11 @@ import { formatStudentName } from '@/lib/studentName';
 import { findClassRoomByName } from '@/lib/classAssignment';
 import useDeleteConfirm from '@/hooks/useDeleteConfirm';
 
-function parseGradeFromClassName(className = '') {
-  const clean = String(className).replace(/[\s״"׳']/g, '');
-  if (clean.startsWith('יב')) return 'יב';
-  if (clean.startsWith('יא')) return 'יא';
-  if (clean.startsWith('י')) return 'י';
-  if (clean.startsWith('ט')) return 'ט';
-  if (clean.startsWith('ח')) return 'ח';
-  if (clean.startsWith('ז')) return 'ז';
-  return 'י';
-}
-
 async function getOrCreateClassRoom(student, classRooms = []) {
   const className = student.class_name || '';
   const existing = findClassRoomByName(classRooms, className);
-  if (existing) return existing;
-  const created = await base44.entities.ClassRoom.create({
-    name: className,
-    grade: student.grade || parseGradeFromClassName(className),
-    year: 'תשפ״ו',
-    is_active: true
-  });
-  classRooms.push(created);
-  return created;
+  if (!existing) throw new Error(`ClassRoom not found: ${className || 'missing class'}`);
+  return existing;
 }
 
 export default function ImportStudentsModal({ classId, onClose, onSuccess }) {
@@ -47,7 +29,7 @@ export default function ImportStudentsModal({ classId, onClose, onSuccess }) {
 
   useEffect(() => {
     async function loadClassRoom() {
-      if (!classId || !/^[a-f0-9]{24}$/i.test(classId)) {
+      if (!classId) {
         setClassRoom(null);
         return;
       }
@@ -64,7 +46,7 @@ export default function ImportStudentsModal({ classId, onClose, onSuccess }) {
       setFileName(file.name);
       setPreview([]);
       setError('');
-      const XLSX = await import('https://cdn.sheetjs.com/xlsx-0.20.3/package/xlsx.mjs');
+      const XLSX = await import('xlsx');
       const buffer = await file.arrayBuffer();
       const wb = XLSX.read(buffer);
       const ws = wb.Sheets[wb.SheetNames[0]];
@@ -98,6 +80,10 @@ export default function ImportStudentsModal({ classId, onClose, onSuccess }) {
   }
 
   async function handleImport() {
+    if (!classRoom && preview.some(student => !String(student.class_name || '').trim())) {
+      toast.error('חסרה כיתה בחלק מהשורות. בחרו כיתה או הוסיפו עמודת כיתה בקובץ');
+      return;
+    }
     setImporting(true);
     let success = 0;
     const classRooms = await base44.entities.ClassRoom.list('-updated_date', 200);

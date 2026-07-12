@@ -42,7 +42,8 @@ function findColumn(headers, options) {
   });
 }
 
-export function parseStudentsWorksheetRows(rows, { classId, classRoom } = {}) {
+export function parseStudentsWorksheetRows(rows, { classId = '', classRoom = null } = { classId: '', classRoom: null }) {
+  if (!Array.isArray(rows)) return [];
   const headerIndex = rows.findIndex(row => {
     const normalized = row.map(normalizeImportText).join('|');
     return (normalized.includes('שםפרטי') && normalized.includes('שםמשפחה')) || normalized.includes('שםמלא');

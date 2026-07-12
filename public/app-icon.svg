@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="SmartScholl">
+  <rect width="512" height="512" rx="112" fill="#2563eb"/>
+  <path fill="#ffffff" d="M256 92 66 194l190 102 190-102L256 92Zm-118 159v94c0 42 53 75 118 75s118-33 118-75v-94l-118 63-118-63Zm264-16v132h28V220l-28 15Z"/>
+</svg>

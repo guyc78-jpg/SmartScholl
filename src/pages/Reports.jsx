@@ -13,6 +13,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { formatStudentName, compareStudentsByLastName, getLastName } from '@/lib/studentName';
 import { getAttendanceScopedStudents, getScopedClassIds, filterScopedAttendance } from '@/lib/attendanceScope';
 import { buildClassIdentityMap, getClassDisplayById } from '@/lib/classIdentity';
+import { getLocalDateString } from '@/lib/dateUtils';
 
 export default function Reports({ role }) {
   const { user } = useAuth();
@@ -23,8 +24,8 @@ export default function Reports({ role }) {
   const [classRooms, setClassRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedStudent, setSelectedStudent] = useState('all');
-  const [dateFrom, setDateFrom] = useState(() => { const d = new Date(); d.setMonth(d.getMonth()-1); return d.toISOString().split('T')[0]; });
-  const [dateTo, setDateTo] = useState(new Date().toISOString().split('T')[0]);
+  const [dateFrom, setDateFrom] = useState(() => { const d = new Date(); d.setMonth(d.getMonth()-1); return getLocalDateString(d); });
+  const [dateTo, setDateTo] = useState(getLocalDateString);
 
   useEffect(() => { loadData(); }, []);
   async function loadData() {

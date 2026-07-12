@@ -2,8 +2,9 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import EventTypeBadge from '@/components/exams/EventTypeBadge';
 import { BookOpen, ChevronLeft } from 'lucide-react';
+import { formatSchoolDate } from '@/lib/dateUtils';
 
-const fmt = d => d ? new Date(d).toLocaleDateString('he-IL', { day: 'numeric', month: 'numeric' }) : '';
+const fmt = d => formatSchoolDate(d, { day: 'numeric', month: 'numeric' });
 
 export default function UpcomingExamsCard({ exams }) {
   const next = (exams || []).slice(0, 3);

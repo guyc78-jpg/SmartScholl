@@ -15,7 +15,7 @@ import ExamGradeReportsPanel from '@/components/staff/ExamGradeReportsPanel';
 import { normalizeGrade, formatGrade, getUserDivisionGrades, getDivisionLabel } from '@/lib/schoolStructure';
 import { detectConflicts } from '@/lib/examConflicts';
 import { logActivity } from '@/lib/activityLogger';
-import useDeleteConfirm from '@/hooks/useDeleteConfirm';
+import { getLocalDateString } from '@/lib/dateUtils';
 
 const gradeOrder = ['ז', 'ח', 'ט', 'י', 'יא', 'יב'];
 
@@ -31,11 +31,10 @@ export default function DivisionExams({ user, role }) {
   const [editingEvent, setEditingEvent] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [showImport, setShowImport] = useState(false);
-  const { confirmDelete, DeleteConfirm } = useDeleteConfirm();
 
   const allowedGrades = useMemo(() => getUserDivisionGrades(user), [user]);
   const divisionLabel = getDivisionLabel(user?.profile_division);
-  const todayIso = new Date().toISOString().split('T')[0];
+  const todayIso = getLocalDateString();
 
   useEffect(() => { loadData(); }, [allowedGrades.join(',')]);
 
@@ -102,20 +101,6 @@ export default function DivisionExams({ user, role }) {
     toast.success(editingEvent ? 'האירוע עודכן' : 'האירוע נוסף');
     setShowForm(false);
     setEditingEvent(null);
-    loadData();
-  }
-
-  async function deleteEvent(id) {
-    const approved = await confirmDelete({
-      title: 'למחוק את האירוע?',
-      description: 'האירוע יוסר מלוח החטיבה ולא ניתן יהיה לשחזר אותו.',
-    });
-    if (!approved) return;
-    const ev = events.find(e => e.id === id);
-    await base44.entities.Exam.delete(id);
-    await logActivity({ user, role, actionName: 'מחיקת אירוע שכבתי', details: ev ? `${ev.type}: ${ev.title}` : id });
-    toast.success('האירוע נמחק');
-    setSelectedEvent(null);
     loadData();
   }
 
@@ -225,10 +210,8 @@ export default function DivisionExams({ user, role }) {
         canEdit
         isStudent={false}
         onEdit={openEdit}
-        onDelete={deleteEvent}
         extraContent={selectedWarnings.length > 0 ? <ConflictWarnings warnings={selectedWarnings} /> : null}
       />
-      <DeleteConfirm />
     </div>
   );
 }

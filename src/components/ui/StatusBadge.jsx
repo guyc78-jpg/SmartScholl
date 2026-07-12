@@ -40,8 +40,6 @@ const statusConfig = {
   'כיתתית': 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
   'אישית': 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400',
   'להורים': 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400',
-  // General
-  'בינונית': 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
 };
 
 export default function StatusBadge({ status, className, subject }) {

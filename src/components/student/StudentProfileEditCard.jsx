@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CheckCircle2, ImagePlus, Save, UserRound } from 'lucide-react';
 import { toast } from 'sonner';
+import { validateImageFile } from '@/lib/fileValidation';
 
 const AVATARS = [
   { value: 'male_student', label: 'תלמיד', icon: '👨‍🎓' },
@@ -36,12 +37,19 @@ export default function StudentProfileEditCard({ student, user, onSaved }) {
   const handleUpload = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    const fileError = validateImageFile(file);
+    if (fileError) { toast.error(fileError); event.target.value = ''; return; }
     setUploading(true);
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
-    set({ photo_url: file_url, image_mode: 'photo' });
-    toast.success('התמונה הועלתה');
-    setUploading(false);
-    event.target.value = '';
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      set({ photo_url: file_url, image_mode: 'photo' });
+      toast.success('התמונה הועלתה');
+    } catch (uploadError) {
+      toast.error(uploadError?.message || 'העלאת התמונה נכשלה');
+    } finally {
+      setUploading(false);
+      event.target.value = '';
+    }
   };
 
   const handleSave = async () => {
@@ -56,18 +64,19 @@ export default function StudentProfileEditCard({ student, user, onSaved }) {
       const lastName = form.lastName.trim();
       const fullName = `${firstName} ${lastName}`;
 
-      const studentPatch = {
-        firstName, lastName,
-        first_name: firstName, last_name: lastName,
-        full_name: fullName, fullName,
+      const studentProfile = {
+        firstName,
+        lastName,
         phone: form.phone.trim(),
         address: form.address.trim(),
         gender: form.gender,
         photo_url: form.image_mode === 'photo' ? form.photo_url : student.photo_url || '',
-        user_email: user.email,
       };
-      if (!emailLocked && form.email.trim()) studentPatch.email = form.email.trim();
-      await base44.entities.Student.update(student.id, studentPatch);
+      if (!emailLocked && form.email.trim()) studentProfile.email = form.email.trim();
+      await base44.functions.invoke('handleApprovalRequest', {
+        action: 'update_student_profile',
+        profile: studentProfile,
+      });
 
       await base44.auth.updateMe({
         profile_full_name: fullName,

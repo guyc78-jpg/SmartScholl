@@ -31,7 +31,7 @@ export default function UserRow({ user, selected, onSelectToggle, onEdit }) {
       tags.push(`${getRoleLabel('homeroom_teacher', user)} ${klass}`);
     }
   }
-  
+
   // אם אין תגים, הצג את התפקיד הראשי
   if (tags.length === 0) {
     tags.push(ROLE_LABELS[user.role] || '—');

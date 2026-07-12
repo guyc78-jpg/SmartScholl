@@ -1,0 +1,13 @@
+{
+  "name": "checkAttendanceAlerts",
+  "entry": "entry.ts",
+  "automations": [
+    {
+      "name": "Check attendance alerts",
+      "type": "entity",
+      "entity_name": "AttendanceRecord",
+      "event_types": ["create", "update"],
+      "is_active": true
+    }
+  ]
+}

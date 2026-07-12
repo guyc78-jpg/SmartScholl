@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { MessageSquare, Plus, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
+import { formatSchoolDate, getLocalDateString } from '@/lib/dateUtils';
 
 const TYPES = ['שיחה טלפונית', 'פגישה', 'מייל', 'הודעה', 'שיחת זום'];
 const WITH_WHOM = ['הורה 1', 'הורה 2', 'תלמיד', 'מורה', 'יועצת', 'אחר'];
@@ -26,7 +27,7 @@ export default function CommunicationsList({ comms, onRefresh, user, role, class
       toast.error('יש למלא שם תלמיד, סוג, עם מי וסיכום'); return;
     }
     setSaving(true);
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateString();
     await base44.entities.Communication.create({
       student_id: form.student_id,
       student_name: selectedStudent?.full_name || '',
@@ -34,7 +35,7 @@ export default function CommunicationsList({ comms, onRefresh, user, role, class
       date: today,
       type: form.type,
       with_whom: form.with_whom,
-      summary: `[${user?.full_name || user?.email} · ${new Date().toLocaleString('he-IL')}]\n${form.summary}`,
+      summary: `[${user?.full_name || user?.email} · ${formatSchoolDate(new Date(), { dateStyle: 'short', timeStyle: 'short' })}]\n${form.summary}`,
       follow_up: form.follow_up,
     });
     toast.success('שיחה נשמרה');
@@ -90,7 +91,7 @@ export default function CommunicationsList({ comms, onRefresh, user, role, class
               <Input value={form.follow_up} onChange={e => setForm(p => ({ ...p, follow_up: e.target.value }))} placeholder="למשל: לבדוק שוב בעוד שבוע" />
             </div>
             <div className="text-xs text-muted-foreground bg-muted rounded-lg px-3 py-2">
-              יישמר עם: <span className="font-medium">{user?.full_name || user?.email}</span> · {new Date().toLocaleString('he-IL')}
+              יישמר עם: <span className="font-medium">{user?.full_name || user?.email}</span> · {formatSchoolDate(new Date(), { dateStyle: 'short', timeStyle: 'short' })}
             </div>
             <div className="flex gap-2">
               <Button size="sm" onClick={handleSave} disabled={saving} className="flex-1">{saving ? 'שומר...' : 'שמור'}</Button>

@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.34';
 
 const EXAM_ALERT_TYPES = new Set(['מבחן', 'בחן', 'בגרות', 'מתכונת', 'מועד ב׳']);
 
@@ -37,29 +37,78 @@ function firstPresent(...values) {
   return values.find(value => value !== undefined && value !== null && String(value).trim() !== '') || '';
 }
 
-// מקור אמת לתפקידים — נטען מ-ApprovedUser בשרת, לא מנתוני לקוח הניתנים לזיוף
-async function resolveServerRoles(base44, user) {
-  const roles = new Set();
-  if (user?.role === 'admin' || user?.role === 'system_admin') roles.add('admin');
-  const email = String(user?.email || '').trim().toLowerCase();
-  if (email) {
-    const records = await base44.asServiceRole.entities.ApprovedUser.filter({ email }).catch(() => []);
-    records
-      .filter(record => record.isActive !== false)
-      .flatMap(record => [record.role, ...(Array.isArray(record.roles) ? record.roles : [])])
-      .filter(Boolean)
-      .forEach(role => roles.add(role === 'system_admin' ? 'admin' : role === 'grade_coordinator' ? 'coordinator' : role));
+function parseRolesValue(value) {
+  if (Array.isArray(value)) return value;
+  const text = String(value || '').trim();
+  if (!text) return [];
+  if (text.startsWith('[')) {
+    try { const parsed = JSON.parse(text); return Array.isArray(parsed) ? parsed : []; } catch { return []; }
   }
-  return roles;
+  return text.split(',').map(item => item.trim()).filter(Boolean);
 }
 
-function getRequestedRole(roles, payloadRole) {
-  if (payloadRole && (roles.has(payloadRole) || roles.has('admin'))) return payloadRole;
-  if (roles.has('admin')) return 'admin';
-  if (roles.has('coordinator')) return 'coordinator';
-  if (roles.has('homeroom_teacher')) return 'homeroom_teacher';
-  if (roles.has('student')) return 'student';
-  return 'user';
+async function listAll(entity, sort = '-updated_date') {
+  const rows = [];
+  const pageSize = 5000;
+  for (let skip = 0; ; skip += pageSize) {
+    const page = await entity.list(sort, pageSize, skip);
+    rows.push(...(page || []));
+    if (!page || page.length < pageSize) return rows;
+  }
+}
+
+async function filterAll(entity, filter, sort = '-updated_date') {
+  const rows = [];
+  const pageSize = 5000;
+  for (let skip = 0; ; skip += pageSize) {
+    const page = await entity.filter(filter, sort, pageSize, skip);
+    rows.push(...(page || []));
+    if (!page || page.length < pageSize) return rows;
+  }
+}
+
+// Resolves the caller's verified roles from the ApprovedUser table (server-side
+// source of truth) rather than client-controllable User fields. Falls back to
+// the student record so students can fetch their own alerts.
+async function getVerifiedAccess(base44, user, payloadRole) {
+  const email = String(user?.email || '').trim().toLowerCase();
+  const verified = new Map();
+
+  if (user?.is_service === true || user?.role === 'admin') verified.set('admin', {});
+
+  if (email) {
+    const approved = await base44.asServiceRole.entities.ApprovedUser.filter({ email }, '-created_date', 20).catch(() => []);
+    for (const record of approved) {
+      if (record.isActive === false) continue;
+      const recordRoles = [...parseRolesValue(record.roles), record.role].filter(Boolean);
+      const scope = record.scope || {};
+      if (recordRoles.includes('system_admin')) verified.set('admin', {});
+      if (recordRoles.includes('division_manager')) verified.set('division_manager', {
+        divisionType: record.divisionType || scope.divisionType || '',
+      });
+      if (recordRoles.includes('grade_coordinator') || recordRoles.includes('coordinator')) verified.set('coordinator', {
+        gradeId: record.gradeId || scope.gradeId || '',
+        homeroomClassId: record.homeroomClassId || scope.homeroomClassId || '',
+      });
+      if (recordRoles.includes('homeroom_teacher')) verified.set('homeroom_teacher', {
+        classId: record.homeroomClassId || scope.classId || scope.homeroomClassId || '',
+      });
+    }
+  }
+
+  if (!verified.size && email) {
+    const byUserEmail = await base44.asServiceRole.entities.Student.filter({ user_email: email }, '-updated_date', 5).catch(() => []);
+    const byEmail = byUserEmail.length ? byUserEmail : await base44.asServiceRole.entities.Student.filter({ email }, '-updated_date', 5).catch(() => []);
+    const student = byEmail.find(record => record.status !== 'סיים');
+    if (student) verified.set('student', { student });
+  }
+
+  const requestedRole = payloadRole === 'grade_coordinator' ? 'coordinator' : payloadRole;
+  if (requestedRole && verified.has(requestedRole)) return { role: requestedRole, scope: verified.get(requestedRole) };
+  for (const role of ['admin', 'division_manager', 'coordinator', 'homeroom_teacher', 'student']) {
+    if (verified.has(role)) return { role, scope: verified.get(role) };
+  }
+  return { role: '', scope: {} };
 }
 
 function getStudentGrade(student) {
@@ -118,10 +167,11 @@ function isExamRelevantToStudent(exam, student) {
   return getExamAudienceSource(exam, student);
 }
 
-async function getScopedStudents(base44, user, role) {
-  if (role === 'admin') return await base44.asServiceRole.entities.Student.list('-updated_date', 1000);
+async function getScopedStudents(base44, user, role, verifiedScope = {}) {
+  if (role === 'admin') return await listAll(base44.asServiceRole.entities.Student);
 
   if (role === 'student') {
+    if (verifiedScope.student) return [verifiedScope.student];
     const queries = [
       base44.asServiceRole.entities.Student.filter({ user_email: user?.email }, '-updated_date', 20),
       base44.asServiceRole.entities.Student.filter({ email: user?.email }, '-updated_date', 20),
@@ -132,16 +182,24 @@ async function getScopedStudents(base44, user, role) {
   }
 
   if (role === 'homeroom_teacher') {
-    if (user?.profile_class_id) return await base44.asServiceRole.entities.Student.filter({ class_id: user.profile_class_id }, '-updated_date', 200);
-    const className = user?.profile_homeroom_class || user?.profile_class;
-    if (className) return await base44.asServiceRole.entities.Student.filter({ class_name: className }, '-updated_date', 200);
+    if (verifiedScope.classId) return await filterAll(base44.asServiceRole.entities.Student, { class_id: verifiedScope.classId });
     return [];
   }
 
   if (role === 'coordinator') {
-    const grade = user?.profile_grade_managed || user?.profile_grade;
+    const grade = verifiedScope.gradeId;
     if (!grade) return [];
-    return await base44.asServiceRole.entities.Student.filter({ grade }, '-updated_date', 1000);
+    return await filterAll(base44.asServiceRole.entities.Student, { grade });
+  }
+
+  if (role === 'division_manager') {
+    const division = verifiedScope.divisionType;
+    const allowedGrades = division === 'upper' ? ['י', 'יא', 'יב'] : division === 'middle' ? ['ז', 'ח', 'ט'] : [];
+    if (!allowedGrades.length) return [];
+    const rows = await Promise.all(allowedGrades.map(grade =>
+      filterAll(base44.asServiceRole.entities.Student, { grade })
+    ));
+    return [...new Map(rows.flat().filter(Boolean).map(student => [student.id, student])).values()];
   }
 
   return [];
@@ -164,30 +222,39 @@ Deno.serve(async (req) => {
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
     const payload = await req.json().catch(() => ({}));
-    const serverRoles = await resolveServerRoles(base44, user);
-    const role = getRequestedRole(serverRoles, payload?.role);
-    if (!['admin', 'homeroom_teacher', 'coordinator', 'student'].includes(role)) return Response.json({ error: 'Forbidden' }, { status: 403 });
+    const verifiedAccess = await getVerifiedAccess(base44, user, payload?.role);
+    const role = verifiedAccess.role;
+    if (!['admin', 'division_manager', 'homeroom_teacher', 'coordinator', 'student'].includes(role)) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
-    const nowIsrael = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jerusalem' }));
-    const todayStr = nowIsrael.toISOString().split('T')[0];
-    const today = new Date(todayStr);
+    const israelParts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Jerusalem',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).formatToParts(new Date());
+    const datePart = type => israelParts.find(part => part.type === type)?.value || '';
+    const todayStr = `${datePart('year')}-${datePart('month')}-${datePart('day')}`;
+    const today = new Date(`${todayStr}T00:00:00Z`);
+    const lateWindowStart = new Date(today);
+    lateWindowStart.setUTCDate(lateWindowStart.getUTCDate() - 30);
+    const lateWindowStartStr = lateWindowStart.toISOString().slice(0, 10);
     const weekStart = new Date(today);
-    weekStart.setDate(today.getDate() - today.getDay() + 1);
+    weekStart.setUTCDate(today.getUTCDate() - today.getUTCDay());
     const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 6);
+    weekEnd.setUTCDate(weekStart.getUTCDate() + 6);
     const weekStartStr = weekStart.toISOString().split('T')[0];
     const weekEndStr = weekEnd.toISOString().split('T')[0];
 
-    const students = await getScopedStudents(base44, user, role);
+    const students = await getScopedStudents(base44, user, role, verifiedAccess.scope);
     const scopedStudentIds = new Set(students.map(student => student.id));
     const scopedClassIds = new Set(students.map(s => s.class_id).filter(Boolean));
     const scopedGrades = new Set(students.map(s => normalize(s.grade || '')).filter(Boolean));
 
     const [attendance, exams, tasks, incidents] = await Promise.all([
-      base44.asServiceRole.entities.AttendanceRecord.list('-date', 1000),
-      base44.asServiceRole.entities.Exam.list('date', 500),
-      base44.asServiceRole.entities.Task.filter({ status: 'לביצוע' }, 'due_date', 1000),
-      base44.asServiceRole.entities.DisciplineEvent.filter({ status: 'פתוח' }, '-date', 1000),
+      listAll(base44.asServiceRole.entities.AttendanceRecord, '-date'),
+      listAll(base44.asServiceRole.entities.Exam, 'date'),
+      filterAll(base44.asServiceRole.entities.Task, { status: 'לביצוע' }, 'due_date'),
+      filterAll(base44.asServiceRole.entities.DisciplineEvent, { status: 'פתוח' }, '-date'),
     ]);
 
     const attByStudent = groupBy((attendance || []).filter(record => scopedStudentIds.has(record.student_id)), 'student_id');
@@ -216,7 +283,7 @@ Deno.serve(async (req) => {
 
       const classMatch = examClassIds.some(id => scopedClassIds.has(id));
       const gradeMatch = examGrades.some(g => scopedGrades.has(normalize(g)));
-      const schoolMatch = role === 'admin' && examScope === 'school';
+      const schoolMatch = examScope === 'school';
 
       if (!classMatch && !gradeMatch && !schoolMatch) continue;
       seenExamIds.add(exam.id);
@@ -269,20 +336,23 @@ Deno.serve(async (req) => {
     for (const student of students) {
       const sAtt = attByStudent.get(student.id) || [];
       const weekAbsences = sAtt.filter(record => ['נעדר', 'נעדר/ת'].includes(record.status) && record.date >= weekStartStr && record.date <= weekEndStr);
-      if (weekAbsences.length >= 3) {
+      const weekAbsenceCount = new Set(weekAbsences.map(record => record.date).filter(Boolean)).size;
+      if (weekAbsenceCount >= 3) {
         alerts.push({
           student_id: student.id,
           student_name: student.full_name,
           class_id: student.class_id,
           alert_type: 'high_absences',
           severity: 'high',
-          message: `${student.full_name} היה נעדר ${weekAbsences.length} פעמים בשבוע הזה`,
-          details: { absences: weekAbsences.length, source_info: sourceInfo('AttendanceRecord', student) },
+          message: `${student.full_name} היה נעדר ${weekAbsenceCount} ימים בשבוע הזה`,
+          details: { absences: weekAbsenceCount, source_info: sourceInfo('AttendanceRecord', student) },
           is_active: true,
         });
       }
 
-      const lates = sAtt.filter(record => ['מאחר', 'מאחר/ת'].includes(record.status)).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+      const lates = sAtt
+        .filter(record => ['מאחר', 'מאחר/ת'].includes(record.status) && record.date >= lateWindowStartStr && record.date <= todayStr)
+        .sort((a, b) => (a.date || '').localeCompare(b.date || ''));
       if (lates.length >= 2) {
         const recent = lates.slice(-2);
         const dayDiff = (new Date(recent[1].date) - new Date(recent[0].date)) / (1000 * 60 * 60 * 24);
@@ -331,6 +401,7 @@ Deno.serve(async (req) => {
 
     return Response.json({ alerts, count: alerts.length, role, scoped_students: students.length });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('Function error:', error);
+    return Response.json({ error: 'Internal server error' }, { status: 500 });
   }
 });

@@ -129,55 +129,13 @@
       ]
     },
     {
-      "entity_name": "FamilySensitiveInfo",
-      "allowed_operations": [
-        "read"
-      ]
-    },
-    {
       "entity_name": "PerformanceReview",
       "allowed_operations": [
         "read"
       ]
     },
     {
-      "entity_name": "ApprovedUser",
-      "allowed_operations": [
-        "read"
-      ]
-    },
-    {
-      "entity_name": "ApprovedStaff",
-      "allowed_operations": [
-        "read"
-      ]
-    },
-    {
-      "entity_name": "ApprovalRequest",
-      "allowed_operations": [
-        "read"
-      ]
-    },
-    {
       "entity_name": "BellSchedule",
-      "allowed_operations": [
-        "read"
-      ]
-    },
-    {
-      "entity_name": "PushNotificationQueue",
-      "allowed_operations": [
-        "read"
-      ]
-    },
-    {
-      "entity_name": "PushSubscription",
-      "allowed_operations": [
-        "read"
-      ]
-    },
-    {
-      "entity_name": "ActivityLog",
       "allowed_operations": [
         "read"
       ]

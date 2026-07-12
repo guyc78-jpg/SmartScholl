@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { normalizeAccommodationList } from '@/lib/accommodations';
 import { Shield, Save, Pencil, Eye, History, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatSchoolDate } from '@/lib/dateUtils';
 
 const GROUPS = [
   { title: 'זמן והיבחנות', keys: ['extra_time_25', 'adapted_exam'] },
@@ -16,8 +17,7 @@ const GROUPS = [
 ];
 
 function formatDateTime(value) {
-  if (!value) return '—';
-  return new Date(value).toLocaleString('he-IL', { dateStyle: 'short', timeStyle: 'short' });
+  return formatSchoolDate(value, { dateStyle: 'short', timeStyle: 'short' }) || '—';
 }
 
 function groupItems(items, activeOnly = false) {

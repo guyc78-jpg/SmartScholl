@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { CLASS_ID } from '@/lib/demoData';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import PageHeader from '@/components/ui/PageHeader';
@@ -10,10 +9,11 @@ import { toast } from 'sonner';
 import { CalendarClock, Plus, Edit, Trash2, Check, Bell, User, Users, HeartPulse, MessageSquare } from 'lucide-react';
 import { formatStudentName } from '@/lib/studentName';
 import { useAuth } from '@/lib/AuthContext';
-import { getUserHomeroomClassId, getUserApprovedClassId } from '@/lib/schoolStructure';
+import { getUserHomeroomClassId, getUserApprovedClassId, getUserApprovedGrade } from '@/lib/schoolStructure';
 import { getAttendanceScopedStudents } from '@/lib/attendanceScope.js';
 import useDeleteConfirm from '@/hooks/useDeleteConfirm';
 import ScheduledConversationForm from '@/components/conversations/ScheduledConversationForm';
+import { formatSchoolDate } from '@/lib/dateUtils';
 
 const TYPE_ICONS = {
   'שיחה אישית עם תלמיד': User,
@@ -29,15 +29,13 @@ const STATUS_STYLES = {
 };
 
 function formatDate(d) {
-  if (!d) return '';
-  const dt = new Date(d);
-  return `${dt.getDate().toString().padStart(2, '0')}/${(dt.getMonth() + 1).toString().padStart(2, '0')}/${dt.getFullYear()}`;
+  return formatSchoolDate(d, { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
 export default function ScheduledConversations({ role = 'homeroom_teacher', user: userProp }) {
   const { user: authUser } = useAuth();
   const user = userProp || authUser;
-  const fallbackClassId = role === 'coordinator' ? getUserHomeroomClassId(user, CLASS_ID) : getUserApprovedClassId(user, CLASS_ID);
+  const fallbackClassId = role === 'coordinator' ? getUserHomeroomClassId(user, '') : getUserApprovedClassId(user, '');
 
   const [conversations, setConversations] = useState([]);
   const [students, setStudents] = useState([]);
@@ -88,6 +86,7 @@ export default function ScheduledConversations({ role = 'homeroom_teacher', user
       student_id: form.student_id || '',
       student_name: student ? formatStudentName(student) : '',
       class_id: classId || '',
+      grade: student?.grade || getUserApprovedGrade(user) || '',
       participants: form.participants || '',
       notes: form.notes || '',
       owner_user_id: user?.id || '',

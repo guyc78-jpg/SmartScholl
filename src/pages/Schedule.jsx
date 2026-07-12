@@ -1,23 +1,28 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { base44 } from '@/api/base44Client';
-import { CLASS_ID } from '@/lib/demoData';
 import { getStudentClassId } from '@/lib/studentProfile';
 import { getUserApprovedClass, getUserApprovedClassId } from '@/lib/schoolStructure';
 import { findClassRoomByName } from '@/lib/classAssignment';
 import { Button } from '@/components/ui/button';
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import PageHeader from '@/components/ui/PageHeader';
 import RtlActionBar from '@/components/ui/RtlActionBar';
 import { toast } from 'sonner';
-import { FileUp, Trash2, Palette } from 'lucide-react';
+import { FileUp, Palette } from 'lucide-react';
 import ImportScheduleDialog from '@/components/schedule/ImportScheduleDialog';
 import WeeklyScheduleGrid from '@/components/schedule/WeeklyScheduleGrid';
 import CellEditorDialog from '@/components/schedule/CellEditorDialog';
 import NowNextCard from '@/components/schedule/NowNextCard';
-import { loadBellSchedule, getTodayDayType, HEBREW_DAY_NAMES, getNowAndNext } from '@/lib/bellSchedule';
+import { loadBellSchedule, getNowAndNext, getTodayHebrewName } from '@/lib/bellSchedule';
 import { autoFixSubjectColors, ensureSubjectForName, loadAndNormalizeSubjects, subjectMapById } from '@/lib/scheduleSubjects';
 
 // Build the weekly rows from the bell schedule: lessons plus visible break rows.
@@ -42,19 +47,21 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
   const [subjects, setSubjects] = useState([]);
   const [periods, setPeriods] = useState([]);
   const [className, setClassName] = useState('');
+  const [classGrade, setClassGrade] = useState('');
   const [activeClassId, setActiveClassId] = useState('');
   const [loading, setLoading] = useState(true);
 
   const [showImport, setShowImport] = useState(false);
-  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false);
   const [fixingColors, setFixingColors] = useState(false);
+  const [confirmColorFix, setConfirmColorFix] = useState(false);
   const [editor, setEditor] = useState(null); // { day, period, slot, periodRow }
   const [currentPeriod, setCurrentPeriod] = useState(null);
 
-  const canEdit = role === 'homeroom_teacher' || role === 'admin';
-  const classId = role === 'student' ? getStudentClassId(user, CLASS_ID) : getUserApprovedClassId(user, CLASS_ID);
+  const canEdit = role === 'homeroom_teacher' || role === 'admin' || role === 'system_admin';
+  const canFixColors = role === 'admin' || role === 'system_admin';
+  const classId = role === 'student' ? getStudentClassId(user, '') : getUserApprovedClassId(user, '');
   const fallbackClassName = getUserApprovedClass(user);
-  const todayDayName = HEBREW_DAY_NAMES[new Date().getDay()];
+  const todayDayName = getTodayHebrewName();
 
   // Update current-period highlight every 30s
   useEffect(() => {
@@ -73,9 +80,9 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
 
   async function load() {
     setLoading(true);
-    const dayType = getTodayDayType();
+    try {
     const [bellPeriods, classRooms] = await Promise.all([
-      loadBellSchedule(dayType === 'fri' ? 'sun_thu' : dayType), // weekly view shows Sun–Thu
+      loadBellSchedule('sun_thu'), // weekly view shows Sun–Thu
       base44.entities.ClassRoom.list('-updated_date', 200),
     ]);
     const classRoom = classRooms.find(room => room.id === classId) || findClassRoomByName(classRooms, fallbackClassName);
@@ -92,7 +99,15 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
     setSlots(normalizedSlots);
     setPeriods(buildPeriodRows(bellPeriods));
     setClassName(classRoom?.name || fallbackClassName || '');
-    setLoading(false);
+    setClassGrade(classRoom?.grade || '');
+    } catch (error) {
+      console.error('Failed to load schedule', error);
+      setSlots([]);
+      setSubjects([]);
+      toast.error('טעינת מערכת השעות נכשלה. אפשר לנסות שוב.');
+    } finally {
+      setLoading(false);
+    }
   }
 
   const slotsByKey = useMemo(() => {
@@ -118,10 +133,15 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
 
   const handleSaveCell = useCallback(async (payload) => {
     const { day, period, slot, periodRow } = editor;
+    if (!(activeClassId || classId)) {
+      toast.error('יש לבחור כיתה לפני שמירת מערכת השעות');
+      return;
+    }
     const subjectDefinition = await ensureSubjectForName(payload.subject, subjects, payload.subject_color);
     const { subject_color, ...slotPayload } = payload;
     const base = {
       class_id: activeClassId || classId,
+      grade: classGrade,
       day,
       period: Number(period),
       start_time: periodRow?.start_time || '',
@@ -138,7 +158,7 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
     }
     setEditor(null);
     load();
-  }, [editor, activeClassId, classId, subjects]);
+  }, [editor, activeClassId, classId, classGrade, subjects]);
 
   const handleDeleteCell = useCallback(async (id) => {
     await base44.entities.ScheduleSlot.delete(id);
@@ -147,13 +167,24 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
     load();
   }, []);
 
-  const handleDeleteAll = useCallback(async () => {
-    const all = await base44.entities.ScheduleSlot.filter({ class_id: activeClassId || classId });
-    await Promise.all(all.map(s => base44.entities.ScheduleSlot.delete(s.id)));
-    toast.success('המערכת נמחקה');
-    setConfirmDeleteAll(false);
-    load();
-  }, [activeClassId, classId]);
+  async function handleFixColors() {
+    if (!canFixColors) {
+      toast.error('אין הרשאה לשינוי צבעים בית-ספרי');
+      return;
+    }
+    setConfirmColorFix(false);
+    setFixingColors(true);
+    try {
+      const count = await autoFixSubjectColors();
+      await load();
+      toast.success(count > 0 ? `עודכנו ${count} מקצועות עם צבעים ייחודיים` : 'כל המקצועות כבר עם צבעים ייחודיים');
+    } catch (error) {
+      console.error('Failed to update global subject colors', error);
+      toast.error('סידור צבעי המקצועות נכשל. לא כל הצבעים עודכנו.');
+    } finally {
+      setFixingColors(false);
+    }
+  }
 
   return (
     <div className="p-4 lg:p-6 pb-24 lg:pb-6 space-y-4" dir="rtl">
@@ -167,29 +198,20 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
                 <FileUp className="w-4 h-4" /> ייבוא קובץ
               </Button>
             )}
-            secondary={(
+            secondary={canFixColors ? (
               <div className="flex gap-2">
                 <Button
                   size="sm"
                   variant="outline"
                   className="h-9 gap-2 text-violet-600 border-violet-200 hover:bg-violet-50 hover:text-violet-700 dark:border-violet-800 dark:text-violet-400"
                   disabled={fixingColors}
-                  onClick={async () => {
-                    setFixingColors(true);
-                    const count = await autoFixSubjectColors();
-                    await load();
-                    toast.success(count > 0 ? `עודכנו ${count} מקצועות עם צבעים ייחודיים` : 'כל המקצועות כבר עם צבעים ייחודיים');
-                    setFixingColors(false);
-                  }}
+                  onClick={() => setConfirmColorFix(true)}
                 >
                   <Palette className="w-4 h-4" />
                   {fixingColors ? 'מסדר...' : 'סדר צבעים'}
                 </Button>
-                <Button size="sm" variant="outline" className="h-9 gap-2 text-destructive hover:text-destructive" onClick={() => setConfirmDeleteAll(true)}>
-                  <Trash2 className="w-4 h-4" /> מחק מערכת
-                </Button>
               </div>
-            )}
+            ) : null}
           />
         ) : null}
       />
@@ -221,6 +243,7 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
           onImported={load}
           classId={activeClassId || classId}
           className={className}
+          grade={classGrade}
         />
       )}
 
@@ -239,22 +262,23 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
         />
       )}
 
-      <AlertDialog open={confirmDeleteAll} onOpenChange={setConfirmDeleteAll}>
+      <AlertDialog open={confirmColorFix} onOpenChange={setConfirmColorFix}>
         <AlertDialogContent dir="rtl">
           <AlertDialogHeader>
-            <AlertDialogTitle>למחוק את כל מערכת השעות?</AlertDialogTitle>
-            <AlertDialogDescription>
-              הפעולה תסיר את כל השיעורים של הכיתה ולא ניתן לשחזר. ניתן לייבא מערכת חדשה לאחר מכן.
+            <AlertDialogTitle className="text-right">לסדר מחדש את צבעי המקצועות?</AlertDialogTitle>
+            <AlertDialogDescription className="text-right">
+              הפעולה מעדכנת את צבעי המקצועות לכל בית הספר, ולכן תשפיע על מערכות השעות של כל הכיתות והמשתמשים.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>ביטול</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteAll} className="bg-destructive hover:bg-destructive/90">
-              מחק הכל
+            <AlertDialogCancel disabled={fixingColors}>ביטול</AlertDialogCancel>
+            <AlertDialogAction onClick={handleFixColors} disabled={fixingColors}>
+              אשר שינוי גלובלי
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
     </div>
   );
 }

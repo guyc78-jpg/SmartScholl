@@ -16,6 +16,7 @@ import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName'
 import { useAuth } from '@/lib/AuthContext';
 import { getUserHomeroomClassId, getUserApprovedClassId } from '@/lib/schoolStructure';
 import useDeleteConfirm from '@/hooks/useDeleteConfirm';
+import { formatSchoolDate, getLocalDateString } from '@/lib/dateUtils';
 
 const typeIcons = { 'שיחה טלפונית': Phone, 'פגישה': MessageSquare, 'מייל': Mail, 'הודעה': MessageSquare, 'שיחת זום': Video };
 
@@ -27,7 +28,7 @@ export default function Communications({ role = 'homeroom_teacher' }) {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editComm, setEditComm] = useState(null);
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDateString();
   const [form, setForm] = useState({ student_id: '', date: today, type: 'שיחה טלפונית', with_whom: 'הורה 1', summary: '', follow_up: '', follow_up_date: '' });
   const { confirmDelete, DeleteConfirm } = useDeleteConfirm();
 
@@ -65,7 +66,7 @@ export default function Communications({ role = 'homeroom_teacher' }) {
     loadData();
   }
 
-  const formatDate = (d) => { if (!d) return ''; const dt = new Date(d); return `${dt.getDate().toString().padStart(2,'0')}/${(dt.getMonth()+1).toString().padStart(2,'0')}/${dt.getFullYear()}`; };
+  const formatDate = (d) => formatSchoolDate(d, { day: '2-digit', month: '2-digit', year: 'numeric' });
 
   return (
     <div className="p-4 lg:p-6 space-y-5" dir="rtl">
@@ -102,8 +103,8 @@ export default function Communications({ role = 'homeroom_teacher' }) {
                       )}
                     </div>
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => openEdit(c)}><Edit className="w-3.5 h-3.5"/></Button>
-                      <Button variant="ghost" size="icon" className="w-7 h-7 text-red-500" onClick={() => handleDelete(c.id)}><Trash2 className="w-3.5 h-3.5"/></Button>
+                      <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => openEdit(c)} aria-label={'עריכת תיעוד תקשורת: ' + (c.student_name || c.with_whom || 'ללא שם')}><Edit className="w-3.5 h-3.5"/></Button>
+                      <Button variant="ghost" size="icon" className="w-7 h-7 text-red-500" onClick={() => handleDelete(c.id)} aria-label={'מחיקת תיעוד תקשורת: ' + (c.student_name || c.with_whom || 'ללא שם')}><Trash2 className="w-3.5 h-3.5"/></Button>
                     </div>
                   </div>
                 </Card>

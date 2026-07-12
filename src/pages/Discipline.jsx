@@ -18,6 +18,7 @@ import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName'
 import { useAuth } from '@/lib/AuthContext';
 import { getUserHomeroomClassId, getUserApprovedClassId } from '@/lib/schoolStructure';
 import useDeleteConfirm from '@/hooks/useDeleteConfirm';
+import { formatSchoolDate, getLocalDateString } from '@/lib/dateUtils';
 
 export default function Discipline({ role = 'homeroom_teacher' }) {
   const { user } = useAuth();
@@ -28,7 +29,7 @@ export default function Discipline({ role = 'homeroom_teacher' }) {
   const [showForm, setShowForm] = useState(false);
   const [editEvent, setEditEvent] = useState(null);
   const [statusFilter, setStatusFilter] = useState('הכל');
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDateString();
   const [form, setForm] = useState({ student_id: '', date: today, time: '', severity: 'קלה', category: 'התנהגות', description: '', treatment: '', parents_updated: false, follow_up_date: '', status: 'פתוח' });
   const { confirmDelete, DeleteConfirm } = useDeleteConfirm();
 
@@ -72,7 +73,7 @@ export default function Discipline({ role = 'homeroom_teacher' }) {
   }
 
   const filtered = statusFilter === 'הכל' ? events : events.filter(e => e.status === statusFilter);
-  const formatDate = (d) => { const dt = new Date(d); return `${dt.getDate().toString().padStart(2,'0')}/${(dt.getMonth()+1).toString().padStart(2,'0')}/${dt.getFullYear()}`; };
+  const formatDate = (d) => formatSchoolDate(d, { day: '2-digit', month: '2-digit', year: 'numeric' });
 
   return (
     <div className="p-4 lg:p-6 space-y-5" dir="rtl">
@@ -119,8 +120,8 @@ export default function Discipline({ role = 'homeroom_teacher' }) {
                     </div>
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => openEdit(ev)}><Edit className="w-3.5 h-3.5"/></Button>
-                    <Button variant="ghost" size="icon" className="w-7 h-7 text-red-500" onClick={() => handleDelete(ev.id)}><Trash2 className="w-3.5 h-3.5"/></Button>
+                    <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => openEdit(ev)} aria-label={'עריכת אירוע משמעת: ' + (ev.student_name || ev.title || 'ללא שם')}><Edit className="w-3.5 h-3.5"/></Button>
+                    <Button variant="ghost" size="icon" className="w-7 h-7 text-red-500" onClick={() => handleDelete(ev.id)} aria-label={'מחיקת אירוע משמעת: ' + (ev.student_name || ev.title || 'ללא שם')}><Trash2 className="w-3.5 h-3.5"/></Button>
                   </div>
                 </div>
                 {ev.status !== 'סגור' && (

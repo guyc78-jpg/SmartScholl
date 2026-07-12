@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { CLASS_ID } from '@/lib/demoData';
 import { getStudentClassId } from '@/lib/studentProfile';
-import { getUserApprovedClassId } from '@/lib/schoolStructure';
+import { getUserApprovedClassId, getUserApprovedGrade } from '@/lib/schoolStructure';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -18,6 +17,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import { toast } from 'sonner';
 import { Megaphone, Plus, Edit, Trash2, Eye, Check } from 'lucide-react';
 import useDeleteConfirm from '@/hooks/useDeleteConfirm';
+import { formatSchoolDate, getLocalDateString } from '@/lib/dateUtils';
 
 export default function Announcements({ role = 'homeroom_teacher', user }) {
   const [announcements, setAnnouncements] = useState([]);
@@ -25,8 +25,8 @@ export default function Announcements({ role = 'homeroom_teacher', user }) {
   const [showForm, setShowForm] = useState(false);
   const [editAnn, setEditAnn] = useState(null);
   const [typeFilter, setTypeFilter] = useState('הכל');
-  const today = new Date().toISOString().split('T')[0];
-  const classId = role === 'student' ? getStudentClassId(user, CLASS_ID) : getUserApprovedClassId(user, CLASS_ID);
+  const today = getLocalDateString();
+  const classId = role === 'student' ? getStudentClassId(user, '') : getUserApprovedClassId(user, '');
   const [form, setForm] = useState({ title: '', content: '', type: 'כיתתית', requires_confirmation: false });
   const [readCounts, setReadCounts] = useState({});
   const { confirmDelete, DeleteConfirm } = useDeleteConfirm();
@@ -54,7 +54,8 @@ export default function Announcements({ role = 'homeroom_teacher', user }) {
 
   async function handleSave() {
     if (!form.title || !form.content) { toast.error('כותרת ותוכן הם שדות חובה'); return; }
-    const data = { ...form, class_id: classId, published_at: today, is_published: true };
+    if (!classId) { toast.error('לא נמצאה כיתה מאושרת לפרסום ההודעה'); return; }
+    const data = { ...form, class_id: classId, grade: getUserApprovedGrade(user), published_at: today, is_published: true };
     try {
       if (editAnn) { await base44.entities.Announcement.update(editAnn.id, data); toast.success('עודכן'); }
       else { await base44.entities.Announcement.create(data); toast.success('הודעה פורסמה!'); }
@@ -73,7 +74,7 @@ export default function Announcements({ role = 'homeroom_teacher', user }) {
   }
 
   const filtered = typeFilter === 'הכל' ? announcements : announcements.filter(a => a.type === typeFilter);
-  const formatDate = (d) => { if (!d) return ''; const dt = new Date(d); return `${dt.getDate().toString().padStart(2,'0')}/${(dt.getMonth()+1).toString().padStart(2,'0')}/${dt.getFullYear()}`; };
+  const formatDate = (d) => formatSchoolDate(d, { day: '2-digit', month: '2-digit', year: 'numeric' });
 
   return (
     <div className="p-4 lg:p-6 space-y-5" dir="rtl">
@@ -119,8 +120,8 @@ export default function Announcements({ role = 'homeroom_teacher', user }) {
                   </div>
                   {role === 'homeroom_teacher' && (
                     <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => openEdit(ann)}><Edit className="w-3.5 h-3.5"/></Button>
-                      <Button variant="ghost" size="icon" className="w-7 h-7 text-red-500" onClick={() => handleDelete(ann.id)}><Trash2 className="w-3.5 h-3.5"/></Button>
+                      <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => openEdit(ann)} aria-label={'עריכת הודעה: ' + (ann.title || 'ללא כותרת')}><Edit className="w-3.5 h-3.5"/></Button>
+                      <Button variant="ghost" size="icon" className="w-7 h-7 text-red-500" onClick={() => handleDelete(ann.id)} aria-label={'מחיקת הודעה: ' + (ann.title || 'ללא כותרת')}><Trash2 className="w-3.5 h-3.5"/></Button>
                     </div>
                   )}
                 </div>

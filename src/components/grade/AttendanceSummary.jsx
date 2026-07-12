@@ -1,9 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Clock, UserX, AlertTriangle } from 'lucide-react';
 import { formatStudentName } from '@/lib/studentName';
+import { getLocalDateString } from '@/lib/dateUtils';
 
 export default function AttendanceSummary({ students, attendance, attByStudent }) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDateString();
   const todayAtt = attendance.filter(r => r.date === today);
 
   const presentToday = todayAtt.filter(r => ['נוכח', 'נוכח/ת'].includes(r.status)).length;

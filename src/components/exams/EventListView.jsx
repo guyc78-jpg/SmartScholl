@@ -5,9 +5,8 @@ import EventTypeBadge from './EventTypeBadge';
 import { getDisplayEventType } from './eventConstants';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { formatSchoolDate } from '@/lib/dateUtils';
 
-const DAY_NAMES = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
-const MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
 
 const SIDE_COLORS = {
   'מבחן': 'bg-purple-400/60',
@@ -30,12 +29,10 @@ const SIDE_COLORS = {
 };
 
 function formatDateHeader(iso) {
-  const d = new Date(iso);
-  const dayName = DAY_NAMES[d.getDay()];
-  return `יום ${dayName}, ${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
+  return formatSchoolDate(iso, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 }
 
-export default function EventListView({ events, onEventClick, onEdit, onDelete, canEdit = true, todayIso }) {
+export default function EventListView({ events, onEventClick, onEdit = null, onDelete = null, canEdit = true, todayIso }) {
   const grouped = useMemo(() => {
     const sorted = [...events].sort((a, b) => {
       const dateCmp = (a.date || '').localeCompare(b.date || '');
@@ -122,7 +119,7 @@ export default function EventListView({ events, onEventClick, onEdit, onDelete, 
 }
 
 function EventActionsMenu({ event, onEdit, onDelete, canEdit }) {
-  if (!canEdit) return <span className="w-8 shrink-0" />;
+  if (!canEdit || (!onEdit && !onDelete)) return <span className="w-8 shrink-0" />;
 
   return (
     <DropdownMenu dir="rtl">
@@ -132,14 +129,18 @@ function EventActionsMenu({ event, onEdit, onDelete, canEdit }) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" sideOffset={6} collisionPadding={16} className="w-32 text-right z-[10000]">
-        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit?.(event); }} className="justify-start gap-2 cursor-pointer">
-          <Pencil className="w-4 h-4" />
-          ערוך
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDelete?.(event.id); }} className="justify-start gap-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10">
-          <Trash2 className="w-4 h-4" />
-          מחק
-        </DropdownMenuItem>
+        {onEdit && (
+          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(event); }} className="justify-start gap-2 cursor-pointer">
+            <Pencil className="w-4 h-4" />
+            ערוך
+          </DropdownMenuItem>
+        )}
+        {onDelete && (
+          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onDelete(event.id); }} className="justify-start gap-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10">
+            <Trash2 className="w-4 h-4" />
+            מחק
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

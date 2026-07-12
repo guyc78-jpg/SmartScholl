@@ -4,11 +4,65 @@
   "properties": {
     "class_id": {
       "type": "string",
-      "description": "\u05de\u05d6\u05d4\u05d4 \u05db\u05d9\u05ea\u05d4"
+      "description": "\u05de\u05d6\u05d4\u05d4 \u05db\u05d9\u05ea\u05d4",
+      "minLength": 1,
+      "rls": {
+        "update": {
+          "$or": [
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "system_admin"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "grade": {
+      "type": "string",
+      "description": "\u05e9\u05db\u05d1\u05d4 \u05de\u05d0\u05d5\u05de\u05ea \u05dc\u05e1\u05d9\u05e0\u05d5\u05df \u05d4\u05e8\u05e9\u05d0\u05d5\u05ea",
+      "minLength": 1,
+      "rls": {
+        "update": {
+          "$or": [
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "system_admin"
+              }
+            }
+          ]
+        }
+      }
     },
     "student_id": {
       "type": "string",
-      "description": "\u05de\u05d6\u05d4\u05d4 \u05ea\u05dc\u05de\u05d9\u05d3 (\u05d0\u05d5\u05e4\u05e6\u05d9\u05d5\u05e0\u05dc\u05d9)"
+      "description": "\u05de\u05d6\u05d4\u05d4 \u05ea\u05dc\u05de\u05d9\u05d3 (\u05d0\u05d5\u05e4\u05e6\u05d9\u05d5\u05e0\u05dc\u05d9)",
+      "rls": {
+        "update": {
+          "$or": [
+            {
+              "user_condition": {
+                "role": "admin"
+              }
+            },
+            {
+              "user_condition": {
+                "role": "system_admin"
+              }
+            }
+          ]
+        }
+      }
     },
     "student_name": {
       "type": "string",
@@ -64,5 +118,75 @@
     "class_id",
     "title",
     "due_date"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "system_admin" } }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "system_admin"
+          }
+        },
+        {
+          "$and": [
+            { "user_condition": { "role": "division_manager", "authorization_division": "upper" } },
+            { "data.grade": { "$in": ["\u05d9", "\u05d9\u05d0", "\u05d9\u05d1"] } }
+          ]
+        },
+        {
+          "$and": [
+            { "user_condition": { "role": "division_manager", "authorization_division": "middle" } },
+            { "data.grade": { "$in": ["\u05d6", "\u05d7", "\u05d8"] } }
+          ]
+        },
+        {
+          "$and": [
+            { "user_condition": { "role": "grade_coordinator" } },
+            { "data.grade": "{{user.data.authorization_grade}}" }
+          ]
+        },
+        {
+          "$and": [
+            { "user_condition": { "role": "coordinator" } },
+            { "data.grade": "{{user.data.authorization_grade}}" }
+          ]
+        },
+        {
+          "$and": [
+            {
+              "user_condition": {
+                "role": "homeroom_teacher"
+              }
+            },
+            {
+              "data.class_id": "{{user.data.authorization_class_id}}"
+            }
+          ]
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "system_admin" } }
+      ]
+    },
+    "delete": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "system_admin" } }
+      ]
+    }
+  }
 }

@@ -9,17 +9,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatStudentName } from '@/lib/studentName';
+import { formatSchoolDate, getLocalDateString } from '@/lib/dateUtils';
 
 const conversationTypes = ['שיחה טלפונית', 'פגישה', 'מייל', 'הודעה', 'שיחת זום'];
 
 const formatDate = (value) => {
-  if (!value) return '—';
-  const date = new Date(value);
-  return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+  return formatSchoolDate(value, { day: '2-digit', month: '2-digit', year: 'numeric' }) || '—';
 };
 
 export default function ParentConversationDialog({ open, onOpenChange, student }) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDateString();
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);

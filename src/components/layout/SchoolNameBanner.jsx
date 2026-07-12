@@ -25,7 +25,7 @@ export function invalidateSchoolNameCache() {
   cachedPromise = null;
 }
 
-export default function SchoolNameBanner({ className, withIcon = true, size = 'sm', inline = false }) {
+export default function SchoolNameBanner({ className = '', withIcon = true, size = 'sm', inline = false }) {
   const [name, setName] = useState(cachedSchoolName || '');
 
   useEffect(() => {

@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Star, Plus } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
+import { formatSchoolDate, getLocalDateString } from '@/lib/dateUtils';
 
 const CATEGORIES = ['כללי', 'אישי', 'אקדמי', 'חברתי', 'רגשי'];
 const CAT_COLORS = {
@@ -29,13 +30,13 @@ export default function NotesList({ notes, onRefresh, user, role, classId, stude
   async function handleSave() {
     if (!form.student_id || !form.content) { toast.error('יש לבחור תלמיד ולהזין הערה'); return; }
     setSaving(true);
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalDateString();
     await base44.entities.TeacherNote.create({
       student_id: form.student_id,
       student_name: selectedStudent?.full_name || '',
       class_id: classId,
       date: today,
-      content: `[${user?.full_name || user?.email} · ${new Date().toLocaleString('he-IL')}]\n${form.content}`,
+      content: `[${user?.full_name || user?.email} · ${formatSchoolDate(new Date(), { dateStyle: 'short', timeStyle: 'short' })}]\n${form.content}`,
       category: form.category,
       is_private: true,
     });
@@ -79,7 +80,7 @@ export default function NotesList({ notes, onRefresh, user, role, classId, stude
               <Textarea value={form.content} onChange={e => setForm(p => ({ ...p, content: e.target.value }))} className="h-24 text-sm" placeholder="הערה על התלמיד..." />
             </div>
             <div className="text-xs text-muted-foreground bg-muted rounded-lg px-3 py-2">
-              יישמר עם: <span className="font-medium">{user?.full_name || user?.email}</span> · {new Date().toLocaleString('he-IL')}
+              יישמר עם: <span className="font-medium">{user?.full_name || user?.email}</span> · {formatSchoolDate(new Date(), { dateStyle: 'short', timeStyle: 'short' })}
             </div>
             <div className="flex gap-2">
               <Button size="sm" onClick={handleSave} disabled={saving} className="flex-1">{saving ? 'שומר...' : 'שמור'}</Button>

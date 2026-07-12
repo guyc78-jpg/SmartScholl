@@ -33,9 +33,11 @@ const priorityStyle = {
   'דחופה': 'bg-destructive/10 text-destructive border-destructive/20',
 };
 
+const EMPTY_EDIT_FORM = { title: '', due_date: '', priority: '', status: '' };
+
 export default function OpenTasksDialog({ open, onOpenChange, tasks, onChanged }) {
   const [editingId, setEditingId] = useState(null);
-  const [editForm, setEditForm] = useState({});
+  const [editForm, setEditForm] = useState(() => ({ ...EMPTY_EDIT_FORM }));
   const [deleteTask, setDeleteTask] = useState(null);
   const [busyId, setBusyId] = useState(null);
 
@@ -51,7 +53,7 @@ export default function OpenTasksDialog({ open, onOpenChange, tasks, onChanged }
 
   const cancelEdit = () => {
     setEditingId(null);
-    setEditForm({});
+    setEditForm({ ...EMPTY_EDIT_FORM });
   };
 
   const updateTask = async (taskId, data) => {

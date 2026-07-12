@@ -13,10 +13,8 @@ import { EVENT_TYPES, normalizeEventType, TYPE_STYLES } from './eventConstants';
 import ImportStepIndicator from './import/ImportStepIndicator';
 import ImportReviewSummary from './import/ImportReviewSummary';
 import NeedsReviewPanel from './import/NeedsReviewPanel';
-import { parseWordCalendarFile, isWordFile } from '@/lib/wordCalendarParser';
-import { format } from 'date-fns';
-import useDeleteConfirm from '@/hooks/useDeleteConfirm';
-import { he } from 'date-fns/locale';
+import { validateFileSize } from '@/lib/fileValidation';
+import { formatSchoolDate, getSchoolWeekdayIndex } from '@/lib/dateUtils';
 
 const emptyRow = {
   title: '',
@@ -40,19 +38,18 @@ const emptyRow = {
   audience_group_label: ''
 };
 
+const isWordFile = (file) => /\.docx?$/i.test(file?.name || '');
+
 const HEB_DAY_NAMES = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 
 const dayFromDate = (iso) => {
   if (!iso) return '';
-  try {
-    const d = new Date(iso);
-    return HEB_DAY_NAMES[d.getDay()] || '';
-  } catch { return ''; }
+  const weekday = getSchoolWeekdayIndex(iso);
+  return weekday >= 0 ? HEB_DAY_NAMES[weekday] : '';
 };
 
 const formatDateLabel = (iso) => {
-  if (!iso) return '';
-  try { return format(new Date(iso), 'EEEE · d בMMMM', { locale: he }); } catch { return iso; }
+  return formatSchoolDate(iso, { weekday: 'long', day: 'numeric', month: 'long' }) || iso || '';
 };
 
 const getRowErrors = (row) => {
@@ -63,16 +60,14 @@ const getRowErrors = (row) => {
   return errors;
 };
 
-export default function SmartCalendarImportDialog({ open, onOpenChange, classId, onImported }) {
+export default function SmartCalendarImportDialog({ open, onOpenChange, classId, grade = '', onImported }) {
   const fileInputRef = useRef(null);
   const [rows, setRows] = useState([]);
   const [reviewItems, setReviewItems] = useState([]);
   const [fileName, setFileName] = useState('');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [replaceExisting, setReplaceExisting] = useState(false);
   const [error, setError] = useState('');
-  const { confirmDelete, DeleteConfirm } = useDeleteConfirm();
 
   const errorsCount = rows.reduce((sum, row) => sum + (getRowErrors(row).length ? 1 : 0), 0);
   const valid = rows.length > 0 && errorsCount === 0;
@@ -109,24 +104,10 @@ export default function SmartCalendarImportDialog({ open, onOpenChange, classId,
     audience_subjects: row.audience_subjects || []
   });
 
-  const clearExistingBoardData = async () => {
-    const existingEvents = await base44.entities.Exam.filter({ class_id: classId });
-    if (!existingEvents.length) return 0;
-    const eventIds = new Set(existingEvents.map(event => event.id));
-    const [allCompletions, allReports] = await Promise.all([
-      base44.entities.ExamCompletion.list('-updated_date', 1000),
-      base44.entities.ExamGradeReport.list('-updated_action_at', 1000),
-    ]);
-    await Promise.all([
-      ...existingEvents.map(event => base44.entities.Exam.delete(event.id)),
-      ...(allCompletions || []).filter(item => eventIds.has(item.exam_id)).map(item => base44.entities.ExamCompletion.delete(item.id)),
-      ...(allReports || []).filter(item => eventIds.has(item.exam_id)).map(item => base44.entities.ExamGradeReport.delete(item.id)),
-    ]);
-    return existingEvents.length;
-  };
-
   const handleFile = async (file) => {
     if (!file) return;
+    const fileError = validateFileSize(file);
+    if (fileError) { setError(fileError); return; }
     setLoading(true);
     setError('');
     setRows([]);
@@ -139,6 +120,7 @@ export default function SmartCalendarImportDialog({ open, onOpenChange, classId,
 
       // קבצי Word — פירסור מקומי של טבלת השבועות
       if (isWordFile(file)) {
+        const { parseWordCalendarFile } = await import('@/lib/wordCalendarParser');
         const parsed = await parseWordCalendarFile(file);
         detected = parsed.events.map(enrichRow);
         review = parsed.needsReview;
@@ -191,39 +173,38 @@ export default function SmartCalendarImportDialog({ open, onOpenChange, classId,
       setError('יש לתקן את השורות המסומנות לפני פרסום ללוח.');
       return;
     }
-    if (replaceExisting) {
-      const approved = await confirmDelete({
-        title: 'למחוק את הלוח הקיים?',
-        description: 'כל האירועים ונתוני המעקב הקיימים יימחקו לפני פרסום הלוח החדש. פעולה זו אינה הפיכה.',
-        confirmLabel: 'מחק קיים ופרסם',
-      });
-      if (!approved) return;
-    }
     setSaving(true);
-    const deletedCount = replaceExisting ? await clearExistingBoardData() : 0;
-    await base44.entities.Exam.bulkCreate(rows.map(row => ({
-      class_id: classId,
-      title: row.title,
-      subject: row.subject,
-      type: row.type,
-      date: row.date,
-      time: row.is_all_day ? '' : row.time,
-      end_time: row.is_all_day ? '' : row.end_time,
-      class_or_grade: row.class_or_grade,
-      teacher: row.teacher,
-      material: row.material,
-      notes: row.notes,
-      audience_scope: row.audience_scope,
-      audience_grades: row.audience_grades,
-      audience_classes: row.audience_classes,
-      audience_tracks: row.audience_tracks,
-      audience_subjects: row.audience_subjects,
-      audience_group_label: row.audience_group_label
-    })));
-    toast.success(replaceExisting ? `${deletedCount} אירועים ישנים נמחקו ו-${rows.length} אירועים חדשים פורסמו בלוח` : `${rows.length} אירועים פורסמו בלוח`);
-    setSaving(false);
-    onImported?.();
-    onOpenChange(false);
+    try {
+      await base44.entities.Exam.bulkCreate(rows.map(row => ({
+        class_id: classId,
+        grade,
+        title: row.title,
+        subject: row.subject,
+        type: row.type,
+        date: row.date,
+        time: row.is_all_day ? '' : row.time,
+        end_time: row.is_all_day ? '' : row.end_time,
+        class_or_grade: row.class_or_grade,
+        teacher: row.teacher,
+        material: row.material,
+        notes: row.notes,
+        audience_scope: row.audience_scope,
+        audience_grades: row.audience_grades,
+        audience_classes: row.audience_classes,
+        audience_tracks: row.audience_tracks,
+        audience_subjects: row.audience_subjects,
+        audience_group_label: row.audience_group_label
+      })));
+      toast.success(`${rows.length} אירועים פורסמו בלוח`);
+      onImported?.();
+      onOpenChange(false);
+    } catch (saveError) {
+      const message = saveError?.message || 'פרסום האירועים נכשל. לא בוצעה מחיקה של הלוח הקיים.';
+      setError(message);
+      toast.error(message);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -262,13 +243,9 @@ export default function SmartCalendarImportDialog({ open, onOpenChange, classId,
                   <h3 className="font-semibold mb-1">2-5. תצוגה מקדימה, סיווג, תיקון ורלוונטיות</h3>
                   <p className="text-sm text-muted-foreground">עברו על השורות, תקנו שגיאות וסמנו למי כל אירוע רלוונטי. הפרסום ללוח יקרה רק לאחר אישור.</p>
                 </div>
-                <label className="flex items-start justify-start gap-2 rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-right text-sm cursor-pointer" dir="rtl">
-                  <input type="checkbox" checked={replaceExisting} onChange={e => setReplaceExisting(e.target.checked)} className="mt-1" />
-                  <span>
-                    <span className="font-bold text-destructive">החלף לוח קיים</span>
-                    <span className="block text-muted-foreground">מוחק את כל האירועים ונתוני המעקב הקיימים לפני פרסום הלוח החדש.</span>
-                  </span>
-                </label>
+                <p className="rounded-lg border border-primary/20 bg-primary/5 p-3 text-right text-sm text-muted-foreground">
+                  הייבוא מוסיף אירועים ללוח הקיים. החלפה מלאה חסומה כדי למנוע אובדן נתונים במקרה של כשל באמצע הפעולה.
+                </p>
               </div>
 
               <div className="space-y-3">
@@ -283,14 +260,13 @@ export default function SmartCalendarImportDialog({ open, onOpenChange, classId,
                   <Button variant="outline" onClick={() => onOpenChange(false)}>ביטול</Button>
                   <Button onClick={save} disabled={!valid || saving}>
                     {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                    {replaceExisting ? 'מחק קיים ופרסם לוח חדש' : 'אשר פרסום ללוח'}
+                    אשר פרסום ללוח
                   </Button>
                 </div>
               </div>
             </div>
           )}
         </div>
-        <DeleteConfirm />
       </DialogContent>
     </Dialog>
   );

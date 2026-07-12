@@ -1,5 +1,17 @@
 import { base44 } from '@/api/base44Client';
 import { findSlotForPeriod, getTodayDayType, getTodayHebrewName, loadBellSchedule, timeToMinutes } from '@/lib/bellSchedule';
+import { SCHOOL_TIME_ZONE } from '@/lib/dateUtils';
+
+function schoolClockMinutes(date = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: SCHOOL_TIME_ZONE,
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map(part => [part.type, Number(part.value)]));
+  return values.hour * 60 + values.minute;
+}
 
 function lessonsFromScheduleSlots(slots, periods) {
   const items = (periods || []).filter(period => ['lesson', 'break'].includes(period.kind));
@@ -21,7 +33,7 @@ function lessonsFromScheduleSlots(slots, periods) {
 }
 
 export function resolveScheduleNowNext(slots, periods, now = new Date()) {
-  const nowMins = now.getHours() * 60 + now.getMinutes();
+  const nowMins = schoolClockMinutes(now);
   const lessons = lessonsFromScheduleSlots(slots, periods);
 
   const current = lessons.find(slot => (
@@ -41,8 +53,9 @@ export function resolveScheduleNowNext(slots, periods, now = new Date()) {
 export async function loadScheduleNowNextData(classId, now = new Date()) {
   if (!classId) return { slots: [], periods: [], current: null, next: null, remainingMins: 0 };
 
-  const todayName = getTodayHebrewName();
-  const dayType = getTodayDayType();
+  const todayName = getTodayHebrewName(now);
+  const dayType = getTodayDayType(now);
+  if (dayType === 'closed') return { slots: [], periods: [], current: null, next: null, remainingMins: 0 };
   const [slots, periods] = await Promise.all([
     base44.entities.ScheduleSlot.filter({ class_id: classId, day: todayName }),
     loadBellSchedule(dayType),

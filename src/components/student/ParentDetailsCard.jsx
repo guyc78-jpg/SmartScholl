@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Phone, MessageCircle, Users, ChevronDown } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function ParentDetailsCard({ student, canEdit, onStudentUpdate, className }) {
+export default function ParentDetailsCard({ student, canEdit, onStudentUpdate, className = '' }) {
   const [parentForm, setParentForm] = useState({
     parent1_name: '',
     parent1_phone: '',

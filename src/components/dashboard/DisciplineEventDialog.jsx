@@ -34,11 +34,19 @@ const severityStyle = {
   'חמורה': 'bg-destructive/10 text-destructive border-destructive/20',
 };
 
+const EMPTY_FORM = {
+  category: '',
+  severity: '',
+  description: '',
+  treatment: '',
+  status: '',
+};
+
 export default function DisciplineEventDialog({ event, open, onOpenChange, onChanged }) {
   const [editing, setEditing] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({});
+  const [form, setForm] = useState(() => ({ ...EMPTY_FORM }));
 
   useEffect(() => {
     if (!event) return;

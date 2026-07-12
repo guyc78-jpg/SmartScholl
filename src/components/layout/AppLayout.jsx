@@ -18,6 +18,7 @@ import PushNotificationToggle from '@/components/notifications/PushNotificationT
 import { getDashboardLabel } from '@/lib/dashboardLabels';
 import RoleIcon from '@/components/ui/RoleIcon';
 import { coordinatorHasHomeroom, getUserHomeroomClassId } from '@/lib/schoolStructure';
+import { useAuth } from '@/lib/AuthContext';
 
 // ── Accordion nav groups ──────────────────────────────────────────────────────
 const sidebarGroups = [
@@ -249,6 +250,7 @@ function AccordionGroup({ group, role, pendingCount, location, onNavigate }) {
 
 // ── AppLayout ─────────────────────────────────────────────────────────────────
 export default function AppLayout({ children, user, role, darkMode, toggleDark, onRoleChange, simulationOffset = false }) {
+  const { logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
   const [activeClassRoom, setActiveClassRoom] = useState(null);
@@ -352,8 +354,8 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
         <PushNotificationToggle showUnsupported compact />
         <div className={cn(
           'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors',
-          darkMode 
-            ? 'text-sidebar-foreground/90 hover:bg-sidebar-accent/40' 
+          darkMode
+            ? 'text-sidebar-foreground/90 hover:bg-sidebar-accent/40'
             : 'text-sidebar-foreground hover:bg-sidebar-accent/60'
         )}>
            {darkMode ? <Sun className="w-4 h-4 flex-shrink-0" /> : <Moon className="w-4 h-4 flex-shrink-0" />}
@@ -362,8 +364,8 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
              onClick={toggleDark}
              className={cn(
                'relative w-11 h-6 rounded-full transition-colors flex-shrink-0',
-               darkMode 
-                 ? 'bg-primary border border-primary/60 shadow-[inset_0_1px_2px_rgba(0,0,0,0.2)]' 
+               darkMode
+                 ? 'bg-primary border border-primary/60 shadow-[inset_0_1px_2px_rgba(0,0,0,0.2)]'
                  : 'bg-slate-300 border border-slate-400/80 shadow-[inset_0_1px_3px_rgba(0,0,0,0.15)]'
              )}
              aria-label="החלף מצב כהה"
@@ -371,15 +373,15 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
              <span
                className={cn(
                  'absolute top-0.5 w-5 h-5 rounded-full transition-transform',
-                 darkMode 
-                   ? 'bg-slate-100 start-0.5 shadow-md' 
+                 darkMode
+                   ? 'bg-slate-100 start-0.5 shadow-md'
                    : 'bg-white border border-slate-300 start-[18px] shadow-[0_1px_3px_rgba(0,0,0,0.25)]'
                )}
              />
            </button>
          </div>
         <button
-          onClick={() => base44.auth.logout('/')}
+          onClick={() => logout(false)}
           className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-foreground transition-colors"
         >
           <LogOut className="w-4 h-4 flex-shrink-0" />

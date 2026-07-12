@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.34';
 
 function cleanName(value = '') {
   return String(value || '').trim().replace(/\s+/g, ' ');
@@ -18,26 +18,44 @@ function needsNameFix(student) {
   return fullName && (!first || !last || (first === fullName && last === fullName));
 }
 
-async function isAdminUser(base44, user) {
-  if (!user) return false;
-  if (user.role === 'admin' || user.role === 'system_admin') return true;
-  const email = String(user.email || '').trim().toLowerCase();
-  if (!email) return false;
-  const records = await base44.asServiceRole.entities.ApprovedUser.filter({ email }).catch(() => []);
-  return records.some(record => record.isActive !== false
-    && (record.role === 'system_admin' || record.role === 'admin'
-      || (Array.isArray(record.roles) && (record.roles.includes('system_admin') || record.roles.includes('admin')))));
+function parseRoles(value) {
+  if (Array.isArray(value)) return value;
+  if (typeof value !== 'string') return [];
+  const text = value.trim();
+  if (!text) return [];
+  if (text.startsWith('[')) {
+    try { const parsed = JSON.parse(text); return Array.isArray(parsed) ? parsed : []; } catch { return []; }
+  }
+  return text.split(',').map(role => role.trim()).filter(Boolean);
+}
+
+async function listAll(entity, sort = '-updated_date') {
+  const rows = [];
+  const pageSize = 5000;
+  for (let skip = 0; ; skip += pageSize) {
+    const page = await entity.list(sort, pageSize, skip);
+    rows.push(...(page || []));
+    if (!page || page.length < pageSize) return rows;
+  }
 }
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me().catch(() => null);
-    if (!(await isAdminUser(base44, user))) {
+    const user = await base44.auth.me();
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const isAdmin = user.role === 'admin' || user.role === 'system_admin' || await (async () => {
+      const email = String(user.email || '').trim().toLowerCase();
+      if (!email) return false;
+      const approved = await base44.asServiceRole.entities.ApprovedUser.filter({ email }, '-created_date', 20).catch(() => []);
+      return approved.some(record => record.isActive !== false && [record.role, ...parseRoles(record.roles)].includes('system_admin'));
+    })();
+    if (!isAdmin) {
       return Response.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
-    const students = await base44.asServiceRole.entities.Student.list('-updated_date', 1000);
+    const students = await listAll(base44.asServiceRole.entities.Student);
     let updated = 0;
     let relatedUpdated = 0;
     const studentDisplayNames = new Map();
@@ -77,7 +95,7 @@ Deno.serve(async (req) => {
     ];
 
     for (const entityName of relatedEntities) {
-      const rows = await base44.asServiceRole.entities[entityName].list('-updated_date', 1000);
+      const rows = await listAll(base44.asServiceRole.entities[entityName]);
       for (const row of rows || []) {
         const displayName = studentDisplayNames.get(row.student_id);
         if (!displayName || row.student_name === displayName) continue;
@@ -88,6 +106,7 @@ Deno.serve(async (req) => {
 
     return Response.json({ success: true, updated, relatedUpdated });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('Function error:', error);
+    return Response.json({ error: 'Internal server error' }, { status: 500 });
   }
 });

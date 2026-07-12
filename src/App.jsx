@@ -8,7 +8,6 @@ import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import AccessDenied from '@/components/auth/AccessDenied';
 import { useState, useEffect, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
-import { seedDemoData } from '@/lib/demoData';
 import AppLayout from '@/components/layout/AppLayout';
 import { Toaster as SonnerToaster } from 'sonner';
 import useThemePreference from '@/hooks/useThemePreference';
@@ -19,7 +18,6 @@ import { lazy, Suspense } from 'react';
 import Dashboard from './pages/Dashboard';
 const Students = lazy(() => import('./pages/Students'));
 const StudentProfile = lazy(() => import('./pages/StudentProfile'));
-const Attendance = lazy(() => import('./pages/Attendance'));
 const Schedule = lazy(() => import('./pages/Schedule'));
 const Exams = lazy(() => import('./pages/Exams'));
 const Community = lazy(() => import('./pages/Community'));
@@ -51,11 +49,9 @@ const PermissionsTester = lazy(() => import('./pages/PermissionsTester'));
 const PushNotifications = lazy(() => import('./pages/PushNotifications'));
 const YearTransition = lazy(() => import('./pages/YearTransition'));
 const SchoolSupportAgent = lazy(() => import('./pages/SchoolSupportAgent'));
-import { isStaff, isStudent, defaultRoute } from './lib/permissions';
 import { getAvailableRoles, getInitialWorkRole, getSystemRole } from './lib/roleUtils';
 import { SimulationProvider, useSimulation } from '@/lib/SimulationContext';
 import SimulationBanner from '@/components/permissions/SimulationBanner';
-import { setSimulationGuard } from '@/lib/simulationGuard';
 import { getAttendanceScopedStudents, getScopedClassIds, loadScopedAttendanceForDate, getSelectedAttendanceDate } from '@/lib/attendanceScope.js';
 
 const validateRequiredBootstrapData = (user, role, approvedRoles) => {
@@ -64,18 +60,31 @@ const validateRequiredBootstrapData = (user, role, approvedRoles) => {
   if (!role || !approvedRoles.includes(role)) throw new Error('לא ניתן לקבוע תפקיד פעיל תקין.');
   if (!user.authorization && !user.__simulated) throw new Error('נתוני ההרשאה עדיין לא נטענו.');
 
-  if (role === 'homeroom_teacher' && !(user.profile_class_id || user.profile_homeroom_class_id || user.homeroomClassId || user.profile_class || user.profile_homeroom_class || user.authorization?.scope?.homeroomClassId)) {
+  if (!user.__simulated && role === 'homeroom_teacher' && !(user.profile_class_id || user.profile_homeroom_class_id || user.homeroomClassId || user.profile_class || user.profile_homeroom_class || user.authorization?.scope?.homeroomClassId)) {
     throw new Error('חסר שיוך לכיתת חינוך.');
   }
-  if ((role === 'grade_coordinator' || role === 'coordinator') && !(user.profile_grade_managed || user.gradeId || user.authorization?.scopes_by_role?.grade_coordinator?.gradeId || user.authorization?.scope?.gradeId)) {
+  if (!user.__simulated && (role === 'grade_coordinator' || role === 'coordinator') && !(user.profile_grade_managed || user.gradeId || user.authorization?.scopes_by_role?.grade_coordinator?.gradeId || user.authorization?.scope?.gradeId)) {
     throw new Error('חסר שיוך לשכבה.');
   }
-  if (role === 'division_manager' && !(user.profile_division || user.divisionType || user.authorization?.scope?.divisionType)) {
+  if (!user.__simulated && role === 'division_manager' && !(user.profile_division || user.divisionType || user.authorization?.scope?.divisionType)) {
     throw new Error('חסר שיוך לחטיבה.');
   }
-  if (role === 'student' && !(user.profile_class_id || user.profile_class)) {
+  if (!user.__simulated && role === 'student' && !(user.profile_class_id || user.profile_class)) {
     throw new Error('חסר שיוך לכיתה בפרופיל התלמיד.');
   }
+};
+
+const LoginRedirect = ({ navigateToLogin }) => {
+  useEffect(() => {
+    navigateToLogin();
+  }, [navigateToLogin]);
+
+  return (
+    <PremiumInitialLoader
+      status="מעבירים אותך למסך ההתחברות"
+      targetProgress={100}
+    />
+  );
 };
 
 const loadDashboardBootstrapData = async (user, role) => {
@@ -125,7 +134,7 @@ const loadDashboardBootstrapData = async (user, role) => {
 };
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user: realUser, updateCurrentUser, checkUserAuth, checkAppState } = useAuth();
+  const { isAuthenticated, authChecked, isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user: realUser, updateCurrentUser, checkUserAuth, checkAppState } = useAuth();
   const { preference: themePreference, setPreference: setThemePreference, isDark: darkMode, toggleDark } = useThemePreference();
   const { isSimulating, simRole, buildSimulatedUser } = useSimulation();
   const navigate = useNavigate();
@@ -144,12 +153,6 @@ const AuthenticatedApp = () => {
   const bootPageRole = bootRole === 'system_admin' ? 'admin' : bootRole === 'grade_coordinator' ? 'coordinator' : bootRole;
   const bootHomeroomClassId = user?.active_homeroom_class_id || user?.profile_homeroom_class_id || user?.homeroomClassId || user?.authorization?.scope?.homeroomClassId || user?.authorization?.homeroomClassId || user?.profile_class_id || '';
   const bootStaff = bootApprovedRoles.includes('system_admin') || bootApprovedRoles.includes('admin') || (['system_admin', 'admin', 'homeroom_teacher', 'grade_coordinator', 'coordinator'].includes(bootRole) && bootApprovedRoles.includes(bootRole));
-
-  // הפעלת/כיבוי מגן הסימולציה (חוסם כתיבת נתונים אמיתיים)
-  useEffect(() => {
-    setSimulationGuard(isSimulating);
-    return () => setSimulationGuard(false);
-  }, [isSimulating]);
 
   // ניווט אוטומטי לעמוד הבית של התפקיד המדומה / חזרה לכלי הסימולציה ביציאה
   const wasSimulatingRef = useRef(false);
@@ -213,7 +216,7 @@ const AuthenticatedApp = () => {
   }, [isLoadingPublicSettings, isLoadingAuth, user?.id, bootHomeroomClassId, bootRole, bootPageRole, bootStaff, workRole, isSimulating, bootstrapAttempt]);
 
   // מסך הטעינה נשאר גלוי עד שכל הנתונים נטענו (bootstrap ready) והפס הגיע ל-100% בפועל
-  const dataLoading = isLoadingPublicSettings || isLoadingAuth || bootstrap.status === 'loading' || (user && bootstrap.status === 'idle' && !authError);
+  const dataLoading = !authChecked || isLoadingPublicSettings || isLoadingAuth || bootstrap.status === 'loading' || (user && bootstrap.status === 'idle' && !authError);
   if ((dataLoading || (bootstrap.status === 'ready' && !loaderComplete)) && !authError) {
     const loaderProgress = isLoadingPublicSettings || isLoadingAuth ? 24 : bootstrap.status === 'loading' ? 70 : bootstrap.status === 'ready' ? 100 : 50;
     return (
@@ -228,8 +231,14 @@ const AuthenticatedApp = () => {
   if (authError) {
     if (authError.type === 'access_denied') return <AccessDenied />;
     if (authError.type === 'user_not_registered') return <UserNotRegisteredError />;
-    if (authError.type === 'auth_required') { navigateToLogin(); return null; }
+    if (authError.type === 'auth_required') return <LoginRedirect navigateToLogin={navigateToLogin} />;
     return <PremiumInitialLoader error="לא הצלחנו להשלים את טעינת האפליקציה. בדקו חיבור ונסו שוב." onRetry={checkAppState} />;
+  }
+
+  // Fail closed: without a verified identity there is no role fallback and no
+  // route tree. Previously a missing user fell through as a student.
+  if (!isAuthenticated || !realUser) {
+    return <LoginRedirect navigateToLogin={navigateToLogin} />;
   }
 
   if (bootstrap.status === 'error') {
@@ -240,6 +249,12 @@ const AuthenticatedApp = () => {
   const onboardingStatus = user?.onboarding_status;
   const userIsAdmin = user ? (getAvailableRoles(user).includes('system_admin') || getAvailableRoles(user).includes('admin')) : false;
   const onboardingDone = user?.onboardingCompleted || onboardingStatus === 'approved';
+  if (user?.must_change_password === true && !user.__simulated) {
+    return <Onboarding user={user} onComplete={async (updatedUser) => {
+      if (updatedUser) updateCurrentUser(updatedUser);
+      await checkUserAuth();
+    }} />;
+  }
   if (user && !userIsAdmin && !onboardingDone && !user.__simulated) {
     if (!onboardingStatus || onboardingStatus === 'pending') {
       return <Onboarding user={user} onComplete={async (updatedUser) => {
@@ -253,7 +268,7 @@ const AuthenticatedApp = () => {
   }
 
   // Gender gate — שדה חובה ראשוני לפני המשך שימוש
-  if (user && !user.authorization && !user.profile_gender) {
+  if (user && !user.profile_gender && !user.__simulated) {
     return <GenderRequiredGate user={user} onSaved={(updated) => updateCurrentUser(updated)} />;
   }
 
@@ -284,7 +299,7 @@ const AuthenticatedApp = () => {
           <Route path="/students" element={<Students role={pageRole} />} />
           <Route path="/students/:id" element={<StudentProfile role={pageRole} />} />
           <Route path="/classrooms" element={<Classrooms user={user} role={pageRole} onUserUpdate={updateCurrentUser} />} />
-          <Route path="/attendance" element={<Attendance />} />
+          <Route path="/attendance" element={<Navigate to="/class-attendance" replace />} />
           <Route path="/class-attendance" element={<ClassAttendance role={pageRole} />} />
           <Route path="/schedule" element={<Schedule role={pageRole} user={user} />} />
           <Route path="/exams" element={<Exams role={pageRole} user={user} />} />
@@ -294,7 +309,7 @@ const AuthenticatedApp = () => {
           <Route path="/communications" element={<Communications role={pageRole} />} />
           <Route path="/conversations" element={<ScheduledConversations role={pageRole} user={user} />} />
           <Route path="/tasks" element={<Tasks role={pageRole} user={user} />} />
-          <Route path="/treatment-center" element={<TreatmentCenter />} />
+          <Route path="/treatment-center" element={<TreatmentCenter user={user} role={pageRole} />} />
           <Route path="/announcements" element={<Announcements role={pageRole} user={user} />} />
           <Route path="/reports" element={<Reports role={pageRole} />} />
           <Route path="/support-agent" element={<SchoolSupportAgent />} />
@@ -373,7 +388,7 @@ function App() {
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
         <SimulationProvider>
-          <Router>
+          <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <AuthenticatedApp />
           </Router>
         </SimulationProvider>

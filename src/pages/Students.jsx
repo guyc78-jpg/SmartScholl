@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { CLASS_ID } from '@/lib/demoData';
 import { Button } from '@/components/ui/button';
 import EmptyState from '@/components/ui/EmptyState';
 import PageHeader from '@/components/ui/PageHeader';
@@ -10,19 +9,10 @@ import RtlFilterGrid from '@/components/ui/RtlFilterGrid';
 import RtlSearchField from '@/components/ui/RtlSearchField';
 import StudentCard from '@/components/students/StudentCard';
 import ClassAssignmentAlert from '@/components/students/ClassAssignmentAlert';
-import { Plus, Upload, Users, Trash2, AlertTriangle, RefreshCw } from 'lucide-react';
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { Plus, Upload, Users, AlertTriangle, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAuth } from '@/lib/AuthContext';
-import { logActivity } from '@/lib/activityLogger';
 import {
   getUserApprovedClass,
   getUserApprovedGrade,
@@ -88,16 +78,16 @@ export default function Students({ role }) {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const [showAdd, setShowAdd] = useState(false);
   const [showImport, setShowImport] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedConversationStudent, setSelectedConversationStudent] = useState(null);
   const [selectedReviewStudent, setSelectedReviewStudent] = useState(null);
   const [classRooms, setClassRooms] = useState([]);
+  const [selectedAdminClassId, setSelectedAdminClassId] = useState('');
   const [accommodationRecords, setAccommodationRecords] = useState({});
-  const [deleting, setDeleting] = useState(false);
-
-  const canDeleteAllStudents = role === 'admin' || role === 'coordinator' || role === 'homeroom_teacher';
   const scopeMode = getActiveScopeMode();
-  const classId = role === 'coordinator' && scopeMode === 'class' ? getUserHomeroomClassId(user, CLASS_ID) : getUserApprovedClassId(user, CLASS_ID);
+  const assignedClassId = role === 'coordinator' && scopeMode === 'class'
+    ? getUserHomeroomClassId(user, '')
+    : getUserApprovedClassId(user, '');
+  const classId = role === 'admin' ? selectedAdminClassId : assignedClassId;
 
   const loadAccommodationSummaries = useCallback(async (studentRows) => {
     if (!studentRows.length) {
@@ -173,27 +163,6 @@ export default function Students({ role }) {
   const communityPct = (s) => s.community_service_goal > 0
     ? Math.round((s.community_service_done / s.community_service_goal) * 100) : 0;
 
-  async function deleteAllStudents() {
-    setDeleting(true);
-    const deletedCount = students.length;
-    await Promise.all(students.map(student => base44.entities.Student.delete(student.id)));
-    await logActivity({
-      user,
-      role,
-      actionName: 'delete_all_students',
-      details: `${user?.full_name || 'משתמש'} מחק/ה ${deletedCount} תלמידים`,
-      metadata: { deletedCount },
-      severity: 'critical'
-    });
-    setStudents([]);
-    setSearch('');
-    setStatusFilter('הכל');
-    setShowDeleteConfirm(false);
-    toast.success('כל התלמידים נמחקו בהצלחה');
-    await loadStudents();
-    setDeleting(false);
-  }
-
   return (
     <div className="p-4 lg:p-6 space-y-5 text-right" dir="rtl">
       <PageHeader
@@ -203,32 +172,42 @@ export default function Students({ role }) {
 
       <ClassAssignmentAlert enabled={role === 'admin'} onFixed={loadStudents} />
 
+      {role === 'admin' && (
+        <div className="max-w-sm space-y-1">
+          <label className="text-xs font-medium text-muted-foreground">כיתה להוספה או לייבוא</label>
+          <Select value={selectedAdminClassId} onValueChange={setSelectedAdminClassId}>
+            <SelectTrigger><SelectValue placeholder="בחרו כיתה לפני הוספת תלמידים" /></SelectTrigger>
+            <SelectContent>
+              {classRooms.filter(item => item.is_active !== false).map(classRoom => (
+                <SelectItem key={classRoom.id} value={classRoom.id}>
+                  {classRoom.name}{classRoom.grade ? ` · שכבה ${classRoom.grade}` : ''}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       <div className="space-y-3" dir="rtl">
         <RtlActionBar
           primary={(
-            <Button size="sm" className="h-9 gap-2" onClick={() => setShowAdd(true)}>
+            <Button size="sm" className="h-9 gap-2" onClick={() => {
+              if (!classId) return toast.error('יש לבחור כיתה לפני הוספת תלמיד/ה');
+              setShowAdd(true);
+            }}>
               <Plus className="w-4 h-4" />
               תלמיד חדש
             </Button>
           )}
           secondary={(
             <>
-              <Button variant="outline" size="sm" className="h-9 gap-2" onClick={() => setShowImport(true)}>
+              <Button variant="outline" size="sm" className="h-9 gap-2" onClick={() => {
+                if (role === 'admin' && !classId) return toast.error('יש לבחור כיתה לפני ייבוא תלמידים');
+                setShowImport(true);
+              }}>
                 <Upload className="w-4 h-4" />
                 <span className="hidden sm:inline">ייבוא מאקסל</span>
               </Button>
-              {canDeleteAllStudents && (
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-9 w-9 text-destructive hover:text-destructive"
-                  onClick={() => setShowDeleteConfirm(true)}
-                  disabled={students.length === 0 || deleting}
-                  aria-label="מחיקת כל התלמידים"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
-              )}
             </>
           )}
         />
@@ -332,24 +311,6 @@ export default function Students({ role }) {
         student={selectedReviewStudent}
       />
 
-      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
-        <AlertDialogContent dir="rtl" className="text-right">
-          <AlertDialogHeader>
-            <AlertDialogTitle>האם למחוק את כל התלמידים?</AlertDialogTitle>
-            <AlertDialogDescription>
-              פעולה זו לא ניתנת לשחזור.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter className="gap-2 sm:justify-end">
-            <Button variant="outline" onClick={() => setShowDeleteConfirm(false)} disabled={deleting}>
-              ביטול
-            </Button>
-            <Button variant="destructive" onClick={deleteAllStudents} disabled={deleting}>
-              {deleting ? 'מוחק...' : 'מחיקה'}
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

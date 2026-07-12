@@ -3,12 +3,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { getSchoolTimeString } from '@/lib/dateUtils';
 
 const LATE_OPTIONS = [5, 10, 15, 20];
 const ABSENCE_REASONS = ['ללא סיבה', 'מחלה', 'אישור הורים', 'פעילות בית ספרית', 'אחר'];
 
 export default function ExceptionDetailDialog({ open, onClose, student, status, initial, onSave }) {
-  const [minutes, setMinutes] = useState(10);
+  const [minutes, setMinutes] = useState(/** @type {number | 'other'} */ (10));
   const [customMinutes, setCustomMinutes] = useState('');
   const [reason, setReason] = useState('ללא סיבה');
   const [releaseTime, setReleaseTime] = useState('');
@@ -19,7 +20,7 @@ export default function ExceptionDetailDialog({ open, onClose, student, status, 
     setMinutes(initial?.minutes ?? 10);
     setCustomMinutes(initial?.customMinutes ?? '');
     setReason(initial?.reason || 'ללא סיבה');
-    setReleaseTime(initial?.releaseTime || new Date().toTimeString().slice(0, 5));
+    setReleaseTime(initial?.releaseTime || getSchoolTimeString());
     setNote(initial?.note || '');
   }, [open, initial]);
 

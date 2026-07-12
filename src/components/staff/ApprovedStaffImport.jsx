@@ -1,4 +1,3 @@
-import * as XLSX from 'xlsx';
 import { Button } from '@/components/ui/button';
 import { Upload } from 'lucide-react';
 import { toast } from 'sonner';
@@ -10,6 +9,7 @@ export default function ApprovedStaffImport({ onImport, saving }) {
   const handleFile = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
+    const XLSX = await import('xlsx');
     const data = await file.arrayBuffer();
     const workbook = XLSX.read(data);
     const sheet = workbook.Sheets[workbook.SheetNames[0]];

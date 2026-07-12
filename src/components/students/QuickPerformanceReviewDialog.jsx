@@ -5,6 +5,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { formatStudentName } from '@/lib/studentName';
+import { getLocalDateString } from '@/lib/dateUtils';
 
 const METRICS = [
   ['learning_habits', 'הרגלי למידה'],
@@ -14,6 +15,17 @@ const METRICS = [
   ['social_functioning', 'תפקוד חברתי'],
   ['emotional_state', 'מצב רגשי'],
 ];
+
+const createEmptyForm = () => ({
+  period: currentPeriod(),
+  learning_habits: 3,
+  participation: 3,
+  responsibility: 3,
+  behavior: 3,
+  social_functioning: 3,
+  emotional_state: 3,
+  notes: '',
+});
 
 const currentPeriod = () => {
   const month = new Date().getMonth() + 1;
@@ -25,10 +37,10 @@ const currentPeriod = () => {
 
 export default function QuickPerformanceReviewDialog({ student, open, onOpenChange }) {
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ period: currentPeriod(), notes: '' });
+  const [form, setForm] = useState(createEmptyForm);
 
   useEffect(() => {
-    if (open) setForm({ period: currentPeriod(), notes: '' });
+    if (open) setForm(createEmptyForm());
   }, [open]);
 
   const setValue = (key, value) => setForm(prev => ({ ...prev, [key]: value }));
@@ -36,7 +48,7 @@ export default function QuickPerformanceReviewDialog({ student, open, onOpenChan
   const saveReview = async () => {
     if (!student) return;
     setSaving(true);
-    const today = new Date().toISOString().slice(0, 10);
+    const today = getLocalDateString();
     await base44.entities.PerformanceReview.create({
       student_id: student.id,
       student_name: formatStudentName(student),

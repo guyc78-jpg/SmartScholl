@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { CLASS_ID } from '@/lib/demoData';
+import { useAuth } from '@/lib/AuthContext';
+import { getUserApprovedClassId } from '@/lib/schoolStructure';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -12,6 +13,7 @@ import RtlActionBar from '@/components/ui/RtlActionBar';
 import { toast } from 'sonner';
 import { Save, CheckCircle2 } from 'lucide-react';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
+import { getLocalDateString, getSchoolTimeString } from '@/lib/dateUtils';
 
 const STATUSES = ['נוכח', 'נעדר', 'מאחר', 'מוצדק', 'שוחרר'];
 const STATUS_SHORT = { 'נוכח': 'נוכח', 'נעדר': 'נעדר', 'מאחר': 'מאחר', 'מוצדק': 'מוצדק', 'שוחרר': 'שוחרר' };
@@ -24,8 +26,10 @@ const statusColors = {
 };
 
 export default function Attendance() {
+  const { user } = useAuth();
+  const classId = getUserApprovedClassId(user, '');
   const [students, setStudents] = useState([]);
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [date, setDate] = useState(getLocalDateString);
   const [attendanceMap, setAttendanceMap] = useState({});
   const [existingIds, setExistingIds] = useState({});
   const [saving, setSaving] = useState(false);
@@ -36,9 +40,16 @@ export default function Attendance() {
 
   async function loadData() {
     setLoading(true);
+    if (!classId) {
+      setStudents([]);
+      setAttendanceMap({});
+      setExistingIds({});
+      setLoading(false);
+      return;
+    }
     const [sts, att] = await Promise.all([
-      base44.entities.Student.filter({ class_id: CLASS_ID }),
-      base44.entities.AttendanceRecord.filter({ class_id: CLASS_ID, date })
+      base44.entities.Student.filter({ class_id: classId }),
+      base44.entities.AttendanceRecord.filter({ class_id: classId, date })
     ]);
     setStudents(sts.filter(s => s.status === 'פעיל' || s.status === 'דורש מעקב').sort(compareStudentsByLastName));
     const map = {};
@@ -59,20 +70,23 @@ export default function Attendance() {
   };
 
   async function handleSave() {
+    if (!classId) {
+      toast.error('לא נמצאה כיתה מאושרת לשמירת נוכחות');
+      return;
+    }
     setSaving(true);
     try {
       for (const student of students) {
         const a = attendanceMap[student.id];
         if (!a?.status) continue;
-        const data = { student_id: student.id, student_name: formatStudentName(student), class_id: CLASS_ID, date, status: a.status, note: a.note || '' };
+        const data = { student_id: student.id, student_name: formatStudentName(student), class_id: classId, date, status: a.status, note: a.note || '' };
         if (existingIds[student.id]) {
           await base44.entities.AttendanceRecord.update(existingIds[student.id], data);
         } else {
           await base44.entities.AttendanceRecord.create(data);
         }
       }
-      const now = new Date();
-      setLastSaved(`${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`);
+      setLastSaved(getSchoolTimeString());
       toast.success('נוכחות נשמרה בהצלחה!');
       loadData().catch(() => {});
     } catch (e) {

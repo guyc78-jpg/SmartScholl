@@ -66,9 +66,9 @@ export default function FamilySensitiveInfoCard({ student, canEdit }) {
   };
 
   const hasSensitiveInfo = statuses.length > 0 || note.trim().length > 0;
-  const displayValue = noSensitiveInfo 
-    ? 'אין מידע רגיש מתועד' 
-    : statuses.length > 0 
+  const displayValue = noSensitiveInfo
+    ? 'אין מידע רגיש מתועד'
+    : statuses.length > 0
     ? statuses.join(', ')
     : 'לא צוין';
 
@@ -95,10 +95,10 @@ export default function FamilySensitiveInfoCard({ student, canEdit }) {
               )}
             </div>
             {canEdit && (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="w-7 h-7 flex-shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted/40" 
+              <Button
+                variant="ghost"
+                size="icon"
+                className="w-7 h-7 flex-shrink-0 text-muted-foreground hover:text-foreground hover:bg-muted/40"
                 onClick={() => setIsEditing(true)}
                 aria-label="עריכת מידע משפחתי"
               >

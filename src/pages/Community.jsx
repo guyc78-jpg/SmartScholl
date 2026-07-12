@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { CLASS_ID } from '@/lib/demoData';
 import { getStudentClassId } from '@/lib/studentProfile';
 import { getUserApprovedClassId, isStudentInApprovedScope, getActiveScopeMode } from '@/lib/schoolStructure';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
@@ -18,15 +17,23 @@ import CommunityServiceReportsPanel from '@/components/staff/CommunityServiceRep
 import { toast } from 'sonner';
 import { Heart, Edit, AlertTriangle, TrendingUp } from 'lucide-react';
 
+const EMPTY_COMMUNITY_FORM = {
+  community_service_goal: 60,
+  community_service_done: 0,
+  community_service_place: '',
+  community_service_contact: '',
+  community_service_status: '',
+};
+
 export default function Community({ role = 'homeroom_teacher', user }) {
   const [students, setStudents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [serviceReports, setServiceReports] = useState([]);
   const [editStudent, setEditStudent] = useState(null);
-  const [form, setForm] = useState({});
+  const [form, setForm] = useState(() => ({ ...EMPTY_COMMUNITY_FORM }));
   const [filter, setFilter] = useState('הכל');
   const scopeMode = getActiveScopeMode();
-  const classId = role === 'student' ? getStudentClassId(user, CLASS_ID) : getUserApprovedClassId(user, CLASS_ID);
+  const classId = role === 'student' ? getStudentClassId(user, '') : getUserApprovedClassId(user, '');
 
   const withCommunityDefaults = (student) => ({
     ...student,
@@ -72,6 +79,7 @@ export default function Community({ role = 'homeroom_teacher', user }) {
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
 
   async function handleSave() {
+    if (!editStudent) return;
     const payload = {
       community_service_goal: Number(form.community_service_goal || 0),
       // השלמת שדות חובה לרשומות ישנות שחסרים בהן שם פרטי/משפחה
@@ -99,7 +107,7 @@ export default function Community({ role = 'homeroom_teacher', user }) {
   }
 
   const pct = (s) => Number(s.community_service_goal) > 0 ? Math.round((Number(s.community_service_done || 0) / Number(s.community_service_goal)) * 100) : 0;
-  
+
   const sorted = [...students].sort(compareStudentsByLastName);
   const filtered = filter === 'הכל' ? sorted : sorted.filter(s => s.community_service_status === filter);
 

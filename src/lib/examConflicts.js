@@ -1,4 +1,4 @@
-import { normalizeGrade } from '@/lib/schoolStructure';
+import { normalizeGrade } from './schoolStructure.js';
 
 // סוגים שנחשבים "מבחן" לצורך זיהוי עומס/כפילות
 const TEST_TYPES = ['מבחן', 'בחן', 'בגרות', 'מתכונת', 'מועד ב׳'];
@@ -26,6 +26,7 @@ function eventGrades(ev) {
 
 // האם שני אירועים חולקים אותו קהל יעד (כיתה או שכבה)
 function shareAudience(a, b) {
+  if (a?.audience_scope === 'school' || b?.audience_scope === 'school') return true;
   const aClasses = eventClassNames(a);
   const bClasses = eventClassNames(b);
   if (aClasses.length && bClasses.length) {
@@ -45,11 +46,11 @@ function shareAudience(a, b) {
 }
 
 function startOfWeek(dateStr) {
-  const d = new Date(dateStr);
-  const day = d.getDay(); // 0=ראשון
-  d.setDate(d.getDate() - day);
-  d.setHours(0, 0, 0, 0);
-  return d.getTime();
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(dateStr || ''));
+  if (!match) return Number.NaN;
+  const date = Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+  const day = new Date(date).getUTCDay(); // 0=ראשון, independent of the device time zone
+  return date - day * 86_400_000;
 }
 
 /**
@@ -61,7 +62,7 @@ export function detectConflicts(candidate, allEvents) {
   if (!candidate?.date) return warnings;
 
   // מתעלמים מהאירוע עצמו (בעריכה)
-  const others = allEvents.filter(e => e.id !== candidate.id);
+  const others = (allEvents || []).filter(e => e.id !== candidate.id);
 
   // 1. שני מבחנים לאותה כיתה באותו יום
   if (isTest(candidate)) {

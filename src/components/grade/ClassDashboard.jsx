@@ -109,7 +109,6 @@ export default function ClassDashboard({ classInfo, user, role }) {
         <WatchStudentsList
           students={data.students}
           attByStudent={attByStudent}
-          classId={classInfo.id}
         />
       )}
       {tab === 'urgent' && (
@@ -127,7 +126,7 @@ export default function ClassDashboard({ classInfo, user, role }) {
         />
       )}
       {tab === 'discipline' && (
-        <DisciplineList events={data.discipline} onRefresh={loadData} user={user} role={role} classId={classInfo.id} students={data.students} />
+        <DisciplineList events={data.discipline} />
       )}
       {tab === 'communications' && (
         <CommunicationsList comms={data.communications} onRefresh={loadData} user={user} role={role} classId={classInfo.id} students={data.students} />

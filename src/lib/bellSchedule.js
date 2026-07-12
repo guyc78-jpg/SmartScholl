@@ -2,6 +2,7 @@
 // and runtime helpers for "now / next" detection.
 
 import { base44 } from '@/api/base44Client';
+import { SCHOOL_TIME_ZONE } from '@/lib/dateUtils';
 
 export const DEFAULT_SUN_THU = [
   { kind: 'pre_bell', label: 'צלצול מקדים', start_time: '08:10', end_time: '08:15' },
@@ -43,13 +44,33 @@ export const DEFAULT_FRI = [
 export const HEBREW_DAY_NAMES = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 
 // 5 = Friday, 6 = Saturday — Friday uses special schedule
-export function getTodayDayType() {
-  const day = new Date().getDay();
-  return day === 5 ? 'fri' : 'sun_thu';
+function getSchoolWeekday(date = new Date()) {
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: SCHOOL_TIME_ZONE,
+    weekday: 'short',
+  }).format(date);
 }
 
-export function getTodayHebrewName() {
-  return HEBREW_DAY_NAMES[new Date().getDay()];
+function getSchoolClockMinutes(date = new Date()) {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: SCHOOL_TIME_ZONE,
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map(part => [part.type, Number(part.value)]));
+  return values.hour * 60 + values.minute;
+}
+
+export function getTodayDayType(date = new Date()) {
+  const weekday = getSchoolWeekday(date);
+  if (weekday === 'Sat') return 'closed';
+  return weekday === 'Fri' ? 'fri' : 'sun_thu';
+}
+
+export function getTodayHebrewName(date = new Date()) {
+  const indexByWeekday = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  return HEBREW_DAY_NAMES[indexByWeekday[getSchoolWeekday(date)]];
 }
 
 // HH:MM -> minutes since midnight
@@ -76,8 +97,9 @@ export function formatRemaining(mins) {
 
 // Returns { current, next, remainingMins } from a periods list at a given Date.
 export function getNowAndNext(periods, now = new Date()) {
+  if (getTodayDayType(now) === 'closed') return { current: null, next: null, remainingMins: 0 };
   if (!periods || periods.length === 0) return { current: null, next: null, remainingMins: 0 };
-  const nowMins = now.getHours() * 60 + now.getMinutes();
+  const nowMins = getSchoolClockMinutes(now);
 
   // Sort lessons + breaks (skip pre_bell/homeroom for "current lesson" framing? we still include all)
   const sorted = [...periods].sort((a, b) => timeToMinutes(a.start_time) - timeToMinutes(b.start_time));
@@ -109,12 +131,16 @@ export function getNowAndNext(periods, now = new Date()) {
 }
 
 // Load schedule from DB; fallback to defaults if not configured yet.
-let _cache = { sun_thu: null, fri: null, ts: 0 };
+let _cache = {
+  sun_thu: { periods: null, ts: 0 },
+  fri: { periods: null, ts: 0 },
+};
 const CACHE_TTL = 30_000;
 
 export async function loadBellSchedule(dayType) {
   const now = Date.now();
-  if (_cache[dayType] && now - _cache.ts < CACHE_TTL) return _cache[dayType];
+  const cached = _cache[dayType];
+  if (cached?.periods && now - cached.ts < CACHE_TTL) return cached.periods;
   const records = await base44.entities.BellSchedule.filter({ day_type: dayType }).catch(() => []);
   let periods;
   if (records && records[0] && Array.isArray(records[0].periods) && records[0].periods.length > 0) {
@@ -122,13 +148,15 @@ export async function loadBellSchedule(dayType) {
   } else {
     periods = dayType === 'fri' ? DEFAULT_FRI : DEFAULT_SUN_THU;
   }
-  _cache[dayType] = periods;
-  _cache.ts = now;
+  _cache[dayType] = { periods, ts: now };
   return periods;
 }
 
 export function invalidateBellCache() {
-  _cache = { sun_thu: null, fri: null, ts: 0 };
+  _cache = {
+    sun_thu: { periods: null, ts: 0 },
+    fri: { periods: null, ts: 0 },
+  };
 }
 
 // Save (upsert) — admin only

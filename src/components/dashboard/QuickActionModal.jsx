@@ -40,8 +40,32 @@ function studentMatchesClass(student, classId, className) {
 const getStudentDisplayName = formatStudentName;
 const sortByLastName = (students) => [...students].sort(compareStudentsByLastName);
 
+const EMPTY_FORM = {
+  student_id: '',
+  student_name: '',
+  selectedStudentId: '',
+  selectedStudentName: '',
+  title: '',
+  subject: '',
+  type: '',
+  date: '',
+  time: '',
+  teacher: '',
+  material: '',
+  notes: '',
+  content: '',
+  severity: '',
+  category: '',
+  description: '',
+  with_whom: '',
+  summary: '',
+  follow_up: '',
+  due_date: '',
+  priority: '',
+};
+
 export default function QuickActionModal({ action, classId: classIdProp, user, role, onClose, onSuccess, initialStudents = null }) {
-  const [form, setForm] = useState({});
+  const [form, setForm] = useState(() => ({ ...EMPTY_FORM }));
   const [saving, setSaving] = useState(false);
   const [students, setStudents] = useState([]);
   const [loadingStudents, setLoadingStudents] = useState(false);
@@ -52,9 +76,40 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
   const [sheetTop, setSheetTop] = useState(null);
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   const sheetRef = useRef(null);
+  const previousFocusRef = useRef(null);
   const scrollAreaRef = useRef(null);
   const baseViewportHeightRef = useRef(null);
   const resetTimersRef = useRef([]);
+
+  useEffect(() => {
+    previousFocusRef.current = document.activeElement;
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+        return;
+      }
+      if (event.key !== 'Tab' || !sheetRef.current) return;
+      const focusable = [...sheetRef.current.querySelectorAll('button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [href], [tabindex]:not([tabindex="-1"])')]
+        .filter(element => !element.hasAttribute('hidden'));
+      if (!focusable.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    requestAnimationFrame(() => sheetRef.current?.focus());
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      previousFocusRef.current?.focus?.();
+    };
+  }, [onClose]);
 
   // גובה הבסיס מחושב מחלון מלא (ללא תלות במקלדת) — כך נשמר גובה מקורי יציב
   useEffect(() => {
@@ -200,7 +255,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
   function handleSheetPointerDown(e) {
     const active = document.activeElement;
     const target = e.target;
-    const activeTextField = active && ['INPUT', 'TEXTAREA'].includes(active.tagName);
+    const activeTextField = active instanceof HTMLElement && ['INPUT', 'TEXTAREA'].includes(active.tagName);
     const targetTextField = target && ['INPUT', 'TEXTAREA'].includes(target.tagName);
     if (activeTextField && !targetTextField) {
       active.blur();
@@ -230,7 +285,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
       return;
     }
     loadStudents();
-  }, [action, usesStudentData, resolvedClassId, hasInitialStudents, initialStudents]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [action, usesStudentData, resolvedClassId, hasInitialStudents, initialStudents]);
 
   // Prevent body scroll on iOS while sheet is open and restore page layout exactly on close
   useEffect(() => {
@@ -259,7 +314,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
 
   // כל פעולה מהירה מתחילה מטופס נקי כדי למנוע זליגת נתונים בין מודולים
   useEffect(() => {
-    setForm({});
+    setForm({ ...EMPTY_FORM });
     setSearchQuery('');
     setStudentListOpen(false);
     setStudents(hasInitialStudents ? initialStudents : []);
@@ -312,6 +367,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
   }
 
   const getSelectedStudent = () => students.find(s => s.id === form.student_id);
+  const getActionClassId = () => getSelectedStudent()?.class_id || resolvedClassId;
 
   const filteredStudents = sortByLastName(students)
     .filter(s => !searchQuery || getStudentDisplayName(s).toLowerCase().includes(searchQuery.toLowerCase()));
@@ -321,7 +377,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
     const disciplineData = {
       student_id: form.student_id,
       student_name: form.student_name || student?.full_name,
-      class_id: resolvedClassId,
+      class_id: getActionClassId(),
       date: today,
       time: form.time || '',
       severity: form.severity || 'קלה',
@@ -336,7 +392,8 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
 
   async function saveExamAction() {
     const examData = {
-      class_id: resolvedClassId,
+      class_id: getActionClassId(),
+      grade: getSelectedStudent()?.grade || approvedGrade,
       title: form.title,
       subject: form.subject,
       type: form.type || 'מבחן',
@@ -351,7 +408,8 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
 
   async function saveAnnouncementAction() {
     const announcementData = {
-      class_id: resolvedClassId,
+      class_id: getActionClassId(),
+      grade: getSelectedStudent()?.grade || approvedGrade,
       title: form.title,
       content: form.content,
       type: form.type || 'כיתתית',
@@ -367,7 +425,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
     const noteData = {
       student_id: form.student_id,
       student_name: form.student_name || student?.full_name,
-      class_id: resolvedClassId,
+      class_id: getActionClassId(),
       date: today,
       content: form.content,
       category: form.category || 'כללי',
@@ -381,7 +439,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
     const communicationData = {
       student_id: form.student_id,
       student_name: form.student_name || student?.full_name,
-      class_id: resolvedClassId,
+      class_id: getActionClassId(),
       date: today,
       type: form.type || 'שיחה טלפונית',
       with_whom: form.with_whom || 'הורה 1',
@@ -394,7 +452,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
   async function saveTaskAction() {
     const student = getSelectedStudent();
     const taskData = {
-      class_id: resolvedClassId,
+      class_id: getActionClassId(),
       student_id: form.student_id,
       student_name: form.student_name || student?.full_name,
       title: form.title,
@@ -422,6 +480,10 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
       toast.error('יש לבחור תלמיד');
       return;
     }
+    if (!getActionClassId()) {
+      toast.error('לא נמצאה כיתה תקינה לפעולה');
+      return;
+    }
     const saveAction = saveHandlers[action];
     if (!saveAction) return;
     setSaving(true);
@@ -432,7 +494,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
         user, role,
         actionName: `quick_${action}`,
         details: `${user?.full_name || 'משתמש'} ביצע/ה פעולה מהירה: ${titles[action]}`,
-        metadata: { classId: resolvedClassId }
+        metadata: { classId: getActionClassId() }
       });
       toast.success('נשמר בהצלחה!');
       onSuccess();
@@ -456,6 +518,10 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
       {/* Sheet panel — follows visualViewport so it floats above the keyboard */}
       <div
         ref={sheetRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="quick-action-title"
+        tabIndex={-1}
         style={{
           position: 'fixed',
           top: keyboardOpen ? (sheetTop ?? undefined) : undefined,
@@ -479,9 +545,10 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
 
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 1rem 0.75rem', flexShrink: 0, borderBottom: '1px solid hsl(var(--border))' }}>
-          <span style={{ fontWeight: 600, fontSize: '1rem' }}>{titles[action]}</span>
+          <span id="quick-action-title" style={{ fontWeight: 600, fontSize: '1rem' }}>{titles[action]}</span>
           <button
             onClick={onClose}
+            aria-label="סגירת חלון הפעולה"
             style={{ padding: 4, borderRadius: 6, color: 'hsl(var(--muted-foreground))' }}
           >
             <X size={18} />
@@ -493,7 +560,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
           ref={scrollAreaRef}
           onFocusCapture={handleFieldFocus}
           onPointerDownCapture={handleSheetPointerDown}
-          style={{ 
+          style={{
             flex: 1,
             overflowY: 'auto',
             paddingTop: '1rem',
@@ -575,7 +642,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
               )}
             </div>
           ) : action === 'community' ? (
-            <CommunityExceptionsQuickAction students={students} loading={loadingStudents} user={user} role={activeRole} />
+            <CommunityExceptionsQuickAction students={students} loading={loadingStudents} role={activeRole} />
           ) : (
           <div className="space-y-4">
 

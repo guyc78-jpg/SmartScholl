@@ -1,16 +1,15 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
 import PageHeader from '@/components/ui/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectTrigger, SelectContent, SelectItem } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { AlertTriangle, Plus, Filter, Search, Clock, CheckCircle2, AlertCircle, Archive, User, Calendar, FileText } from 'lucide-react';
+import { AlertTriangle, Search, Clock, CheckCircle2, AlertCircle, Archive, User, Calendar, FileText } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
-import StatusBadge from '@/components/ui/StatusBadge';
 import { formatStudentName } from '@/lib/studentName';
+import { formatSchoolDate, getLocalDateString } from '@/lib/dateUtils';
 
 const EVENT_TYPES = {
   discipline: { label: 'משמעת', color: 'text-red-600' },
@@ -30,7 +29,7 @@ const STATUS_CONFIG = {
   'נסגר': { icon: Archive, color: 'bg-gray-50 border-gray-200 dark:bg-gray-950/20', badge: 'secondary' },
 };
 
-export default function TreatmentCenter() {
+export default function TreatmentCenter({ user }) {
   const [cases, setCases] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -39,28 +38,16 @@ export default function TreatmentCenter() {
   const [editingCase, setEditingCase] = useState(null);
   const [showDialog, setShowDialog] = useState(false);
   const [newNote, setNewNote] = useState('');
-  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    loadUser();
     loadCases();
   }, []);
-
-  async function loadUser() {
-    try {
-      const u = await base44.auth.me();
-      setUser(u);
-    } catch (e) {
-      console.error(e);
-    }
-  }
 
   async function loadCases() {
     setLoading(true);
     try {
-      const { data } = await base44.functions.invoke('treatmentCases', { action: 'list' });
-      const list = data?.cases || [];
-      setCases(list.sort((a, b) => new Date(b.created_date) - new Date(a.created_date)));
+      const data = await base44.entities.TreatmentCase.list('-created_date', 1000);
+      setCases(data.sort((a, b) => new Date(b.created_date).getTime() - new Date(a.created_date).getTime()));
     } catch (e) {
       console.error(e);
       toast.error('שגיאה בטעינת הנתונים');
@@ -70,33 +57,41 @@ export default function TreatmentCenter() {
 
   async function updateCaseStatus(caseId, newStatus) {
     try {
-      await base44.functions.invoke('treatmentCases', { action: 'updateStatus', case_id: caseId, status: newStatus });
+      await base44.entities.TreatmentCase.update(caseId, { status: newStatus });
       setCases(cases.map(c => c.id === caseId ? { ...c, status: newStatus } : c));
       toast.success('סטטוס עודכן');
     } catch (e) {
       console.error(e);
-      toast.error('אין הרשאה לעדכן טיפול זה');
+      toast.error('שגיאה בעדכון');
     }
   }
 
   async function addNote() {
     if (!newNote.trim() || !editingCase) return;
     try {
-      const { data } = await base44.functions.invoke('treatmentCases', { action: 'addNote', case_id: editingCase.id, content: newNote });
-      const updatedNotes = data?.record?.notes || editingCase.notes || [];
+      const updatedNotes = [
+        ...(editingCase.notes || []),
+        {
+          author_email: user?.email,
+          author_name: user?.full_name,
+          content: newNote,
+          timestamp: new Date().toISOString(),
+        },
+      ];
+      await base44.entities.TreatmentCase.update(editingCase.id, { notes: updatedNotes });
       setEditingCase({ ...editingCase, notes: updatedNotes });
       setCases(cases.map(c => c.id === editingCase.id ? { ...c, notes: updatedNotes } : c));
       setNewNote('');
       toast.success('הערה נוספה');
     } catch (e) {
       console.error(e);
-      toast.error('אין הרשאה להוסיף הערה');
+      toast.error('שגיאה בהוספת הערה');
     }
   }
 
   const filtered = cases.filter(c => {
-    const matchSearch = c.student_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                       c.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchSearch = String(c.student_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                       String(c.title || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchStatus = filterStatus === 'הכל' || c.status === filterStatus;
     const matchRole = filterRole === 'הכל' || c.responsible_role === filterRole;
     return matchSearch && matchStatus && matchRole;
@@ -185,15 +180,18 @@ export default function TreatmentCenter() {
           </div>
         ) : (
           filtered.map(treatmentCase => {
-            const config = STATUS_CONFIG[treatmentCase.status];
+            const config = STATUS_CONFIG[treatmentCase.status] || STATUS_CONFIG['פתוח'];
             const Icon = config.icon;
-            const eventType = EVENT_TYPES[treatmentCase.event_type];
-            const today = new Date().toISOString().split('T')[0];
+            const eventType = EVENT_TYPES[treatmentCase.event_type] || EVENT_TYPES.other;
+            const today = getLocalDateString();
             const isOverdue = treatmentCase.due_date && treatmentCase.due_date < today && treatmentCase.status !== 'נסגר';
 
             return (
               <div
                 key={treatmentCase.id}
+                role="button"
+                tabIndex={0}
+                aria-label={`פתיחת תיק טיפול: ${treatmentCase.title || treatmentCase.student_name || 'ללא כותרת'}`}
                 className={cn(
                   'rounded-xl border p-3.5 transition-all cursor-pointer hover:shadow-sm',
                   config.color
@@ -201,6 +199,13 @@ export default function TreatmentCenter() {
                 onClick={() => {
                   setEditingCase(treatmentCase);
                   setShowDialog(true);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    setEditingCase(treatmentCase);
+                    setShowDialog(true);
+                  }
                 }}
               >
                 <div className="flex items-start gap-3">
@@ -230,7 +235,7 @@ export default function TreatmentCenter() {
                       )}
                       {treatmentCase.due_date && (
                         <span className={cn('flex items-center gap-1', isOverdue && 'text-red-600 font-semibold')}>
-                          <Calendar className="w-3 h-3" /> {new Date(treatmentCase.due_date).toLocaleDateString('he-IL')}
+                          <Calendar className="w-3 h-3" /> {formatSchoolDate(treatmentCase.due_date)}
                           {isOverdue && ' ⚠️'}
                         </span>
                       )}
@@ -287,7 +292,7 @@ export default function TreatmentCenter() {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">תאריך יעד</p>
-                  <p className="font-semibold">{editingCase.due_date ? new Date(editingCase.due_date).toLocaleDateString('he-IL') : '-'}</p>
+                  <p className="font-semibold">{formatSchoolDate(editingCase.due_date) || '-'}</p>
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">עדיפות</p>
@@ -312,7 +317,7 @@ export default function TreatmentCenter() {
                   {editingCase.notes?.map((note, i) => (
                     <div key={i} className="bg-muted/50 rounded-lg p-2">
                       <p className="text-xs font-semibold text-foreground">{note.author_name}</p>
-                      <p className="text-xs text-muted-foreground mb-1">{new Date(note.timestamp).toLocaleString('he-IL')}</p>
+                      <p className="text-xs text-muted-foreground mb-1">{formatSchoolDate(note.timestamp, { dateStyle: 'short', timeStyle: 'short' })}</p>
                       <p className="text-sm text-foreground">{note.content}</p>
                     </div>
                   ))}

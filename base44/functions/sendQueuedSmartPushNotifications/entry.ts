@@ -1,5 +1,34 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.34';
 import webpush from 'npm:web-push@3.6.7';
+
+function isAllowedPushEndpoint(endpoint = '') {
+  try {
+    const url = new URL(String(endpoint));
+    const host = url.hostname.toLowerCase();
+    return url.protocol === 'https:'
+      && !url.username
+      && !url.password
+      && (!url.port || url.port === '443')
+      && (host === 'fcm.googleapis.com'
+        || host === 'updates.push.services.mozilla.com'
+        || host === 'web.push.apple.com'
+        || host.endsWith('.notify.windows.com'));
+  } catch {
+    return false;
+  }
+}
+
+function getVapidSubject() {
+  const subject = (Deno.env.get('VAPID_SUBJECT') || '').trim();
+  if (/^mailto:[^\s@]+@[^\s@]+\.[^\s@]+$/i.test(subject)) return subject;
+  try {
+    const url = new URL(subject);
+    if (url.protocol === 'https:' && !url.username && !url.password) return url.toString();
+  } catch {
+    // Invalid or missing contact subject.
+  }
+  return '';
+}
 
 const EVENT_LABELS = {
   attendance_exception: 'חריג נוכחות',
@@ -18,11 +47,37 @@ function groupBy(items, keyFn) {
     if (!acc[key]) acc[key] = [];
     acc[key].push(item);
     return acc;
-  }, {});
+  }, Object.create(null));
+}
+
+function parseRoles(value) {
+  if (Array.isArray(value)) return value;
+  if (typeof value !== 'string') return [];
+  const text = value.trim();
+  if (!text) return [];
+  if (text.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(text);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return text.split(',').map(role => role.trim()).filter(Boolean);
 }
 
 function unique(values) {
   return [...new Set(values.filter(Boolean))];
+}
+
+async function filterAll(entity, filter, sort = 'created_date') {
+  const rows = [];
+  const pageSize = 5000;
+  for (let skip = 0; ; skip += pageSize) {
+    const page = await entity.filter(filter, sort, pageSize, skip);
+    rows.push(...(page || []));
+    if (!page || page.length < pageSize) return rows;
+  }
 }
 
 function buildNotification(items) {
@@ -50,28 +105,43 @@ Deno.serve(async (req) => {
     const base44 = createClientFromRequest(req);
     const user = await base44.auth.me().catch(() => null);
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-    // Only system admins may trigger the push queue manually (automations also run as admin).
-    const adminRecords = await base44.asServiceRole.entities.ApprovedUser
-      .filter({ email: String(user.email || '').trim().toLowerCase() })
-      .catch(() => []);
-    const isAdmin = user.role === 'admin' || user.role === 'system_admin'
-      || adminRecords.some(record => record.isActive !== false && (record.role === 'system_admin' || (Array.isArray(record.roles) && record.roles.includes('system_admin'))));
-    if (!isAdmin) return Response.json({ error: 'Forbidden' }, { status: 403 });
+    const roles = [...new Set([...parseRoles(user.roles), ...parseRoles(user.available_roles), user.role].filter(Boolean))];
+    if (user?.is_service !== true && !roles.includes('admin') && !roles.includes('system_admin')) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     const publicKey = Deno.env.get('VAPID_PUBLIC_KEY');
     const privateKey = Deno.env.get('VAPID_PRIVATE_KEY');
-    if (!publicKey || !privateKey) return Response.json({ error: 'Push notifications are not configured' }, { status: 500 });
+    const vapidSubject = getVapidSubject();
+    if (!publicKey || !privateKey || !vapidSubject) {
+      return Response.json({ error: 'Push notifications are not configured' }, { status: 500 });
+    }
 
-    webpush.setVapidDetails('mailto:notifications@example.com', publicKey, privateKey);
+    webpush.setVapidDetails(vapidSubject, publicKey, privateKey);
+
+    const queueEntity = base44.asServiceRole.entities.PushNotificationQueue;
+    const nowDate = new Date();
+    const staleBefore = new Date(nowDate.getTime() - 10 * 60 * 1000).toISOString();
+    const staleLeases = await filterAll(queueEntity, { status: 'processing' });
+    await Promise.all(staleLeases
+      .filter(item => !item.locked_at || item.locked_at < staleBefore)
+      .map(item => queueEntity.update(item.id, { status: 'pending', lease_id: '', locked_at: '' })));
+
+    const leaseId = crypto.randomUUID();
+    const lockedAt = nowDate.toISOString();
+    await queueEntity.updateMany(
+      { status: 'pending' },
+      { $set: { status: 'processing', lease_id: leaseId, locked_at: lockedAt } },
+    );
 
     const [queueItems, subscriptions] = await Promise.all([
-      base44.asServiceRole.entities.PushNotificationQueue.filter({ status: 'pending' }, 'created_date', 500),
-      base44.asServiceRole.entities.PushSubscription.filter({ is_active: true }),
+      filterAll(queueEntity, { status: 'processing', lease_id: leaseId }),
+      filterAll(base44.asServiceRole.entities.PushSubscription, { is_active: true }),
     ]);
 
     const activeSubscriptionsByUser = groupBy(subscriptions || [], item => item.user_id || '');
     const itemsByUser = groupBy(queueItems || [], item => item.recipient_user_id || '');
-    const now = new Date().toISOString();
+    const now = nowDate.toISOString();
     let sentGroups = 0;
     let sentNotifications = 0;
 
@@ -82,6 +152,8 @@ Deno.serve(async (req) => {
         await Promise.all(items.map(item => base44.asServiceRole.entities.PushNotificationQueue.update(item.id, {
           status: 'failed',
           sent_at: now,
+          lease_id: '',
+          locked_at: '',
           error: 'אין מנוי פוש פעיל למשתמש',
         })));
         continue;
@@ -98,6 +170,14 @@ Deno.serve(async (req) => {
       for (const subscriptionRecord of userSubscriptions) {
         try {
           const subscription = JSON.parse(subscriptionRecord.subscription_json);
+          if (!isAllowedPushEndpoint(subscriptionRecord.endpoint)
+              || subscription.endpoint !== subscriptionRecord.endpoint) {
+            await base44.asServiceRole.entities.PushSubscription.update(subscriptionRecord.id, {
+              is_active: false,
+              last_seen_at: now,
+            });
+            continue;
+          }
           await webpush.sendNotification(subscription, payload);
           groupSent = true;
           sentNotifications += 1;
@@ -115,6 +195,8 @@ Deno.serve(async (req) => {
       await Promise.all(items.map(item => base44.asServiceRole.entities.PushNotificationQueue.update(item.id, {
         status: groupSent ? 'sent' : 'failed',
         sent_at: now,
+        lease_id: '',
+        locked_at: '',
         error: groupSent ? '' : 'שליחת הפוש נכשלה בכל המכשירים',
       })));
       if (groupSent) sentGroups += 1;
@@ -122,6 +204,7 @@ Deno.serve(async (req) => {
 
     return Response.json({ ok: true, groups: sentGroups, notifications: sentNotifications, queued: (queueItems || []).length });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('Function error:', error);
+    return Response.json({ error: 'Internal server error' }, { status: 500 });
   }
 });

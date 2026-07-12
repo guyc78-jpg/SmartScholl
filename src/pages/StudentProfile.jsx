@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import StatusBadge from '@/components/ui/StatusBadge';
-import { ChevronRight, ChevronDown, Phone, Mail, Edit, Plus, Calendar, Shield, Heart, Star, MessageSquare, BarChart2, CheckSquare, Eye, EyeOff } from 'lucide-react';
+import { ChevronRight, ChevronDown, Phone, Mail, Edit, Calendar, Shield, Heart, Star, MessageSquare, BarChart2, Eye, EyeOff } from 'lucide-react';
 import AddStudentModal from '@/components/students/AddStudentModal';
 import ParentContactLog from '@/components/student/ParentContactLog';
 import GrowthReport from '@/components/student/GrowthReport';
@@ -20,6 +20,7 @@ import LearningAccommodationsCard from '@/components/student/LearningAccommodati
 import { toast } from 'sonner';
 import { useAuth } from '@/lib/AuthContext';
 import { formatStudentName } from '@/lib/studentName';
+import { formatSchoolDate, getLocalDateString } from '@/lib/dateUtils';
 
 const RatingDots = ({ value }) => (
   <div className="flex flex-row-reverse gap-1">
@@ -44,7 +45,7 @@ export default function StudentProfile({ role }) {
   const [tab, setTab] = useState('overview');
   const [showStudentId, setShowStudentId] = useState(false);
   const [headerExpanded, setHeaderExpanded] = useState(false);
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDateString();
   const [conversationForm, setConversationForm] = useState({
     date: today,
     type: 'שיחה טלפונית',
@@ -58,21 +59,21 @@ export default function StudentProfile({ role }) {
 
   async function loadAll() {
     setLoading(true);
-    const [st, att, disRes, nts, rvs, cmsRes, tks] = await Promise.all([
+    const [st, att, dis, nts, rvs, cms, tks] = await Promise.all([
       base44.entities.Student.filter({ id: studentId }),
       base44.entities.AttendanceRecord.filter({ student_id: studentId }),
-      base44.functions.invoke('sensitiveStudentRecords', { action: 'listForStudent', entity: 'DisciplineEvent', student_id: studentId }),
+      base44.entities.DisciplineEvent.filter({ student_id: studentId }),
       base44.entities.TeacherNote.filter({ student_id: studentId }),
       base44.entities.PerformanceReview.filter({ student_id: studentId }),
-      base44.functions.invoke('sensitiveStudentRecords', { action: 'listForStudent', entity: 'Communication', student_id: studentId }),
+      base44.entities.Communication.filter({ student_id: studentId }),
       base44.entities.Task.filter({ student_id: studentId }),
     ]);
     setStudent(st[0]);
     setAttendance(att.sort((a,b) => b.date.localeCompare(a.date)));
-    setDiscipline(disRes.data.records || []);
+    setDiscipline(dis.sort((a,b) => b.date.localeCompare(a.date)));
     setNotes(nts.sort((a,b) => b.date.localeCompare(a.date)));
     setReviews(rvs.sort((a,b) => b.date.localeCompare(a.date)));
-    setComms(cmsRes.data.records || []);
+    setComms(cms.sort((a,b) => b.date.localeCompare(a.date)));
     setTasks(tks);
     setLoading(false);
   }
@@ -95,9 +96,7 @@ export default function StudentProfile({ role }) {
   const studentDisplayName = formatStudentName(student);
 
   const formatDate = (d) => {
-    if (!d) return '—';
-    const date = new Date(d);
-    return `${date.getDate().toString().padStart(2,'0')}/${(date.getMonth()+1).toString().padStart(2,'0')}/${date.getFullYear()}`;
+    return formatSchoolDate(d, { day: '2-digit', month: '2-digit', year: 'numeric' }) || '—';
   };
 
   const setConversationField = (field, value) => {
@@ -109,19 +108,23 @@ export default function StudentProfile({ role }) {
       toast.error('יש למלא סיכום שיחה');
       return;
     }
+    if (!student?.class_id) {
+      toast.error('לתלמיד/ה אין שיוך כיתה תקין');
+      return;
+    }
 
     const communicationData = {
       ...conversationForm,
       student_id: studentId,
       student_name: studentDisplayName,
-      class_id: student.class_id || ''
+      class_id: student.class_id
     };
 
-    await base44.functions.invoke('sensitiveStudentRecords', { action: 'save', entity: 'Communication', ...communicationData });
+    await base44.entities.Communication.create(communicationData);
 
     if (conversationForm.follow_up.trim() && conversationForm.follow_up_date) {
       await base44.entities.Task.create({
-        class_id: student.class_id || '',
+        class_id: student.class_id,
         student_id: studentId,
         student_name: studentDisplayName,
         title: `תזכורת המשך: ${studentDisplayName}`,
@@ -159,7 +162,7 @@ export default function StudentProfile({ role }) {
                 <h1 className="text-xl sm:text-2xl font-bold text-foreground truncate">{studentDisplayName}</h1>
                 <StatusBadge status={student.status} />
               </div>
-              <p className="text-sm text-muted-foreground mt-1">כיתה {student.class_name || 'י׳1'}</p>
+              <p className="text-sm text-muted-foreground mt-1">{student.class_name ? `כיתה ${student.class_name}` : 'ללא שיוך כיתה'}</p>
             </div>
             <div className="flex items-center gap-1 flex-shrink-0">
               <Button variant="ghost" size="sm" className="gap-1.5 text-muted-foreground hover:text-primary hover:bg-transparent" onClick={() => setShowEdit(true)}>
@@ -343,7 +346,7 @@ export default function StudentProfile({ role }) {
 
         {/* Contacts */}
         <TabsContent value="contacts" className="space-y-4">
-          <ParentContactLog 
+          <ParentContactLog
             studentId={studentId}
             classId={student.class_id || ''}
             studentName={studentDisplayName}

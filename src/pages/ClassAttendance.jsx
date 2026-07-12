@@ -33,6 +33,8 @@ import { getUserApprovedClass } from '@/lib/schoolStructure';
 import { useAuth } from '@/lib/AuthContext';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 import { ATTENDANCE_STATUSES, PRESENT_STATUS, getAttendanceScopedStudents, getLocalDateString, getScopedClassIds, filterScopedAttendance, getSelectedAttendanceDate, saveSelectedAttendanceDate, loadScopedAttendanceForDate, toStoredAttendanceStatus } from '@/lib/attendanceScope';
+import { ATTENDANCE_THRESHOLDS as THRESHOLDS } from '@/lib/attendanceThresholds';
+import { formatSchoolDate, getSchoolTimeString } from '@/lib/dateUtils';
 
 const STATUSES = ATTENDANCE_STATUSES;
 const PRESENT = PRESENT_STATUS;
@@ -44,8 +46,6 @@ const STATUS_SHORT = {
   'נעדר/ת': 'נעדר/ת',
   'שוחרר/ת': 'שוחרר/ת',
 };
-
-export const THRESHOLDS = { absences: 5, lates: 8 };
 
 const statusBtnStyle = {
   'נוכח/ת':   { active: 'bg-emerald-500 text-white border-emerald-500', idle: 'border-border text-muted-foreground hover:bg-emerald-50 hover:border-emerald-300 dark:hover:bg-emerald-900/20' },
@@ -61,7 +61,8 @@ function isPastDay(dateStr) {
 
 export default function ClassAttendance({ role }) {
   const { user } = useAuth();
-  const canEdit = role === 'homeroom_teacher' || role === 'admin' || role === 'coordinator';
+  const canEdit = role === 'homeroom_teacher' || role === 'admin' || role === 'system_admin';
+  const canView = canEdit || role === 'coordinator';
   const [students, setStudents] = useState([]);
   const [date, setDate] = useState(getSelectedAttendanceDate);
   const [attendanceMap, setAttendanceMap] = useState({});
@@ -142,7 +143,7 @@ export default function ClassAttendance({ role }) {
       date,
       status: toStoredAttendanceStatus(statusOrNull),
       note,
-      period: new Date().toTimeString().slice(0, 5),
+      period: getSchoolTimeString(),
     };
     if (existingId) {
       await base44.entities.AttendanceRecord.update(existingId, data);
@@ -189,21 +190,63 @@ export default function ClassAttendance({ role }) {
 
   async function handleResetAllAttendance() {
     if (!canEdit) return;
-    setSaving(true);
-    const idsToDelete = Object.values(existingIds).filter(Boolean);
-    setAttendanceMap({});
-    setExistingIds({});
-    setConfirmed(false);
-    setConfirmedAt(null);
     setResetConfirmOpen(false);
-    try {
-      await Promise.all(idsToDelete.map(id => base44.entities.AttendanceRecord.delete(id)));
-      toast.success('כל סימוני הנוכחות אופסו');
-    } catch (e) {
-      console.error(e); toast.error('איפוס הנוכחות נכשל');
-      await loadDay();
+    const recordsToDelete = Object.entries(existingIds).filter(([, id]) => Boolean(id));
+    if (recordsToDelete.length === 0) {
+      setAttendanceMap({});
+      setConfirmed(false);
+      setConfirmedAt(null);
+      toast.success('סימוני הנוכחות המקומיים אופסו');
+      return;
     }
-    setSaving(false);
+
+    setSaving(true);
+    const deletedStudentIds = [];
+    const failures = [];
+    try {
+      for (const [studentId, recordId] of recordsToDelete) {
+        try {
+          await base44.entities.AttendanceRecord.delete(recordId);
+          deletedStudentIds.push(studentId);
+        } catch (error) {
+          console.error(`Failed to reset attendance record ${recordId}`, error);
+          failures.push({ studentId, recordId });
+        }
+      }
+
+      if (deletedStudentIds.length > 0) {
+        setAttendanceMap(previous => {
+          const next = { ...previous };
+          deletedStudentIds.forEach(studentId => delete next[studentId]);
+          return next;
+        });
+        setExistingIds(previous => {
+          const next = { ...previous };
+          deletedStudentIds.forEach(studentId => delete next[studentId]);
+          return next;
+        });
+      }
+
+      const remainingCount = recordsToDelete.length - deletedStudentIds.length;
+      setConfirmed(remainingCount > 0);
+      if (remainingCount === 0) setConfirmedAt(null);
+
+      try {
+        await loadDay();
+      } catch (reloadError) {
+        console.error('Failed to reload attendance after reset', reloadError);
+      }
+
+      if (failures.length === 0) {
+        toast.success('כל סימוני הנוכחות אופסו');
+      } else if (deletedStudentIds.length > 0) {
+        toast.error(`האיפוס הושלם חלקית: ${deletedStudentIds.length} נמחקו, ${failures.length} נכשלו`);
+      } else {
+        toast.error(`איפוס הנוכחות נכשל עבור ${failures.length} רשומות`);
+      }
+    } finally {
+      setSaving(false);
+    }
   }
 
   // Return a flagged student back to present (clears note)
@@ -213,6 +256,7 @@ export default function ClassAttendance({ role }) {
 
   // Open the detail dialog for editing an existing exception
   function handleEditException(student, status) {
+    if (!canEdit) return;
     setDetailStudent(student);
     setDetailStatus(status);
   }
@@ -242,7 +286,7 @@ export default function ClassAttendance({ role }) {
 
   // Worth checking — recent issues (last 14 days)
   const worthChecking = useMemo(() => {
-    const cutoff = new Date(Date.now() - 14 * 86400000).toISOString().split('T')[0];
+    const cutoff = getLocalDateString(new Date(Date.now() - 14 * 86400000));
     return students.map(s => {
       const recent = allRecords.filter(r => r.student_id === s.id && r.date >= cutoff);
       const recentLates = recent.filter(r => r.status === 'מאחר/ת').length;
@@ -274,8 +318,11 @@ export default function ClassAttendance({ role }) {
   );
 
   // ── Picker handlers ───────────────────────────────────────────────────────
-  function openPicker(status) { setPickerStatus(status); }
+  function openPicker(status) {
+    if (canEdit) setPickerStatus(status);
+  }
   function handlePickerSelect(student) {
+    if (!canEdit) return;
     const status = pickerStatus;
     setPickerStatus(null);
     if (status === 'נעדר/ת' || status === 'מאחר/ת' || status === 'שוחרר/ת') {
@@ -283,6 +330,7 @@ export default function ClassAttendance({ role }) {
     }
   }
   async function handleDetailSave(data) {
+    if (!canEdit) return;
     await setStatus(detailStudent, data.status, data.note);
     setDetailStudent(null); setDetailStatus(null);
   }
@@ -303,7 +351,7 @@ export default function ClassAttendance({ role }) {
   }
 
   // ── Permissions ───────────────────────────────────────────────────────────
-  if (!canEdit) {
+  if (!canView) {
     return (
       <div className="p-6 flex flex-col items-center justify-center min-h-64 text-center" dir="rtl">
         <AlertTriangle className="w-12 h-12 text-amber-400 mb-3" />
@@ -356,7 +404,8 @@ export default function ClassAttendance({ role }) {
               />
 
               {/* Worth Checking */}
-              <WorthCheckingPanel students={worthChecking} onSelectStudent={(s) => {
+              <WorthCheckingPanel students={worthChecking} readOnly={!canEdit} onSelectStudent={(s) => {
+                if (!canEdit) return;
                 setDetailStudent(s); setDetailStatus('נעדר/ת');
               }} />
 
@@ -364,26 +413,26 @@ export default function ClassAttendance({ role }) {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2" dir="rtl">
                 <Button
                   onClick={handleConfirmAllPresent}
-                  disabled={saving || isPastDay(date)}
+                  disabled={!canEdit || saving || isPastDay(date)}
                   className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 h-11"
                 >
                   <CheckCircle2 className="w-4 h-4" />
                   <span className="text-xs sm:text-sm">אשר נוכחות</span>
                 </Button>
                 <Button variant="outline" onClick={() => openPicker('נעדר/ת')}
-                  disabled={isPastDay(date)}
+                  disabled={!canEdit || isPastDay(date)}
                   className="gap-1.5 h-11 hover:bg-red-50 hover:border-red-300 dark:hover:bg-red-900/20">
                   <UserX className="w-4 h-4 text-red-500" />
                   <span className="text-xs sm:text-sm">הוסף נעדר/ת</span>
                 </Button>
                 <Button variant="outline" onClick={() => openPicker('מאחר/ת')}
-                  disabled={isPastDay(date)}
+                  disabled={!canEdit || isPastDay(date)}
                   className="gap-1.5 h-11 hover:bg-amber-50 hover:border-amber-300 dark:hover:bg-amber-900/20">
                   <Clock className="w-4 h-4 text-amber-500" />
                   <span className="text-xs sm:text-sm">הוסף מאחר/ת</span>
                 </Button>
                 <Button variant="outline" onClick={() => openPicker('שוחרר/ת')}
-                  disabled={isPastDay(date)}
+                  disabled={!canEdit || isPastDay(date)}
                   className="gap-1.5 h-11 hover:bg-purple-50 hover:border-purple-300 dark:hover:bg-purple-900/20">
                   <LogOut className="w-4 h-4 text-purple-500" />
                   <span className="text-xs sm:text-sm">הוסף שחרור</span>
@@ -416,7 +465,7 @@ export default function ClassAttendance({ role }) {
                </div>
                <button
                  onClick={() => setResetConfirmOpen(true)}
-                 disabled={saving || isPastDay(date) || Object.keys(attendanceMap).length === 0}
+                 disabled={!canEdit || saving || isPastDay(date) || Object.keys(attendanceMap).length === 0}
                  className="px-3 h-8 rounded-md border text-xs font-medium transition-colors gap-1.5 flex items-center hover:bg-destructive/10 hover:border-destructive/30 hover:text-destructive disabled:opacity-50 disabled:cursor-not-allowed text-muted-foreground border-border bg-card"
                  title="אפס את כל סימוני הנוכחות"
                >
@@ -463,7 +512,7 @@ export default function ClassAttendance({ role }) {
                           student={student}
                           status={current.status}
                           note={current.note}
-                          disabled={isPastDay(date)}
+                          disabled={!canEdit || isPastDay(date)}
                           onMarkPresent={handleMarkPresent}
                           onEdit={handleEditException}
                         />
@@ -492,7 +541,7 @@ export default function ClassAttendance({ role }) {
                               {STATUSES.map(st => (
                                 <button key={st}
                                   onClick={() => handleQuickStatus(student, st)}
-                                  disabled={isPastDay(date)}
+                                  disabled={!canEdit || isPastDay(date)}
                                   aria-label={st}
                                   className={`text-[9px] sm:text-[10px] leading-normal h-7 min-w-[41px] sm:min-w-[44px] px-0.5 sm:px-1.5 rounded-md border font-medium transition-all whitespace-nowrap text-center disabled:opacity-50
                                     ${current?.status === st ? statusBtnStyle[st].active : statusBtnStyle[st].idle}`}>
@@ -511,14 +560,14 @@ export default function ClassAttendance({ role }) {
               {/* Footer status */}
               <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2 flex-wrap" dir="rtl">
                 <Save className="w-3.5 h-3.5" />
-                <span>שמירה אוטומטית פעילה</span>
+                <span>{canEdit ? 'שמירה אוטומטית פעילה' : 'תצוגה בלבד'}</span>
                 {confirmed && (
                   <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-medium bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded-md">
                     <CheckCircle2 className="w-3.5 h-3.5" />
                     נוכחות אושרה
                     {confirmedAt && (
                       <span className="text-emerald-600/80 dark:text-emerald-300/80 font-normal">
-                        בשעה {new Date(confirmedAt).toLocaleTimeString('he-IL', { hour: '2-digit', minute: '2-digit' })}
+                        בשעה {formatSchoolDate(confirmedAt, { hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })}
                       </span>
                     )}
                   </span>

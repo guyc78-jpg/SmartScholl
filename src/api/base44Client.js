@@ -1,15 +1,23 @@
 import { createClient } from '@base44/sdk';
 import { appParams } from '@/lib/app-params';
-import { setBase44AccessClaims, clearBase44AccessClaims } from '@/lib/accessGuard';
+import {
+  createGuardedBase44Client,
+  setBase44AccessClaims,
+  clearBase44AccessClaims,
+  setBase44SimulationClaims,
+  clearBase44SimulationClaims,
+} from '@/lib/accessGuard';
+import { createSimulationGuardedBase44Client } from '@/lib/simulationGuard';
 
 const { appId, token, functionsVersion, appBaseUrl, serverUrl } = appParams;
 
+/** @param {string | URL | null | undefined} url */
 const isUserInAppLogUrl = (url = '') => String(url).includes('/api/app-logs/') && String(url).includes('/log-user-in-app/');
 
 const silentAppLogResponse = () => new Response(null, { status: 204 });
 
-if (typeof window !== 'undefined' && !window.__base44AppLogGuardInstalled) {
-  window.__base44AppLogGuardInstalled = true;
+if (typeof window !== 'undefined' && !('__base44AppLogGuardInstalled' in window)) {
+  Object.defineProperty(window, '__base44AppLogGuardInstalled', { configurable: false, value: true });
 
   const originalLog = window.console.log.bind(window.console);
   window.console.log = (...args) => {
@@ -20,7 +28,7 @@ if (typeof window !== 'undefined' && !window.__base44AppLogGuardInstalled) {
 
   const originalFetch = window.fetch.bind(window);
   window.fetch = async (input, init) => {
-    const url = typeof input === 'string' ? input : input?.url;
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
     if (isUserInAppLogUrl(url)) return silentAppLogResponse();
     return originalFetch(input, init);
   };
@@ -36,24 +44,30 @@ if (typeof window !== 'undefined' && !window.__base44AppLogGuardInstalled) {
   const originalXhrOpen = window.XMLHttpRequest?.prototype.open;
   const originalXhrSend = window.XMLHttpRequest?.prototype.send;
   if (originalXhrOpen && originalXhrSend) {
+    const mutedRequests = new WeakSet();
     window.XMLHttpRequest.prototype.open = function(method, url, ...rest) {
-      this.__base44MuteAppLog = isUserInAppLogUrl(typeof url === 'string' ? url : url?.toString?.() || '');
-      if (this.__base44MuteAppLog) return;
+      if (isUserInAppLogUrl(url)) {
+        mutedRequests.add(this);
+        return;
+      }
       return originalXhrOpen.call(this, method, url, ...rest);
     };
 
     window.XMLHttpRequest.prototype.send = function(body) {
-      if (!this.__base44MuteAppLog) return originalXhrSend.call(this, body);
+      if (!mutedRequests.has(this)) return originalXhrSend.call(this, body);
       setTimeout(() => {
         for (const [key, value] of Object.entries({ readyState: 4, status: 204, statusText: 'No Content', responseText: '', response: '' })) {
           try { Object.defineProperty(this, key, { configurable: true, value }); } catch {}
         }
-        this.onreadystatechange?.();
-        this.dispatchEvent?.(new Event('readystatechange'));
-        this.onload?.();
-        this.dispatchEvent?.(new Event('load'));
-        this.onloadend?.();
-        this.dispatchEvent?.(new Event('loadend'));
+        const readyStateEvent = new Event('readystatechange');
+        const loadEvent = new ProgressEvent('load');
+        const loadEndEvent = new ProgressEvent('loadend');
+        this.onreadystatechange?.call(this, readyStateEvent);
+        this.dispatchEvent(readyStateEvent);
+        this.onload?.call(this, loadEvent);
+        this.dispatchEvent(loadEvent);
+        this.onloadend?.call(this, loadEndEvent);
+        this.dispatchEvent(loadEndEvent);
       }, 0);
     };
   }
@@ -79,16 +93,24 @@ const blockedAccommodationEntity = new Proxy({}, {
 
 const entitiesProxy = new Proxy(rawBase44.entities, {
   get(target, entityName) {
+    if (typeof entityName === 'symbol') return Reflect.get(target, entityName);
     if (entityName === 'StudentAccommodation') return blockedAccommodationEntity;
     return target[entityName];
   }
 });
 
-// Emergency hotfix: keep the raw client for navigation performance, with a small direct-access block for sensitive accommodations.
-export const base44 = new Proxy(rawBase44, {
+const accommodationBlockedClient = new Proxy(rawBase44, {
   get(target, prop) {
     if (prop === 'entities') return entitiesProxy;
-    return target[prop];
+    return Reflect.get(target, prop);
   }
 });
-export { setBase44AccessClaims, clearBase44AccessClaims };
+
+const accessGuardedClient = createGuardedBase44Client(accommodationBlockedClient);
+export const base44 = createSimulationGuardedBase44Client(accessGuardedClient);
+export {
+  setBase44AccessClaims,
+  clearBase44AccessClaims,
+  setBase44SimulationClaims,
+  clearBase44SimulationClaims,
+};

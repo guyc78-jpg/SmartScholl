@@ -48,7 +48,7 @@ export function daysUntil(dateStr) {
   if (!dateStr) return null;
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const due = new Date(dateStr); due.setHours(0, 0, 0, 0);
-  return Math.round((due - today) / 86400000);
+  return Math.round((due.getTime() - today.getTime()) / 86400000);
 }
 
 // Flag should appear on the dashboard if it's not closed
@@ -62,7 +62,8 @@ const STATUS_RANK = { 'פתוח': 0, 'בטיפול': 1, 'טופל': 2 };
 
 export function sortFlags(flags) {
   return [...flags].sort((a, b) => {
-    if (!!b.is_pinned - !!a.is_pinned) return (!!b.is_pinned) - (!!a.is_pinned);
+    const pinnedDiff = Number(Boolean(b.is_pinned)) - Number(Boolean(a.is_pinned));
+    if (pinnedDiff) return pinnedDiff;
     const sa = STATUS_RANK[a.status] ?? 9, sb = STATUS_RANK[b.status] ?? 9;
     if (sa !== sb) return sa - sb;
     const pa = PRIORITY_RANK[a.priority] ?? 9, pb = PRIORITY_RANK[b.priority] ?? 9;

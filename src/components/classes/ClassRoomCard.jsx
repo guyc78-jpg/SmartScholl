@@ -26,8 +26,8 @@ export default function ClassRoomCard({ classRoom, onEdit, onDelete, canManage =
           </div>
           {canManage && (
             <div className="flex gap-1 flex-shrink-0">
-              <Button variant="ghost" size="icon" onClick={() => onEdit(classRoom)}><Edit className="w-4 h-4" /></Button>
-              <Button variant="ghost" size="icon" className="text-destructive" onClick={() => onDelete(classRoom)}><Trash2 className="w-4 h-4" /></Button>
+              <Button variant="ghost" size="icon" onClick={() => onEdit(classRoom)} aria-label={'עריכת כיתה: ' + (classRoom.name || 'ללא שם')}><Edit className="w-4 h-4" /></Button>
+              <Button variant="ghost" size="icon" className="text-destructive" onClick={() => onDelete(classRoom)} aria-label={'מחיקת כיתה: ' + (classRoom.name || 'ללא שם')}><Trash2 className="w-4 h-4" /></Button>
             </div>
           )}
         </div>

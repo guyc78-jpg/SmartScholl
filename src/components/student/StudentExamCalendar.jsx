@@ -8,9 +8,10 @@ import EventTypeBadge from '@/components/exams/EventTypeBadge';
 import { buildGoogleCalendarExamUrl } from '@/lib/googleCalendarExport';
 import { BookOpen, CalendarPlus, CheckCircle2, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatSchoolDate, getLocalDateString } from '@/lib/dateUtils';
 
-const today = () => new Date().toISOString().split('T')[0];
-const fmt = d => d ? new Date(d).toLocaleDateString('he-IL') : '';
+const today = () => getLocalDateString();
+const fmt = d => formatSchoolDate(d);
 
 export default function StudentExamCalendar({ exams, student, user, reports, completions = [], onToggleCompletion, onChanged }) {
   const [drafts, setDrafts] = useState({});
@@ -58,7 +59,7 @@ export default function StudentExamCalendar({ exams, student, user, reports, com
       <CardContent className="space-y-3">
         {(exams || []).length === 0 ? <p className="text-sm text-muted-foreground">אין כרגע מבחנים או אירועים רלוונטיים.</p> : exams.map(exam => {
           const report = reportByExam[exam.id];
-          const completed = completions.some(item => item.exam_id === exam.id);
+          const completed = completions.some(item => item.exam_id === exam.id && item.status === 'done');
           const canReport = exam.date <= today() && (!report || ['דיווח תלמיד', 'דורש תיקון'].includes(report.status));
           const draft = drafts[exam.id] || {};
           return (

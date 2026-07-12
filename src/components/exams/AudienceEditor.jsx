@@ -8,7 +8,7 @@ const toList = value => String(value || '').split(',').map(v => v.trim()).filter
 const norm = value => String(value || '').trim().toLowerCase();
 const hasAny = (list, values) => (list || []).map(norm).some(item => values.map(norm).includes(item));
 
-export default function AudienceEditor({ value, onChange, allowedScopes }) {
+export default function AudienceEditor({ value, onChange, allowedScopes = null }) {
   const availableScopes = allowedScopes?.length ? AUDIENCE_SCOPES.filter(scope => allowedScopes.includes(scope.value)) : AUDIENCE_SCOPES;
   const scope = availableScopes.some(item => item.value === value.audience_scope) ? value.audience_scope : 'grade';
   const update = patch => onChange({ ...value, ...patch });

@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.34';
 
 const VALID_STAFF_ROLES = ['homeroom_teacher', 'grade_coordinator', 'division_manager', 'system_admin'];
 const VALID_DIVISIONS = ['upper', 'middle'];
@@ -12,6 +12,15 @@ function cleanStaffName(value) {
     .replace(/[–—-]\s*[^\s]+@[^\s]+/g, '')
     .replace(/\b[^\s]+@[^\s]+\b/g, '')
     .trim();
+}
+
+function getStudentDisplayName(student, fallback = '') {
+  const fullName = String(student?.full_name || student?.fullName || '').trim();
+  if (fullName) return fullName;
+  return [student?.firstName || student?.first_name, student?.lastName || student?.last_name]
+    .map(value => String(value || '').trim())
+    .filter(Boolean)
+    .join(' ') || fallback;
 }
 
 function getClassDisplayName(classRoom) {
@@ -70,7 +79,7 @@ async function writeLog(base44, { eventType, actorEmail, targetEmail, targetName
 
 function validateScope(role, scope = {}) {
   if (role === 'homeroom_teacher') return !!scope.classId;
-  if (role === 'grade_coordinator') return !!scope.gradeId && !!scope.homeroomClassId;
+  if (role === 'grade_coordinator') return !!scope.gradeId;
   if (role === 'division_manager') return VALID_DIVISIONS.includes(scope.divisionType);
   if (role === 'system_admin') return true;
   return false;
@@ -101,17 +110,18 @@ function buildClaimsFromApprovedUser(record, role = record.role, scope = getScop
 }
 
 function buildClaimsFromStudent(student, email) {
+  const fullName = getStudentDisplayName(student, email);
   return {
     authorized: true,
     source: 'student',
-    fullName: student.full_name || student.fullName || email,
+    fullName,
     email,
     role: 'student',
     roles: ['student'],
     scope: null,
     isActive: true,
     student_id: student.id,
-    profile_full_name: student.full_name || '',
+    profile_full_name: fullName,
     profile_class_id: student.class_id || '',
     profile_class: student.class_name || '',
     profile_homeroom_class: student.class_name || '',
@@ -121,8 +131,40 @@ function buildClaimsFromStudent(student, email) {
   };
 }
 
+async function syncVerifiedAuthorization(base44, user, claims) {
+  const roles = [...new Set((claims.roles || [claims.role]).filter(Boolean))];
+  const classId = claims.profile_class_id || claims.profile_homeroom_class_id || claims.homeroomClassId || '';
+  const grade = normalizeGrade(claims.profile_grade_managed || claims.scope?.gradeId || '');
+  const division = claims.profile_division || claims.scope?.divisionType || '';
+  const patch = {
+    role: claims.role,
+    roles,
+    available_roles: roles,
+    active_work_role: roles.includes(user.active_work_role) ? user.active_work_role : claims.role,
+    authorization_student_id: claims.student_id || '',
+    authorization_class_id: classId,
+    authorization_grade: grade,
+    authorization_division: division,
+    authorization_active: true,
+    profile_homeroom_class_id: claims.profile_homeroom_class_id || claims.homeroomClassId || '',
+    onboarding_status: 'approved',
+    onboardingCompleted: true,
+  };
+  await base44.asServiceRole.entities.User.update(user.id, patch);
+}
+
 async function getAccess(base44, user, skipLog = false) {
   const email = normalizeEmail(user.email);
+  if (['disabled', 'rejected'].includes(user.status)) {
+    await base44.asServiceRole.entities.User.update(user.id, {
+      authorization_active: false,
+      authorization_student_id: '',
+      authorization_class_id: '',
+      authorization_grade: '',
+      authorization_division: '',
+    });
+    return { allowed: false };
+  }
   let approvedRecords = await base44.asServiceRole.entities.ApprovedUser.filter({ email });
 
   if (!approvedRecords.length) {
@@ -134,7 +176,7 @@ async function getAccess(base44, user, skipLog = false) {
         role: 'system_admin',
         roles: ['system_admin'],
         primaryDisplayRole: 'system_admin',
-        scope: null,
+        scope: {},
         homeroomClassId: '',
         gradeId: '',
         divisionType: '',
@@ -162,6 +204,13 @@ async function getAccess(base44, user, skipLog = false) {
       .filter(item => validateScope(item.role, item.scope));
 
     if (!roleRecords.length) {
+      await base44.asServiceRole.entities.User.update(user.id, {
+        authorization_active: false,
+        authorization_student_id: '',
+        authorization_class_id: '',
+        authorization_grade: '',
+        authorization_division: '',
+      });
       await writeLog(base44, {
         eventType: 'login_blocked',
         actorEmail: email,
@@ -218,6 +267,8 @@ async function getAccess(base44, user, skipLog = false) {
       }
     }
 
+    await syncVerifiedAuthorization(base44, user, claims);
+
     if (!skipLog) {
       await writeLog(base44, {
         eventType: 'login_success',
@@ -235,7 +286,7 @@ async function getAccess(base44, user, skipLog = false) {
 
   const studentsByUserEmail = await base44.asServiceRole.entities.Student.filter({ user_email: email });
   const studentsByEmail = studentsByUserEmail.length ? studentsByUserEmail : await base44.asServiceRole.entities.Student.filter({ email });
-  const student = studentsByEmail[0];
+  const student = studentsByEmail.find(record => record.status !== 'סיים');
 
   if (student) {
     const claims = buildClaimsFromStudent(student, email);
@@ -247,6 +298,7 @@ async function getAccess(base44, user, skipLog = false) {
         claims.profile_homeroom_class = classLabel;
       }
     }
+    await syncVerifiedAuthorization(base44, user, claims);
     if (!skipLog) {
       await writeLog(base44, {
         eventType: 'login_success',
@@ -270,6 +322,13 @@ async function getAccess(base44, user, skipLog = false) {
     details: 'המשתמש אינו מופיע בטבלאות המאושרות',
     severity: 'warning',
   });
+  await base44.asServiceRole.entities.User.update(user.id, {
+    authorization_active: false,
+    authorization_student_id: '',
+    authorization_class_id: '',
+    authorization_grade: '',
+    authorization_division: '',
+  });
   return { allowed: false };
 }
 
@@ -284,7 +343,10 @@ Deno.serve(async (req) => {
     const user = await base44.auth.me();
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
     const action = body.action || 'getAccess';
 
     if (action === 'getAccess') {
@@ -297,16 +359,40 @@ Deno.serve(async (req) => {
 
     if (action === 'logUnauthorizedAccess') {
       const access = await getAccess(base44, user, true);
+      if (!access.allowed) return Response.json({ error: 'Forbidden' }, { status: 403 });
+      const metadataText = JSON.stringify(body.metadata && typeof body.metadata === 'object' ? body.metadata : {});
       await writeLog(base44, {
         eventType: 'unauthorized_access',
         actorEmail: normalizeEmail(user.email),
         targetEmail: normalizeEmail(user.email),
         targetName: access.claims?.fullName || user.full_name || '',
-        actionName: body.attemptedAction || body.actionName || 'unauthorized_access',
-        role: access.claims?.role || body.role || '',
-        details: body.details || 'ניסיון גישה לא מורשה',
-        metadata: { ...(body.metadata || {}), path: body.path || '' },
+        actionName: String(body.attemptedAction || body.actionName || 'unauthorized_access').slice(0, 160),
+        role: access.claims?.role || '',
+        details: String(body.details || 'ניסיון גישה לא מורשה').slice(0, 1200),
+        metadata: { ...(metadataText.length <= 4000 ? JSON.parse(metadataText) : { truncated: true }), path: String(body.path || '').slice(0, 300) },
         severity: 'critical',
+      });
+      return Response.json({ success: true });
+    }
+
+    if (action === 'logActivity') {
+      const access = await getAccess(base44, user, true);
+      if (!access.allowed) return Response.json({ error: 'Forbidden' }, { status: 403 });
+      const actionName = String(body.actionName || 'user_action').trim().slice(0, 120);
+      const details = String(body.details || '').trim().slice(0, 1200);
+      const severity = ['info', 'warning'].includes(body.severity) ? body.severity : 'info';
+      const metadataText = JSON.stringify(body.metadata && typeof body.metadata === 'object' ? body.metadata : {});
+      const metadata = metadataText.length <= 4000 ? JSON.parse(metadataText) : { truncated: true };
+      await writeLog(base44, {
+        eventType: 'user_action',
+        actorEmail: normalizeEmail(user.email),
+        targetEmail: normalizeEmail(user.email),
+        targetName: access.claims?.fullName || user.full_name || user.email,
+        actionName,
+        role: access.claims?.role || '',
+        details,
+        metadata,
+        severity,
       });
       return Response.json({ success: true });
     }
@@ -319,6 +405,9 @@ Deno.serve(async (req) => {
       const isSystemAdmin = roles.includes('system_admin') || claims.role === 'system_admin';
       const isCoordinator = roles.includes('grade_coordinator') || roles.includes('coordinator') || claims.role === 'grade_coordinator' || claims.role === 'coordinator';
       const isHomeroomTeacher = roles.includes('homeroom_teacher') || claims.role === 'homeroom_teacher';
+      if (!isSystemAdmin && !isCoordinator && !isHomeroomTeacher) {
+        return Response.json({ error: 'Forbidden' }, { status: 403 });
+      }
       const managedGrade = normalizeGrade(claims.profile_grade_managed || claims.scope?.gradeId || '');
       const homeroomClassId = claims.homeroomClassId || claims.profile_homeroom_class_id || '';
       const allClasses = (await base44.asServiceRole.entities.ClassRoom.list('grade', 500)).filter(item => item.is_active !== false);
@@ -421,7 +510,7 @@ Deno.serve(async (req) => {
       if (!isSystemAdmin && normalizeGrade(targetClass.grade) !== managedGrade) return Response.json({ error: 'Forbidden' }, { status: 403 });
 
       const previousIdentity = String(targetClass.class_identity || '').trim();
-      const nextIdentity = String(body.classIdentity || '').trim();
+      const nextIdentity = String(body.classIdentity || '').trim().slice(0, 120);
       const savedClass = previousIdentity === nextIdentity
         ? targetClass
         : await base44.asServiceRole.entities.ClassRoom.update(targetClass.id, { class_identity: nextIdentity });
@@ -471,7 +560,7 @@ Deno.serve(async (req) => {
       const record = body.user || {};
       const email = normalizeEmail(record.email);
       const role = record.role;
-      const scope = role === 'system_admin' ? null : (record.scope || {});
+      const scope = role === 'system_admin' ? {} : (record.scope || {});
       const homeroomClassId = ['homeroom_teacher', 'grade_coordinator', 'system_admin'].includes(role) ? (record.homeroomClassId || scope?.homeroomClassId || scope?.classId || '') : '';
       const gradeId = record.gradeId || scope?.gradeId || '';
       const roles = role === 'system_admin'

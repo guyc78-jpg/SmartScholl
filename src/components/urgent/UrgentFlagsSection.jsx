@@ -13,7 +13,7 @@ import useDeleteConfirm from '@/hooks/useDeleteConfirm';
  * Visible to homeroom_teacher / coordinator / admin only.
  * Provides quick add + manage actions.
  */
-export default function UrgentFlagsSection({ classId, user, canManage, maxItems = 3, onChanged }) {
+export default function UrgentFlagsSection({ classId, user, canManage, maxItems = 3, onChanged = null }) {
   const [flags, setFlags] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);

@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { CLASS_ID } from '@/lib/demoData';
 import { getStudentClassId } from '@/lib/studentProfile';
-import { getUserApprovedClass, getUserApprovedClassId } from '@/lib/schoolStructure';
+import { getUserApprovedClass, getUserApprovedClassId, getUserApprovedGrade } from '@/lib/schoolStructure';
 import { findClassRoomByName } from '@/lib/classAssignment';
 import PageHeader from '@/components/ui/PageHeader';
 import RtlActionBar from '@/components/ui/RtlActionBar';
 import { Button } from '@/components/ui/button';
-import { FileUp, Plus, Users, Trash2, MoreVertical } from 'lucide-react';
+import { FileUp, Plus, Users, MoreVertical } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 import EventFilters, { filterByGroup, filterBySearch } from '@/components/exams/EventFilters';
@@ -21,7 +20,6 @@ import { isEventRelevantForStudent } from '@/components/exams/AudienceEditor';
 import { getAvailableRoles } from '@/lib/roleUtils';
 import { getClassDisplayName } from '@/lib/classIdentity';
 import { getLocalDateString } from '@/lib/attendanceScope.js';
-import useDeleteConfirm from '@/hooks/useDeleteConfirm';
 
 export default function Exams({ role, user }) {
   const [events, setEvents] = useState([]);
@@ -36,13 +34,11 @@ export default function Exams({ role, user }) {
   const [onlyMine, setOnlyMine] = useState(true);
   const [showTracking, setShowTracking] = useState(false);
   const [showImport, setShowImport] = useState(false);
-  const [showDemo, setShowDemo] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [activeClassId, setActiveClassId] = useState('');
   const [currentClassRoom, setCurrentClassRoom] = useState(null);
-  const { confirmDelete, DeleteConfirm } = useDeleteConfirm();
 
   const approvedRoles = getAvailableRoles(user);
   const canManageBoard = role !== 'student' && (approvedRoles.includes('admin') || approvedRoles.includes('system_admin') || approvedRoles.includes('coordinator') || approvedRoles.includes('grade_coordinator') || approvedRoles.includes('homeroom_teacher'));
@@ -50,7 +46,7 @@ export default function Exams({ role, user }) {
   const canEdit = role !== 'student' && (approvedRoles.includes('admin') || approvedRoles.includes('coordinator') || approvedRoles.includes('homeroom_teacher'));
   const canTrack = role !== 'student' && (approvedRoles.includes('coordinator') || approvedRoles.includes('grade_coordinator') || approvedRoles.includes('homeroom_teacher'));
   const isStudent = role === 'student';
-  const classId = isStudent ? getStudentClassId(user, CLASS_ID) : getUserApprovedClassId(user, CLASS_ID);
+  const classId = isStudent ? getStudentClassId(user, '') : getUserApprovedClassId(user, '');
   const fallbackClassName = getUserApprovedClass(user);
   const todayIso = getLocalDateString();
 
@@ -58,6 +54,7 @@ export default function Exams({ role, user }) {
 
   async function loadData() {
     setLoading(true);
+    try {
     const classRooms = await base44.entities.ClassRoom.list('-updated_date', 200);
     const classRoom = classRooms.find(room => room.id === classId) || findClassRoomByName(classRooms, fallbackClassName);
     const resolvedClassId = classRoom?.id || classId;
@@ -70,16 +67,21 @@ export default function Exams({ role, user }) {
     const nextStudents = studentData || [];
     setEvents((eventData || []).sort((a, b) => (a.date || '').localeCompare(b.date || '')));
     setStudents(nextStudents);
-    setLoading(false);
-
     const current = isStudent ? nextStudents.find(s => s.email === user?.email || s.user_email === user?.email) : null;
-    Promise.all([
+    const [completionData, reportData] = await Promise.all([
       current ? base44.entities.ExamCompletion.filter({ student_id: current.id }) : Promise.resolve([]),
       canTrack ? base44.entities.ExamGradeReport.list('-updated_action_at', 300) : Promise.resolve([]),
-    ]).then(([completionData, reportData]) => {
-      setCompletions(completionData || []);
-      setGradeReports(reportData || []);
-    }).catch(() => {});
+    ]);
+    setCompletions(completionData || []);
+    setGradeReports(reportData || []);
+    } catch (error) {
+      console.error('Failed to load exams', error);
+      setEvents([]);
+      setStudents([]);
+      toast.error('טעינת לוח האירועים נכשלה. אפשר לנסות שוב.');
+    } finally {
+      setLoading(false);
+    }
   }
 
   const currentStudent = useMemo(() => {
@@ -92,15 +94,8 @@ export default function Exams({ role, user }) {
     return Object.fromEntries(relevantCompletions.map(c => [c.exam_id, c]));
   }, [completions, currentStudent]);
 
-  const demoEvents = useMemo(() => [
-    { id: 'demo_1', class_id: classId, title: 'בגרות במתמטיקה', subject: 'מתמטיקה', type: 'בגרות', date: todayIso, time: '09:00', audience_scope: 'grade', audience_grades: ['יב'], material: 'חדו״א, הסתברות וגיאומטריה' },
-    { id: 'demo_2', class_id: classId, title: 'חזרה לטקס סיום', subject: 'שכבה', type: 'טקס', date: todayIso, time: '12:00', audience_scope: 'school', notes: 'באולם הספורט' },
-    { id: 'demo_3', class_id: classId, title: 'צילומי מחזור', subject: 'שכבה', type: 'צילומים', date: new Date(Date.now() + 86400000).toISOString().split('T')[0], time: '10:30', audience_scope: 'class', audience_classes: ['יב5', 'יב7'] },
-    { id: 'demo_4', class_id: classId, title: 'מועד ב׳ באנגלית', subject: 'אנגלית', type: 'מועד ב׳', date: new Date(Date.now() + 4 * 86400000).toISOString().split('T')[0], time: '08:30', audience_scope: 'subject', audience_subjects: ['אנגלית'] }
-  ], [classId, todayIso]);
-
   const classDisplayName = getClassDisplayName(currentClassRoom, fallbackClassName || 'הכיתה');
-  const sourceEvents = (showDemo && events.length === 0 ? demoEvents : events).map(event => ({
+  const sourceEvents = events.map(event => ({
     ...event,
     class_or_grade: event.class_or_grade || classDisplayName,
   }));
@@ -117,55 +112,33 @@ export default function Exams({ role, user }) {
 
   async function saveEvent(form) {
     if (!form.title || !form.date) return;
-    if (editingEvent?.id?.startsWith('demo_')) return;
     const resolvedClassId = activeClassId || classId;
-    if (editingEvent) await base44.entities.Exam.update(editingEvent.id, { ...form, class_id: resolvedClassId });
-    else await base44.entities.Exam.create({ ...form, class_id: resolvedClassId });
+    if (!resolvedClassId) { toast.error('יש לבחור כיתה לפני שמירת האירוע'); return; }
+    const grade = currentClassRoom?.grade || getUserApprovedGrade(user) || '';
+    if (editingEvent) await base44.entities.Exam.update(editingEvent.id, { ...form, class_id: resolvedClassId, grade });
+    else await base44.entities.Exam.create({ ...form, class_id: resolvedClassId, grade });
     toast.success(editingEvent ? 'האירוע עודכן' : 'האירוע נוסף');
     setShowForm(false);
     setEditingEvent(null);
     loadData();
   }
 
-  async function clearAllEvents() {
-    if (!events.length) return;
-    const approved = await confirmDelete({
-      title: 'למחוק את כל האירועים והנתונים?',
-      description: `יימחקו ${events.length} אירועים וכל נתוני המעקב שלהם. פעולה זו אינה הפיכה.`,
-      confirmLabel: 'מחק את הכל',
-    });
-    if (!approved) return;
-    const eventIds = new Set(events.map(event => event.id));
-    const [allCompletions, allReports] = await Promise.all([
-      base44.entities.ExamCompletion.list('-updated_date', 1000),
-      base44.entities.ExamGradeReport.list('-updated_action_at', 1000),
-    ]);
-    await Promise.all([
-      ...events.map(event => base44.entities.Exam.delete(event.id)),
-      ...(allCompletions || []).filter(item => eventIds.has(item.exam_id)).map(item => base44.entities.ExamCompletion.delete(item.id)),
-      ...(allReports || []).filter(item => eventIds.has(item.exam_id)).map(item => base44.entities.ExamGradeReport.delete(item.id)),
-    ]);
-    toast.success('כל נתוני הלוח נמחקו');
-    loadData();
-  }
-
-  async function deleteEvent(id) {
-    if (String(id).startsWith('demo_')) return;
-    const approved = await confirmDelete({
-      title: 'למחוק את האירוע?',
-      description: 'האירוע יוסר מלוח המבחנים ולא ניתן יהיה לשחזר אותו.',
-    });
-    if (!approved) return;
-    await base44.entities.Exam.delete(id);
-    toast.success('האירוע נמחק');
-    setSelectedEvent(null);
-    loadData();
-  }
-
   async function updateStudentStatus(payload) {
     if (!currentStudent || !selectedEvent) return;
+    if (String(selectedEvent.id || '').startsWith('demo_')) {
+      toast.error('לא ניתן לשמור סטטוס השלמה לאירוע הדגמה');
+      return;
+    }
     const existing = completions.find(c => c.exam_id === selectedEvent.id && c.student_id === currentStudent.id);
-    const data = { exam_id: selectedEvent.id, student_id: currentStudent.id, student_name: currentStudent.full_name, ...payload, completed_at: payload.status === 'done' ? new Date().toISOString() : '' };
+    const data = {
+      exam_id: selectedEvent.id,
+      student_id: currentStudent.id,
+      student_name: currentStudent.full_name,
+      class_id: currentStudent.class_id,
+      grade: currentStudent.grade,
+      ...payload,
+      completed_at: payload.status === 'done' ? new Date().toISOString() : '',
+    };
     if (existing) await base44.entities.ExamCompletion.update(existing.id, data);
     else await base44.entities.ExamCompletion.create(data);
     loadData();
@@ -210,13 +183,6 @@ export default function Exams({ role, user }) {
                       <DropdownMenuItem onClick={() => setShowImport(true)} className="justify-start gap-2 cursor-pointer">
                         <FileUp className="w-4 h-4" /> ייבוא לוח
                       </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={clearAllEvents}
-                        disabled={events.length === 0}
-                        className="justify-start gap-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10"
-                      >
-                        <Trash2 className="w-4 h-4" /> מחיקת הכל
-                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 )}
@@ -244,30 +210,27 @@ export default function Exams({ role, user }) {
           canAdd={canEdit}
           onImport={() => setShowImport(true)}
           onAdd={() => { setEditingEvent(null); setShowForm(true); }}
-          onDemo={() => setShowDemo(true)}
         />
       ) : view === 'month' ? (
-        <MonthView events={visibleEvents} offset={currentOffset} onOffsetChange={setCurrentOffset} onEventClick={setSelectedEvent} onEdit={openEdit} onDelete={deleteEvent} canEdit={canEdit} todayIso={todayIso} view={view} onViewChange={setView} />
+        <MonthView events={visibleEvents} offset={currentOffset} onOffsetChange={setCurrentOffset} onEventClick={setSelectedEvent} onEdit={openEdit} canEdit={canEdit} todayIso={todayIso} view={view} onViewChange={setView} />
       ) : view === 'week' ? (
-        <WeekView events={visibleEvents} offset={currentOffset} onOffsetChange={setCurrentOffset} onEventClick={setSelectedEvent} onEdit={openEdit} onDelete={deleteEvent} canEdit={canEdit} todayIso={todayIso} view={view} onViewChange={setView} />
+        <WeekView events={visibleEvents} offset={currentOffset} onOffsetChange={setCurrentOffset} onEventClick={setSelectedEvent} onEdit={openEdit} canEdit={canEdit} todayIso={todayIso} view={view} onViewChange={setView} />
       ) : (
-        <DayView events={visibleEvents} offset={currentOffset} onOffsetChange={setCurrentOffset} onEventClick={setSelectedEvent} onEdit={openEdit} onDelete={deleteEvent} canEdit={canEdit} todayIso={todayIso} view={view} onViewChange={setView} />
+        <DayView events={visibleEvents} offset={currentOffset} onOffsetChange={setCurrentOffset} onEventClick={setSelectedEvent} onEdit={openEdit} canEdit={canEdit} todayIso={todayIso} view={view} onViewChange={setView} />
       )}
 
-      {canImport && <SmartCalendarImportDialog open={showImport} onOpenChange={setShowImport} classId={activeClassId || classId} onImported={loadData} />}
+      {canImport && <SmartCalendarImportDialog open={showImport} onOpenChange={setShowImport} classId={activeClassId || classId} grade={currentClassRoom?.grade || getUserApprovedGrade(user) || ''} onImported={loadData} />}
       <EventFormDialog open={showForm} onOpenChange={setShowForm} event={editingEvent} onSave={saveEvent} />
       <EventDetailsDialog
         event={selectedEvent}
         open={!!selectedEvent}
         onClose={() => setSelectedEvent(null)}
-        canEdit={canEdit && !selectedEvent?.id?.startsWith('demo_')}
+        canEdit={canEdit}
         isStudent={isStudent}
         completion={selectedEvent ? completions.find(c => c.exam_id === selectedEvent.id && c.student_id === currentStudent?.id) : null}
         onStudentUpdate={updateStudentStatus}
         onEdit={openEdit}
-        onDelete={deleteEvent}
       />
-      <DeleteConfirm />
     </div>
   );
 }

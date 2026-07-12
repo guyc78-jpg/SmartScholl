@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { CLASS_ID } from '@/lib/demoData';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -18,6 +17,7 @@ import useDeleteConfirm from '@/hooks/useDeleteConfirm';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 import { useAuth } from '@/lib/AuthContext';
 import { getUserApprovedClassId } from '@/lib/schoolStructure';
+import { formatSchoolDate, getLocalDateString } from '@/lib/dateUtils';
 
 const CATEGORIES = [
   { key: 'learning_habits', label: 'הרגלי למידה' },
@@ -55,12 +55,12 @@ export default function Performance({ role = 'homeroom_teacher' }) {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editReview, setEditReview] = useState(null);
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalDateString();
   const [form, setForm] = useState({ student_id: '', period: '', date: today, learning_habits: 3, participation: 3, responsibility: 3, behavior: 3, social_functioning: 3, emotional_state: 3, notes: '' });
   const { confirmDelete, DeleteConfirm } = useDeleteConfirm();
 
   const { user } = useAuth();
-  const classId = getUserApprovedClassId(user, CLASS_ID);
+  const classId = getUserApprovedClassId(user, '');
 
   useEffect(() => { loadData(); }, []);
   async function loadData() {
@@ -102,7 +102,7 @@ export default function Performance({ role = 'homeroom_teacher' }) {
   const studentById = new Map(students.map(student => [student.id, student]));
   const displayStudentName = (studentId, fallbackName = '') => formatStudentName(studentById.get(studentId) || fallbackName);
 
-  const formatDate = (d) => { if (!d) return ''; const dt = new Date(d); return `${dt.getDate().toString().padStart(2,'0')}/${(dt.getMonth()+1).toString().padStart(2,'0')}/${dt.getFullYear()}`; };
+  const formatDate = (d) => formatSchoolDate(d, { day: '2-digit', month: '2-digit', year: 'numeric' });
 
   return (
     <div className="p-4 lg:p-6 space-y-5" dir="rtl">

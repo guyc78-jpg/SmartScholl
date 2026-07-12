@@ -23,7 +23,8 @@
         "discipline_event",
         "new_task",
         "urgent_treatment",
-        "conversation_reminder"
+        "conversation_reminder",
+        "exam_grade"
       ],
       "description": "\u05e1\u05d5\u05d2 \u05d4\u05d0\u05d9\u05e8\u05d5\u05e2 \u05dc\u05d4\u05ea\u05e8\u05d0\u05d4"
     },
@@ -55,6 +56,7 @@
       "type": "string",
       "enum": [
         "pending",
+        "processing",
         "sent",
         "failed"
       ],
@@ -69,9 +71,29 @@
       "type": "string",
       "description": "\u05ea\u05d0\u05e8\u05d9\u05da \u05d5\u05e9\u05e2\u05ea \u05e9\u05dc\u05d9\u05d7\u05d4"
     },
+    "locked_at": {
+      "type": "string",
+      "description": "\u05de\u05d5\u05e2\u05d3 \u05e0\u05e2\u05d9\u05dc\u05ea \u05d4\u05e8\u05e9\u05d5\u05de\u05d4 \u05dc\u05e9\u05dc\u05d9\u05d7\u05d4"
+    },
+    "lease_id": {
+      "type": "string",
+      "description": "\u05de\u05d6\u05d4\u05d4 \u05d4\u05e8\u05e6\u05d4 \u05e9\u05e0\u05e2\u05dc\u05d4 \u05d0\u05ea \u05d4\u05e8\u05e9\u05d5\u05de\u05d4"
+    },
     "error": {
       "type": "string",
       "description": "\u05e4\u05d9\u05e8\u05d5\u05d8 \u05e9\u05d2\u05d9\u05d0\u05d4 \u05d0\u05dd \u05d4\u05e9\u05dc\u05d9\u05d7\u05d4 \u05e0\u05db\u05e9\u05dc\u05d4"
+    },
+    "source_entity": {
+      "type": "string",
+      "description": "\u05e9\u05dd \u05d9\u05e9\u05d5\u05ea \u05d4\u05de\u05e7\u05d5\u05e8 \u05dc\u05de\u05e0\u05d9\u05e2\u05ea \u05db\u05e4\u05d9\u05dc\u05d5\u05ea"
+    },
+    "source_entity_id": {
+      "type": "string",
+      "description": "\u05de\u05d6\u05d4\u05d4 \u05e8\u05e9\u05d5\u05de\u05ea \u05d4\u05de\u05e7\u05d5\u05e8"
+    },
+    "source_event_key": {
+      "type": "string",
+      "description": "\u05de\u05e4\u05ea\u05d7 \u05d0\u05d9\u05e8\u05d5\u05e2 \u05d9\u05d9\u05d7\u05d5\u05d3\u05d9 \u05dc\u05de\u05e0\u05d9\u05e2\u05ea \u05e9\u05dc\u05d9\u05d7\u05d4 \u05db\u05e4\u05d5\u05dc\u05d4"
     }
   },
   "required": [
@@ -82,5 +104,66 @@
     "url",
     "status",
     "queued_at"
-  ]
+  ],
+  "rls": {
+    "create": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "system_admin"
+          }
+        }
+      ]
+    },
+    "read": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "system_admin"
+          }
+        },
+        {
+          "data.recipient_email": "{{user.email}}"
+        }
+      ]
+    },
+    "update": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "system_admin"
+          }
+        }
+      ]
+    },
+    "delete": {
+      "$or": [
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        },
+        {
+          "user_condition": {
+            "role": "system_admin"
+          }
+        }
+      ]
+    }
+  }
 }

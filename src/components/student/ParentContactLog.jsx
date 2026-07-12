@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { formatStudentName } from '@/lib/studentName';
 import useDeleteConfirm from '@/hooks/useDeleteConfirm';
+import { formatSchoolDate, getLocalDateString, getSchoolTimeString } from '@/lib/dateUtils';
 
 const CONTACT_TYPES = ['טלפון', 'פנים אל פנים', 'הודעה כתובה', 'WhatsApp', 'דוא״ל'];
 const PARENT_OPTIONS = ['הורה 1', 'הורה 2', 'שני הורים'];
@@ -21,8 +22,8 @@ export default function ParentContactLog({ studentId, classId, studentName, pare
   const [editingId, setEditingId] = useState(null);
   const { confirmDelete, DeleteConfirm } = useDeleteConfirm();
   const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0],
-    time: new Date().toTimeString().slice(0, 5),
+    date: getLocalDateString(),
+    time: getSchoolTimeString(),
     subject: '',
     summary: '',
     contact_type: 'טלפון',
@@ -40,7 +41,7 @@ export default function ParentContactLog({ studentId, classId, studentName, pare
   async function loadContacts() {
     setLoading(true);
     const data = await base44.entities.ParentContact.filter({ student_id: studentId });
-    setContacts(data.sort((a, b) => new Date(b.date) - new Date(a.date)));
+    setContacts(data.sort((a, b) => String(b.date || '').localeCompare(String(a.date || ''))));
     setLoading(false);
   }
 
@@ -83,8 +84,8 @@ export default function ParentContactLog({ studentId, classId, studentName, pare
 
   function resetForm() {
     setFormData({
-      date: new Date().toISOString().split('T')[0],
-      time: new Date().toTimeString().slice(0, 5),
+      date: getLocalDateString(),
+      time: getSchoolTimeString(),
       subject: '',
       summary: '',
       contact_type: 'טלפון',
@@ -104,7 +105,6 @@ export default function ParentContactLog({ studentId, classId, studentName, pare
   }
 
   function generateWhatsAppMessage() {
-    const dateStr = new Date(formData.date).toLocaleDateString('he-IL');
     const msg = `שלום, קצר הודעה בנוגע ל${formatStudentName(studentName)}: ${formData.subject}. ${formData.summary.substring(0, 100)}...`;
     const encoded = encodeURIComponent(msg);
     const phone = formData.parent_phone?.replace(/\D/g, '');
@@ -112,7 +112,7 @@ export default function ParentContactLog({ studentId, classId, studentName, pare
       toast.error('אנא הזן מספר טלפון להורה');
       return;
     }
-    window.open(`https://wa.me/${phone}?text=${encoded}`, '_blank');
+    window.open(`https://wa.me/${phone}?text=${encoded}`, '_blank', 'noopener,noreferrer');
   }
 
   if (loading) return <div className="h-20 flex items-center justify-center text-muted-foreground text-sm">טוען...</div>;
@@ -145,7 +145,7 @@ export default function ParentContactLog({ studentId, classId, studentName, pare
                   <p className="font-medium text-sm">{contact.subject}</p>
                   <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                     <Calendar className="w-3 h-3" />
-                    {new Date(contact.date).toLocaleDateString('he-IL')} ב{contact.time}
+                    {formatSchoolDate(contact.date)} ב{contact.time}
                   </p>
                 </div>
                 <div className="flex gap-1 flex-shrink-0">

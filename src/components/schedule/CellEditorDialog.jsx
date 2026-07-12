@@ -21,8 +21,15 @@ export default function CellEditorDialog({ open, onOpenChange, slot, day, period
 
   useEffect(() => {
     if (open) {
+      const slotSubject = slot?.subject || '';
+      const knownSubjects = new Set([
+        ...subjects.filter(subject => subject.is_active !== false).map(subject => subject.name),
+        ...DEFAULT_SUBJECTS,
+      ]);
+      const isCustomSubject = Boolean(slotSubject && !knownSubjects.has(slotSubject));
       setForm({
-        subject: slot?.subject || '',
+        subject: isCustomSubject ? 'אחר' : slotSubject,
+        customSubject: isCustomSubject ? slotSubject : '',
         subjectColor: subjects.find(subject => subject.id === slot?.subject_id || subject.normalized_key === normalizeSubjectName(slot?.subject))?.color || SUBJECT_COLORS[0],
         teacher: slot?.teacher || '',
         room: slot?.room || '',
@@ -32,7 +39,7 @@ export default function CellEditorDialog({ open, onOpenChange, slot, day, period
       });
       setConfirmDelete(false);
     }
-  }, [open, slot]);
+  }, [open, slot, subjects]);
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
   const activeSubjects = subjects.filter(subject => subject.is_active !== false);

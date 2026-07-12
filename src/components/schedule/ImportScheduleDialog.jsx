@@ -1,5 +1,4 @@
 import { useRef, useState } from 'react';
-import * as XLSX from 'xlsx';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -8,7 +7,6 @@ import SelectedFileNotice from '@/components/import/SelectedFileNotice';
 import { base44 } from '@/api/base44Client';
 import { ensureSubjectForName, normalizeSubjectName } from '@/lib/scheduleSubjects';
 import useDeleteConfirm from '@/hooks/useDeleteConfirm';
-import { parseExcelScheduleFile } from '@/lib/excelScheduleParser';
 import ScheduleImportPreview from '@/components/schedule/ScheduleImportPreview';
 
 const DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי'];
@@ -90,7 +88,24 @@ const parseLessonBlock = (block) => {
 const splitLessonBlocks = (cellValue) =>
   String(cellValue || '').split(/\n?-{5,}\n?/).map(s => s.trim()).filter(Boolean);
 
-export default function ImportScheduleDialog({ open, onOpenChange, onImported, classId, className = '' }) {
+const normalizeFingerprintValue = (value = '') =>
+  String(value ?? '').trim().replace(/\s+/g, ' ').toLocaleLowerCase('he');
+
+// A semantic fingerprint makes replacement retry-safe: an interrupted import
+// can continue without creating another copy of rows that were already saved.
+const scheduleSlotFingerprint = (slot = {}) => [
+  normalizeFingerprintValue(slot.day),
+  Number(slot.period || 0),
+  normalizeFingerprintValue(slot.start_time),
+  normalizeFingerprintValue(slot.end_time),
+  normalizeSubjectName(slot.subject || ''),
+  normalizeFingerprintValue(slot.teacher),
+  normalizeFingerprintValue(slot.room),
+  normalizeFingerprintValue(slot.notes),
+  Boolean(slot.is_parallel) ? '1' : '0',
+].join('\u001f');
+
+export default function ImportScheduleDialog({ open, onOpenChange, onImported, classId, className = '', grade = '' }) {
   const fileInputRef = useRef(null);
   const [fileName, setFileName] = useState('');
   const [rows, setRows] = useState([]);
@@ -115,6 +130,7 @@ export default function ImportScheduleDialog({ open, onOpenChange, onImported, c
   };
 
   const parseSpreadsheetFile = async (file) => {
+    const XLSX = await import('xlsx');
     const buffer = await file.arrayBuffer();
     const workbook = XLSX.read(buffer);
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -207,7 +223,7 @@ export default function ImportScheduleDialog({ open, onOpenChange, onImported, c
 בכל תא עשויים להיות כמה שיעורים מקבילים, מופרדים בקו "----------". כל מקטע כזה הוא שיעור נפרד.
 
 כללי חילוץ חובה:
-1. החזר רק שיעורים שבהם רשימת הכיתות כוללת את "${className || ''}" או וריאנט שלו: י"ב 8, יב 8, י``ב 8, י״ב 8.
+1. החזר רק שיעורים שבהם רשימת הכיתות כוללת את "${className || ''}" או וריאנט שלו: י"ב 8, יב 8, י׳׳ב 8, י״ב 8.
 2. אם בתא אחד יש כמה מקטעים ששייכים לכיתה — החזר את כולם כשורות נפרדות עם אותו day ואותו period.
 3. אל תאחד מקצועות, אל תבחר רק מקצוע אחד מתוך תא, ואל תדלג על עמודים.
 4. שמות ימים חייבים להיות: ראשון, שני, שלישי, רביעי, חמישי, שישי.
@@ -266,7 +282,10 @@ ${strict ? '6. אם נמצאו פחות מ-8 שיעורים, זה כמעט בו�
       const isPdf = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';
       const parsed = isPdf
         ? { rows: await parsePdfFile(file), diagnostics: { skippedEmptyRows: [], unparsedCells: [], duplicateCount: 0, parallelCount: 0 } }
-        : await parseExcelScheduleFile(file);
+        : await (async () => {
+          const { parseExcelScheduleFile } = await import('@/lib/excelScheduleParser');
+          return parseExcelScheduleFile(file);
+        })();
       if (parsed.rows.length === 0) setError('לא נמצאו שיעורים בקובץ. ודאו שהקובץ מכיל מערכת שעות עם מקצועות.');
       else { setRows(parsed.rows); setDiagnostics(parsed.diagnostics); }
     } catch (e) {
@@ -277,30 +296,97 @@ ${strict ? '6. אם נמצאו פחות מ-8 שיעורים, זה כמעט בו�
 
   const handleConfirmImport = async () => {
     if (hasMissingRequired) { setError('יש להשלים יום, מספר שיעור ומקצוע בכל השורות לפני הייבוא.'); return; }
+    if (!classId) { setError('לא ניתן לייבא מערכת ללא שיוך לכיתה.'); return; }
     setIsImporting(true);
-    let subjects = (await base44.entities.SchoolSubject.list('-updated_date', 500)).filter(subject => subject.is_active !== false);
-    const subjectsByKey = {};
-    for (const subject of subjects) subjectsByKey[subject.normalized_key] = subject;
-    for (const row of rows) {
-      const key = normalizeSubjectName(row.subject);
-      if (!subjectsByKey[key]) {
-        const subject = await ensureSubjectForName(row.subject, subjects);
-        subjects = [...subjects, subject];
-        subjectsByKey[key] = subject;
+    setError('');
+    try {
+      let subjects = (await base44.entities.SchoolSubject.list('-updated_date', 500)).filter(subject => subject.is_active !== false);
+      const subjectsByKey = {};
+      for (const subject of subjects) subjectsByKey[subject.normalized_key] = subject;
+      for (const row of rows) {
+        const key = normalizeSubjectName(row.subject);
+        if (!subjectsByKey[key]) {
+          const subject = await ensureSubjectForName(row.subject, subjects);
+          subjects = [...subjects, subject];
+          subjectsByKey[key] = subject;
+        }
       }
+
+      const existingSlots = await base44.entities.ScheduleSlot.filter({ class_id: classId });
+      const importedSlots = rows.map(row => ({
+        class_id: classId, grade, day: row.day, period: Number(row.period),
+        start_time: row.start_time, end_time: row.end_time,
+        subject: row.subject, subject_id: subjectsByKey[normalizeSubjectName(row.subject)]?.id || '', teacher: row.teacher, room: row.room, notes: row.notes,
+        original_text: row.original_text || '', source_row: Number(row.source_row || 0), is_parallel: Boolean(row.is_parallel)
+      }));
+
+      // Remove duplicates from the incoming file before writing anything.
+      const desiredByFingerprint = new Map();
+      importedSlots.forEach(slot => {
+        const fingerprint = scheduleSlotFingerprint(slot);
+        if (!desiredByFingerprint.has(fingerprint)) desiredByFingerprint.set(fingerprint, slot);
+      });
+      const desiredSlots = [...desiredByFingerprint.values()];
+      const desiredFingerprints = new Set(desiredByFingerprint.keys());
+      const existingFingerprints = new Set(existingSlots.map(scheduleSlotFingerprint));
+      const slotsToCreate = desiredSlots.filter(slot => !existingFingerprints.has(scheduleSlotFingerprint(slot)));
+
+      // Keep one already-matching row and delete only obsolete rows or surplus
+      // duplicates. This preserves valid data and makes every retry idempotent.
+      const retainedFingerprints = new Set();
+      const slotsToDelete = existingSlots.filter(slot => {
+        const fingerprint = scheduleSlotFingerprint(slot);
+        if (desiredFingerprints.has(fingerprint) && !retainedFingerprints.has(fingerprint)) {
+          retainedFingerprints.add(fingerprint);
+          return false;
+        }
+        return true;
+      });
+
+      // Persist the replacement first. If creation fails, the working schedule
+      // remains untouched instead of being irreversibly erased.
+      if (slotsToCreate.length > 0) {
+        await base44.entities.ScheduleSlot.bulkCreate(slotsToCreate);
+      }
+
+      const deletionResults = await Promise.allSettled(
+        slotsToDelete.map(slot => base44.entities.ScheduleSlot.delete(slot.id))
+      );
+      const failedDeletes = deletionResults.filter(result => result.status === 'rejected').length;
+      let refreshFailed = false;
+      try {
+        await onImported?.();
+      } catch (refreshError) {
+        refreshFailed = true;
+        console.error('Schedule imported but refresh failed', refreshError);
+      }
+
+      if (failedDeletes > 0 || refreshFailed) {
+        const deleteMessage = failedDeletes > 0
+          ? `${failedDeletes} שיעורים ישנים לא הוסרו`
+          : '';
+        const refreshMessage = refreshFailed ? 'התצוגה לא התרעננה' : '';
+        const message = `המערכת החדשה נשמרה, אך ${[deleteMessage, refreshMessage].filter(Boolean).join(' וגם ')}. אפשר לנסות שוב בבטחה.`;
+        setError(message);
+        toast.warning(message);
+        return;
+      }
+
+      const removedCount = slotsToDelete.length;
+      const unchangedCount = desiredSlots.length - slotsToCreate.length;
+      toast.success(
+        slotsToCreate.length === 0 && removedCount === 0
+          ? 'מערכת השעות כבר מעודכנת'
+          : `מערכת השעות יובאה: ${slotsToCreate.length} נוספו, ${unchangedCount} נשמרו ללא שינוי, ${removedCount} הוסרו`
+      );
+      onOpenChange(false);
+    } catch (importError) {
+      const message = importError?.message || 'ייבוא מערכת השעות לא הושלם. המערכת הקיימת לא נמחקה, ואפשר לנסות שוב ללא יצירת כפילויות.';
+      setError(message);
+      toast.error(message);
+    } finally {
+      setIsImporting(false);
     }
-    const existingSlots = await base44.entities.ScheduleSlot.filter({ class_id: classId });
-    await Promise.all(existingSlots.map(slot => base44.entities.ScheduleSlot.delete(slot.id)));
-    await base44.entities.ScheduleSlot.bulkCreate(rows.map(row => ({
-      class_id: classId, day: row.day, period: Number(row.period),
-      start_time: row.start_time, end_time: row.end_time,
-      subject: row.subject, subject_id: subjectsByKey[normalizeSubjectName(row.subject)]?.id || '', teacher: row.teacher, room: row.room, notes: row.notes,
-      original_text: row.original_text || '', source_row: Number(row.source_row || 0), is_parallel: Boolean(row.is_parallel)
-    })));
-    toast.success('מערכת השעות יובאה בהצלחה');
-    setIsImporting(false);
-    onImported?.();
-    onOpenChange(false);
   };
 
   return (

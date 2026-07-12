@@ -1,5 +1,6 @@
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
+import { getSchoolWeekdayIndex } from '@/lib/dateUtils';
 
 export default function AttendancePatterns({ statsPerStudent, allRecords }) {
   // Top absences
@@ -11,7 +12,7 @@ export default function AttendancePatterns({ statsPerStudent, allRecords }) {
   const dayNames = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי'];
   const dayCount = { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
   allRecords.filter(r => r.status === 'נעדר/ת').forEach(r => {
-    const d = new Date(r.date).getDay();
+    const d = getSchoolWeekdayIndex(r.date);
     dayCount[d] = (dayCount[d] || 0) + 1;
   });
   const dayData = dayNames.map((name, i) => ({ name, count: dayCount[i] || 0 }));

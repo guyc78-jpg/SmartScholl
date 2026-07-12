@@ -72,11 +72,11 @@ export default function PositiveReinforcementDialog({
       if (sendToParent && hasParentContact) {
         const parentPhone = student.parent1_phone?.replace(/\D/g, '') || '';
         const message = `שלום, רציתי לשתף אתכם חיזוק חיובי על ${student.full_name || student.firstName}: ${note}`;
-        
+
         if (parentPhone) {
           // Open WhatsApp with prefilled message
           const whatsappUrl = `https://wa.me/${parentPhone}?text=${encodeURIComponent(message)}`;
-          window.open(whatsappUrl, '_blank');
+          window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
         } else if (student.parent1_email) {
           toast.info('אין מספר טלפון זמין. ניתן לשלוח דוא"ל ישירות.');
         }

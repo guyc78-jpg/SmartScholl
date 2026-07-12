@@ -13,6 +13,7 @@ import {
   DEFAULT_SUN_THU, DEFAULT_FRI
 } from '@/lib/bellSchedule';
 import { hasApprovedRole } from '@/lib/roleUtils';
+import { getSchoolTimeString } from '@/lib/dateUtils';
 
 const KIND_META = {
   lesson:   { label: 'שיעור',       icon: BookOpen, color: 'text-primary' },
@@ -168,8 +169,7 @@ function PeriodEditor({ periods, onChange, activeIndex, onRequestRemove }) {
 // Find currently active row by clock (HH:MM within [start,end))
 function findActiveIndex(periods) {
   if (!periods?.length) return -1;
-  const now = new Date();
-  const hhmm = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const hhmm = getSchoolTimeString();
   return periods.findIndex(p => p.start_time && p.end_time && hhmm >= p.start_time && hhmm < p.end_time);
 }
 

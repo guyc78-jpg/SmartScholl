@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { AlertTriangle, CheckCircle2, Loader2, Users, XCircle } from 'lucide-react';
 import EventTypeBadge from './EventTypeBadge';
+import { addDaysToDateString } from '@/lib/dateUtils';
 
 export default function ClassTrackingPanel({ events, classId, todayIso }) {
   const [students, setStudents] = useState([]);
@@ -29,7 +30,9 @@ export default function ClassTrackingPanel({ events, classId, todayIso }) {
 
   const upcoming = useMemo(() => events.filter(e => e.date >= todayIso).sort((a, b) => a.date.localeCompare(b.date)).slice(0, 8), [events, todayIso]);
   const selectedEvent = upcoming.find(e => e.id === selectedEventId) || upcoming[0];
-  const eventCompletions = completions.filter(c => c.exam_id === selectedEvent?.id);
+  const eventCompletions = completions.filter(
+    c => c.exam_id === selectedEvent?.id && c.status !== 'not_started'
+  );
   const markedIds = new Set(eventCompletions.map(c => c.student_id));
   const marked = students.filter(s => markedIds.has(s.id));
   const unmarked = students.filter(s => !markedIds.has(s.id));
@@ -39,9 +42,7 @@ export default function ClassTrackingPanel({ events, classId, todayIso }) {
   });
 
   const weeklyLoad = useMemo(() => {
-    const end = new Date(todayIso);
-    end.setDate(end.getDate() + 7);
-    const endIso = end.toISOString().split('T')[0];
+    const endIso = addDaysToDateString(todayIso, 7);
     return events.filter(e => e.date >= todayIso && e.date <= endIso).length;
   }, [events, todayIso]);
 

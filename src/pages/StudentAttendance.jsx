@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { CLASS_ID } from '@/lib/demoData';
 import { getStudentClassId } from '@/lib/studentProfile';
 import { fetchMyStudent } from '@/lib/studentData';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { CalendarCheck } from 'lucide-react';
+import { formatSchoolDate } from '@/lib/dateUtils';
 
-const fmt = d => d ? new Date(d).toLocaleDateString('he-IL', { weekday: 'short', day: 'numeric', month: 'numeric' }) : '';
+const fmt = d => formatSchoolDate(d, { weekday: 'short', day: 'numeric', month: 'numeric' });
 
 const STAT_CHIPS = [
   { status: 'נוכח', classes: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300' },
@@ -18,7 +18,7 @@ const STAT_CHIPS = [
 ];
 
 export default function StudentAttendance({ user }) {
-  const classId = getStudentClassId(user, CLASS_ID);
+  const classId = getStudentClassId(user, '');
   const [records, setRecords] = useState(null);
 
   useEffect(() => {

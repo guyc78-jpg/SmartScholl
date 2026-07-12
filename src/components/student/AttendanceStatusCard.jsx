@@ -2,12 +2,13 @@ import { Link } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { CalendarCheck, ChevronLeft } from 'lucide-react';
+import { formatSchoolDate, getLocalDateString } from '@/lib/dateUtils';
 
-const fmt = d => d ? new Date(d).toLocaleDateString('he-IL', { day: 'numeric', month: 'numeric' }) : '';
+const fmt = d => formatSchoolDate(d, { day: 'numeric', month: 'numeric' });
 const dayMs = 24 * 60 * 60 * 1000;
 
 export default function AttendanceStatusCard({ records }) {
-  const cutoff = new Date(Date.now() - 14 * dayMs).toISOString().split('T')[0];
+  const cutoff = getLocalDateString(new Date(Date.now() - 14 * dayMs));
   const exceptions = (records || []).filter(r => r.status && r.status !== 'נוכח' && (r.date || '') >= cutoff).slice(0, 4);
 
   return (

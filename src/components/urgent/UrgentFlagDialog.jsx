@@ -9,11 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { Calendar, Bell, X } from 'lucide-react';
 import { CATEGORIES, PRIORITIES, STATUSES } from './urgentFlagUtils';
+import { formatSchoolDate } from '@/lib/dateUtils';
 
 // Custom date field — shows placeholder when empty, clear button when filled
 function DateField({ value, onChange, icon: Icon, placeholder }) {
   const formatted = value
-    ? new Date(value).toLocaleDateString('he-IL', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    ? formatSchoolDate(value, { day: '2-digit', month: '2-digit', year: 'numeric' })
     : null;
 
   return (

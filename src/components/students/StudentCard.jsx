@@ -28,7 +28,10 @@ export default function StudentCard({ student, communityPct, onParentConversatio
               <h3 className="text-sm font-semibold leading-tight text-foreground">{formatStudentName(student)}</h3>
               {student.status && student.status !== 'פעיל' && <StatusBadge status={student.status} />}
             </div>
-            <p className="text-xs text-muted-foreground">{classIdentityLabel || student.class_name || 'כיתה י׳1'} · {student.grade || 'י'}</p>
+            <p className="text-xs text-muted-foreground">
+              {classIdentityLabel || student.class_name || 'ללא שיוך כיתה'}
+              {student.grade ? ` · ${student.grade}` : ''}
+            </p>
 
             <div className="mt-1.5 flex flex-wrap justify-start gap-3" dir="rtl">
               {phone && (

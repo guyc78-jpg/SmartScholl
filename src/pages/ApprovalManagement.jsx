@@ -10,6 +10,7 @@ import {
   BookOpen, Users, ChevronDown, ChevronUp, Shield, ScrollText, School
 } from 'lucide-react';
 import PageHeader from '@/components/ui/PageHeader';
+import { formatSchoolDate } from '@/lib/dateUtils';
 
 const ROLE_LABELS = {
   homeroom_teacher: 'מורה / מחנך/ת',
@@ -100,7 +101,7 @@ function RequestCard({ req, onApprove, onReject, processing }) {
               <div className="mt-3 pt-3 border-t space-y-1 text-xs text-muted-foreground">
                 {req.school_role && <p><span className="font-medium">תפקיד בביה"ס:</span> {req.school_role}</p>}
                 {req.request_type === 'class_change' && req.request_reason && <p><span className="font-medium">סיבת הבקשה:</span> {req.request_reason}</p>}
-                <p><span className="font-medium">נשלח:</span> {req.created_date ? new Date(req.created_date).toLocaleString('he-IL') : '-'}</p>
+                <p><span className="font-medium">נשלח:</span> {formatSchoolDate(req.created_date, { dateStyle: 'short', timeStyle: 'short' }) || '-'}</p>
                 {req.reviewed_by && <p><span className="font-medium">טופל ע"י:</span> {req.reviewed_by}</p>}
                 {req.rejection_reason && <p><span className="font-medium">סיבת דחייה:</span> {req.rejection_reason}</p>}
               </div>
@@ -176,7 +177,7 @@ export default function ApprovalManagement({ role }) {
       setLogs(res.data.logs || []);
     } catch (e) {
       console.error('Load pending error:', e);
-      const errorMsg = e?.response?.status === 403 
+      const errorMsg = e?.response?.status === 403
         ? 'אין לך הרשאה לגשת לעמוד זה. זה דורש הרשאות מנהלים או מחנך/ת כיתה.'
         : 'שגיאה בטעינת הנתונים';
       toast.error(errorMsg);
@@ -303,7 +304,7 @@ export default function ApprovalManagement({ role }) {
                     log.severity === 'warning' ? 'bg-amber-100 text-amber-700' :
                     'bg-blue-100 text-blue-700'
                   }`}>{log.severity}</span>
-                  <p className="text-xs text-muted-foreground mt-1">{log.created_date ? new Date(log.created_date).toLocaleString('he-IL') : ''}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{formatSchoolDate(log.created_date, { dateStyle: 'short', timeStyle: 'short' })}</p>
                 </div>
               </div>
             </div>

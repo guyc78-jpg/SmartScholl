@@ -1,17 +1,17 @@
 import { Link } from 'react-router-dom';
 import { BookOpen, CalendarCheck, Heart } from 'lucide-react';
-
-const dayMs = 24 * 60 * 60 * 1000;
+import { addDaysToDateString, differenceInDateStrings, getLocalDateString } from '@/lib/dateUtils';
 
 function examCountdown(exam) {
   if (!exam?.date) return { value: '—', hint: 'אין מבחנים קרובים' };
-  const diff = Math.round((new Date(exam.date) - new Date(new Date().toDateString())) / dayMs);
+  const diff = differenceInDateStrings(exam.date, getLocalDateString());
+  if (!Number.isFinite(diff)) return { value: '—', hint: 'תאריך המבחן אינו תקין' };
   const value = diff <= 0 ? 'היום' : diff === 1 ? 'מחר' : `בעוד ${diff} ימים`;
   return { value, hint: `מבחן קרוב · ${exam.subject || exam.title}` };
 }
 
 export default function StudentQuickStats({ nextExam, attendanceRecords, communityApproved, communityGoal }) {
-  const cutoff = new Date(Date.now() - 30 * dayMs).toISOString().split('T')[0];
+  const cutoff = addDaysToDateString(getLocalDateString(), -30);
   const recent = (attendanceRecords || []).filter(r => (r.date || '') >= cutoff);
   const present = recent.filter(r => r.status === 'נוכח').length;
   const attendancePct = recent.length ? `${Math.round((present / recent.length) * 100)}%` : '—';

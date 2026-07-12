@@ -8,7 +8,9 @@
     "build": "vite build",
     "lint": "eslint . --quiet",
     "lint:fix": "eslint . --fix",
+    "test": "node --test tests/*.test.mjs",
     "typecheck": "tsc -p ./jsconfig.json",
+    "validate:base44": "node scripts/validate-base44.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -77,7 +79,7 @@
     "tailwindcss-animate": "^1.0.7",
     "three": "^0.171.0",
     "vaul": "^1.1.2",
-    "xlsx": "^0.18.5",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
     "zod": "^3.24.2"
   },
   "devDependencies": {

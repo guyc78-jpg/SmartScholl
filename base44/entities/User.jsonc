@@ -14,8 +14,10 @@
         "student",
         "parent"
       ],
-      "default": "student",
-      "description": "\u05d4\u05e8\u05e9\u05d0\u05ea \u05de\u05e2\u05e8\u05db\u05ea / \u05ea\u05e4\u05e7\u05d9\u05d3 \u05e8\u05d0\u05e9\u05d9 \u05de\u05d0\u05d5\u05e9\u05e8"
+      "description": "\u05d4\u05e8\u05e9\u05d0\u05ea \u05de\u05e2\u05e8\u05db\u05ea / \u05ea\u05e4\u05e7\u05d9\u05d3 \u05e8\u05d0\u05e9\u05d9 \u05de\u05d0\u05d5\u05e9\u05e8",
+      "rls": {
+        "write": { "user_condition": { "role": "admin" } }
+      }
     },
     "roles": {
       "type": "array",
@@ -32,7 +34,10 @@
           "parent"
         ]
       },
-      "description": "\u05db\u05dc \u05d4\u05ea\u05e4\u05e7\u05d9\u05d3\u05d9\u05dd \u05d4\u05de\u05d0\u05d5\u05e9\u05e8\u05d9\u05dd \u05dc\u05de\u05e9\u05ea\u05de\u05e9"
+      "description": "\u05db\u05dc \u05d4\u05ea\u05e4\u05e7\u05d9\u05d3\u05d9\u05dd \u05d4\u05de\u05d0\u05d5\u05e9\u05e8\u05d9\u05dd \u05dc\u05de\u05e9\u05ea\u05de\u05e9",
+      "rls": {
+        "write": { "user_condition": { "role": "admin" } }
+      }
     },
     "available_roles": {
       "type": "array",
@@ -49,7 +54,10 @@
           "parent"
         ]
       },
-      "description": "\u05ea\u05e4\u05e7\u05d9\u05d3\u05d9\u05dd \u05de\u05d0\u05d5\u05e9\u05e8\u05d9\u05dd \u05dc\u05d1\u05d7\u05d9\u05e8\u05d4 \u05d1\u05ea\u05e6\u05d5\u05d2\u05d4/\u05de\u05e6\u05d1 \u05e2\u05d1\u05d5\u05d3\u05d4"
+      "description": "\u05ea\u05e4\u05e7\u05d9\u05d3\u05d9\u05dd \u05de\u05d0\u05d5\u05e9\u05e8\u05d9\u05dd \u05dc\u05d1\u05d7\u05d9\u05e8\u05d4 \u05d1\u05ea\u05e6\u05d5\u05d2\u05d4/\u05de\u05e6\u05d1 \u05e2\u05d1\u05d5\u05d3\u05d4",
+      "rls": {
+        "write": { "user_condition": { "role": "admin" } }
+      }
     },
     "active_work_role": {
       "type": "string",
@@ -203,11 +211,20 @@
     },
     "profile_class_id": {
       "type": "string",
-      "description": "\u05de\u05d6\u05d4\u05d4 \u05e8\u05e9\u05d5\u05de\u05ea \u05d4\u05db\u05d9\u05ea\u05d4 \u05d4\u05de\u05e9\u05d5\u05d9\u05db\u05ea"
+      "description": "\u05de\u05d6\u05d4\u05d4 \u05e8\u05e9\u05d5\u05de\u05ea \u05d4\u05db\u05d9\u05ea\u05d4 \u05d4\u05de\u05e9\u05d5\u05d9\u05db\u05ea",
+      "rls": { "write": { "user_condition": { "role": "admin" } } }
+    },
+    "profile_homeroom_class_id": {
+      "type": "string",
+      "description": "\u05de\u05d6\u05d4\u05d4 \u05db\u05d9\u05ea\u05ea \u05d4\u05d7\u05d9\u05e0\u05d5\u05da \u05d4\u05de\u05d0\u05d5\u05e9\u05e8\u05ea",
+      "rls": {
+        "write": { "user_condition": { "role": "admin" } }
+      }
     },
     "profile_class": {
       "type": "string",
-      "description": "\u05e9\u05dd \u05db\u05d9\u05ea\u05ea \u05ea\u05dc\u05de\u05d9\u05d3"
+      "description": "\u05e9\u05dd \u05db\u05d9\u05ea\u05ea \u05ea\u05dc\u05de\u05d9\u05d3",
+      "rls": { "write": { "user_condition": { "role": "admin" } } }
     },
     "profile_homeroom_teacher": {
       "type": "string",
@@ -231,11 +248,13 @@
     },
     "profile_grade_managed": {
       "type": "string",
-      "description": "\u05e9\u05db\u05d1\u05d4 \u05de\u05e9\u05d5\u05d9\u05db\u05ea \u05de\u05d0\u05d5\u05e9\u05e8\u05ea"
+      "description": "\u05e9\u05db\u05d1\u05d4 \u05de\u05e9\u05d5\u05d9\u05db\u05ea \u05de\u05d0\u05d5\u05e9\u05e8\u05ea",
+      "rls": { "write": { "user_condition": { "role": "admin" } } }
     },
     "profile_homeroom_class": {
       "type": "string",
-      "description": "\u05db\u05d9\u05ea\u05d4 \u05de\u05e9\u05d5\u05d9\u05db\u05ea \u05de\u05d0\u05d5\u05e9\u05e8\u05ea"
+      "description": "\u05db\u05d9\u05ea\u05d4 \u05de\u05e9\u05d5\u05d9\u05db\u05ea \u05de\u05d0\u05d5\u05e9\u05e8\u05ea",
+      "rls": { "write": { "user_condition": { "role": "admin" } } }
     },
     "profile_division": {
       "type": "string",
@@ -243,7 +262,8 @@
         "upper",
         "middle"
       ],
-      "description": "\u05d7\u05d8\u05d9\u05d1\u05d4 \u05de\u05e9\u05d5\u05d9\u05db\u05ea \u05dc\u05de\u05e0\u05d4\u05dc/\u05ea \u05d7\u05d8\u05d9\u05d1\u05d4"
+      "description": "\u05d7\u05d8\u05d9\u05d1\u05d4 \u05de\u05e9\u05d5\u05d9\u05db\u05ea \u05dc\u05de\u05e0\u05d4\u05dc/\u05ea \u05d7\u05d8\u05d9\u05d1\u05d4",
+      "rls": { "write": { "user_condition": { "role": "admin" } } }
     },
     "status": {
       "type": "string",
@@ -254,11 +274,67 @@
         "rejected"
       ],
       "default": "active",
-      "description": "\u05e1\u05d8\u05d8\u05d5\u05e1 \u05de\u05e9\u05ea\u05de\u05e9 \u05e4\u05e0\u05d9\u05de\u05d9 \u05dc\u05e0\u05d9\u05d4\u05d5\u05dc"
+      "description": "\u05e1\u05d8\u05d8\u05d5\u05e1 \u05de\u05e9\u05ea\u05de\u05e9 \u05e4\u05e0\u05d9\u05de\u05d9 \u05dc\u05e0\u05d9\u05d4\u05d5\u05dc",
+      "rls": { "write": { "user_condition": { "role": "admin" } } }
     },
     "school_name": {
       "type": "string",
       "description": "\u05e9\u05dd \u05d1\u05d9\u05ea \u05d4\u05e1\u05e4\u05e8 (\u05de\u05d5\u05d2\u05d3\u05e8 \u05e2\u05f4\u05d9 \u05de\u05e0\u05d4\u05dc \u05de\u05e2\u05e8\u05db\u05ea \u05d5\u05de\u05d5\u05e6\u05d2 \u05d1\u05e2\u05d3\u05d9\u05e0\u05d5\u05ea \u05d1\u05d3\u05e9\u05d1\u05d5\u05e8\u05d3 \u05d5\u05d1\u05db\u05d5\u05ea\u05e8\u05ea)"
+    },
+    "authorization_student_id": {
+      "type": "string",
+      "description": "\u05de\u05d6\u05d4\u05d4 \u05ea\u05dc\u05de\u05d9\u05d3 \u05de\u05d0\u05d5\u05de\u05ea \u05dc\u05d0\u05db\u05d9\u05e4\u05ea RLS",
+      "rls": { "write": { "user_condition": { "role": "admin" } } }
+    },
+    "authorization_class_id": {
+      "type": "string",
+      "description": "\u05de\u05d6\u05d4\u05d4 \u05db\u05d9\u05ea\u05d4 \u05de\u05d0\u05d5\u05de\u05ea \u05dc\u05d0\u05db\u05d9\u05e4\u05ea RLS",
+      "rls": { "write": { "user_condition": { "role": "admin" } } }
+    },
+    "authorization_grade": {
+      "type": "string",
+      "description": "\u05e9\u05db\u05d1\u05d4 \u05de\u05d0\u05d5\u05de\u05ea \u05dc\u05d0\u05db\u05d9\u05e4\u05ea RLS",
+      "rls": { "write": { "user_condition": { "role": "admin" } } }
+    },
+    "authorization_division": {
+      "type": "string",
+      "enum": ["", "upper", "middle"],
+      "description": "\u05d7\u05d8\u05d9\u05d1\u05d4 \u05de\u05d0\u05d5\u05de\u05ea \u05dc\u05d0\u05db\u05d9\u05e4\u05ea RLS",
+      "rls": { "write": { "user_condition": { "role": "admin" } } }
+    },
+    "authorization_active": {
+      "type": "boolean",
+      "default": false,
+      "description": "\u05e1\u05de\u05df \u05d4\u05e8\u05e9\u05d0\u05d4 \u05de\u05d0\u05d5\u05de\u05ea \u05dc\u05d2\u05d9\u05e9\u05d4 \u05dc\u05e0\u05ea\u05d5\u05e0\u05d9 \u05d4\u05de\u05e2\u05e8\u05db\u05ea",
+      "rls": { "write": { "user_condition": { "role": "admin" } } }
+    }
+  },
+  "rls": {
+    "create": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "system_admin" } }
+      ]
+    },
+    "read": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "system_admin" } },
+        { "id": "{{user.id}}" }
+      ]
+    },
+    "update": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "system_admin" } },
+        { "id": "{{user.id}}" }
+      ]
+    },
+    "delete": {
+      "$or": [
+        { "user_condition": { "role": "admin" } },
+        { "user_condition": { "role": "system_admin" } }
+      ]
     }
   }
 }

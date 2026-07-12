@@ -1,0 +1,14 @@
+{
+  "name": "queueSmartPushNotifications",
+  "entry": "entry.ts",
+  "automations": [
+    {"name":"Queue attendance notifications","type":"entity","entity_name":"AttendanceRecord","event_types":["create","update"],"is_active":true},
+    {"name":"Queue community-service notifications","type":"entity","entity_name":"CommunityServiceReport","event_types":["create","update"],"is_active":true},
+    {"name":"Queue communication notifications","type":"entity","entity_name":"Communication","event_types":["create","update"],"is_active":true},
+    {"name":"Queue discipline notifications","type":"entity","entity_name":"DisciplineEvent","event_types":["create","update"],"is_active":true},
+    {"name":"Queue exam-grade notifications","type":"entity","entity_name":"ExamGradeReport","event_types":["create","update"],"is_active":true},
+    {"name":"Queue task notifications","type":"entity","entity_name":"Task","event_types":["create","update"],"is_active":true},
+    {"name":"Queue urgent-flag notifications","type":"entity","entity_name":"UrgentFlag","event_types":["create","update"],"is_active":true},
+    {"name":"Queue treatment notifications","type":"entity","entity_name":"TreatmentCase","event_types":["create","update"],"is_active":true}
+  ]
+}

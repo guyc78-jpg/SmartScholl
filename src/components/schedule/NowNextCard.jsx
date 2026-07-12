@@ -8,7 +8,7 @@ import { colorToSubjectStyle, subjectMapById } from '@/lib/scheduleSubjects';
 import { loadScheduleNowNextData, resolveScheduleNowNext } from '@/lib/scheduleNowNext';
 
 // Smart "now / next" card driven by real ScheduleSlot lessons for class + day, enriched with the same bell times shown in Schedule.
-export default function NowNextCard({ classId, className, showEmpty = false }) {
+export default function NowNextCard({ classId, className = '', showEmpty = false }) {
   const [state, setState] = useState({ loading: true, current: null, next: null, remainingMins: 0 });
   const [subjectsById, setSubjectsById] = useState({});
   const slotsRef = useRef([]);
@@ -98,7 +98,7 @@ export default function NowNextCard({ classId, className, showEmpty = false }) {
   );
 }
 
-function LessonBlock({ title, slot, emptyText, remainingMins, timeToNext, subjectDefinition, muted = false }) {
+function LessonBlock({ title, slot, emptyText, remainingMins = null, timeToNext = null, subjectDefinition, muted = false }) {
   const subjectStyle = slot && subjectDefinition ? colorToSubjectStyle(subjectDefinition.color) : null;
   const timeRange = slot?.start_time
     ? slot.end_time ? `${slot.start_time}–${slot.end_time}` : slot.start_time

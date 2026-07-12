@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { THRESHOLDS } from '@/pages/ClassAttendance';
+import { ATTENDANCE_THRESHOLDS as THRESHOLDS } from '@/lib/attendanceThresholds';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
-import { CLASS_ID } from '@/lib/demoData';
 import StatCard from '@/components/ui/StatCard';
 import UrgentFlagsSection from '@/components/urgent/UrgentFlagsSection';
 import DailySmartCard from '@/components/dashboard/DailySmartCard';
@@ -34,6 +33,7 @@ import { getAvailableRoles, getUserFirstName, hasApprovedRole, getRoleDisplayLin
 import { getClassDisplayName, getHomeroomClassLabel } from '@/lib/classIdentity';
 import useReadNotifications from '@/hooks/useReadNotifications';
 import { ATTENDANCE_EXCEPTION_STATUSES, getAttendanceScopedStudents, getScopedClassIds, filterScopedAttendance, getSelectedAttendanceDate, getLocalDateString, loadScopedAttendanceForDate } from '@/lib/attendanceScope.js';
+import { formatSchoolDate } from '@/lib/dateUtils';
 
 const HEBREW_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 const HEBREW_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
@@ -77,7 +77,7 @@ export default function Dashboard({ user, role, initialData }) {
   const dashboardTitle = roleDisplayLines[0];
   const dashboardSecondaryTitle = roleDisplayLines.slice(1).join(' · ');
   // classId must be stable from the start — never depend on async-loaded students
-  const classId = getUserApprovedClassId(user, CLASS_ID);
+  const classId = getUserApprovedClassId(user, '');
   const classIdentityTitle = dashboardClassRoom ? getClassDisplayName(dashboardClassRoom, getUserApprovedClass(user)) : getUserApprovedClass(user);
   const headerRoleTitle = isActiveHomeroom ? getHomeroomClassLabel(dashboardClassRoom, classIdentityTitle) : dashboardTitle;
   const scopeLabels = [
@@ -141,7 +141,7 @@ export default function Dashboard({ user, role, initialData }) {
       const scopedIds = new Set(scopedStudents.map(student => student.id));
       const shouldFetchAll = isActiveAdmin || classIds.length > 3;
       const filterByClass = records => (records || []).filter(record => classIdSet.has(record.class_id));
-      
+
       const retryFetch = async (fn, retries = 2) => {
         for (let i = 0; i < retries; i++) {
           try {
@@ -216,7 +216,6 @@ export default function Dashboard({ user, role, initialData }) {
   const attendanceExceptionsToday = attendanceExceptionRecords.length;
   const openTasks = tasks.filter(t => t.status !== 'בוצע').length;
 
-  const MONTH_SHORT = ['ינו', 'פבר', 'מרץ', 'אפר', 'מאי', 'יונ', 'יול', 'אוג', 'ספט', 'אוק', 'נוב', 'דצמ'];
 
   const upcomingEvents = exams
     .filter(e => e.date >= today)
@@ -302,7 +301,7 @@ export default function Dashboard({ user, role, initialData }) {
       id: `conversation-${c.id}`,
       signature: `conversation-${c.id}-${c.date}-${c.time}`,
       title: `${c.conversation_type}${c.student_name ? ` · ${c.student_name}` : ''}`,
-      description: `${new Date(c.date).toLocaleDateString('he-IL')} בשעה ${c.time}`,
+      description: `${formatSchoolDate(c.date)} בשעה ${c.time}`,
       to: c.student_id ? `/students/${c.student_id}` : '/conversations'
     })),
   ];
@@ -391,7 +390,6 @@ export default function Dashboard({ user, role, initialData }) {
           allAttendanceRecords={allAttRecords}
           performanceReviews={performanceReviews}
           tasks={tasks}
-          classId={classId}
         />
       )}
 
@@ -471,14 +469,13 @@ export default function Dashboard({ user, role, initialData }) {
               </CardHeader>
               <CardContent className="space-y-2">
                 {upcomingEvents.map(event => {
-                  const d = new Date(event.date);
                   const typeStyle = TYPE_STYLES[event.type] || TYPE_STYLES['אחר'];
                   return (
                     <div key={event.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-muted/50">
                       {/* Date badge */}
                       <div className="w-10 h-10 bg-primary/10 rounded-xl flex flex-col items-center justify-center text-primary flex-shrink-0">
-                        <span className="text-[11px] font-bold leading-none">{d.getDate()}</span>
-                        <span className="text-[9px] leading-none mt-0.5">{MONTH_SHORT[d.getMonth()]}</span>
+                        <span className="text-[11px] font-bold leading-none">{formatSchoolDate(event.date, { day: 'numeric' })}</span>
+                        <span className="text-[9px] leading-none mt-0.5">{formatSchoolDate(event.date, { month: 'short' })}</span>
                       </div>
                       {/* Title + subtitle */}
                       <div className="flex-1 min-w-0">

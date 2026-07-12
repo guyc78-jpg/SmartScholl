@@ -23,9 +23,9 @@ export default function WatchStudentsSection({
       const openTasks = tasks.filter(t => t.student_id === studentId && t.status !== 'בוצע').length;
       const recentPerformance = performanceReviews
         .filter(p => p.student_id === studentId)
-        .sort((a, b) => new Date(b.date) - new Date(a.date))
+        .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))
         .slice(0, 1);
-      
+
       const lowScores = recentPerformance[0] ? [
         recentPerformance[0].learning_habits,
         recentPerformance[0].participation,

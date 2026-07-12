@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { base44 } from '@/api/base44Client';
-import { CLASS_ID } from '@/lib/demoData';
 import { getStudentClassId, getStudentClassName } from '@/lib/studentProfile';
 import { fetchMyStudent } from '@/lib/studentData';
 import { Card, CardContent } from '@/components/ui/card';
@@ -12,9 +11,11 @@ import StudentProfileEditCard from '@/components/student/StudentProfileEditCard'
 import ClassChangeRequestCard from '@/components/profile/ClassChangeRequestCard';
 import { getUserDisplayName } from '@/lib/roleUtils';
 import { LogOut } from 'lucide-react';
+import { useAuth } from '@/lib/AuthContext';
 
 export default function StudentMore({ user }) {
-  const classId = getStudentClassId(user, CLASS_ID);
+  const { logout } = useAuth();
+  const classId = getStudentClassId(user, '');
   const className = getStudentClassName(user);
   const [data, setData] = useState(null);
 
@@ -75,7 +76,7 @@ export default function StudentMore({ user }) {
         <Card><CardContent className="py-6 text-center text-sm text-muted-foreground">לא נמצאה רשומת תלמיד/ה מקושרת לחשבון. פנו למחנך/ת הכיתה.</CardContent></Card>
       )}
 
-      <Button variant="outline" className="w-full gap-2" onClick={() => base44.auth.logout('/')}>
+      <Button variant="outline" className="w-full gap-2" onClick={() => logout(false)}>
         <LogOut className="w-4 h-4" />התנתקות
       </Button>
     </div>

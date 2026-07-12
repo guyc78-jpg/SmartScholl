@@ -10,6 +10,7 @@ import { CheckSquare, Plus, Check } from 'lucide-react';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { toast } from 'sonner';
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
+import { formatSchoolDate } from '@/lib/dateUtils';
 
 const PRIORITIES = ['נמוכה', 'בינונית', 'גבוהה', 'דחופה'];
 const CATEGORIES = ['נוכחות', 'משמעת', 'תפקוד', 'הורים', 'כללי'];
@@ -31,7 +32,7 @@ export default function TasksList({ tasks, onRefresh, user, role, classId, stude
       student_id: form.student_id || null,
       student_name: selectedStudent?.full_name || '',
       title: form.title,
-      description: `[נוצר ע"י ${user?.full_name || user?.email} · ${new Date().toLocaleString('he-IL')}]\n${form.description}`,
+      description: `[נוצר ע"י ${user?.full_name || user?.email} · ${formatSchoolDate(new Date(), { dateStyle: 'short', timeStyle: 'short' })}]\n${form.description}`,
       due_date: form.due_date,
       priority: form.priority,
       category: form.category,
@@ -103,7 +104,7 @@ export default function TasksList({ tasks, onRefresh, user, role, classId, stude
               <Textarea value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))} className="h-16 text-sm" placeholder="פרטים נוספים..." />
             </div>
             <div className="text-xs text-muted-foreground bg-muted rounded-lg px-3 py-2">
-              יישמר עם: <span className="font-medium">{user?.full_name || user?.email}</span> · {new Date().toLocaleString('he-IL')}
+              יישמר עם: <span className="font-medium">{user?.full_name || user?.email}</span> · {formatSchoolDate(new Date(), { dateStyle: 'short', timeStyle: 'short' })}
             </div>
             <div className="flex gap-2">
               <Button size="sm" onClick={handleSave} disabled={saving} className="flex-1">{saving ? 'שומר...' : 'שמור'}</Button>

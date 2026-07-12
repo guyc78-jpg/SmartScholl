@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Clock, LogOut, AlertTriangle, Lock, Mail } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { base44 } from '@/api/base44Client';
+import { useAuth } from '@/lib/AuthContext';
 
 const ROLE_LABELS = {
   homeroom_teacher: 'מחנך/ת',
@@ -9,6 +9,7 @@ const ROLE_LABELS = {
 };
 
 export default function PendingApproval({ user }) {
+  const { logout } = useAuth();
   const roleLabel = ROLE_LABELS[user?.requested_role] || 'צוות';
   const isRejected = user?.onboarding_status === 'rejected';
 
@@ -69,7 +70,7 @@ export default function PendingApproval({ user }) {
         <Button
           variant="outline"
           className="w-full gap-2"
-          onClick={() => base44.auth.logout()}
+          onClick={() => logout(false)}
         >
           <LogOut className="w-4 h-4" />
           התנתק/י

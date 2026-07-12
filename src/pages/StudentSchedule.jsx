@@ -1,12 +1,12 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { base44 } from '@/api/base44Client';
-import { CLASS_ID } from '@/lib/demoData';
 import { getStudentClassId, getStudentClassName } from '@/lib/studentProfile';
 import { findClassRoomByName } from '@/lib/classAssignment';
 import PageHeader from '@/components/ui/PageHeader';
+import { Button } from '@/components/ui/button';
 import NowNextCard from '@/components/schedule/NowNextCard';
 import WeeklyScheduleGrid from '@/components/schedule/WeeklyScheduleGrid';
-import { loadBellSchedule, getTodayDayType, HEBREW_DAY_NAMES, getNowAndNext } from '@/lib/bellSchedule';
+import { loadBellSchedule, HEBREW_DAY_NAMES, getNowAndNext } from '@/lib/bellSchedule';
 
 // בניית שורות שיעורים מתוך לוח הצלצולים — זהה לעמוד מערכת השעות של הצוות
 function buildPeriodRows(bellPeriods) {
@@ -26,7 +26,7 @@ function buildPeriodRows(bellPeriods) {
 }
 
 export default function StudentSchedule({ user }) {
-  const classId = getStudentClassId(user, CLASS_ID);
+  const classId = getStudentClassId(user, '');
   const fallbackClassName = getStudentClassName(user);
   const [slots, setSlots] = useState([]);
   const [periods, setPeriods] = useState([]);
@@ -34,6 +34,8 @@ export default function StudentSchedule({ user }) {
   const [className, setClassName] = useState('');
   const [currentPeriod, setCurrentPeriod] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const loadRequestId = useRef(0);
   const todayDayName = HEBREW_DAY_NAMES[new Date().getDay()];
 
   // הדגשת השיעור הנוכחי — מתעדכן כל 30 שניות
@@ -49,23 +51,36 @@ export default function StudentSchedule({ user }) {
     return () => clearInterval(t);
   }, [periods]);
 
-  useEffect(() => { load(); }, [classId]);
+  useEffect(() => {
+    load();
+    return () => { loadRequestId.current += 1; };
+  }, [classId, fallbackClassName]);
 
   async function load() {
+    const requestId = ++loadRequestId.current;
     setLoading(true);
-    const dayType = getTodayDayType();
-    const [bellPeriods, classRooms] = await Promise.all([
-      loadBellSchedule(dayType === 'fri' ? 'sun_thu' : dayType),
-      base44.entities.ClassRoom.list('-updated_date', 200),
-    ]);
-    const classRoom = classRooms.find(room => room.id === classId) || findClassRoomByName(classRooms, fallbackClassName);
-    const resolvedClassId = classRoom?.id || classId;
-    const data = await base44.entities.ScheduleSlot.filter({ class_id: resolvedClassId });
-    setActiveClassId(resolvedClassId);
-    setSlots(data);
-    setPeriods(buildPeriodRows(bellPeriods));
-    setClassName(classRoom?.name || fallbackClassName || '');
-    setLoading(false);
+    setError('');
+    try {
+      const [bellPeriods, classRooms] = await Promise.all([
+        loadBellSchedule('sun_thu'),
+        base44.entities.ClassRoom.list('-updated_date', 200),
+      ]);
+      const classRoom = classRooms.find(room => room.id === classId) || findClassRoomByName(classRooms, fallbackClassName);
+      const resolvedClassId = classRoom?.id || classId;
+      if (!resolvedClassId) throw new Error('Missing student class assignment');
+      const data = await base44.entities.ScheduleSlot.filter({ class_id: resolvedClassId });
+      if (requestId !== loadRequestId.current) return;
+      setActiveClassId(resolvedClassId);
+      setSlots(data || []);
+      setPeriods(buildPeriodRows(bellPeriods));
+      setClassName(classRoom?.name || fallbackClassName || '');
+    } catch (loadError) {
+      if (requestId !== loadRequestId.current) return;
+      console.error('Student schedule load failed:', loadError);
+      setError('לא הצלחנו לטעון את מערכת השעות. בדקו את החיבור ונסו שוב.');
+    } finally {
+      if (requestId === loadRequestId.current) setLoading(false);
+    }
   }
 
   const slotsByKey = useMemo(() => {
@@ -85,8 +100,16 @@ export default function StudentSchedule({ user }) {
       <NowNextCard classId={activeClassId || classId} />
 
       {loading ? (
-        <div className="flex justify-center py-12">
-          <div className="w-7 h-7 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+        <div className="flex justify-center py-12" role="status" aria-live="polite">
+          <div className="w-7 h-7 border-4 border-primary/20 border-t-primary rounded-full animate-spin" aria-hidden="true" />
+          <span className="sr-only">טוענים את מערכת השעות</span>
+        </div>
+      ) : error ? (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-5 text-center" role="alert">
+          <p className="text-sm text-destructive">{error}</p>
+          <Button type="button" variant="outline" size="sm" className="mt-3" onClick={load}>
+            נסו שוב
+          </Button>
         </div>
       ) : (
         <WeeklyScheduleGrid
@@ -95,7 +118,6 @@ export default function StudentSchedule({ user }) {
           todayDayName={todayDayName}
           currentPeriod={currentPeriod}
           canEdit={false}
-          onCellClick={() => {}}
         />
       )}
     </div>

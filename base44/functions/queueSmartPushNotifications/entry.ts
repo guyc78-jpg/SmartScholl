@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.34';
 
 const EVENT_LABELS = {
   attendance_exception: 'חריג נוכחות',
@@ -24,6 +24,17 @@ const PRESENT_STATUSES = new Set(['נוכח', 'נוכח/ת']);
 const COMMUNITY_EXCEPTION_STATUSES = new Set(['ממתין לאישור', 'דורש תיקון', 'נדחה']);
 const MIDDLE_GRADES = new Set(['ז', 'ח', 'ט', '7', '8', '9']);
 const UPPER_GRADES = new Set(['י', 'יא', 'יב', 'י׳', 'י״א', 'י״ב', '10', '11', '12']);
+
+const SUPPORTED_EVENT_ENTITIES = new Set([
+  'AttendanceRecord',
+  'CommunityServiceReport',
+  'Communication',
+  'DisciplineEvent',
+  'ExamGradeReport',
+  'Task',
+  'UrgentFlag',
+  'TreatmentCase',
+]);
 
 function parseRoles(value) {
   if (Array.isArray(value)) return value;
@@ -351,17 +362,30 @@ function actorMatchesUser(user, data) {
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
+    // Block anonymous external callers — this endpoint is reachable publicly.
+    // Entity-trigger automations run with an authenticated context.
+    const user = await base44.auth.me().catch(() => null);
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+
     const payload = await req.json().catch(() => ({}));
     const entityName = payload?.event?.entity_name;
     const eventType = payload?.event?.type;
-    let data = payload?.data;
+    const entityId = payload?.event?.entity_id || payload?.data?.id;
     const oldData = payload?.old_data;
 
-    if (!entityName || !eventType || eventType === 'delete') return Response.json({ ok: true, queued: 0 });
-    if (!data && payload?.payload_too_large && payload?.event?.entity_id) {
-      data = await base44.asServiceRole.entities[entityName].get(payload.event.entity_id);
+    if (!SUPPORTED_EVENT_ENTITIES.has(entityName) || !['create', 'update'].includes(eventType) || !entityId) {
+      return Response.json({ ok: true, queued: 0 });
     }
+    const data = await base44.asServiceRole.entities[entityName].get(entityId).catch(() => null);
     if (!data) return Response.json({ ok: true, queued: 0 });
+
+    const callerRoles = getRoles(user);
+    const privilegedCaller = user?.is_service === true
+      || callerRoles.includes('admin')
+      || callerRoles.includes('system_admin');
+    if (!privilegedCaller && !actorMatchesUser(user, data)) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 });
+    }
 
     const history = await loadHistory(base44, entityName, data, eventType);
     const descriptor = getEventDescriptor(entityName, data, oldData, eventType, history);
@@ -384,7 +408,17 @@ Deno.serve(async (req) => {
       return userCanReceive(user, classInfo);
     });
 
-    const records = recipients.map(user => ({
+    const sourceEntityId = data.id || entityId;
+    const sourceVersion = data.updated_date || data.created_date || '';
+    const sourceEventKey = `${entityName}:${sourceEntityId}:${eventType}:${sourceVersion}`;
+    const existingQueue = await base44.asServiceRole.entities.PushNotificationQueue.filter(
+      { source_event_key: sourceEventKey },
+      '-created_date',
+      5000
+    );
+    const existingRecipientIds = new Set((existingQueue || []).map(item => item.recipient_user_id).filter(Boolean));
+
+    const records = recipients.filter(user => !existingRecipientIds.has(user.id)).map(user => ({
       recipient_user_id: user.id,
       recipient_email: user.email || '',
       actor_user_id: actorUserId,
@@ -397,11 +431,15 @@ Deno.serve(async (req) => {
       url: descriptor.url,
       status: 'pending',
       queued_at: now,
+      source_entity: entityName,
+      source_entity_id: sourceEntityId,
+      source_event_key: sourceEventKey,
     }));
 
     if (records.length) await base44.asServiceRole.entities.PushNotificationQueue.bulkCreate(records);
     return Response.json({ ok: true, queued: records.length, event_type: descriptor.event_type });
   } catch (error) {
-    return Response.json({ error: error.message }, { status: 500 });
+    console.error('Function error:', error);
+    return Response.json({ error: 'Internal server error' }, { status: 500 });
   }
 });
