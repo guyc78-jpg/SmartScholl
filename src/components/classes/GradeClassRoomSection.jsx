@@ -1,6 +1,5 @@
 import { ChevronDown, School } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import ClassRoomCard from '@/components/classes/ClassRoomCard';
 import { cn } from '@/lib/utils';
 import { formatGrade } from '@/lib/schoolStructure';

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { base44 } from '@/api/base44Client';
-import { Button } from '@/components/ui/button';
 import { Flag, Plus, ChevronLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import UrgentFlagItem from './UrgentFlagItem';

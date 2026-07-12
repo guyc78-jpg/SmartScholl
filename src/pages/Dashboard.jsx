@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { ATTENDANCE_THRESHOLDS as THRESHOLDS } from '@/lib/attendanceThresholds';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import StatCard from '@/components/ui/StatCard';
 import UrgentFlagsSection from '@/components/urgent/UrgentFlagsSection';
@@ -11,14 +10,12 @@ import AttendanceExceptionsCard from '@/components/dashboard/AttendanceException
 import AttendanceExceptionsDialog from '@/components/dashboard/AttendanceExceptionsDialog';
 import ClassAssignmentAlert from '@/components/students/ClassAssignmentAlert';
 
-import {
-  Users, Clock, AlertTriangle, BookOpen, CheckSquare,
-  Shield, Heart, UserCheck, Calendar, MessageSquare,
-  Megaphone, Star, ChevronLeft, TrendingUp, CalendarDays
+import { BookOpen, CheckSquare,
+  Shield, Heart, MessageSquare,
+  Megaphone, Star, ChevronLeft, CalendarDays
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { TYPE_STYLES } from '@/components/exams/eventConstants';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import StatusBadge from '@/components/ui/StatusBadge';
 import QuickActionModal from '@/components/dashboard/QuickActionModal';
@@ -29,7 +26,7 @@ import SchoolNameBanner from '@/components/layout/SchoolNameBanner';
 import RoleIcon from '@/components/ui/RoleIcon';
 import NowNextCard from '@/components/schedule/NowNextCard';
 import { getUserApprovedClass, getUserApprovedClassId, getUserApprovedGrade } from '@/lib/schoolStructure';
-import { getAvailableRoles, getUserFirstName, hasApprovedRole, getRoleDisplayLines, getRoleShort } from '@/lib/roleUtils';
+import { getAvailableRoles, getUserFirstName, getRoleDisplayLines, getRoleShort } from '@/lib/roleUtils';
 import { getClassDisplayName, getHomeroomClassLabel } from '@/lib/classIdentity';
 import useReadNotifications from '@/hooks/useReadNotifications';
 import { ATTENDANCE_EXCEPTION_STATUSES, getAttendanceScopedStudents, getScopedClassIds, filterScopedAttendance, getSelectedAttendanceDate, getLocalDateString, loadScopedAttendanceForDate } from '@/lib/attendanceScope.js';

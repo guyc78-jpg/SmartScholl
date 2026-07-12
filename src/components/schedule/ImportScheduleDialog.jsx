@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { AlertTriangle, FileUp, Loader2, ChevronDown } from 'lucide-react';
+import { AlertTriangle, FileUp, Loader2 } from 'lucide-react';
 import SelectedFileNotice from '@/components/import/SelectedFileNotice';
 import { base44 } from '@/api/base44Client';
 import { ensureSubjectForName, normalizeSubjectName } from '@/lib/scheduleSubjects';

@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import PageHeader from '@/components/ui/PageHeader';
-import { Button } from '@/components/ui/button';
 import { Users, AlertTriangle, Lock } from 'lucide-react';
 import ClassDashboard from '@/components/grade/ClassDashboard';
 import { getUserApprovedGrade, normalizeGrade } from '@/lib/schoolStructure';

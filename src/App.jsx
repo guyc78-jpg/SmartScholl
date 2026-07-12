@@ -168,7 +168,7 @@ const AuthenticatedApp = () => {
       wasSimulatingRef.current = false;
       navigate('/permissions-tester', { replace: true });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [isSimulating]);
 
   useEffect(() => {

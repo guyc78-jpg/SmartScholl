@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { base44 } from '@/api/base44Client';
 import { toast } from 'sonner';
-import { Upload, FileText, Check, AlertCircle } from 'lucide-react';
+import { Upload, FileText, Check } from 'lucide-react';
 import SelectedFileNotice from '@/components/import/SelectedFileNotice';
 import { parseStudentsWorksheetRows } from '@/lib/studentImport';
 import { formatStudentName } from '@/lib/studentName';

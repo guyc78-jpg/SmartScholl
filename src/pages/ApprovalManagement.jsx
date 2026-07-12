@@ -3,11 +3,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { base44 } from '@/api/base44Client';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { toast } from 'sonner';
 import {
-  CheckCircle, XCircle, AlertTriangle, Clock, User,
-  BookOpen, Users, ChevronDown, ChevronUp, Shield, ScrollText, School
+  CheckCircle, XCircle, AlertTriangle, Clock,
+  BookOpen, Users, ChevronDown, ChevronUp, ScrollText, School
 } from 'lucide-react';
 import PageHeader from '@/components/ui/PageHeader';
 import { formatSchoolDate } from '@/lib/dateUtils';
