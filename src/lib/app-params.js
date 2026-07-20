@@ -7,7 +7,6 @@ const memoryStorage = {
 };
 const localStore = isNode ? memoryStorage : window.localStorage;
 const sessionStore = isNode ? memoryStorage : window.sessionStorage;
-const SENSITIVE_PARAMS = new Set(['access_token']);
 const TRUSTED_RUNTIME_HOSTS = ['base44.app', 'base44.com'];
 const LOCAL_RUNTIME_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
 const runtimeEnv = /** @type {Record<string, string | undefined>} */ (import.meta.env ?? {});
@@ -16,7 +15,7 @@ const toSnakeCase = (str) => {
 	return str.replace(/([A-Z])/g, '_$1').toLowerCase();
 }
 
-const storageForParam = (paramName) => SENSITIVE_PARAMS.has(paramName) ? sessionStore : localStore;
+const storageForParam = () => localStore;
 
 const isTrustedRuntimeUrl = (value) => {
 	if (!value) return false;
