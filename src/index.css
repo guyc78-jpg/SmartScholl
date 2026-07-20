@@ -6,90 +6,92 @@
 
 @layer base {
   :root {
-    --background: 40 22% 95%;
-    --foreground: 155 18% 13%;
-    --card: 40 32% 98%;
-    --card-foreground: 155 18% 13%;
-    --popover: 40 28% 98%;
-    --popover-foreground: 155 18% 13%;
-    --primary: 163 65% 25%;
-    --primary-foreground: 40 30% 98%;
-    --secondary: 38 18% 90%;
-    --secondary-foreground: 155 18% 17%;
-    --muted: 40 14% 91%;
+    --background: 42 35% 93%;
+    --foreground: 156 16% 13%;
+    --card: 43 45% 97%;
+    --card-foreground: 156 16% 13%;
+    --popover: 43 45% 97%;
+    --popover-foreground: 156 16% 13%;
+    --primary: 165 66% 30%;
+    --primary-foreground: 43 45% 98%;
+    --secondary: 42 22% 89%;
+    --secondary-foreground: 156 16% 17%;
+    --muted: 42 18% 90%;
     --muted-foreground: 156 8% 42%;
-    --accent: 158 24% 88%;
-    --accent-foreground: 163 60% 20%;
+    --accent: 162 26% 87%;
+    --accent-foreground: 165 60% 22%;
     --destructive: 2 58% 47%;
     --destructive-foreground: 0 0% 98%;
-    --border: 45 12% 82%;
-    --input: 45 12% 82%;
-    --ring: 163 65% 28%;
-    --chart-1: 163 65% 28%;
+    --border: 44 16% 82%;
+    --input: 44 16% 82%;
+    --ring: 165 66% 32%;
+    --chart-1: 165 66% 32%;
     --chart-2: 35 58% 53%;
     --chart-3: 12 55% 55%;
     --chart-4: 192 36% 43%;
     --chart-5: 328 38% 53%;
-    --radius: 1.25rem;
-    --sidebar-background: 40 26% 97%;
-    --sidebar-foreground: 155 16% 18%;
-    --sidebar-primary: 163 65% 25%;
-    --sidebar-primary-foreground: 40 30% 98%;
-    --sidebar-accent: 158 22% 88%;
-    --sidebar-accent-foreground: 163 60% 20%;
-    --sidebar-border: 45 12% 82%;
-    --sidebar-ring: 163 65% 28%;
+    --radius: 1.5rem;
+    --sidebar-background: 43 40% 96%;
+    --sidebar-foreground: 156 14% 18%;
+    --sidebar-primary: 165 66% 30%;
+    --sidebar-primary-foreground: 43 45% 98%;
+    --sidebar-accent: 162 24% 88%;
+    --sidebar-accent-foreground: 165 60% 22%;
+    --sidebar-border: 44 16% 82%;
+    --sidebar-ring: 165 66% 32%;
     --font-heebo: 'Heebo', -apple-system, BlinkMacSystemFont, sans-serif;
-    --liquid-surface: 250 249 246;
-    --liquid-surface-strong: 255 255 253;
+    --liquid-surface: 250 248 242;
+    --liquid-surface-strong: 255 254 249;
     --liquid-border: 255 255 255;
-    --liquid-shadow: 36 49 43;
+    --liquid-shadow: 33 46 40;
     --liquid-highlight: 255 255 255;
-    --liquid-blur: 24px;
+    --liquid-blur: 28px;
+    --app-backdrop: url('https://media.base44.com/images/public/6a0da0e4562d38d97303d3e3/45697bca3_generated_image.png');
     --app-bottom-nav-height: 82px;
     --app-mobile-overlay-bottom-space: calc(var(--app-bottom-nav-height) + env(safe-area-inset-bottom));
     --app-overlay-padding-bottom: calc(var(--app-mobile-overlay-bottom-space) + 16px);
   }
 
   .dark {
-    --background: 158 14% 11%;
-    --foreground: 42 18% 92%;
-    --card: 158 12% 15%;
-    --card-foreground: 42 18% 92%;
-    --popover: 158 12% 15%;
-    --popover-foreground: 42 18% 92%;
-    --primary: 159 46% 55%;
-    --primary-foreground: 160 38% 10%;
-    --secondary: 156 9% 21%;
-    --secondary-foreground: 42 15% 90%;
-    --muted: 156 9% 19%;
+    --background: 154 13% 9%;
+    --foreground: 42 20% 92%;
+    --card: 157 11% 14%;
+    --card-foreground: 42 20% 92%;
+    --popover: 157 11% 14%;
+    --popover-foreground: 42 20% 92%;
+    --primary: 163 42% 52%;
+    --primary-foreground: 160 38% 9%;
+    --secondary: 156 9% 20%;
+    --secondary-foreground: 42 16% 90%;
+    --muted: 156 9% 18%;
     --muted-foreground: 45 8% 68%;
-    --accent: 157 18% 23%;
-    --accent-foreground: 158 42% 78%;
+    --accent: 160 18% 22%;
+    --accent-foreground: 160 42% 78%;
     --destructive: 2 55% 57%;
     --destructive-foreground: 0 0% 98%;
-    --border: 150 7% 29%;
-    --input: 150 7% 29%;
-    --ring: 159 46% 55%;
-    --chart-1: 159 46% 57%;
+    --border: 152 8% 27%;
+    --input: 152 8% 27%;
+    --ring: 163 42% 52%;
+    --chart-1: 163 44% 56%;
     --chart-2: 35 54% 61%;
     --chart-3: 12 53% 62%;
     --chart-4: 192 40% 59%;
     --chart-5: 328 42% 63%;
-    --sidebar-background: 158 16% 10%;
+    --sidebar-background: 155 14% 8%;
     --sidebar-foreground: 42 14% 88%;
-    --sidebar-primary: 159 46% 55%;
-    --sidebar-primary-foreground: 160 38% 10%;
-    --sidebar-accent: 157 16% 22%;
+    --sidebar-primary: 163 42% 52%;
+    --sidebar-primary-foreground: 160 38% 9%;
+    --sidebar-accent: 158 15% 20%;
     --sidebar-accent-foreground: 42 18% 92%;
-    --sidebar-border: 150 7% 26%;
-    --sidebar-ring: 159 46% 55%;
-    --liquid-surface: 31 40 36;
-    --liquid-surface-strong: 39 49 44;
+    --sidebar-border: 152 8% 24%;
+    --sidebar-ring: 163 42% 52%;
+    --liquid-surface: 30 38 34;
+    --liquid-surface-strong: 38 47 42;
     --liquid-border: 255 255 255;
     --liquid-shadow: 0 0 0;
     --liquid-highlight: 255 255 255;
-    --liquid-blur: 26px;
+    --liquid-blur: 30px;
+    --app-backdrop: url('https://media.base44.com/images/public/6a0da0e4562d38d97303d3e3/b2e846725_generated_image.png');
   }
 }
 
@@ -108,6 +110,19 @@
     -webkit-font-smoothing: antialiased;
   }
 
+  /* Vision Sheets depth field — one fixed blurred backdrop behind all glass */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-image: var(--app-backdrop);
+    background-size: cover;
+    background-position: center;
+    opacity: 0.9;
+    pointer-events: none;
+  }
+
   main::-webkit-scrollbar {
     display: none;
   }
@@ -118,54 +133,80 @@
 }
 
 @layer components {
+  /* ── Vision Sheets material tiers ─────────────────────────────── */
+
+  /* Tier 1 — broad content plane (page-level container) */
+  .vision-plane {
+    background: linear-gradient(180deg, rgb(var(--liquid-surface-strong) / 0.62) 0%, rgb(var(--liquid-surface) / 0.5) 100%);
+    border: 1px solid rgb(var(--liquid-border) / 0.55);
+    border-radius: 2rem;
+    box-shadow:
+      inset 0 1px 0 rgb(var(--liquid-highlight) / 0.75),
+      inset 0 -1px 0 rgb(var(--liquid-highlight) / 0.18),
+      0 24px 60px rgb(var(--liquid-shadow) / 0.14);
+    backdrop-filter: blur(var(--liquid-blur)) saturate(150%);
+    -webkit-backdrop-filter: blur(var(--liquid-blur)) saturate(150%);
+  }
+
+  .dark .vision-plane {
+    background: linear-gradient(180deg, rgb(var(--liquid-surface-strong) / 0.6) 0%, rgb(var(--liquid-surface) / 0.52) 100%);
+    border-color: rgb(var(--liquid-border) / 0.12);
+    box-shadow:
+      inset 0 1px 0 rgb(var(--liquid-highlight) / 0.1),
+      0 24px 60px rgb(var(--liquid-shadow) / 0.42);
+  }
+
+  /* Tier 2 — nested elevated sheets (cards, popovers, drawers) */
   .liquid-sheet,
   .bg-card,
   .bg-popover,
   .bg-sidebar,
-  [class*="rounded-xl"].border,
-  [class*="rounded-2xl"].border,
-  [class*="rounded-3xl"].border,
   [data-radix-dialog-content],
   [data-radix-select-content],
   [data-radix-dropdown-menu-content],
   [data-radix-popover-content],
   [role="menu"],
   [role="listbox"] {
-    background-color: rgb(var(--liquid-surface) / 0.72);
-    border-color: rgb(var(--liquid-border) / 0.58);
-    box-shadow: inset 0 1px 0 rgb(var(--liquid-highlight) / 0.66), 0 1px 2px rgb(var(--liquid-shadow) / 0.08), 0 14px 38px rgb(var(--liquid-shadow) / 0.09);
-    backdrop-filter: blur(var(--liquid-blur)) saturate(145%);
-    -webkit-backdrop-filter: blur(var(--liquid-blur)) saturate(145%);
+    background: linear-gradient(180deg, rgb(var(--liquid-surface-strong) / 0.82) 0%, rgb(var(--liquid-surface) / 0.68) 100%);
+    border-color: rgb(var(--liquid-border) / 0.62);
+    box-shadow:
+      inset 0 1px 0 rgb(var(--liquid-highlight) / 0.8),
+      inset 0 -1px 0 rgb(var(--liquid-highlight) / 0.14),
+      0 2px 6px rgb(var(--liquid-shadow) / 0.05),
+      0 16px 40px rgb(var(--liquid-shadow) / 0.1);
+    backdrop-filter: blur(var(--liquid-blur)) saturate(150%);
+    -webkit-backdrop-filter: blur(var(--liquid-blur)) saturate(150%);
   }
 
   .dark .liquid-sheet,
   .dark .bg-card,
   .dark .bg-popover,
   .dark .bg-sidebar,
-  .dark [class*="rounded-xl"].border,
-  .dark [class*="rounded-2xl"].border,
-  .dark [class*="rounded-3xl"].border,
   .dark [data-radix-dialog-content],
   .dark [data-radix-select-content],
   .dark [data-radix-dropdown-menu-content],
   .dark [data-radix-popover-content],
   .dark [role="menu"],
   .dark [role="listbox"] {
-    background-color: rgb(var(--liquid-surface) / 0.70);
-    border-color: rgb(var(--liquid-border) / 0.14);
-    box-shadow: inset 0 1px 0 rgb(var(--liquid-highlight) / 0.10), 0 1px 2px rgb(var(--liquid-shadow) / 0.22), 0 18px 44px rgb(var(--liquid-shadow) / 0.28);
+    background: linear-gradient(180deg, rgb(var(--liquid-surface-strong) / 0.82) 0%, rgb(var(--liquid-surface) / 0.7) 100%);
+    border-color: rgb(var(--liquid-border) / 0.13);
+    box-shadow:
+      inset 0 1px 0 rgb(var(--liquid-highlight) / 0.11),
+      0 2px 6px rgb(var(--liquid-shadow) / 0.28),
+      0 18px 44px rgb(var(--liquid-shadow) / 0.4);
   }
 
+  /* Tier 3 — controls */
   .liquid-control,
   input,
   textarea,
   select,
   [data-radix-select-trigger] {
-    background-color: rgb(var(--liquid-surface-strong) / 0.58);
-    border-color: rgb(var(--liquid-border) / 0.62);
-    box-shadow: inset 0 1px 0 rgb(var(--liquid-highlight) / 0.58), 0 1px 2px rgb(var(--liquid-shadow) / 0.06);
-    backdrop-filter: blur(14px) saturate(135%);
-    -webkit-backdrop-filter: blur(14px) saturate(135%);
+    background-color: rgb(var(--liquid-surface-strong) / 0.6);
+    border-color: rgb(var(--liquid-border) / 0.65);
+    box-shadow: inset 0 1px 0 rgb(var(--liquid-highlight) / 0.6), 0 1px 2px rgb(var(--liquid-shadow) / 0.05);
+    backdrop-filter: blur(14px) saturate(140%);
+    -webkit-backdrop-filter: blur(14px) saturate(140%);
   }
 
   .dark .liquid-control,
@@ -176,6 +217,30 @@
     background-color: rgb(var(--liquid-surface-strong) / 0.62);
     border-color: rgb(var(--liquid-border) / 0.12);
     box-shadow: inset 0 1px 0 rgb(var(--liquid-highlight) / 0.08), 0 1px 2px rgb(var(--liquid-shadow) / 0.18);
+  }
+
+  /* Circular icon lens */
+  .icon-lens {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background: linear-gradient(180deg, rgb(var(--liquid-surface-strong) / 0.9) 0%, rgb(var(--liquid-surface) / 0.65) 100%);
+    border: 1px solid rgb(var(--liquid-border) / 0.7);
+    box-shadow:
+      inset 0 1px 0 rgb(var(--liquid-highlight) / 0.85),
+      inset 0 -2px 4px rgb(var(--liquid-shadow) / 0.05),
+      0 2px 6px rgb(var(--liquid-shadow) / 0.08);
+    color: hsl(var(--primary));
+    flex-shrink: 0;
+  }
+
+  .dark .icon-lens {
+    background: linear-gradient(180deg, rgb(var(--liquid-surface-strong) / 0.92) 0%, rgb(var(--liquid-surface) / 0.7) 100%);
+    border-color: rgb(var(--liquid-border) / 0.14);
+    box-shadow:
+      inset 0 1px 0 rgb(var(--liquid-highlight) / 0.12),
+      0 2px 6px rgb(var(--liquid-shadow) / 0.3);
   }
 
   button,
@@ -201,7 +266,7 @@
   [role="button"]:focus-visible,
   [data-radix-select-trigger]:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 3px hsl(var(--ring) / 0.22), inset 0 1px 0 rgb(var(--liquid-highlight) / 0.5);
+    box-shadow: 0 0 0 3px hsl(var(--ring) / 0.25), inset 0 1px 0 rgb(var(--liquid-highlight) / 0.5);
   }
 
   [data-radix-dropdown-menu-item]:hover,
@@ -219,8 +284,8 @@
   }
 
   @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-    .liquid-sheet, .bg-card, .bg-popover, .bg-sidebar {
-      background-color: hsl(var(--card));
+    .liquid-sheet, .vision-plane, .bg-card, .bg-popover, .bg-sidebar {
+      background: hsl(var(--card));
     }
   }
 }

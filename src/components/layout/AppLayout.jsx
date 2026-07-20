@@ -184,7 +184,7 @@ function AccordionGroup({ group, role, pendingCount, location, onNavigate }) {
         className={cn(
           'w-full flex items-center gap-2.5 px-3 py-2.5 rounded-2xl transition-colors duration-150 text-right',
           hasActive
-            ? 'bg-accent text-accent-foreground font-semibold'
+            ? 'bg-primary text-primary-foreground font-semibold shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_6px_16px_hsl(var(--primary)/0.28)]'
             : 'text-sidebar-foreground/65 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
         )}
       >
@@ -196,7 +196,7 @@ function AccordionGroup({ group, role, pendingCount, location, onNavigate }) {
           )}
         />
         <span className="text-[12px] font-semibold flex-1 text-right">{group.title}</span>
-        <GroupIcon className={cn('w-4 h-4 flex-shrink-0', hasActive && 'text-sidebar-primary')} />
+        <GroupIcon className={cn('w-4 h-4 flex-shrink-0', hasActive && 'text-primary-foreground')} />
       </button>
 
       {/* Children */}
@@ -393,15 +393,17 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
 
   return (
     <div
-      className="flex bg-background overflow-hidden text-right"
+      className="flex overflow-hidden text-right"
       dir="rtl"
       style={simulationOffset
         ? { height: 'calc(100vh - 44px)', marginTop: 'calc(44px + env(safe-area-inset-top))' }
         : { height: '100vh' }}
     >
       {/* Desktop Sidebar */}
-      <aside className="liquid-sheet hidden lg:flex w-64 flex-col flex-shrink-0 border-s border-border/50 bg-sidebar/70 shadow-[-14px_0_38px_rgba(26,43,35,0.06)]">
-        <SidebarContent />
+      <aside className="hidden lg:flex flex-shrink-0 py-3 ps-0 pe-3">
+        <div className="liquid-sheet flex w-64 flex-col rounded-[1.75rem] border border-border/55 overflow-hidden h-full">
+          <SidebarContent />
+        </div>
       </aside>
 
       {/* Mobile Sidebar Overlay */}
@@ -411,7 +413,7 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
             className="fixed inset-0 z-40 lg:hidden bg-foreground/25 backdrop-blur-md"
             onClick={() => setSidebarOpen(false)}
           />
-          <aside className="liquid-sheet fixed inset-y-0 start-0 w-[min(21rem,88vw)] z-50 lg:hidden border-s border-border/50 bg-sidebar/75 shadow-2xl">
+          <aside className="liquid-sheet fixed top-2 bottom-2 start-2 w-[min(21rem,86vw)] z-50 lg:hidden rounded-[1.75rem] border border-border/55 overflow-hidden">
             <button
               type="button"
               onClick={() => setSidebarOpen(false)}
@@ -427,7 +429,7 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile Header */}
-        <header className="liquid-sheet lg:hidden relative z-30 flex items-center justify-between px-3 h-[60px] bg-card/65 border-b border-border/50 flex-shrink-0">
+        <header className="liquid-sheet lg:hidden relative z-30 flex items-center justify-between px-3 h-[60px] border-b border-border/40 flex-shrink-0">
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
@@ -461,7 +463,7 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
         </main>
 
         {/* Mobile Bottom Nav */}
-         <nav className="liquid-sheet lg:hidden fixed bottom-2 inset-x-3 grid bg-card/75 border border-border/55 rounded-[24px] z-30 overflow-hidden" dir="rtl"
+         <nav className="liquid-sheet lg:hidden fixed bottom-2 inset-x-3 grid border border-border/55 rounded-[26px] z-30 overflow-hidden" dir="rtl"
          style={{
            gridTemplateColumns: `repeat(${bottomNavItems.length}, minmax(0, 1fr))`,
            paddingBottom: 'max(6px, env(safe-area-inset-bottom))',

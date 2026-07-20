@@ -318,67 +318,70 @@ export default function Dashboard({ user, role, initialData }) {
   }
 
   return (
-    <div className="p-4 sm:p-5 lg:p-7 space-y-5 lg:space-y-6 text-right" dir="rtl">
-      {/* Header */}
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center justify-between gap-2 mb-1">
-            <h1 className="text-xl lg:text-2xl font-bold text-foreground leading-tight">שלום, {getUserFirstName(user)} 👋</h1>
-            <NotificationsDropdown notifications={notifications} onRead={handleNotificationRead} />
+    <div className="p-3 sm:p-5 lg:p-7 space-y-5 lg:space-y-6 text-right" dir="rtl">
+      {/* Vision plane — greeting + today's intelligence in one broad glass sheet */}
+      <div className="vision-plane p-4 sm:p-5 lg:p-6 space-y-4">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <h1 className="text-xl lg:text-2xl font-bold text-foreground leading-tight">שלום, {getUserFirstName(user)} 👋</h1>
+              <NotificationsDropdown notifications={notifications} onRead={handleNotificationRead} />
+            </div>
+            <p className="text-sm font-medium text-foreground/70 mt-0.5 flex items-center gap-1.5" dir="rtl">
+              <RoleIcon role={role} roles={approvedRoles} />
+              <span>{headerRoleTitle}</span>
+            </p>
+            {dashboardSecondaryTitle && <p className="text-xs text-muted-foreground/80 mt-0.5">{dashboardSecondaryTitle}</p>}
+            <p className="text-xs text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-1.5">
+              <SchoolNameBanner inline />
+              <span>{hebrewDate()}</span>
+            </p>
           </div>
-          <p className="text-sm font-medium text-foreground/70 mt-0.5 flex items-center gap-1.5" dir="rtl">
-            <RoleIcon role={role} roles={approvedRoles} />
-            <span>{headerRoleTitle}</span>
-          </p>
-          {dashboardSecondaryTitle && <p className="text-xs text-muted-foreground/80 mt-0.5">{dashboardSecondaryTitle}</p>}
-          <p className="text-xs text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-1.5">
-            <SchoolNameBanner inline />
-            <span>{hebrewDate()}</span>
-          </p>
         </div>
+
+        <ClassAssignmentAlert enabled={isActiveAdmin} onFixed={() => loadData(false)} />
+
+        {/* Now / Next — shown first, always visible for staff with a class */}
+        {(isActiveHomeroom || isActiveAdmin || isActiveCoordinator) && (
+          <NowNextCard classId={classId} showEmpty />
+        )}
+
+        {(isActiveHomeroom || isActiveAdmin || isActiveCoordinator) && (
+          <AttendanceExceptionsCard
+            exceptionsCount={attendanceExceptionsToday}
+            totalStudents={students.length}
+            exceptions={attendanceExceptionRecords}
+            date={attendanceDate !== today ? attendanceDate : 'היום'}
+            onClick={() => attendanceExceptionsToday > 0 && setAttendanceFilterOpen(true)}
+          />
+        )}
+
+        {/* Urgent Flags — dynamic items needing immediate attention (staff only) */}
+        {(isActiveHomeroom || isActiveCoordinator || isActiveAdmin) && classId && (
+          <UrgentFlagsSection
+            classId={classId}
+            user={user}
+            canManage={isActiveHomeroom || isActiveCoordinator || isActiveAdmin}
+          />
+        )}
+
+        {/* Daily Smart Card — unified intelligence on what matters today */}
+        {(isActiveHomeroom || isActiveAdmin || isActiveCoordinator) && (
+          <DailySmartCard
+            classId={classId}
+            students={students}
+            todayAttendance={todayAttendance}
+            exams={exams}
+            tasks={tasks}
+            discipline={discipline}
+            announcements={announcements}
+            role={role}
+            user={user}
+            onOpenDisciplineEvent={setSelectedDisciplineEvent}
+          />
+        )}
       </div>
-
-      <ClassAssignmentAlert enabled={isActiveAdmin} onFixed={() => loadData(false)} />
-
-      {/* Now / Next — shown first, always visible for staff with a class */}
-      {(isActiveHomeroom || isActiveAdmin || isActiveCoordinator) && (
-        <NowNextCard classId={classId} showEmpty />
-      )}
-
-      {(isActiveHomeroom || isActiveAdmin || isActiveCoordinator) && (
-        <AttendanceExceptionsCard
-          exceptionsCount={attendanceExceptionsToday}
-          totalStudents={students.length}
-          exceptions={attendanceExceptionRecords}
-          date={attendanceDate !== today ? attendanceDate : 'היום'}
-          onClick={() => attendanceExceptionsToday > 0 && setAttendanceFilterOpen(true)}
-        />
-      )}
-
-      {/* Urgent Flags — dynamic items needing immediate attention (staff only) */}
-      {(isActiveHomeroom || isActiveCoordinator || isActiveAdmin) && classId && (
-        <UrgentFlagsSection
-          classId={classId}
-          user={user}
-          canManage={isActiveHomeroom || isActiveCoordinator || isActiveAdmin}
-        />
-      )}
-
-      {/* Daily Smart Card — unified intelligence on what matters today */}
-      {(isActiveHomeroom || isActiveAdmin || isActiveCoordinator) && (
-        <DailySmartCard
-          classId={classId}
-          students={students}
-          todayAttendance={todayAttendance}
-          exams={exams}
-          tasks={tasks}
-          discipline={discipline}
-          announcements={announcements}
-          role={role}
-          user={user}
-          onOpenDisciplineEvent={setSelectedDisciplineEvent}
-        />
-      )}
 
       {/* Watch Students Section — identify students needing attention */}
       {(isActiveHomeroom || isActiveAdmin || isActiveCoordinator) && (
@@ -421,7 +424,7 @@ export default function Dashboard({ user, role, initialData }) {
             <h2 className="text-sm font-bold text-foreground mb-2.5">פעולות מהירות</h2>
             <div className="grid grid-cols-4 gap-2">
               {quickActions.map(btn => {
-                const commonClassName = "liquid-sheet group relative flex min-h-[88px] flex-col items-center justify-center gap-2 py-3 px-1.5 rounded-2xl border border-border/55 hover:border-primary/25 hover:bg-accent/45 transition-all text-center";
+                const commonClassName = "liquid-sheet group relative flex min-h-[92px] flex-col items-center justify-center gap-2 py-3 px-1.5 rounded-[1.35rem] border border-border/55 hover:border-primary/25 transition-all text-center";
                 const commonContent = (
                   <>
                     {btn.badge > 0 && (
@@ -429,8 +432,8 @@ export default function Dashboard({ user, role, initialData }) {
                         {btn.badge > 99 ? '99+' : btn.badge}
                       </span>
                     )}
-                    <div className="w-10 h-10 rounded-2xl bg-primary/10 border border-primary/10 group-hover:bg-primary/15 flex items-center justify-center transition-colors shadow-inner">
-                      <btn.icon className="w-4 h-4 text-primary" strokeWidth={2.2} />
+                    <div className="icon-lens w-11 h-11">
+                      <btn.icon className="w-[18px] h-[18px]" strokeWidth={2} />
                     </div>
                     <span className="text-[11px] font-semibold text-foreground/80 leading-tight">{btn.label}</span>
                   </>
