@@ -6,94 +6,90 @@
 
 @layer base {
   :root {
-    /* Light: warm cream + deep emerald — soft, professional, education-friendly */
-    --background: 48 30% 97%;
-    --foreground: 158 45% 13%;
-    --card: 0 0% 100%;
-    --card-foreground: 158 45% 13%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 158 45% 13%;
-    --primary: 161 84% 22%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 38 88% 52%;
-    --secondary-foreground: 30 45% 15%;
-    --muted: 45 22% 95%;
-    --muted-foreground: 158 12% 42%;
-    --accent: 161 40% 93%;
-    --accent-foreground: 161 84% 18%;
-    --destructive: 0 70% 50%;
+    --background: 40 22% 95%;
+    --foreground: 155 18% 13%;
+    --card: 40 32% 98%;
+    --card-foreground: 155 18% 13%;
+    --popover: 40 28% 98%;
+    --popover-foreground: 155 18% 13%;
+    --primary: 163 65% 25%;
+    --primary-foreground: 40 30% 98%;
+    --secondary: 38 18% 90%;
+    --secondary-foreground: 155 18% 17%;
+    --muted: 40 14% 91%;
+    --muted-foreground: 156 8% 42%;
+    --accent: 158 24% 88%;
+    --accent-foreground: 163 60% 20%;
+    --destructive: 2 58% 47%;
     --destructive-foreground: 0 0% 98%;
-    --border: 45 18% 89%;
-    --input: 45 18% 89%;
-    --ring: 161 84% 22%;
-    --chart-1: 161 84% 28%;
-    --chart-2: 38 88% 52%;
-    --chart-3: 25 90% 55%;
-    --chart-4: 200 65% 45%;
-    --chart-5: 340 65% 55%;
-    --radius: 0.75rem;
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 158 25% 22%;
-    --sidebar-primary: 161 84% 22%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 161 40% 95%;
-    --sidebar-accent-foreground: 161 84% 18%;
-    --sidebar-border: 45 18% 91%;
-    --sidebar-ring: 161 84% 22%;
-    --font-heebo: 'Heebo', sans-serif;
-    --liquid-surface: 255 255 255;
-    --liquid-surface-strong: 255 255 255;
-    --liquid-tint: 236 253 245;
+    --border: 45 12% 82%;
+    --input: 45 12% 82%;
+    --ring: 163 65% 28%;
+    --chart-1: 163 65% 28%;
+    --chart-2: 35 58% 53%;
+    --chart-3: 12 55% 55%;
+    --chart-4: 192 36% 43%;
+    --chart-5: 328 38% 53%;
+    --radius: 1.25rem;
+    --sidebar-background: 40 26% 97%;
+    --sidebar-foreground: 155 16% 18%;
+    --sidebar-primary: 163 65% 25%;
+    --sidebar-primary-foreground: 40 30% 98%;
+    --sidebar-accent: 158 22% 88%;
+    --sidebar-accent-foreground: 163 60% 20%;
+    --sidebar-border: 45 12% 82%;
+    --sidebar-ring: 163 65% 28%;
+    --font-heebo: 'Heebo', -apple-system, BlinkMacSystemFont, sans-serif;
+    --liquid-surface: 250 249 246;
+    --liquid-surface-strong: 255 255 253;
     --liquid-border: 255 255 255;
-    --liquid-shadow: 18 64 48;
+    --liquid-shadow: 36 49 43;
     --liquid-highlight: 255 255 255;
-    --liquid-blur: 18px;
-    --app-bottom-nav-height: 72px;
+    --liquid-blur: 24px;
+    --app-bottom-nav-height: 82px;
     --app-mobile-overlay-bottom-space: calc(var(--app-bottom-nav-height) + env(safe-area-inset-bottom));
     --app-overlay-padding-bottom: calc(var(--app-mobile-overlay-bottom-space) + 16px);
   }
 
   .dark {
-    /* Dark: deep slate-green base (warmer & less heavy than pure black-green) */
-    --background: 200 18% 11%;
-    --foreground: 45 25% 94%;
-    --card: 200 16% 15%;
-    --card-foreground: 45 25% 94%;
-    --popover: 200 16% 15%;
-    --popover-foreground: 45 25% 94%;
-    --primary: 161 60% 52%;
-    --primary-foreground: 158 50% 10%;
-    --secondary: 38 80% 60%;
-    --secondary-foreground: 30 40% 12%;
-    --muted: 200 14% 19%;
-    --muted-foreground: 45 12% 70%;
-    --accent: 161 30% 22%;
-    --accent-foreground: 161 60% 82%;
-    --destructive: 0 58% 52%;
+    --background: 158 14% 11%;
+    --foreground: 42 18% 92%;
+    --card: 158 12% 15%;
+    --card-foreground: 42 18% 92%;
+    --popover: 158 12% 15%;
+    --popover-foreground: 42 18% 92%;
+    --primary: 159 46% 55%;
+    --primary-foreground: 160 38% 10%;
+    --secondary: 156 9% 21%;
+    --secondary-foreground: 42 15% 90%;
+    --muted: 156 9% 19%;
+    --muted-foreground: 45 8% 68%;
+    --accent: 157 18% 23%;
+    --accent-foreground: 158 42% 78%;
+    --destructive: 2 55% 57%;
     --destructive-foreground: 0 0% 98%;
-    --border: 200 12% 23%;
-    --input: 200 12% 23%;
-    --ring: 161 60% 52%;
-    --chart-1: 161 60% 55%;
-    --chart-2: 38 80% 62%;
-    --chart-3: 25 85% 62%;
-    --chart-4: 200 65% 60%;
-    --chart-5: 340 65% 62%;
-    --sidebar-background: 200 20% 9%;
-    --sidebar-foreground: 45 18% 86%;
-    --sidebar-primary: 161 60% 55%;
-    --sidebar-primary-foreground: 158 50% 10%;
-    --sidebar-accent: 200 16% 16%;
-    --sidebar-accent-foreground: 45 25% 94%;
-    --sidebar-border: 200 14% 17%;
-    --sidebar-ring: 161 60% 55%;
-    --liquid-surface: 21 32 36;
-    --liquid-surface-strong: 29 43 48;
-    --liquid-tint: 32 80 67;
+    --border: 150 7% 29%;
+    --input: 150 7% 29%;
+    --ring: 159 46% 55%;
+    --chart-1: 159 46% 57%;
+    --chart-2: 35 54% 61%;
+    --chart-3: 12 53% 62%;
+    --chart-4: 192 40% 59%;
+    --chart-5: 328 42% 63%;
+    --sidebar-background: 158 16% 10%;
+    --sidebar-foreground: 42 14% 88%;
+    --sidebar-primary: 159 46% 55%;
+    --sidebar-primary-foreground: 160 38% 10%;
+    --sidebar-accent: 157 16% 22%;
+    --sidebar-accent-foreground: 42 18% 92%;
+    --sidebar-border: 150 7% 26%;
+    --sidebar-ring: 159 46% 55%;
+    --liquid-surface: 31 40 36;
+    --liquid-surface-strong: 39 49 44;
     --liquid-border: 255 255 255;
     --liquid-shadow: 0 0 0;
     --liquid-highlight: 255 255 255;
-    --liquid-blur: 20px;
+    --liquid-blur: 26px;
   }
 }
 
@@ -106,8 +102,14 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Heebo', sans-serif;
+    font-family: 'Heebo', -apple-system, BlinkMacSystemFont, sans-serif;
     direction: rtl;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  main::-webkit-scrollbar {
+    display: none;
   }
 
   html {
@@ -116,7 +118,7 @@
 }
 
 @layer components {
-  /* Apple Liquid Glass visual layer — global, non-structural, RTL-safe */
+  .liquid-sheet,
   .bg-card,
   .bg-popover,
   .bg-sidebar,
@@ -129,17 +131,14 @@
   [data-radix-popover-content],
   [role="menu"],
   [role="listbox"] {
-    background: linear-gradient(145deg, rgb(var(--liquid-surface) / 0.78), rgb(var(--liquid-tint) / 0.42));
-    border-color: rgb(var(--liquid-border) / 0.42);
-    box-shadow:
-      inset 0 1px 0 rgb(var(--liquid-highlight) / 0.34),
-      0 12px 34px rgb(var(--liquid-shadow) / 0.10),
-      0 1px 2px rgb(var(--liquid-shadow) / 0.08);
-    backdrop-filter: blur(var(--liquid-blur)) saturate(165%);
-    -webkit-backdrop-filter: blur(var(--liquid-blur)) saturate(165%);
-    transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+    background-color: rgb(var(--liquid-surface) / 0.72);
+    border-color: rgb(var(--liquid-border) / 0.58);
+    box-shadow: inset 0 1px 0 rgb(var(--liquid-highlight) / 0.66), 0 1px 2px rgb(var(--liquid-shadow) / 0.08), 0 14px 38px rgb(var(--liquid-shadow) / 0.09);
+    backdrop-filter: blur(var(--liquid-blur)) saturate(145%);
+    -webkit-backdrop-filter: blur(var(--liquid-blur)) saturate(145%);
   }
 
+  .dark .liquid-sheet,
   .dark .bg-card,
   .dark .bg-popover,
   .dark .bg-sidebar,
@@ -152,96 +151,77 @@
   .dark [data-radix-popover-content],
   .dark [role="menu"],
   .dark [role="listbox"] {
-    background: linear-gradient(145deg, rgb(var(--liquid-surface) / 0.76), rgb(var(--liquid-tint) / 0.28));
-    border-color: rgb(var(--liquid-border) / 0.13);
-    box-shadow:
-      inset 0 1px 0 rgb(var(--liquid-highlight) / 0.10),
-      0 16px 38px rgb(var(--liquid-shadow) / 0.32),
-      0 1px 2px rgb(var(--liquid-shadow) / 0.24);
+    background-color: rgb(var(--liquid-surface) / 0.70);
+    border-color: rgb(var(--liquid-border) / 0.14);
+    box-shadow: inset 0 1px 0 rgb(var(--liquid-highlight) / 0.10), 0 1px 2px rgb(var(--liquid-shadow) / 0.22), 0 18px 44px rgb(var(--liquid-shadow) / 0.28);
   }
 
-  a .bg-card:hover,
-  button .bg-card:hover,
-  .bg-card.cursor-pointer:hover,
-  [class*="rounded-xl"].border:hover,
-  [class*="rounded-2xl"].border:hover {
-    box-shadow:
-      inset 0 1px 0 rgb(var(--liquid-highlight) / 0.42),
-      0 16px 42px rgb(var(--liquid-shadow) / 0.13),
-      0 2px 5px rgb(var(--liquid-shadow) / 0.09);
-    transform: translateY(-1px);
-  }
-
-  .dark a .bg-card:hover,
-  .dark button .bg-card:hover,
-  .dark .bg-card.cursor-pointer:hover,
-  .dark [class*="rounded-xl"].border:hover,
-  .dark [class*="rounded-2xl"].border:hover {
-    box-shadow:
-      inset 0 1px 0 rgb(var(--liquid-highlight) / 0.13),
-      0 18px 44px rgb(var(--liquid-shadow) / 0.40),
-      0 2px 5px rgb(var(--liquid-shadow) / 0.24);
-  }
-
-  button,
-  [role="button"],
+  .liquid-control,
   input,
   textarea,
   select,
   [data-radix-select-trigger] {
-    transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease, color 160ms ease;
+    background-color: rgb(var(--liquid-surface-strong) / 0.58);
+    border-color: rgb(var(--liquid-border) / 0.62);
+    box-shadow: inset 0 1px 0 rgb(var(--liquid-highlight) / 0.58), 0 1px 2px rgb(var(--liquid-shadow) / 0.06);
+    backdrop-filter: blur(14px) saturate(135%);
+    -webkit-backdrop-filter: blur(14px) saturate(135%);
   }
 
-  button:not(:disabled),
-  [role="button"]:not([aria-disabled="true"]) {
-    box-shadow: inset 0 1px 0 rgb(var(--liquid-highlight) / 0.22), 0 4px 12px rgb(var(--liquid-shadow) / 0.08);
-  }
-
-  button:not(:disabled):hover,
-  [role="button"]:not([aria-disabled="true"]):hover {
-    transform: translateY(-1px);
-    box-shadow: inset 0 1px 0 rgb(var(--liquid-highlight) / 0.30), 0 7px 18px rgb(var(--liquid-shadow) / 0.11);
-  }
-
-  input,
-  textarea,
-  select,
-  [data-radix-select-trigger] {
-    background: rgb(var(--liquid-surface-strong) / 0.52);
-    border-color: rgb(var(--liquid-border) / 0.38);
-    box-shadow: inset 0 1px 0 rgb(var(--liquid-highlight) / 0.20), 0 1px 2px rgb(var(--liquid-shadow) / 0.05);
-    backdrop-filter: blur(12px) saturate(145%);
-    -webkit-backdrop-filter: blur(12px) saturate(145%);
-  }
-
+  .dark .liquid-control,
   .dark input,
   .dark textarea,
   .dark select,
   .dark [data-radix-select-trigger] {
-    background: rgb(var(--liquid-surface-strong) / 0.58);
+    background-color: rgb(var(--liquid-surface-strong) / 0.62);
     border-color: rgb(var(--liquid-border) / 0.12);
     box-shadow: inset 0 1px 0 rgb(var(--liquid-highlight) / 0.08), 0 1px 2px rgb(var(--liquid-shadow) / 0.18);
+  }
+
+  button,
+  [role="button"],
+  a,
+  input,
+  textarea,
+  select,
+  [data-radix-select-trigger] {
+    transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, color 180ms ease, transform 180ms ease, opacity 180ms ease;
+  }
+
+  button:not(:disabled):active,
+  [role="button"]:not([aria-disabled="true"]):active {
+    transform: scale(0.985);
   }
 
   input:focus-visible,
   textarea:focus-visible,
   select:focus-visible,
+  button:focus-visible,
+  a:focus-visible,
+  [role="button"]:focus-visible,
   [data-radix-select-trigger]:focus-visible {
-    box-shadow: inset 0 1px 0 rgb(var(--liquid-highlight) / 0.28), 0 0 0 3px hsl(var(--ring) / 0.18), 0 8px 22px rgb(var(--liquid-shadow) / 0.08);
-  }
-
-  .rounded-full,
-  [class*="rounded-full"].border,
-  [data-radix-dropdown-menu-item],
-  [data-radix-select-item] {
-    transition: background-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
+    outline: none;
+    box-shadow: 0 0 0 3px hsl(var(--ring) / 0.22), inset 0 1px 0 rgb(var(--liquid-highlight) / 0.5);
   }
 
   [data-radix-dropdown-menu-item]:hover,
   [data-radix-select-item]:hover,
   [data-highlighted] {
-    background-color: hsl(var(--accent) / 0.72);
-    box-shadow: inset 0 1px 0 rgb(var(--liquid-highlight) / 0.18);
+    background-color: hsl(var(--accent) / 0.82);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      scroll-behavior: auto !important;
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .liquid-sheet, .bg-card, .bg-popover, .bg-sidebar {
+      background-color: hsl(var(--card));
+    }
   }
 }
 

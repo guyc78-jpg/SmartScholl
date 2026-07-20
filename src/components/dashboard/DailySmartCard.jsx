@@ -76,7 +76,7 @@ function InsightCard({ insight, accent, Icon }) {
   );
 
   const className = cn(
-    'group relative flex items-start gap-3 p-3 rounded-xl bg-background/60 border border-border/70 ring-1 ring-transparent transition-all text-right',
+    'group relative flex items-start gap-3 p-3 rounded-2xl bg-card/45 border border-border/45 ring-1 ring-transparent transition-all text-right',
     'hover:bg-background hover:border-border cursor-pointer',
     accent.ring
   );
@@ -214,7 +214,7 @@ export default function DailySmartCard({ classId, students, todayAttendance, exa
   if (loading) return null;
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-4 lg:p-5" dir="rtl">
+    <section className="liquid-sheet rounded-3xl border border-border/60 p-4 lg:p-5" dir="rtl">
       <div className="flex items-center gap-2 mb-4">
         <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center ring-1 ring-primary/15">
           <TrendingUp className="w-4 h-4 text-primary" />

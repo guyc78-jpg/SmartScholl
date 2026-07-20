@@ -182,7 +182,7 @@ function AccordionGroup({ group, role, pendingCount, location, onNavigate }) {
         type="button"
         onClick={() => setOpen(v => !v)}
         className={cn(
-          'w-full flex items-center gap-2.5 px-3 py-2 rounded-lg transition-colors duration-150 text-right',
+          'w-full flex items-center gap-2.5 px-3 py-2.5 rounded-2xl transition-colors duration-150 text-right',
           hasActive
             ? 'bg-accent text-accent-foreground font-semibold'
             : 'text-sidebar-foreground/65 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
@@ -221,7 +221,7 @@ function AccordionGroup({ group, role, pendingCount, location, onNavigate }) {
                     to={item.path}
                     onClick={onNavigate}
                     className={cn(
-                      'relative flex items-center gap-2 px-2.5 py-1.5 rounded-lg transition-colors duration-150',
+                      'relative flex items-center gap-2 px-3 py-2 rounded-xl transition-colors duration-150',
                       isActive
                         ? 'bg-accent text-accent-foreground font-semibold'
                         : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
@@ -304,7 +304,7 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
   }, [activeHomeroomClassId, activeRole]);
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full text-right" dir="rtl">
+    <div className="flex flex-col h-full text-right bg-transparent" dir="rtl">
       {/* User */}
       <div className="px-4 py-4 border-b border-sidebar-border">
         <div className="flex items-center gap-2.5" dir="rtl">
@@ -393,19 +393,14 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
 
   return (
     <div
-      className="flex bg-background overflow-hidden"
+      className="flex bg-background overflow-hidden text-right"
       dir="rtl"
       style={simulationOffset
         ? { height: 'calc(100vh - 44px)', marginTop: 'calc(44px + env(safe-area-inset-top))' }
         : { height: '100vh' }}
     >
       {/* Desktop Sidebar */}
-      <aside className={cn(
-        'hidden lg:flex w-60 flex-col flex-shrink-0 border-s',
-        darkMode
-          ? 'bg-slate-700 border-slate-600/40'
-          : 'bg-sidebar border-sidebar-border'
-      )}>
+      <aside className="liquid-sheet hidden lg:flex w-64 flex-col flex-shrink-0 border-s border-border/50 bg-sidebar/70 shadow-[-14px_0_38px_rgba(26,43,35,0.06)]">
         <SidebarContent />
       </aside>
 
@@ -413,18 +408,10 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
       {sidebarOpen && (
         <>
           <div
-            className={cn(
-              'fixed inset-0 z-40 lg:hidden',
-              darkMode ? 'bg-black/60' : 'bg-black/50'
-            )}
+            className="fixed inset-0 z-40 lg:hidden bg-foreground/25 backdrop-blur-md"
             onClick={() => setSidebarOpen(false)}
           />
-          <aside className={cn(
-            'fixed inset-y-0 start-0 w-72 z-50 lg:hidden border-s',
-            darkMode
-              ? 'bg-slate-700 border-slate-600/40 shadow-[0_0_40px_rgba(0,0,0,0.5)]'
-              : 'bg-sidebar border-sidebar-border shadow-2xl'
-          )}>
+          <aside className="liquid-sheet fixed inset-y-0 start-0 w-[min(21rem,88vw)] z-50 lg:hidden border-s border-border/50 bg-sidebar/75 shadow-2xl">
             <button
               type="button"
               onClick={() => setSidebarOpen(false)}
@@ -440,7 +427,7 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Mobile Header */}
-        <header className="lg:hidden relative z-30 flex items-center justify-between px-2 h-14 bg-card border-b border-border flex-shrink-0">
+        <header className="liquid-sheet lg:hidden relative z-30 flex items-center justify-between px-3 h-[60px] bg-card/65 border-b border-border/50 flex-shrink-0">
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
@@ -469,19 +456,19 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
 
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto overflow-x-hidden text-right will-change-scroll" dir="rtl"
-          style={{ paddingBottom: 'calc(76px + env(safe-area-inset-bottom))', WebkitOverflowScrolling: 'touch' }}>
+          style={{ paddingBottom: 'calc(var(--app-bottom-nav-height) + 24px + env(safe-area-inset-bottom))', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
           {children}
         </main>
 
         {/* Mobile Bottom Nav */}
-         <nav className="lg:hidden fixed bottom-0 inset-x-0 grid bg-card border-t border-border z-30" dir="rtl"
-          style={{
-            gridTemplateColumns: `repeat(${bottomNavItems.length}, minmax(0, 1fr))`,
-            paddingBottom: 'env(safe-area-inset-bottom)',
-            paddingTop: '8px',
-            paddingInline: '12px',
-            minHeight: 'calc(72px + env(safe-area-inset-bottom))',
-          }}>
+         <nav className="liquid-sheet lg:hidden fixed bottom-2 inset-x-3 grid bg-card/75 border border-border/55 rounded-[24px] z-30 overflow-hidden" dir="rtl"
+         style={{
+           gridTemplateColumns: `repeat(${bottomNavItems.length}, minmax(0, 1fr))`,
+           paddingBottom: 'max(6px, env(safe-area-inset-bottom))',
+           paddingTop: '7px',
+           paddingInline: '8px',
+           minHeight: 'calc(70px + env(safe-area-inset-bottom))',
+         }}>
           {bottomNavItems.map((item) => {
             const isActive = location.pathname === item.path;
             const itemLabel = item.dynamicLabel ? getDashboardLabel(role) : item.label;
@@ -490,14 +477,13 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  'flex flex-col items-center justify-center gap-1 py-1.5 transition-colors min-w-0 text-center',
-                  isActive ? 'text-primary' : 'text-muted-foreground'
+                  'flex flex-col items-center justify-center gap-1 py-1.5 rounded-2xl transition-all min-w-0 text-center',
+                  isActive ? 'text-primary bg-primary/10' : 'text-muted-foreground hover:bg-muted/40'
                 )}
-                style={{ transform: 'translateY(-8px)' }}
               >
                 <div className={cn(
                   'flex items-center justify-center w-10 h-6 rounded-full transition-colors flex-shrink-0',
-                  isActive && 'bg-primary/10'
+                  isActive && 'bg-primary/12 shadow-inner'
                 )}>
                   <item.icon className="w-4 h-4" strokeWidth={isActive ? 2.4 : 2} />
                 </div>

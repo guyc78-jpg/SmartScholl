@@ -5,10 +5,10 @@ export default function EmptyState({ icon: Icon, title, description, action }) {
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex flex-col items-center justify-center text-center px-4 py-10 rounded-2xl border border-dashed border-border bg-muted/30"
+      className="liquid-sheet flex flex-col items-center justify-center text-center px-5 py-12 rounded-3xl border border-border/60"
     >
       {Icon && (
-        <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center mb-3">
+        <div className="w-14 h-14 bg-primary/10 rounded-2xl border border-primary/15 shadow-inner flex items-center justify-center mb-4">
           <Icon className="w-6 h-6 text-primary" />
         </div>
       )}

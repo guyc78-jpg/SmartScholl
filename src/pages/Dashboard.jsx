@@ -318,7 +318,7 @@ export default function Dashboard({ user, role, initialData }) {
   }
 
   return (
-    <div className="p-4 lg:p-6 space-y-6" dir="rtl">
+    <div className="p-4 sm:p-5 lg:p-7 space-y-5 lg:space-y-6 text-right" dir="rtl">
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
@@ -421,7 +421,7 @@ export default function Dashboard({ user, role, initialData }) {
             <h2 className="text-sm font-bold text-foreground mb-2.5">פעולות מהירות</h2>
             <div className="grid grid-cols-4 gap-2">
               {quickActions.map(btn => {
-                const commonClassName = "group relative flex flex-col items-center justify-center gap-1.5 py-3 px-1.5 rounded-xl bg-card border border-border hover:border-primary/40 hover:bg-primary/[0.04] transition-colors";
+                const commonClassName = "liquid-sheet group relative flex min-h-[88px] flex-col items-center justify-center gap-2 py-3 px-1.5 rounded-2xl border border-border/55 hover:border-primary/25 hover:bg-accent/45 transition-all text-center";
                 const commonContent = (
                   <>
                     {btn.badge > 0 && (
@@ -429,7 +429,7 @@ export default function Dashboard({ user, role, initialData }) {
                         {btn.badge > 99 ? '99+' : btn.badge}
                       </span>
                     )}
-                    <div className="w-9 h-9 rounded-lg bg-primary/10 group-hover:bg-primary/15 flex items-center justify-center transition-colors">
+                    <div className="w-10 h-10 rounded-2xl bg-primary/10 border border-primary/10 group-hover:bg-primary/15 flex items-center justify-center transition-colors shadow-inner">
                       <btn.icon className="w-4 h-4 text-primary" strokeWidth={2.2} />
                     </div>
                     <span className="text-[11px] font-semibold text-foreground/80 leading-tight">{btn.label}</span>

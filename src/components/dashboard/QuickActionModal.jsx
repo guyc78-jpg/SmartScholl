@@ -511,7 +511,8 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
     >
       {/* Backdrop — close on click of the backdrop itself only (not bubbled events) */}
       <div
-        style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)' }}
+        className="backdrop-blur-md"
+        style={{ position: 'absolute', inset: 0, background: 'hsl(var(--foreground) / 0.24)' }}
         onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
       />
 
@@ -530,8 +531,12 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
           bottom: `${sheetBottom}px`,
           height: sheetHeight ? `${sheetHeight}px` : '85vh',
           maxHeight: sheetHeight ? `${sheetHeight}px` : undefined,
-          background: 'hsl(var(--card))',
-          borderRadius: '1rem 1rem 0 0',
+          background: 'rgb(var(--liquid-surface) / 0.82)',
+          backdropFilter: 'blur(var(--liquid-blur)) saturate(145%)',
+          WebkitBackdropFilter: 'blur(var(--liquid-blur)) saturate(145%)',
+          border: '1px solid rgb(var(--liquid-border) / 0.45)',
+          boxShadow: '0 -18px 48px rgb(var(--liquid-shadow) / 0.14), inset 0 1px 0 rgb(var(--liquid-highlight) / 0.6)',
+          borderRadius: '1.75rem 1.75rem 0 0',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
@@ -540,7 +545,7 @@ export default function QuickActionModal({ action, classId: classIdProp, user, r
       >
         {/* Handle bar */}
         <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 4px' }}>
-          <div style={{ width: 40, height: 4, borderRadius: 9999, background: 'hsl(var(--border))' }} />
+          <div style={{ width: 42, height: 5, borderRadius: 9999, background: 'hsl(var(--muted-foreground) / 0.35)' }} />
         </div>
 
         {/* Header */}

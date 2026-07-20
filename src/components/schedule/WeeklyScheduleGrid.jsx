@@ -13,7 +13,7 @@ export default function WeeklyScheduleGrid({ periods, slotsByKey, todayDayName, 
   const highlightDay = DAYS.includes(todayDayName) ? todayDayName : null;
 
   return (
-    <div className="rounded-2xl border border-border bg-card overflow-hidden" dir="rtl">
+    <div className="liquid-sheet rounded-3xl border border-border/60 overflow-hidden shadow-[0_18px_44px_rgba(28,45,37,0.08)]" dir="rtl">
       <div>
         <table className="w-full table-fixed border-collapse text-center">
           <colgroup>
@@ -22,7 +22,7 @@ export default function WeeklyScheduleGrid({ periods, slotsByKey, todayDayName, 
           </colgroup>
           <thead>
             <tr>
-              <th className="bg-primary text-primary-foreground p-0 border-b border-l border-primary/30 align-middle">
+              <th className="bg-muted/55 text-foreground p-0 border-b border-l border-border/55 align-middle">
                 <CornerHeader />
               </th>
               {DAYS.map(day => (
@@ -31,8 +31,8 @@ export default function WeeklyScheduleGrid({ periods, slotsByKey, todayDayName, 
                   className={cn(
                     'text-[11px] font-bold py-1.5 px-0.5 border-b border-l border-primary/30 last:border-l-0 relative',
                     day === highlightDay
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-primary/85 text-primary-foreground/95'
+                      ? 'bg-primary/15 text-primary'
+                      : 'bg-muted/45 text-foreground/80'
                   )}
                 >
                   {day}
@@ -120,27 +120,14 @@ function CornerHeader() {
   // Diagonal-split corner: "יום" top-left, "שעה" bottom-right.
   // Triangles use primary + a slightly lighter shade, separated by a clean diagonal line.
   return (
-    <div className="relative w-full h-10 sm:h-11 overflow-hidden select-none" aria-label="יום / שעה">
-      {/* Top-left triangle (darker primary) */}
-      <div
-        className="absolute inset-0 bg-primary"
-        style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }}
-      />
-      {/* Bottom-right triangle (lighter shade for contrast) */}
-      <div
-        className="absolute inset-0 bg-primary/75 dark:bg-primary/55"
-        style={{ clipPath: 'polygon(100% 0, 100% 100%, 0 100%)' }}
-      />
-      {/* Diagonal divider line */}
-      <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none" viewBox="0 0 100 100">
-        <line x1="100" y1="0" x2="0" y2="100" stroke="hsl(var(--primary-foreground))" strokeOpacity="0.45" strokeWidth="1.2" vectorEffect="non-scaling-stroke" />
-      </svg>
+    <div className="relative w-full h-10 sm:h-11 overflow-hidden select-none bg-muted/55" aria-label="יום / שעה">
+      <span className="absolute inset-x-2 top-1/2 h-px -rotate-45 bg-border/80" aria-hidden />
       {/* "יום" — top-left triangle area */}
-      <span className="absolute top-0.5 left-0.5 sm:left-1 text-[8px] sm:text-[9px] font-bold text-primary-foreground leading-none">
+      <span className="absolute top-0.5 left-0.5 sm:left-1 text-[8px] sm:text-[9px] font-bold text-muted-foreground leading-none">
         יום
       </span>
       {/* "שעה" — bottom-right triangle area */}
-      <span className="absolute bottom-0.5 right-0.5 sm:right-1 text-[8px] sm:text-[9px] font-bold text-primary-foreground leading-none">
+      <span className="absolute bottom-0.5 right-0.5 sm:right-1 text-[8px] sm:text-[9px] font-bold text-muted-foreground leading-none">
         שעה
       </span>
     </div>
