@@ -79,8 +79,16 @@ export default function Community({ role = 'homeroom_teacher', user }) {
 
   async function handleSave() {
     if (!editStudent) return;
+    const goal = Number(form.community_service_goal);
+    const done = Number(form.community_service_done);
+    if (!Number.isFinite(goal) || goal <= 0 || !Number.isFinite(done) || done < 0) {
+      toast.error('יעד השעות חייב להיות גדול מאפס, ושעות שבוצעו אינן יכולות להיות שליליות');
+      return;
+    }
+    const selectedStatus = form.community_service_status || 'לא התחיל';
+    const consistentStatus = done >= goal ? 'הושלם' : done > 0 && selectedStatus === 'לא התחיל' ? 'בתהליך' : selectedStatus;
     const payload = {
-      community_service_goal: Number(form.community_service_goal || 0),
+      community_service_goal: goal,
       // השלמת שדות חובה לרשומות ישנות שחסרים בהן שם פרטי/משפחה
       ...(!editStudent.firstName || !editStudent.lastName ? (() => {
         const parts = (editStudent.full_name || editStudent.fullName || formatStudentName(editStudent) || '').trim().split(/\s+/);
@@ -89,10 +97,10 @@ export default function Community({ role = 'homeroom_teacher', user }) {
           lastName: editStudent.lastName || parts.slice(1).join(' ') || '-',
         };
       })() : {}),
-      community_service_done: Number(form.community_service_done || 0),
-      community_service_place: form.community_service_place || '',
-      community_service_contact: form.community_service_contact || '',
-      community_service_status: form.community_service_status || 'לא התחיל',
+      community_service_done: done,
+      community_service_place: form.community_service_place?.trim() || '',
+      community_service_contact: form.community_service_contact?.trim() || '',
+      community_service_status: consistentStatus,
     };
 
     try {

@@ -27,16 +27,15 @@ export default function Reports({ role }) {
   const [dateFrom, setDateFrom] = useState(() => { const d = new Date(); d.setMonth(d.getMonth()-1); return getLocalDateString(d); });
   const [dateTo, setDateTo] = useState(getLocalDateString);
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => { loadData(); }, [user?.id, role]);
   async function loadData() {
     setLoading(true);
     const scopedStudents = await getAttendanceScopedStudents(user, role);
     const classIds = getScopedClassIds(scopedStudents);
-    const scopedIds = new Set(scopedStudents.map(student => student.id));
 
-    const [attArrays, disArrays, exsArrays, classRows] = await Promise.all([
+    const [attArrays, disciplineResponse, exsArrays, classRows] = await Promise.all([
       Promise.all(classIds.map(classId => base44.entities.AttendanceRecord.filter({ class_id: classId }))),
-      Promise.all(classIds.map(classId => base44.entities.DisciplineEvent.filter({ class_id: classId }))),
+      base44.functions.invoke('sensitiveStudentRecords', { action: 'list', entity: 'DisciplineEvent' }),
       Promise.all(classIds.map(classId => base44.entities.Exam.filter({ class_id: classId }))),
       base44.entities.ClassRoom.list('grade', 500),
     ]);
@@ -44,7 +43,7 @@ export default function Reports({ role }) {
     setStudents(scopedStudents);
     setClassRooms(classRows || []);
     setAttendance(filterScopedAttendance(attArrays.flat(), scopedStudents));
-    setDiscipline(disArrays.flat().filter(record => scopedIds.has(record.student_id)));
+    setDiscipline(disciplineResponse.data.records || []);
     setExams(exsArrays.flat());
     setLoading(false);
   }
@@ -97,13 +96,21 @@ export default function Reports({ role }) {
   })).slice(0, 8);
 
   const exportCSV = () => {
+    const safeCell = (value) => {
+      let text = String(value ?? '');
+      if (/^[=+\-@]/.test(text)) text = `'${text}`;
+      return `"${text.replace(/"/g, '""')}"`;
+    };
     const rows = [['תלמיד', 'תאריך', 'סטטוס', 'הערה']];
     filteredAtt.forEach(a => rows.push([displayStudentName(a.student_id, a.student_name), a.date, a.status, a.note || '']));
-    const csv = rows.map(r => r.join(',')).join('\n');
+    const csv = rows.map(row => row.map(safeCell).join(',')).join('\r\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = 'דוח_נוכחות.csv'; a.click();
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'דוח_נוכחות.csv';
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   return (

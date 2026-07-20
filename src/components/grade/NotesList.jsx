@@ -28,23 +28,29 @@ export default function NotesList({ notes, onRefresh, user, role, classId, stude
   const selectedStudent = students.find(s => s.id === form.student_id);
 
   async function handleSave() {
-    if (!form.student_id || !form.content) { toast.error('יש לבחור תלמיד ולהזין הערה'); return; }
+    if (!form.student_id || !form.content.trim()) { toast.error('יש לבחור תלמיד ולהזין הערה'); return; }
+    if (saving) return;
     setSaving(true);
-    const today = getLocalDateString();
-    await base44.entities.TeacherNote.create({
-      student_id: form.student_id,
-      student_name: selectedStudent?.full_name || '',
-      class_id: classId,
-      date: today,
-      content: `[${user?.full_name || user?.email} · ${formatSchoolDate(new Date(), { dateStyle: 'short', timeStyle: 'short' })}]\n${form.content}`,
-      category: form.category,
-      is_private: true,
-    });
-    toast.success('הערה נשמרה');
-    setForm({ content: '', category: 'כללי', student_id: '' });
-    setShowForm(false);
-    setSaving(false);
-    onRefresh();
+    try {
+      const today = getLocalDateString();
+      await base44.entities.TeacherNote.create({
+        student_id: form.student_id,
+        student_name: formatStudentName(selectedStudent),
+        class_id: selectedStudent?.class_id || classId,
+        date: today,
+        content: `[${user?.full_name || user?.email} · ${formatSchoolDate(new Date(), { dateStyle: 'short', timeStyle: 'short' })}]\n${form.content.trim()}`,
+        category: form.category,
+        is_private: true,
+      });
+      toast.success('הערה נשמרה');
+      setForm({ content: '', category: 'כללי', student_id: '' });
+      setShowForm(false);
+      await onRefresh();
+    } catch (error) {
+      toast.error(error?.message || 'שמירת ההערה נכשלה');
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (

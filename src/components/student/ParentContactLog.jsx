@@ -19,6 +19,7 @@ export default function ParentContactLog({ studentId, classId, studentName, pare
   const [loading, setLoading] = useState(true);
   const [showDialog, setShowDialog] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [saving, setSaving] = useState(false);
   const { confirmDelete, DeleteConfirm } = useDeleteConfirm();
   const [formData, setFormData] = useState({
     date: getLocalDateString(),
@@ -45,29 +46,44 @@ export default function ParentContactLog({ studentId, classId, studentName, pare
   }
 
   async function handleSave() {
-    if (!formData.subject || !formData.summary) {
-      toast.error('מלא את כל השדות החובה');
+    if (saving) return;
+    if (!formData.date || !formData.subject.trim() || !formData.summary.trim()) {
+      toast.error('יש למלא תאריך, נושא וסיכום שיחה');
+      return;
+    }
+    if (formData.follow_up_needed && !formData.follow_up_date) {
+      toast.error('יש לבחור תאריך להמשך טיפול');
       return;
     }
 
+    setSaving(true);
     const payload = {
       student_id: studentId,
       student_name: studentName,
       class_id: classId,
-      initiated_by: user.full_name,
+      initiated_by: user?.full_name || user?.email || '',
       ...formData,
+      subject: formData.subject.trim(),
+      summary: formData.summary.trim(),
+      follow_up_date: formData.follow_up_needed ? formData.follow_up_date : '',
     };
 
-    if (editingId) {
-      await base44.entities.ParentContact.update(editingId, payload);
-      toast.success('הקשר עודכן');
-    } else {
-      await base44.entities.ParentContact.create(payload);
-      toast.success('הקשר נוסף ליומן');
+    try {
+      if (editingId) {
+        await base44.entities.ParentContact.update(editingId, payload);
+        toast.success('הקשר עודכן');
+      } else {
+        await base44.entities.ParentContact.create(payload);
+        toast.success('הקשר נוסף ליומן');
+      }
+      setShowDialog(false);
+      resetForm();
+      await loadContacts();
+    } catch (error) {
+      toast.error(error?.message || 'שמירת הקשר נכשלה');
+    } finally {
+      setSaving(false);
     }
-    setShowDialog(false);
-    loadContacts();
-    resetForm();
   }
 
   async function handleDelete(id) {
@@ -98,13 +114,24 @@ export default function ParentContactLog({ studentId, classId, studentName, pare
   }
 
   function handleEdit(contact) {
-    setFormData(contact);
+    setFormData({
+      date: contact.date || getLocalDateString(),
+      time: contact.time || getSchoolTimeString(),
+      subject: contact.subject || '',
+      summary: contact.summary || '',
+      contact_type: contact.contact_type || 'טלפון',
+      contacted_parent: contact.contacted_parent || 'הורה 1',
+      follow_up_needed: Boolean(contact.follow_up_needed),
+      follow_up_date: contact.follow_up_date || '',
+      parent_phone: contact.parent_phone || '',
+      notes: contact.notes || '',
+    });
     setEditingId(contact.id);
     setShowDialog(true);
   }
 
   function generateWhatsAppMessage() {
-    const msg = `שלום, קצר הודעה בנוגע ל${formatStudentName(studentName)}: ${formData.subject}. ${formData.summary.substring(0, 100)}...`;
+    const msg = `שלום, הודעה קצרה בנוגע ל${formatStudentName(studentName)}: ${formData.subject}. ${formData.summary.substring(0, 100)}...`;
     const encoded = encodeURIComponent(msg);
     const phone = formData.parent_phone?.replace(/\D/g, '');
     if (!phone) {
@@ -311,7 +338,7 @@ export default function ParentContactLog({ studentId, classId, studentName, pare
                 <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
               </Button>
             )}
-            <Button size="sm" onClick={handleSave}>{editingId ? 'עדכן' : 'שמור'}</Button>
+            <Button size="sm" onClick={handleSave} disabled={saving}>{saving ? 'שומר...' : editingId ? 'עדכן' : 'שמור'}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

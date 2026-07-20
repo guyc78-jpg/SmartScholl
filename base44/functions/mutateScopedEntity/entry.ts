@@ -1,4 +1,4 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.34';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.31';
 
 const MUTABLE_ENTITIES = new Set([
   'Announcement', 'AnnouncementRead', 'AttendanceRecord', 'Communication',
@@ -23,6 +23,7 @@ const STAFF_ROLES = new Set([
 ]);
 const REPORT_REVIEW_ENTITIES = new Set(['CommunityServiceReport', 'ExamGradeReport']);
 const IDEMPOTENT_CREATE_KEYS = {
+  AttendanceRecord: ['student_id', 'date'],
   AnnouncementRead: ['announcement_id', 'student_id'],
   ExamCompletion: ['exam_id', 'student_id'],
   ExamGradeReport: ['exam_id', 'student_id'],
@@ -82,8 +83,12 @@ function fail(message, status = 400) {
 
 async function getById(entity, id) {
   if (!id || typeof id !== 'string') return null;
-  const rows = await entity.filter({ id }, '-updated_date', 2);
-  return rows?.[0] || null;
+  try {
+    const rows = await entity.filter({ id }, '-updated_date', 2);
+    return rows?.[0] || null;
+  } catch {
+    return null;
+  }
 }
 
 function studentName(student) {

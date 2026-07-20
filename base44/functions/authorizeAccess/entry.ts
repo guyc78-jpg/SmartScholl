@@ -137,7 +137,6 @@ async function syncVerifiedAuthorization(base44, user, claims) {
   const grade = normalizeGrade(claims.profile_grade_managed || claims.scope?.gradeId || '');
   const division = claims.profile_division || claims.scope?.divisionType || '';
   const patch = {
-    role: claims.role,
     roles,
     available_roles: roles,
     active_work_role: roles.includes(user.active_work_role) ? user.active_work_role : claims.role,
