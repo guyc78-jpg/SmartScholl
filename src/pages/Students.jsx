@@ -28,6 +28,7 @@ import QuickPerformanceReviewDialog from '@/components/students/QuickPerformance
 import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName';
 import { ACCOMMODATION_TYPES, activeAccommodationLabels } from '@/lib/accommodations';
 import { buildClassIdentityMap, getClassDisplayById } from '@/lib/classIdentity';
+import { getPageCache, setPageCache } from '@/lib/pageDataCache';
 
 const PAGE_SIZE = 40;
 const LOAD_TIMEOUT_MS = 15000;
@@ -69,8 +70,10 @@ const buildScopeFilter = (user, role) => {
 
 export default function Students({ role }) {
   const { user } = useAuth();
-  const [students, setStudents] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const cacheKey = `students:${role}:${getActiveScopeMode()}`;
+  const cached = getPageCache(cacheKey);
+  const [students, setStudents] = useState(cached?.students || []);
+  const [loading, setLoading] = useState(!cached);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('הכל');
@@ -80,9 +83,9 @@ export default function Students({ role }) {
   const [showImport, setShowImport] = useState(false);
   const [selectedConversationStudent, setSelectedConversationStudent] = useState(null);
   const [selectedReviewStudent, setSelectedReviewStudent] = useState(null);
-  const [classRooms, setClassRooms] = useState([]);
+  const [classRooms, setClassRooms] = useState(cached?.classRooms || []);
   const [selectedAdminClassId, setSelectedAdminClassId] = useState('');
-  const [accommodationRecords, setAccommodationRecords] = useState({});
+  const [accommodationRecords, setAccommodationRecords] = useState(cached?.accommodationRecords || {});
   const scopeMode = getActiveScopeMode();
   const assignedClassId = role === 'coordinator' && scopeMode === 'class'
     ? getUserHomeroomClassId(user, '')
@@ -101,10 +104,11 @@ export default function Students({ role }) {
     const next = {};
     for (const record of response.data.records || []) next[record.student_id] = record;
     setAccommodationRecords(next);
-  }, []);
+    setPageCache(cacheKey, { ...(getPageCache(cacheKey) || {}), accommodationRecords: next });
+  }, [cacheKey]);
 
   const loadStudents = useCallback(async () => {
-    setLoading(true);
+    if (!getPageCache(cacheKey)) setLoading(true);
     setError('');
     const scopeFilter = buildScopeFilter(user, role);
 
@@ -126,6 +130,7 @@ export default function Students({ role }) {
       const divisionGrades = role === 'division_manager' ? getDivisionGrades(user) : [];
       const nextStudents = divisionGrades.length ? allStudents.filter(student => divisionGrades.includes(normalizeGrade(student.grade))) : allStudents;
       setStudents(nextStudents);
+      setPageCache(cacheKey, { ...(getPageCache(cacheKey) || {}), students: nextStudents });
       setLoading(false);
       loadAccommodationSummaries(nextStudents);
     } catch (e) {
@@ -136,7 +141,12 @@ export default function Students({ role }) {
   }, [user, role, scopeMode, loadAccommodationSummaries]);
 
   useEffect(() => { loadStudents(); }, [loadStudents]);
-  useEffect(() => { base44.entities.ClassRoom.list('grade', 500).then(rows => setClassRooms(rows || [])); }, []);
+  useEffect(() => {
+    base44.entities.ClassRoom.list('grade', 500).then(rows => {
+      setClassRooms(rows || []);
+      setPageCache(cacheKey, { ...(getPageCache(cacheKey) || {}), classRooms: rows || [] });
+    });
+  }, [cacheKey]);
 
   // Reset pagination when search/filter changes.
   useEffect(() => { setVisibleCount(PAGE_SIZE); }, [search, statusFilter, accommodationFilter]);

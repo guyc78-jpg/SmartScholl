@@ -24,6 +24,7 @@ import CellEditorDialog from '@/components/schedule/CellEditorDialog';
 import NowNextCard from '@/components/schedule/NowNextCard';
 import { loadBellSchedule, getNowAndNext, getTodayHebrewName } from '@/lib/bellSchedule';
 import { autoFixSubjectColors, ensureSubjectForName, loadAndNormalizeSubjects, subjectMapById } from '@/lib/scheduleSubjects';
+import { getPageCache, setPageCache } from '@/lib/pageDataCache';
 
 // Build the weekly rows from the bell schedule: lessons plus visible break rows.
 function buildPeriodRows(bellPeriods) {
@@ -43,13 +44,16 @@ function buildPeriodRows(bellPeriods) {
 }
 
 export default function Schedule({ role = 'homeroom_teacher', user }) {
-  const [slots, setSlots] = useState([]);
-  const [subjects, setSubjects] = useState([]);
-  const [periods, setPeriods] = useState([]);
-  const [className, setClassName] = useState('');
-  const [classGrade, setClassGrade] = useState('');
-  const [activeClassId, setActiveClassId] = useState('');
-  const [loading, setLoading] = useState(true);
+  const initialClassId = role === 'student' ? getStudentClassId(user, '') : getUserApprovedClassId(user, '');
+  const cacheKey = `schedule:${initialClassId}`;
+  const cached = getPageCache(cacheKey);
+  const [slots, setSlots] = useState(cached?.slots || []);
+  const [subjects, setSubjects] = useState(cached?.subjects || []);
+  const [periods, setPeriods] = useState(cached?.periods || []);
+  const [className, setClassName] = useState(cached?.className || '');
+  const [classGrade, setClassGrade] = useState(cached?.classGrade || '');
+  const [activeClassId, setActiveClassId] = useState(cached?.activeClassId || '');
+  const [loading, setLoading] = useState(!cached);
 
   const [showImport, setShowImport] = useState(false);
   const [fixingColors, setFixingColors] = useState(false);
@@ -79,7 +83,7 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
   useEffect(() => { load(); }, [classId]);
 
   async function load() {
-    setLoading(true);
+    if (!getPageCache(cacheKey)) setLoading(true);
     try {
     const [bellPeriods, classRooms] = await Promise.all([
       loadBellSchedule('sun_thu'), // weekly view shows Sun–Thu
@@ -94,12 +98,23 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
       const subject = subjectByKey[String(slot.subject || '').trim().replace(/\s+/g, ' ').replace(/["'`׳״]/g, '').toLowerCase()];
       return subject && slot.subject_id !== subject.id ? { ...slot, subject_id: subject.id } : slot;
     });
+    const nextPeriods = buildPeriodRows(bellPeriods);
+    const nextClassName = classRoom?.name || fallbackClassName || '';
+    const nextClassGrade = classRoom?.grade || '';
     setActiveClassId(resolvedClassId);
     setSubjects(normalizedSubjects);
     setSlots(normalizedSlots);
-    setPeriods(buildPeriodRows(bellPeriods));
-    setClassName(classRoom?.name || fallbackClassName || '');
-    setClassGrade(classRoom?.grade || '');
+    setPeriods(nextPeriods);
+    setClassName(nextClassName);
+    setClassGrade(nextClassGrade);
+    setPageCache(cacheKey, {
+      slots: normalizedSlots,
+      subjects: normalizedSubjects,
+      periods: nextPeriods,
+      className: nextClassName,
+      classGrade: nextClassGrade,
+      activeClassId: resolvedClassId,
+    });
     } catch (error) {
       console.error('Failed to load schedule', error);
       setSlots([]);

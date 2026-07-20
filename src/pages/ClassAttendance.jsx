@@ -35,6 +35,7 @@ import { formatStudentName, compareStudentsByLastName } from '@/lib/studentName'
 import { ATTENDANCE_STATUSES, PRESENT_STATUS, getAttendanceScopedStudents, getLocalDateString, getScopedClassIds, filterScopedAttendance, getSelectedAttendanceDate, saveSelectedAttendanceDate, loadScopedAttendanceForDate, toStoredAttendanceStatus } from '@/lib/attendanceScope';
 import { ATTENDANCE_THRESHOLDS as THRESHOLDS } from '@/lib/attendanceThresholds';
 import { formatSchoolDate, getSchoolTimeString } from '@/lib/dateUtils';
+import { getPageCache, setPageCache } from '@/lib/pageDataCache';
 
 const STATUSES = ATTENDANCE_STATUSES;
 const PRESENT = PRESENT_STATUS;
@@ -63,15 +64,17 @@ export default function ClassAttendance({ role }) {
   const { user } = useAuth();
   const canEdit = role === 'homeroom_teacher' || role === 'admin' || role === 'system_admin';
   const canView = canEdit || role === 'coordinator';
-  const [students, setStudents] = useState([]);
+  const cacheKey = `attendance:${role}`;
+  const cached = getPageCache(cacheKey);
+  const [students, setStudents] = useState(cached?.students || []);
   const [date, setDate] = useState(getSelectedAttendanceDate);
   const [attendanceMap, setAttendanceMap] = useState({});
   const [existingIds, setExistingIds] = useState({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!cached);
   const [saving, setSaving] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [confirmedAt, setConfirmedAt] = useState(null);
-  const [allRecords, setAllRecords] = useState([]);
+  const [allRecords, setAllRecords] = useState(cached?.allRecords || []);
   const [view, setView] = useState('exceptions'); // exceptions | all
   const [search, setSearch] = useState('');
   const [tab, setTab] = useState('daily');
@@ -86,16 +89,22 @@ export default function ClassAttendance({ role }) {
   useEffect(() => { if (students.length > 0) loadDay(); }, [date, students]);
 
   async function loadAll() {
-    setLoading(true);
+    if (!getPageCache(cacheKey)) setLoading(true);
     const scopedStudents = await getAttendanceScopedStudents(user, role);
     const classIds = getScopedClassIds(scopedStudents);
 
-    setStudents([...scopedStudents].sort(compareStudentsByLastName));
+    const sortedStudents = [...scopedStudents].sort(compareStudentsByLastName);
+    setStudents(sortedStudents);
+    setPageCache(cacheKey, { ...(getPageCache(cacheKey) || {}), students: sortedStudents });
     setLoading(false);
 
     if (classIds.length > 0) {
       Promise.all(classIds.map(cid => base44.entities.AttendanceRecord.filter({ class_id: cid })))
-        .then(recsArrays => setAllRecords(filterScopedAttendance(recsArrays.flat(), scopedStudents)))
+        .then(recsArrays => {
+          const nextRecords = filterScopedAttendance(recsArrays.flat(), scopedStudents);
+          setAllRecords(nextRecords);
+          setPageCache(cacheKey, { ...(getPageCache(cacheKey) || {}), allRecords: nextRecords });
+        })
         .catch(() => setAllRecords([]));
     } else {
       setAllRecords([]);

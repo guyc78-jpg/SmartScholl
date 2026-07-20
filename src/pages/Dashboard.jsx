@@ -31,6 +31,7 @@ import { getClassDisplayName, getHomeroomClassLabel } from '@/lib/classIdentity'
 import useReadNotifications from '@/hooks/useReadNotifications';
 import { ATTENDANCE_EXCEPTION_STATUSES, getAttendanceScopedStudents, getScopedClassIds, filterScopedAttendance, getSelectedAttendanceDate, getLocalDateString, loadScopedAttendanceForDate } from '@/lib/attendanceScope.js';
 import { formatSchoolDate } from '@/lib/dateUtils';
+import { getPageCache, setPageCache } from '@/lib/pageDataCache';
 
 const HEBREW_DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 const HEBREW_MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
@@ -41,13 +42,14 @@ function hebrewDate() {
 
 export default function Dashboard({ user, role, initialData }) {
    const navigate = useNavigate();
-   const [students, setStudents] = useState(initialData?.students || []);
-   const [todayAttendance, setTodayAttendance] = useState(initialData?.todayAttendance || []);
-   const [exams, setExams] = useState(initialData?.exams || []);
-   const [tasks, setTasks] = useState(initialData?.tasks || []);
-   const [discipline, setDiscipline] = useState(initialData?.discipline || []);
-   const [announcements, setAnnouncements] = useState(initialData?.announcements || []);
-   const [loading, setLoading] = useState(!initialData);
+   const cached = getPageCache('dashboard');
+   const [students, setStudents] = useState(initialData?.students || cached?.students || []);
+   const [todayAttendance, setTodayAttendance] = useState(initialData?.todayAttendance || cached?.todayAttendance || []);
+   const [exams, setExams] = useState(initialData?.exams || cached?.exams || []);
+   const [tasks, setTasks] = useState(initialData?.tasks || cached?.tasks || []);
+   const [discipline, setDiscipline] = useState(initialData?.discipline || cached?.discipline || []);
+   const [announcements, setAnnouncements] = useState(initialData?.announcements || cached?.announcements || []);
+   const [loading, setLoading] = useState(!initialData && !cached);
    const [quickAction, setQuickAction] = useState(null);
    const [tasksDialogOpen, setTasksDialogOpen] = useState(false);
    const [selectedDisciplineEvent, setSelectedDisciplineEvent] = useState(null);
@@ -101,7 +103,7 @@ export default function Dashboard({ user, role, initialData }) {
       setAnnouncements(initialData.announcements || []);
       setLoading(false);
     }
-    loadData(!initialData);
+    loadData(!initialData && !getPageCache('dashboard'));
     const scheduleReload = () => {
       clearTimeout(loadTimerRef.current);
       loadTimerRef.current = setTimeout(() => loadData(false), 150);
@@ -175,12 +177,22 @@ export default function Dashboard({ user, role, initialData }) {
         fetchForScope('Announcement', null, 100),
       ]);
 
+      const nextDiscipline = dis.filter(record => scopedIds.has(record.student_id));
+      const nextTasks = tks.filter(task => !task.student_id || scopedIds.has(task.student_id));
       setStudents(scopedStudents);
       setTodayAttendance(att);
-      setDiscipline(dis.filter(record => scopedIds.has(record.student_id)));
-      setTasks(tks.filter(task => !task.student_id || scopedIds.has(task.student_id)));
+      setDiscipline(nextDiscipline);
+      setTasks(nextTasks);
       setExams(exs);
       setAnnouncements(ann);
+      setPageCache('dashboard', {
+        students: scopedStudents,
+        todayAttendance: att,
+        exams: exs,
+        tasks: nextTasks,
+        discipline: nextDiscipline,
+        announcements: ann,
+      });
       setLoading(false);
 
       Promise.all([

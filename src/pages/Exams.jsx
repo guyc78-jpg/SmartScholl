@@ -20,13 +20,17 @@ import { isEventRelevantForStudent } from '@/components/exams/AudienceEditor';
 import { getAvailableRoles } from '@/lib/roleUtils';
 import { getClassDisplayName } from '@/lib/classIdentity';
 import { getLocalDateString } from '@/lib/attendanceScope.js';
+import { getPageCache, setPageCache } from '@/lib/pageDataCache';
 
 export default function Exams({ role, user }) {
-  const [events, setEvents] = useState([]);
-  const [students, setStudents] = useState([]);
-  const [completions, setCompletions] = useState([]);
-  const [gradeReports, setGradeReports] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const initialClassId = role === 'student' ? getStudentClassId(user, '') : getUserApprovedClassId(user, '');
+  const cacheKey = `exams:${initialClassId}:${role}`;
+  const cached = getPageCache(cacheKey);
+  const [events, setEvents] = useState(cached?.events || []);
+  const [students, setStudents] = useState(cached?.students || []);
+  const [completions, setCompletions] = useState(cached?.completions || []);
+  const [gradeReports, setGradeReports] = useState(cached?.gradeReports || []);
+  const [loading, setLoading] = useState(!cached);
   const [view, setView] = useState('week');
   const [viewOffsets, setViewOffsets] = useState({ day: 0, week: 0, month: 0 });
   const [filterGroup, setFilterGroup] = useState('all');
@@ -37,8 +41,8 @@ export default function Exams({ role, user }) {
   const [showForm, setShowForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
   const [selectedEvent, setSelectedEvent] = useState(null);
-  const [activeClassId, setActiveClassId] = useState('');
-  const [currentClassRoom, setCurrentClassRoom] = useState(null);
+  const [activeClassId, setActiveClassId] = useState(cached?.activeClassId || '');
+  const [currentClassRoom, setCurrentClassRoom] = useState(cached?.currentClassRoom || null);
 
   const approvedRoles = getAvailableRoles(user);
   const canManageBoard = role !== 'student' && (approvedRoles.includes('admin') || approvedRoles.includes('system_admin') || approvedRoles.includes('coordinator') || approvedRoles.includes('grade_coordinator') || approvedRoles.includes('homeroom_teacher'));
@@ -53,7 +57,7 @@ export default function Exams({ role, user }) {
   useEffect(() => { loadData(); }, [classId, role]);
 
   async function loadData() {
-    setLoading(true);
+    if (!getPageCache(cacheKey)) setLoading(true);
     try {
     const classRooms = await base44.entities.ClassRoom.list('-updated_date', 200);
     const classRoom = classRooms.find(room => room.id === classId) || findClassRoomByName(classRooms, fallbackClassName);
@@ -65,7 +69,8 @@ export default function Exams({ role, user }) {
       base44.entities.Student.filter({ class_id: resolvedClassId }),
     ]);
     const nextStudents = studentData || [];
-    setEvents((eventData || []).sort((a, b) => (a.date || '').localeCompare(b.date || '')));
+    const nextEvents = (eventData || []).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+    setEvents(nextEvents);
     setStudents(nextStudents);
     const current = isStudent ? nextStudents.find(s => s.email === user?.email || s.user_email === user?.email) : null;
     const [completionData, reportData] = await Promise.all([
@@ -74,6 +79,14 @@ export default function Exams({ role, user }) {
     ]);
     setCompletions(completionData || []);
     setGradeReports(reportData || []);
+    setPageCache(cacheKey, {
+      events: nextEvents,
+      students: nextStudents,
+      completions: completionData || [],
+      gradeReports: reportData || [],
+      activeClassId: resolvedClassId,
+      currentClassRoom: classRoom || null,
+    });
     } catch (error) {
       console.error('Failed to load exams', error);
       setEvents([]);
