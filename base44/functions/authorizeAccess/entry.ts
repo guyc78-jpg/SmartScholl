@@ -149,7 +149,18 @@ async function syncVerifiedAuthorization(base44, user, claims) {
     onboarding_status: 'approved',
     onboardingCompleted: true,
   };
-  await base44.asServiceRole.entities.User.update(user.id, patch);
+  const hasChanged = JSON.stringify(user.roles || []) !== JSON.stringify(patch.roles)
+    || JSON.stringify(user.available_roles || []) !== JSON.stringify(patch.available_roles)
+    || user.active_work_role !== patch.active_work_role
+    || user.authorization_student_id !== patch.authorization_student_id
+    || user.authorization_class_id !== patch.authorization_class_id
+    || user.authorization_grade !== patch.authorization_grade
+    || user.authorization_division !== patch.authorization_division
+    || user.authorization_active !== true
+    || user.profile_homeroom_class_id !== patch.profile_homeroom_class_id
+    || user.onboarding_status !== patch.onboarding_status
+    || user.onboardingCompleted !== patch.onboardingCompleted;
+  if (hasChanged) await base44.asServiceRole.entities.User.update(user.id, patch);
 }
 
 async function getAccess(base44, user, skipLog = false) {
