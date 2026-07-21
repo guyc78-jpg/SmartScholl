@@ -134,7 +134,7 @@ const loadDashboardBootstrapData = async (user, role) => {
 };
 
 const AuthenticatedApp = () => {
-  const { isAuthenticated, authChecked, isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user: realUser, updateCurrentUser, checkUserAuth, checkAppState } = useAuth();
+  const { isAuthenticated, authChecked, isLoadingAuth, authError, navigateToLogin, user: realUser, updateCurrentUser, checkUserAuth, checkAppState } = useAuth();
   const { preference: themePreference, setPreference: setThemePreference, isDark: darkMode, toggleDark } = useThemePreference();
   const { isSimulating, simRole, buildSimulatedUser } = useSimulation();
   const navigate = useNavigate();
@@ -197,7 +197,7 @@ const AuthenticatedApp = () => {
   }, [user?.id]);
 
   useEffect(() => {
-    if (isLoadingPublicSettings || isLoadingAuth || !user || !bootRole) return;
+    if (isLoadingAuth || !user || !bootRole) return;
     if (!isSimulating && realUser && !workRole) return;
 
     let cancelled = false;
@@ -213,12 +213,12 @@ const AuthenticatedApp = () => {
 
     runBootstrap();
     return () => { cancelled = true; };
-  }, [isLoadingPublicSettings, isLoadingAuth, user?.id, bootHomeroomClassId, bootRole, bootPageRole, bootStaff, workRole, isSimulating, bootstrapAttempt]);
+  }, [isLoadingAuth, user?.id, bootHomeroomClassId, bootRole, bootPageRole, bootStaff, workRole, isSimulating, bootstrapAttempt]);
 
   // מסך הטעינה נשאר גלוי עד שכל הנתונים נטענו (bootstrap ready) והפס הגיע ל-100% בפועל
-  const dataLoading = !authChecked || isLoadingPublicSettings || isLoadingAuth || bootstrap.status === 'loading' || (user && bootstrap.status === 'idle' && !authError);
+  const dataLoading = !authChecked || isLoadingAuth || bootstrap.status === 'loading' || (user && bootstrap.status === 'idle' && !authError);
   if ((dataLoading || (bootstrap.status === 'ready' && !loaderComplete)) && !authError) {
-    const loaderProgress = isLoadingPublicSettings || isLoadingAuth ? 24 : bootstrap.status === 'loading' ? 70 : bootstrap.status === 'ready' ? 100 : 50;
+    const loaderProgress = isLoadingAuth ? 24 : bootstrap.status === 'loading' ? 70 : bootstrap.status === 'ready' ? 100 : 50;
     return (
       <PremiumInitialLoader
         status={bootstrap.message}
