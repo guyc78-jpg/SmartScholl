@@ -279,18 +279,6 @@ async function getAccess(base44, user, skipLog = false) {
 
     await syncVerifiedAuthorization(base44, user, claims);
 
-    if (!skipLog) {
-      await writeLog(base44, {
-        eventType: 'login_success',
-        actorEmail: email,
-        targetEmail: email,
-        targetName: primaryItem.record.fullName,
-        actionName: 'login_success',
-        role: primaryRole,
-        details: 'כניסה מוצלחת למערכת',
-        metadata: { roles, scopesByRole },
-      });
-    }
     return { allowed: true, claims };
   }
 
