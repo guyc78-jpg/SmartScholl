@@ -155,38 +155,25 @@ export const AuthProvider = ({ children }) => {
         interceptResponses: true,
       });
 
-      const publicSettings = await withNetworkRetry(
+      // Authentication is the only prerequisite for opening the application.
+      // Public visual settings are loaded afterward so a slow settings request
+      // never leaves a signed-in user blocked on the loading screen.
+      await checkUserAuth();
+      if (requestId !== appStateRequestId.current) return;
+      setIsLoadingPublicSettings(false);
+
+      withNetworkRetry(
         () => appClient.get(`/prod/public-settings/by-id/${appParams.appId}`),
         3
-      );
-      if (requestId !== appStateRequestId.current) return;
-      setAppPublicSettings(publicSettings);
-
-      // Token presence is not proof of authentication, and SDK-managed
-      // sessions may exist without appParams.token. me() is authoritative.
-      await checkUserAuth();
+      ).then((publicSettings) => {
+        if (requestId === appStateRequestId.current) setAppPublicSettings(publicSettings);
+      }).catch((appError) => {
+        console.warn('Public settings could not be loaded:', appError);
+      });
     } catch (appError) {
       if (requestId !== appStateRequestId.current) return;
-      clearBase44AccessClaims();
-      setUser(null);
-      setIsAuthenticated(false);
-      setAuthChecked(true);
-      setIsLoadingAuth(false);
       console.error('App state check failed:', appError);
-
-      const status = getErrorStatus(appError);
-      const reason = appError?.data?.extra_data?.reason
-        || appError?.response?.data?.extra_data?.reason;
-
-      if (status === 403 && reason === 'auth_required') {
-        setAuthError({ type: 'auth_required', message: 'Authentication required' });
-      } else if (status === 403 && reason === 'user_not_registered') {
-        setAuthError({ type: 'user_not_registered', message: 'User not registered for this app' });
-      } else if (status === 403 && reason) {
-        setAuthError({ type: reason, message: appError.message });
-      } else {
-        setAuthError({ type: 'unknown', message: appError.message || 'Failed to load app' });
-      }
+      setAuthError({ type: 'unknown', message: appError.message || 'Failed to load app' });
     } finally {
       if (requestId === appStateRequestId.current) setIsLoadingPublicSettings(false);
     }
