@@ -88,7 +88,7 @@ export default function CellEditorDialog({ open, onOpenChange, slot, day, period
             ) : (
               <Select value={form.subject} onValueChange={selectSubject}>
                 <SelectTrigger><SelectValue placeholder="בחר מקצוע" /></SelectTrigger>
-                <SelectContent>
+                <SelectContent className="-translate-x-8 sm:translate-x-0">
                   {subjectOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   <SelectItem value="אחר">אחר</SelectItem>
                 </SelectContent>
