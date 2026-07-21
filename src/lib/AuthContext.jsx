@@ -103,10 +103,10 @@ export const AuthProvider = ({ children }) => {
       const accessResponse = await withNetworkRetry(
         () => withTimeout(
           base44.functions.invoke('authorizeAccess', { action: 'getAccess' }),
-          8000,
+          20000,
           'authorizeAccess timeout'
         ),
-        2
+        3
       );
       if (requestId !== authRequestId.current) return null;
 
