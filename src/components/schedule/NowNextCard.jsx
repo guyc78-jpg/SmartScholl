@@ -69,10 +69,10 @@ export default function NowNextCard({ classId, className = '', showEmpty = false
     if (!showEmpty) return null;
     return (
       <Card className={className}>
-        <CardContent className="p-3 sm:p-4 text-right" dir="rtl">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center flex-shrink-0">
-              <Clock className="w-5 h-5 text-muted-foreground" />
+        <CardContent className="p-2 sm:p-2.5 text-right" dir="rtl">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+              <Clock className="w-4 h-4 text-muted-foreground" />
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-foreground/80">מערכת שעות</p>

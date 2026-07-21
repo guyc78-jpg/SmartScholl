@@ -20,10 +20,10 @@ export default function AttendanceExceptionsCard({
 
   if (exceptionsCount === 0) {
     return (
-      <div className="w-full rounded-xl border border-border bg-card p-3 text-right" dir="rtl">
-        <div className="flex items-center gap-2.5 justify-start">
-          <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <CheckCircle2 className="w-4 h-4 text-primary" strokeWidth={2.2} />
+      <div className="w-full rounded-xl border border-border bg-card p-2 text-right" dir="rtl">
+        <div className="flex items-center gap-2 justify-start">
+          <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+            <CheckCircle2 className="w-3.5 h-3.5 text-primary" strokeWidth={2.2} />
           </div>
           <p className="text-sm font-semibold text-foreground">אין חריגי נוכחות {date}</p>
         </div>

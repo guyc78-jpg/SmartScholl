@@ -330,9 +330,9 @@ export default function Dashboard({ user, role, initialData }) {
   }
 
   return (
-    <div className="p-3 sm:p-5 lg:p-7 space-y-5 lg:space-y-6 text-right" dir="rtl">
+    <div className="p-2 sm:p-3 lg:p-4 space-y-2.5 lg:space-y-3 text-right" dir="rtl">
       {/* Vision plane — greeting + today's intelligence in one broad glass sheet */}
-      <div className="vision-plane p-4 sm:p-5 lg:p-6 space-y-4">
+      <div className="vision-plane p-3 sm:p-3.5 lg:p-4 space-y-2.5">
         {/* Header */}
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
@@ -433,10 +433,10 @@ export default function Dashboard({ user, role, initialData }) {
         if (!quickActions.length) return null;
         return (
           <section>
-            <h2 className="text-sm font-bold text-foreground mb-1.5">פעולות מהירות</h2>
-            <div className="grid grid-cols-4 gap-1.5" dir="rtl">
+            <h2 className="text-sm font-bold text-foreground mb-1">פעולות מהירות</h2>
+            <div className="grid grid-cols-4 gap-1" dir="rtl">
               {quickActions.map(btn => {
-                const commonClassName = "liquid-sheet group relative flex min-h-[66px] flex-col items-center justify-center gap-1 py-1.5 px-1 rounded-xl border border-border/55 hover:border-primary/25 transition-all text-center";
+                const commonClassName = "liquid-sheet group relative flex min-h-[58px] flex-col items-center justify-center gap-0.5 py-1 px-1 rounded-xl border border-border/55 hover:border-primary/25 transition-all text-center";
                 const commonContent = (
                   <>
                     {btn.badge > 0 && (

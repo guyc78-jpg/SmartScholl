@@ -214,10 +214,10 @@ export default function DailySmartCard({ classId, students, todayAttendance, exa
   if (loading) return null;
 
   return (
-    <section className="liquid-sheet rounded-3xl border border-border/60 p-4 lg:p-5" dir="rtl">
-      <div className="flex items-center gap-2 mb-4">
-        <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center ring-1 ring-primary/15">
-          <TrendingUp className="w-4 h-4 text-primary" />
+    <section className="liquid-sheet rounded-3xl border border-border/60 p-2.5 lg:p-3" dir="rtl">
+      <div className="flex items-center gap-2 mb-2">
+        <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center ring-1 ring-primary/15">
+          <TrendingUp className="w-3.5 h-3.5 text-primary" />
         </div>
         <div>
           <h2 className="text-base font-bold text-foreground leading-tight">מה חשוב היום</h2>
@@ -228,12 +228,12 @@ export default function DailySmartCard({ classId, students, todayAttendance, exa
       </div>
 
       {insights.length === 0 && (
-        <div className="flex items-center justify-center py-6 text-sm text-muted-foreground">
+        <div className="flex items-center justify-center py-3 text-sm text-muted-foreground">
           אין משהו מיוחד היום 🎉
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
         {insights.map(insight => {
           const accent = PRIORITY_ACCENT[insight.priority] || PRIORITY_ACCENT.medium;
           const Icon = insight.icon;
