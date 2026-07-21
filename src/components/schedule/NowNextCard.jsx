@@ -89,7 +89,7 @@ export default function NowNextCard({ classId, className = '', showEmpty = false
   return (
     <Card className={className}>
       <CardContent className="p-2 sm:p-2.5 text-right" dir="rtl">
-        <div className="grid grid-cols-2 gap-2 sm:gap-2.5 items-stretch" dir="rtl">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-2.5 items-stretch" dir="rtl">
           <LessonBlock title="השיעור עכשיו" slot={current} emptyText="אין שיעור כרגע" remainingMins={current ? remainingMins : null} subjectDefinition={current?.subject_id ? subjectsById[current.subject_id] : null} />
           <LessonBlock title="השיעור הבא" slot={next} emptyText="אין שיעור נוסף היום" timeToNext={!current ? remainingMins : null} subjectDefinition={next?.subject_id ? subjectsById[next.subject_id] : null} muted />
         </div>
