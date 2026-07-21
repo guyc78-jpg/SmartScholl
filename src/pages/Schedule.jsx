@@ -26,21 +26,31 @@ import { loadBellSchedule, getNowAndNext, getTodayHebrewName } from '@/lib/bellS
 import { autoFixSubjectColors, ensureSubjectForName, loadAndNormalizeSubjects, subjectMapById } from '@/lib/scheduleSubjects';
 import { getPageCache, setPageCache } from '@/lib/pageDataCache';
 
-// Build the weekly rows from the bell schedule: lessons plus visible break rows.
+// Build lesson rows only; breaks become visual dividers before the following lesson.
 function buildPeriodRows(bellPeriods) {
-  const visibleRows = (bellPeriods || [])
+  const orderedRows = (bellPeriods || [])
     .filter(p => p.kind === 'lesson' || p.kind === 'break')
     .sort((a, b) => (a.start_time || '').localeCompare(b.start_time || ''));
 
-  if (visibleRows.length === 0) {
-    return Array.from({ length: 12 }, (_, i) => ({ kind: 'lesson', period: i + 1, start_time: '', end_time: '', label: `שיעור ${i + 1}` }));
-  }
+  const lessonRows = [];
+  let hasBreakBefore = false;
+  orderedRows.forEach((row, index) => {
+    if (row.kind === 'break') {
+      hasBreakBefore = lessonRows.length > 0;
+      return;
+    }
+    lessonRows.push({
+      ...row,
+      has_break_before: hasBreakBefore,
+      row_key: `lesson-${row.period || index}`,
+      label: row.label || `שיעור ${row.period}`,
+    });
+    hasBreakBefore = false;
+  });
 
-  return visibleRows.map((row, index) => ({
-    ...row,
-    row_key: row.kind === 'break' ? `break-${row.start_time || index}` : `lesson-${row.period || index}`,
-    label: row.label || (row.kind === 'break' ? 'הפסקה' : `שיעור ${row.period}`),
-  }));
+  return lessonRows.length
+    ? lessonRows
+    : Array.from({ length: 12 }, (_, i) => ({ kind: 'lesson', period: i + 1, start_time: '', end_time: '', label: `שיעור ${i + 1}` }));
 }
 
 export default function Schedule({ role = 'homeroom_teacher', user }) {

@@ -45,31 +45,14 @@ export default function WeeklyScheduleGrid({ periods, slotsByKey, todayDayName, 
           </thead>
           <tbody>
             {periods.map((p, rowIdx) => {
-              const isBreakRow = p.kind === 'break';
               const isCurrentRow = highlightDay && Number(currentPeriod) === Number(p.period);
-              if (isBreakRow) {
-                return (
-                  <tr key={p.row_key || `break-${p.start_time}-${rowIdx}`}>
-                    <td className="border-b border-l border-border bg-secondary/10 p-1 align-middle text-center">
-                      <div className="flex min-h-[34px] flex-col items-center justify-center gap-0.5 px-0.5 sm:px-1">
-                        <div className="text-[10px] sm:text-xs font-extrabold text-secondary-foreground">הפסקה</div>
-                        {p.start_time && <div className="force-ltr text-[9px] sm:text-[10px] font-bold text-foreground/80">{p.start_time}</div>}
-                      </div>
-                    </td>
-                    <td colSpan={DAYS.length} className="border-b border-border bg-secondary/10 px-2 py-1 text-center align-middle">
-                      <div className="flex min-h-[34px] items-center justify-center gap-2 rounded-lg border border-secondary/20 bg-secondary/10 text-center text-xs font-bold text-secondary-foreground" dir="rtl">
-                        <span>{p.label || 'הפסקה'}</span>
-                        {p.start_time && p.end_time && <span className="force-ltr text-[11px] font-semibold text-muted-foreground">{p.start_time}–{p.end_time}</span>}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              }
+              const hasBreakBefore = p.has_break_before;
               return (
                 <tr key={p.row_key || p.period}>
                   <td
                     className={cn(
                       'font-bold border-b border-l border-border align-middle p-0',
+                       hasBreakBefore && 'border-t-4 border-t-primary/30',
                       rowIdx % 2 === 0 ? 'bg-muted/40' : 'bg-card',
                       isCurrentRow && 'bg-primary/10 text-primary',
                     )}
@@ -100,6 +83,7 @@ export default function WeeklyScheduleGrid({ periods, slotsByKey, todayDayName, 
                         isToday={isToday}
                         isNow={isNow}
                         canEdit={canEdit}
+                        hasBreakBefore={hasBreakBefore}
                         interactive={isInteractive}
                         onClick={isInteractive ? () => onCellClick?.(day, p.period, cellSlots[0], p) : undefined}
                         subjectsById={subjectsById}
@@ -134,7 +118,7 @@ function CornerHeader() {
   );
 }
 
-function Cell({ slots = [], day, period, isToday, isNow, canEdit, interactive, onClick, subjectsById }) {
+function Cell({ slots = [], day, period, isToday, isNow, canEdit, hasBreakBefore, interactive, onClick, subjectsById }) {
   const hasSlots = slots.length > 0;
   const primarySlot = slots[0];
   const primarySubject = primarySlot?.subject_id ? subjectsById[primarySlot.subject_id] : null;
@@ -148,6 +132,7 @@ function Cell({ slots = [], day, period, isToday, isNow, canEdit, interactive, o
     <td
       className={cn(
         'border-b border-l last:border-l-0 border-border align-top p-0 transition-colors relative',
+         hasBreakBefore && 'border-t-4 border-t-primary/30',
         isNow && 'ring-1 ring-inset ring-primary/40',
         !hasSlots && (isNow ? 'bg-primary/15 dark:bg-primary/20' : isToday ? 'bg-primary/[0.05]' : ''),
         interactive ? (canEdit ? 'cursor-pointer hover:bg-accent/60' : 'cursor-pointer hover:bg-accent/40') : 'cursor-default',
