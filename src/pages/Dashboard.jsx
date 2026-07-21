@@ -433,21 +433,21 @@ export default function Dashboard({ user, role, initialData }) {
         if (!quickActions.length) return null;
         return (
           <section>
-            <h2 className="text-sm font-bold text-foreground mb-2.5">פעולות מהירות</h2>
-            <div className="grid grid-cols-4 gap-2">
+            <h2 className="text-sm font-bold text-foreground mb-1.5">פעולות מהירות</h2>
+            <div className="grid grid-cols-4 gap-1.5" dir="rtl">
               {quickActions.map(btn => {
-                const commonClassName = "liquid-sheet group relative flex min-h-[92px] flex-col items-center justify-center gap-2 py-3 px-1.5 rounded-[1.35rem] border border-border/55 hover:border-primary/25 transition-all text-center";
+                const commonClassName = "liquid-sheet group relative flex min-h-[66px] flex-col items-center justify-center gap-1 py-1.5 px-1 rounded-xl border border-border/55 hover:border-primary/25 transition-all text-center";
                 const commonContent = (
                   <>
                     {btn.badge > 0 && (
-                      <span className="absolute top-1.5 end-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-destructive text-white text-[10px] font-bold flex items-center justify-center leading-none">
+                      <span className="absolute top-1 end-1 min-w-[15px] h-[15px] px-0.5 rounded-full bg-destructive text-white text-[9px] font-bold flex items-center justify-center leading-none">
                         {btn.badge > 99 ? '99+' : btn.badge}
                       </span>
                     )}
-                    <div className="icon-lens w-11 h-11">
-                      <btn.icon className="w-[18px] h-[18px]" strokeWidth={2} />
+                    <div className="icon-lens w-8 h-8">
+                      <btn.icon className="w-3.5 h-3.5" strokeWidth={2} />
                     </div>
-                    <span className="text-[11px] font-semibold text-foreground/80 leading-tight">{btn.label}</span>
+                    <span className="text-[10px] font-semibold text-foreground/80 leading-none">{btn.label}</span>
                   </>
                 );
                 return (
