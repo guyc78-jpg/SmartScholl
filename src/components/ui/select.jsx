@@ -57,7 +57,7 @@ const SelectContent = React.forwardRef(({ className, children, position = "poppe
       dir="rtl"
       style={{ WebkitOverflowScrolling: 'touch' }}
       className={cn(
-        "relative z-[10000] max-h-[calc(100dvh-var(--app-mobile-overlay-bottom-space)-1rem)] min-w-[8rem] max-w-[calc(100vw-2rem)] overflow-x-hidden overflow-y-auto overscroll-contain rounded-2xl border border-border/60 bg-popover text-right text-popover-foreground shadow-xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
+        "relative z-[10000] w-[var(--radix-select-trigger-width)] max-w-[calc(100vw-2rem)] max-h-[calc(100dvh-var(--app-mobile-overlay-bottom-space)-1rem)] overflow-x-hidden overflow-y-auto overscroll-contain rounded-2xl border border-border/60 bg-popover text-right text-popover-foreground shadow-xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
         position === "popper" &&
           "data-[side=bottom]:translate-y-1 data-[side=top]:-translate-y-1",
         className
