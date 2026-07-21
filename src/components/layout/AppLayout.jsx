@@ -463,7 +463,7 @@ export default function AppLayout({ children, user, role, darkMode, toggleDark, 
         </main>
 
         {/* Mobile Bottom Nav */}
-         <nav className="liquid-sheet lg:hidden fixed bottom-3 left-1/2 w-[calc(100%-2rem)] max-w-[25rem] -translate-x-1/2 grid border border-border/55 rounded-[26px] z-30 overflow-hidden shadow-[0_14px_34px_rgb(var(--liquid-shadow)/0.18)]" dir="rtl"
+         <nav className="liquid-sheet lg:hidden fixed bottom-5 left-1/2 w-[calc(100%-2rem)] max-w-[25rem] -translate-x-1/2 grid border border-border/55 rounded-[26px] z-30 overflow-hidden shadow-[0_14px_34px_rgb(var(--liquid-shadow)/0.18)]" dir="rtl"
          style={{
            gridTemplateColumns: `repeat(${bottomNavItems.length}, minmax(0, 1fr))`,
            paddingBottom: 'max(6px, env(safe-area-inset-bottom))',
