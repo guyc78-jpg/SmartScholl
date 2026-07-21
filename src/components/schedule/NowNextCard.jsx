@@ -56,8 +56,8 @@ export default function NowNextCard({ classId, className = '', showEmpty = false
   if (state.loading) {
     return (
       <Card className={className}>
-        <CardContent className="p-2 sm:p-2.5">
-          <div className="h-[90px] rounded-xl bg-muted/40 animate-pulse" />
+        <CardContent className="p-1.5">
+          <div className="h-[134px] rounded-xl bg-muted/40 animate-pulse" />
         </CardContent>
       </Card>
     );
@@ -88,8 +88,8 @@ export default function NowNextCard({ classId, className = '', showEmpty = false
 
   return (
     <Card className={className}>
-      <CardContent className="p-2 sm:p-2.5 text-right" dir="rtl">
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-2.5 items-stretch" dir="rtl">
+      <CardContent className="p-1.5 text-right" dir="rtl">
+        <div className="grid grid-cols-1 gap-1.5 items-stretch" dir="rtl">
           <LessonBlock title="השיעור עכשיו" slot={current} emptyText="אין שיעור כרגע" remainingMins={current ? remainingMins : null} subjectDefinition={current?.subject_id ? subjectsById[current.subject_id] : null} />
           <LessonBlock title="השיעור הבא" slot={next} emptyText="אין שיעור נוסף היום" timeToNext={!current ? remainingMins : null} subjectDefinition={next?.subject_id ? subjectsById[next.subject_id] : null} muted />
         </div>
@@ -123,7 +123,7 @@ function LessonBlock({ title, slot, emptyText, remainingMins = null, timeToNext 
   return (
     <div
       className={cn(
-        'grid h-[90px] min-w-0 grid-rows-[14px_24px_14px_14px] items-start rounded-xl border px-2.5 py-2 text-right',
+        'grid h-16 min-w-0 grid-rows-[10px_18px_10px_10px] items-start rounded-xl border px-2 py-1.5 text-right',
         muted ? 'border-border/70 bg-muted/20' : slot?.kind === 'break' ? 'border-amber-200/70 bg-amber-50/40 dark:border-amber-800/70 dark:bg-amber-900/15' : 'border-emerald-200/70 bg-emerald-50/40 dark:border-emerald-800/70 dark:bg-emerald-900/15'
       )}
       style={subjectStyle ? { backgroundColor: subjectStyle.backgroundColor, borderColor: `${subjectStyle.color}55` } : undefined}
@@ -131,29 +131,29 @@ function LessonBlock({ title, slot, emptyText, remainingMins = null, timeToNext 
     >
       <div className="flex items-center justify-between gap-1.5" dir="rtl">
         <span className={cn(
-          'rounded-full px-1 py-0.5 text-[8px] font-semibold leading-none',
+          'rounded-full px-1 py-0.5 text-[7px] font-semibold leading-none',
           muted ? 'bg-muted text-muted-foreground' : slot?.kind === 'break' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300'
         )}>
           {title}
         </span>
-        <span className="text-[9px] font-medium text-muted-foreground force-ltr">{timeRange}</span>
+        <span className="text-[8px] font-medium text-muted-foreground force-ltr">{timeRange}</span>
       </div>
 
       <p className={cn(
-        'w-full truncate text-sm font-extrabold leading-[1.6]',
+        'w-full truncate text-xs font-extrabold leading-[18px]',
         !slot && 'text-muted-foreground'
       )} style={subjectStyle ? { color: subjectStyle.color } : undefined}>
         {subjectDefinition?.name || slot?.subject || emptyText}
       </p>
 
       <p className={cn(
-        'w-full truncate text-[9px] font-medium',
+        'w-full truncate text-[8px] font-medium',
         slot && remainingMins != null ? slot.kind === 'break' ? 'text-amber-700 dark:text-amber-300' : 'text-emerald-700 dark:text-emerald-300' : 'text-muted-foreground'
       )}>
         {statusText}
       </p>
 
-      <p className="w-full truncate text-[9px] text-muted-foreground">
+      <p className="w-full truncate text-[8px] text-muted-foreground">
         {metaText}
       </p>
     </div>
