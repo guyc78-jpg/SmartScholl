@@ -164,13 +164,11 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
       ...slotPayload,
       subject_id: subjectDefinition?.id || payload.subject_id || '',
     };
-    if (slot?.id) {
-      await base44.entities.ScheduleSlot.update(slot.id, base);
-      toast.success('עודכן');
-    } else {
-      await base44.entities.ScheduleSlot.create(base);
-      toast.success('נוסף לשיעור');
-    }
+    const savedSlot = slot?.id
+      ? await base44.entities.ScheduleSlot.update(slot.id, base)
+      : await base44.entities.ScheduleSlot.create(base);
+    setSlots(current => slot?.id ? current.map(item => item.id === slot.id ? savedSlot : item) : [...current, savedSlot]);
+    toast.success(slot?.id ? 'עודכן' : 'נוסף לשיעור');
     setEditor(null);
     load();
   }, [editor, activeClassId, classId, classGrade, subjects]);
@@ -202,7 +200,7 @@ export default function Schedule({ role = 'homeroom_teacher', user }) {
   }
 
   return (
-    <div className="p-4 lg:p-6 pb-24 lg:pb-6 space-y-4" dir="rtl">
+    <div className="p-4 lg:p-6 pb-32 lg:pb-6 space-y-4" dir="rtl">
       <PageHeader
         title="מערכת שעות"
         subtitle="לוח שבועי לפי הצלצולים — ימים א׳–ו׳"

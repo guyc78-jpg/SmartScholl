@@ -3,9 +3,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Trash2, AlertTriangle } from 'lucide-react';
 import { SUBJECT_COLORS, normalizeSubjectName } from '@/lib/scheduleSubjects';
+import ScheduleSubjectPicker from '@/components/schedule/ScheduleSubjectPicker';
 
 const DEFAULT_SUBJECTS = [
   'מתמטיקה','עברית','ספרות','אנגלית','היסטוריה','גיאוגרפיה',
@@ -18,6 +18,7 @@ export default function CellEditorDialog({ open, onOpenChange, slot, day, period
   const isEdit = !!slot?.id;
   const [form, setForm] = useState({ subject: '', teacher: '', room: '', group: '', notes: '', customSubject: '', subjectColor: SUBJECT_COLORS[0] });
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [showColorPicker, setShowColorPicker] = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -38,6 +39,7 @@ export default function CellEditorDialog({ open, onOpenChange, slot, day, period
         notes: stripGroup(slot?.notes),
       });
       setConfirmDelete(false);
+      setShowColorPicker(false);
     }
   }, [open, slot, subjects]);
 
@@ -48,6 +50,7 @@ export default function CellEditorDialog({ open, onOpenChange, slot, day, period
   const selectSubject = (value) => {
     const subject = activeSubjects.find(item => item.normalized_key === normalizeSubjectName(value));
     setForm(prev => ({ ...prev, subject: value, subjectColor: subject?.color || prev.subjectColor || SUBJECT_COLORS[0] }));
+    setShowColorPicker(false);
   };
 
   function handleSubmit() {
@@ -66,19 +69,19 @@ export default function CellEditorDialog({ open, onOpenChange, slot, day, period
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md" dir="rtl">
-        <DialogHeader>
+      <DialogContent className="max-h-[calc(100svh-2rem)] gap-3 p-4 sm:max-w-md sm:p-5" dir="rtl">
+        <DialogHeader className="space-y-2">
           <DialogTitle className="text-right">
             {isEdit ? 'עריכת שיעור' : 'הוספת שיעור'}
           </DialogTitle>
-          <div className="flex items-center justify-center gap-4 py-2 rounded-lg bg-muted/40">
+          <div className="flex items-center justify-center gap-3 rounded-lg bg-muted/40 py-1.5">
             <span className="text-sm font-semibold text-foreground">יום {day}</span>
             <span className="text-sm font-semibold text-foreground">שיעור {period}</span>
             {periodTime && <span className="force-ltr text-base font-bold text-primary">{periodTime}</span>}
           </div>
         </DialogHeader>
 
-        <div className="space-y-3 text-right">
+        <div className="space-y-2.5 text-right">
           <div className="space-y-1">
             <Label className="text-xs">מקצוע *</Label>
             {form.subject === 'אחר' ? (
@@ -86,31 +89,26 @@ export default function CellEditorDialog({ open, onOpenChange, slot, day, period
                 onChange={e => set('customSubject', e.target.value)}
                 placeholder="הזן מקצוע" />
             ) : (
-              <Select value={form.subject} onValueChange={selectSubject}>
-                <SelectTrigger><SelectValue placeholder="בחר מקצוע" /></SelectTrigger>
-                <SelectContent>
-                  {subjectOptions.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                  <SelectItem value="אחר">אחר</SelectItem>
-                </SelectContent>
-              </Select>
+              <ScheduleSubjectPicker value={form.subject} options={[...subjectOptions, 'אחר']} onChange={selectSubject} />
             )}
           </div>
-          <div className="space-y-1">
-            <Label className="text-xs">צבע מקצוע קבוע</Label>
+          <div className="flex items-center justify-between rounded-lg bg-muted/35 px-3 py-2" dir="rtl">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span className="h-4 w-4 rounded-full border border-foreground/10" style={{ backgroundColor: form.subjectColor }} />
+              <span>צבע המקצוע</span>
+            </div>
+            <button type="button" onClick={() => setShowColorPicker(value => !value)} className="text-xs font-semibold text-primary hover:underline">
+              {showColorPicker ? 'סגור' : 'שינוי צבע'}
+            </button>
+          </div>
+          {showColorPicker && (
             <div className="grid grid-cols-8 gap-1.5" dir="rtl">
               {SUBJECT_COLORS.slice(0, 16).map(color => (
-                <button
-                  key={color}
-                  type="button"
-                  onClick={() => set('subjectColor', color)}
-                  className="h-7 rounded-full border-2 transition-all"
-                  style={{ backgroundColor: color, borderColor: form.subjectColor === color ? 'hsl(var(--foreground))' : 'transparent' }}
-                  aria-label={`בחר צבע ${color}`}
-                />
+                <button key={color} type="button" onClick={() => set('subjectColor', color)} className="h-7 rounded-full border-2 transition-all" style={{ backgroundColor: color, borderColor: form.subjectColor === color ? 'hsl(var(--foreground))' : 'transparent' }} aria-label={`בחר צבע ${color}`} />
               ))}
             </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
+          )}
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-3">
             <div className="space-y-1">
               <Label className="text-xs">מורה</Label>
               <Input value={form.teacher} onChange={e => set('teacher', e.target.value)} placeholder="שם המורה" />
@@ -130,7 +128,7 @@ export default function CellEditorDialog({ open, onOpenChange, slot, day, period
           </div>
         </div>
 
-        <DialogFooter className="flex-row gap-2 sm:justify-between">
+        <DialogFooter className="sticky bottom-0 -mx-4 -mb-4 mt-1 flex-row gap-2 border-t border-border/50 bg-card/95 px-4 py-3 backdrop-blur-sm sm:-mx-5 sm:-mb-5 sm:px-5 sm:justify-between">
           {isEdit ? (
             <Button variant="ghost" className="text-destructive hover:text-destructive gap-2" onClick={() => setConfirmDelete(true)}>
               <Trash2 className="w-4 h-4" /> מחק
